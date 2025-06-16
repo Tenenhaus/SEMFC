@@ -19,7 +19,7 @@ mlSEM <- function (init, block_sizes, mode, S, lengths_parameter,which_exo_endo)
     result <- solnp(pars = init,
                   fun=F1_bis, S = S, block_sizes=block_sizes, mode=mode,lengths_parameter = lengths_parameter,
                   which_exo_endo = which_exo_endo,
-                  control = list(trace = 0, tol = 1e-8))
+                  control = list(trace = 0, tol = 1e-16))
 
   }
 

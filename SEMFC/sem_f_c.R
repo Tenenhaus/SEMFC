@@ -39,8 +39,8 @@ library(Rsolnp)
 
 
 
-SEM_F_C <- R6Class(
-  "SEM_F_C",
+SemFC <- R6Class(
+  "SemFC",
   public = list(
     # Attributs
     data = NULL,
@@ -211,7 +211,7 @@ colnames(C) <- rownames(C) <- names(A)
 mode <- c(rep("reflective", 5))
 
 
-model <- SEM_F_C$new(data=A, relation_matrix = C, mode=mode, scale=F, bias=F)
+model <- SemFC$new(data=A, relation_matrix = C, mode=mode, scale=F, bias=F)
 model$fit_svd()
 x = model$svd_parameters$theta
 res =s_implied_bis(x, model$block_sizes, model$mode, model$lengths_theta, model$which_exo_endo, jac=F)
@@ -241,10 +241,10 @@ sem.model <-  '
     eta4 ~ eta1 + eta2 + eta3
     eta5 ~ eta4'
 
-fit.sem.ml <- sem(sem.model, data=A2, estimator = "ML")
+fit.sem.ml <- sem(sem.model, data=A2, estimator = "ML", likelihood = 'wishart')
 
 
-estimate = parameterEstimates(fit.sem.ml, standardized = TRUE)
+estimate = parameterEstimates(fit.sem.ml, standardized = FALSE)
 
 
 
@@ -279,7 +279,7 @@ colnames(C) <- rownames(C) <- names(Y)
 
 mode <- c(rep("formative", 4), rep("reflective", 2))
 
-model <- SEM_F_C$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
+model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
 model$fit_svd()
 # model$svd_infer(B=1000, verbose=FALSE)
 model$fit_ml(initialisation_svd = TRUE)
