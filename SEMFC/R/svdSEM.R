@@ -32,7 +32,10 @@
 svdSEM <- function(A, C, scale = TRUE,
                    mode = rep("formative", length(A)), 
                    bias = FALSE){
+
+    # vecteur qui code le nombre des variables observes de chaque bloc
     pjs <- sapply(A, NCOL)
+    # nombre d'individu
     nb_row <- NROW(A[[1]])
     
     #-------------------------------------------------------
@@ -124,7 +127,7 @@ svdSEM <- function(A, C, scale = TRUE,
     
     #Compute the implied covariance matrix implied by the model
     BDIAG = list()
-    
+
     for (i in seq_len(J)){
       if(mode[i] == "formative"){
         BDIAG [[i]] = cov2(A[[i]], bias = bias)-lambda[[i]]%*%t(lambda[[i]])
@@ -155,16 +158,18 @@ svdSEM <- function(A, C, scale = TRUE,
                 psi = lv$PSI,
                 d = d,
                 Ptilde = Phat,
+                P_EXO = lv$P_EXO,
+                P_ENDO = lv$P_ENDO,
                 P_IMPLIED = lv$R_LVM,
                 SIGMA_IMPLIED = SIGMA_LVM,
                 T_LS = T_LS, 
                 reliability_coef = reliability_coef,
-                residual_variance = residual_variance, 
-                C = C,
+                residual_variance = residual_variance[mode == 'reflective'],
+                blocks = blocks,
                 mode = mode,
                 bias = bias,
-                scale = scale, 
-                blocks = blocks)
+                scale = scale,
+                C = C)
         
     return(out)
 }

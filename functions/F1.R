@@ -1,6 +1,7 @@
 ########################################
 # Objective function for ML estimation #
 ########################################
+source("functions/s_implied.R")
 
 F1 <- function(x, S){
   #loadings
@@ -64,3 +65,21 @@ F1 <- function(x, S){
   return(opt)
 }
 
+
+F1_bis <- function(x, S, block_sizes, mode, lengths_parameter, which_exo_endo){
+
+
+  implied_S <- s_implied_bis(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac = FALSE)$SIGMA_IMPLIED
+
+  ########################################################################
+  ###################### Compute log-likelihood  #########################
+  ########################################################################
+
+  opt <- log(det(implied_S)) +
+    sum(diag(S%*%solve(implied_S))) -
+    log(det(S)) -
+    NCOL(S)
+
+  return(opt)
+
+}

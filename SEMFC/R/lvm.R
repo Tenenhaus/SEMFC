@@ -14,9 +14,14 @@ lvm <- function(R, C){
   BETA = as.matrix(tC[J, J, drop = F])
   GAMMA = as.matrix(tC[J, H, drop = F])
   PSI = matrix(0, NCOL(BETA), NCOL(BETA))
-  
+
+
+
+  # pour chaque variable endo, on fait le calcul des beta/gamma
   for (i in 1:length(which_exo_endo$Ji)){
+    # les endo lie a l'endo i
     Ji = which_exo_endo$Ji[[i]]
+    # les exos lies a l'endo i
     Hi = which_exo_endo$Hi[[i]]
     l_j = length(Ji)
     l_h = length(Hi)
@@ -59,7 +64,8 @@ lvm <- function(R, C){
     }
     
     if(igraph::is_dag(gr) & config1){
-    xx = matrix(NA, l, l)    
+    #   cov vect(endo-i,exo-i)
+    xx = matrix(NA, l, l)
     xx[1:l_j, 1:l_j] = R[Ji, Ji]
     xx[1:l_j, (l_j+1):l] = R[Ji, Hi]
     xx[(l_j+1):l, 1:l_j] = R[Hi, Ji]
@@ -137,6 +143,8 @@ lvm <- function(R, C){
               BETA = BETA, GAMMA = GAMMA, 
               PSI = PSI, 
               R2 = R2,
+              P_EXO = R_LVM[H, H],
+              P_ENDO = R_LVM[J, J],
               R_LVM = R_LVM))
 }
 
