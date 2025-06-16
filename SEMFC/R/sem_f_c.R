@@ -1,20 +1,20 @@
 library(R6)
 
 
-# load_all("RGCCA")
-source("RGCCA/R/svdSEM.R")
-source("RGCCA/R/scale2.R")
-source("RGCCA/R/correction.R")
-source("RGCCA/R/cov2.R")
-source("RGCCA/R/lvm.R")
-source("RGCCA/R/ind_exo_endo.R")
-source("RGCCA/R/d_LS.R")
-source("RGCCA/R/improper.R")
-source("RGCCA/R/svdSEM_infer.R")
-source("RGCCA/R/scaleDataSet.R")
-source("RGCCA/R/svdSEM_gof.R")
-source("RGCCA/R/model_sem.R")
-source("RGCCA/R/mlSEM_infer.R")
+# load_all("SEMFC")
+source("SEMFC/R/svdSEM.R")
+source("SEMFC/R/scale2.R")
+source("SEMFC/R/correction.R")
+source("SEMFC/R/cov2.R")
+source("SEMFC/R/lvm.R")
+source("SEMFC/R/ind_exo_endo.R")
+source("SEMFC/R/d_LS.R")
+source("SEMFC/R/improper.R")
+source("SEMFC/R/svdSEM_infer.R")
+source("SEMFC/R/scaleDataSet.R")
+source("SEMFC/R/svdSEM_gof.R")
+source("SEMFC/R/model_sem.R")
+source("SEMFC/R/mlSEM_infer.R")
 
 #functions
 source("functions/data_simulation.R")
@@ -213,10 +213,47 @@ mode <- c(rep("reflective", 5))
 
 model <- SEM_F_C$new(data=A, relation_matrix = C, mode=mode, scale=F, bias=F)
 model$fit_svd()
+x = model$svd_parameters$theta
+res =s_implied_bis(x, model$block_sizes, model$mode, model$lengths_theta, model$which_exo_endo, jac=F)
+
+
 # model$svd_infer(B=1000, verbose=FALSE)
 model$fit_ml(initialisation_svd = TRUE)
-model$ml_infer()
-print(model$SD)
+# model$ml_infer()
+
+
+
+
+
+A2 = data.frame(Reduce("cbind", A))
+
+sem.model <-  '
+# latent variable definitions
+    eta1 =~ CUEX1+CUEX2+CUEX3
+    eta2 =~ PERQ1+PERQ2+PERQ3+PERQ4+PERQ5+PERQ6+PERQ7
+    eta3 =~ PERV1+PERV2
+    eta4 =~ CUSA1+CUSA2+CUSA3
+    eta5 =~ CUSL1+CUSL2+CUSL3
+
+    # Regressions
+    eta2 ~ eta1
+    eta3 ~ eta1 + eta2
+    eta4 ~ eta1 + eta2 + eta3
+    eta5 ~ eta4'
+
+fit.sem.ml <- sem(sem.model, data=A2, estimator = "ML")
+
+
+estimate = parameterEstimates(fit.sem.ml, standardized = TRUE)
+
+
+
+
+print('end')
+
+
+
+
 
 
 set.seed(20091979)

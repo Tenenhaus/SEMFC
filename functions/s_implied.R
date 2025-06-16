@@ -173,7 +173,14 @@ get_path_coeff <- function(x, list_linked_exo_endo, exo_or_endo_variable, initia
     #' get_path_coeff(x, list_linked_exo_endo, exo_or_endo_variable, initial_start_index)
 
   # list of number of linked exos/endos for each endo variable
-  length_exo_endo <- sapply(list_linked_exo_endo, length)
+  # length_exo_endo <- sapply(list_linked_exo_endo, length)
+  length_exo_endo <- sapply(list_linked_exo_endo,
+                            function(sublist) {
+                              ifelse((length(sublist) == 1 && sublist[[1]] == 0),
+                                     return(0),
+                                     return(length(sublist)))
+                            })
+
 
   # Initialisation of index for the rows of the path coeff matrix
   start_index <- initial_start_index + c(0, cumsum(head(length_exo_endo, -1)))
