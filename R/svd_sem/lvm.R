@@ -17,7 +17,7 @@ lvm <- function(R, C){
 
 
 
-  # pour chaque variable endo, on fait le calcul des beta/gamma
+
   for (i in 1:length(which_exo_endo$Ji)){
     # les endo lie a l'endo i
     Ji = which_exo_endo$Ji[[i]]

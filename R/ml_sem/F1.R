@@ -1,7 +1,7 @@
 ########################################
 # Objective function for ML estimation #
 ########################################
-source("functions/s_implied.R")
+source("../../functions/s_implied.R")
 
 F1 <- function(x, S){
   #loadings

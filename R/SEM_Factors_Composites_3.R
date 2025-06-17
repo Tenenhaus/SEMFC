@@ -40,12 +40,12 @@ source("RGCCA/R/sem_f_c.R")
 
 
 #functions
-source("functions/data_simulation.R")
-source("functions/F1.R")
-source("functions/h_theta.R")
+source("SEMFC/data/data_simulation.R")
+source("SEMFC/ml_sem/F1.R")
+source("../functions/h_theta.R")
 source("functions/s_implied.R")
-source("functions/h_constraints.R")
-source("functions/parameters_svd.R")
+source("SEMFC/ml_sem/h_constraints.R")
+source("SEMFC/svd_sem/parameters_svd.R")
 source("functions/mlSEM.R")
 source("functions/rml_sem.R")
 
@@ -763,7 +763,7 @@ round(Table7, 3)
 ############################
 ############################
 
-ECSI = as.data.frame(read_excel("mobil.xls"))/10
+ECSI = as.data.frame(read_excel("SEMFC/data/mobil.xls"))/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", 
                                "PERQ5", "PERQ6", "PERQ7")],

@@ -80,7 +80,7 @@ heq0 <- function(x, S) {
   return(h)
 }
 
-source("functions/F1.R")
+source("F1.R")
 
 heq1_bis <- function (x,S, block_sizes, mode, lengths_parameter, which_exo_endo){
 

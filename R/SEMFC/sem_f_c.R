@@ -4,12 +4,12 @@ library(R6)
 # load_all("SEMFC")
 source("SEMFC/R/svdSEM.R")
 source("SEMFC/R/scale2.R")
-source("SEMFC/R/correction.R")
+source("svd_sem/correction.R")
 source("SEMFC/R/cov2.R")
-source("SEMFC/R/lvm.R")
+source("svd_sem/lvm.R")
 source("SEMFC/R/ind_exo_endo.R")
 source("SEMFC/R/d_LS.R")
-source("SEMFC/R/improper.R")
+source("svd_sem/improper.R")
 source("SEMFC/R/svdSEM_infer.R")
 source("SEMFC/R/scaleDataSet.R")
 source("SEMFC/R/svdSEM_gof.R")
@@ -17,12 +17,12 @@ source("SEMFC/R/model_sem.R")
 source("SEMFC/R/mlSEM_infer.R")
 
 #functions
-source("functions/data_simulation.R")
-source("functions/F1.R")
+source("data/data_simulation.R")
+source("ml_sem/F1.R")
 source("functions/h_theta.R")
 source("functions/s_implied.R")
-source("functions/h_constraints.R")
-source("functions/parameters_svd.R")
+source("ml_sem/h_constraints.R")
+source("svd_sem/parameters_svd.R")
 source("functions/mlSEM.R")
 
 
@@ -191,7 +191,7 @@ SemFC <- R6Class(
 
 
 library(readxl)
-ECSI = as.data.frame(read_excel("mobil.xls"))/10
+ECSI = as.data.frame(read_excel("data/mobil.xls"))/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4",
                                "PERQ5", "PERQ6", "PERQ7")],
