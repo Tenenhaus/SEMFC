@@ -11,9 +11,11 @@ source('R/utils/get_lengths_theta.R')
 #import functions from svd module
 source('R/svd_sem/svdSEM.R')
 source('R/svd_sem/parameters_svd.R')
+source('R/svd_sem/svdSEM_infer.R')
 #import functions from ml module
 source('R/ml_sem/F1.R')
 source('R/ml_sem/mlSEM.R')
+source('R/ml_sem/mlSEM_infer.R')
 
 library(Matrix)
 library(knitr)
@@ -200,12 +202,12 @@ mode <- c(rep("reflective", 5))
 
 model <- SemFC$new(data=A, relation_matrix = C, mode=mode, scale=F, bias=F)
 model$fit_svd()
-x = model$svd_parameters$theta
-res =lvm_ml(x, model$block_sizes, model$mode, model$lengths_theta, model$which_exo_endo, jac=F)
+# x = model$svd_parameters$theta
+# res =lvm_ml(x, model$block_sizes, model$mode, model$lengths_theta, model$which_exo_endo, jac=F)
 
 
 # model$svd_infer(B=1000, verbose=FALSE)
-model$fit_ml(initialisation_svd = TRUE)
+# model$fit_ml(initialisation_svd = TRUE)
 # model$ml_infer()
 
 
@@ -240,7 +242,13 @@ df = round(cbind(std_all_ml, std_all_estimate),3)
 
 df = cbind(df, df[,1] - df[,2])
 
+g =  unlist(model$ml_parameters$gamma)
+b = unlist(model$ml_parameters$beta)
+ml = c(g[1], g[2], b[2,1],g[3],b[3,1],b[3,2],b[4,3])
+estim_bg = estimate[19:25,11]
+df2 = round(cbind(ml, estim_bg),3)
 
+df_all = round(cbind(c(std_all_ml,ml), c(std_all_estimate,estim_bg )),3)
 
 
 print('end')
@@ -253,7 +261,7 @@ print('end')
 set.seed(20091979)
 N <- 300
 library(mvtnorm)
-X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = FALSE)
+X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = TRUE)
 colnames(X) <- paste("X", rep(1:6, each = 3), rep(1:3, 6), sep ="")
 
 

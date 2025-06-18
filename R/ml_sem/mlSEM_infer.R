@@ -1,6 +1,6 @@
 
 
-
+# source('R/ml_sem/h_constraints.R')
 
 information_matrix <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo){
   JAC <- numDeriv::jacobian(lvm_ml, x = x, block_sizes = block_sizes, mode =mode ,
@@ -35,7 +35,7 @@ information_matrix <- function(x, block_sizes, mode, lengths_parameter, which_ex
 
 Jac_constraints <- function(x, S, block_sizes, mode, lengths_parameter, which_exo_endo){
   # transpose of the jacobian of constraint function
-  H <- t(numDeriv::jacobian(heq1_bis, x = x, S=S, block_sizes=block_sizes, mode = mode,
+  H <- t(numDeriv::jacobian(heq1, x = x, S=S, block_sizes=block_sizes, mode = mode,
                             lengths_parameter = lengths_parameter, which_exo_endo = which_exo_endo))
 
   return(H)
