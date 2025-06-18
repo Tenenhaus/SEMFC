@@ -241,10 +241,17 @@ sem.model <-  '
     eta4 ~ eta1 + eta2 + eta3
     eta5 ~ eta4'
 
-fit.sem.ml <- sem(sem.model, data=A2, estimator = "ML", likelihood = 'wishart')
+fit.sem.ml <- sem(sem.model, data=A2, estimator = "ML", likelihood="wishart")
 
 
-estimate = parameterEstimates(fit.sem.ml, standardized = FALSE)
+estimate = parameterEstimates(fit.sem.ml, standardized = TRUE)
+
+std_all_ml = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$ml_parameters$residual_variance),diag(model$cov_S))
+std_all_estimate = estimate[1:18,11]
+df = round(cbind(std_all_ml, std_all_estimate),3)
+
+
+df = cbind(df, df[,1] - df[,2])
 
 
 
