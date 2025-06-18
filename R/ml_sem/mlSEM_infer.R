@@ -3,8 +3,8 @@
 
 
 information_matrix <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo){
-  JAC <- numDeriv::jacobian(s_implied_bis, x = x, block_sizes = block_sizes, mode =mode ,
-                            lengths_parameter = lengths_parameter, which_exo_endo = which_exo_endo,jac = TRUE)
+  JAC <- numDeriv::jacobian(lvm_ml, x = x, block_sizes = block_sizes, mode =mode ,
+                            lengths_parameter = lengths_parameter, which_exo_endo = which_exo_endo, jac = TRUE)
   full_jac <- sapply(1:NCOL(JAC),
                         function(col){
                           ds_dt <- matrix(0, sum(block_sizes), sum(block_sizes))
@@ -14,8 +14,8 @@ information_matrix <- function(x, block_sizes, mode, lengths_parameter, which_ex
       )
 
   nb_param <- length(x)
-  Sinv <- solve(s_implied_bis( x = x, block_sizes = block_sizes, mode =mode,
-                               lengths_parameter = lengths_parameter, which_exo_endo = which_exo_endo,jac = F)$SIGMA_IMPLIED)
+  Sinv <- solve(lvm_ml(x = x, block_sizes = block_sizes, mode =mode,
+                       lengths_parameter = lengths_parameter, which_exo_endo = which_exo_endo, jac = F)$SIGMA_IMPLIED)
   Sinv_full_jac <- lapply(full_jac, function(fj) as.matrix(Sinv %*% fj))
   I_ij <- function(i, j) {
     0.5 * sum(diag(Sinv_full_jac[[i]] %*% Sinv_full_jac[[j]]))

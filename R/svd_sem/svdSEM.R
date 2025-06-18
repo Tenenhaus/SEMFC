@@ -1,3 +1,21 @@
+# #' Source Required R Files
+# #'
+# #' This function sources required R files for the svd-SEM implementation.
+# #'
+# #' @details
+# #' Sources two R files:
+# #' - lvm.R: Contains latent variable model functionality
+# #' - d_LS.R: Contains least squares calculation utilities
+# #'
+
+
+source("R/svd_sem/correction.R")
+source("R/svd_sem/lvm.R")
+source("R/utils/d_LS.R")
+source("R/utils/scale2.R")
+
+#' @import Matrix
+#' @importFrom readxl read_excel
 #' Structural equation models with factors and composites with svd-SEM
 #' @param A  A list that contains the \eqn{J} blocks of variables \eqn{X_1, X_2, ..., X_J}.
 #' @param scale  If scale = TRUE, each block is standardized to zero means and unit variances.

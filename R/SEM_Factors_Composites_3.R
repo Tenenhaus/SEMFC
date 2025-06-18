@@ -191,7 +191,7 @@ for (b in seq_len(n_simu)){
       z <- abs(diff(x[26:27]))/sqrt(VCOV[26, 26] + VCOV[27, 27] - 2*VCOV[26, 27])
       vcov_pval[b] = 2*pnorm(z, lower.tail = F)
 
-      parameter_implied = s_implied_bis(x, block_sizes, mode, lengths_parameter, which_exo_endo,jac=FALSE)
+      parameter_implied = lvm_ml(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac=FALSE)
       P_EXO_ML <- model$ml_parameters$P_EXO
       P_ENDO_ML <- parameter_implied$P_ENDO
       # path coefficients

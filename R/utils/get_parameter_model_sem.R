@@ -36,12 +36,4 @@ get_parameter_model_sem <- function(data, mode){
 
 
 
-
-
-
-
-
-
-
-
 }

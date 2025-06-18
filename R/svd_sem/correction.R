@@ -1,5 +1,9 @@
 # correction of the RGCCA estimates
 
+
+source("R/utils/cov2.R")
+
+
 # correction = function(A, a, bias = FALSE){
 #   S = cov2(A, bias = bias)
 #   diag(S) = 0

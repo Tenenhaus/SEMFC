@@ -10,7 +10,7 @@ source("R/utils/get_lengths_theta.R")
 
 
 
-s_implied_bis <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac = TRUE){
+lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac = TRUE){
 
   n <- which_exo_endo$ind_exo
   m <- which_exo_endo$ind_endo

@@ -1,32 +1,19 @@
 library(R6)
 
 
-# load_all("SEMFC")
-source("SEMFC/R/svdSEM.R")
-source("SEMFC/R/scale2.R")
-source("svd_sem/correction.R")
-source("SEMFC/R/cov2.R")
-source("svd_sem/lvm.R")
-source("SEMFC/R/ind_exo_endo.R")
-source("SEMFC/R/d_LS.R")
-source("svd_sem/improper.R")
-source("SEMFC/R/svdSEM_infer.R")
-source("SEMFC/R/scaleDataSet.R")
-source("SEMFC/R/svdSEM_gof.R")
-source("SEMFC/R/model_sem.R")
-source("SEMFC/R/mlSEM_infer.R")
 
-#functions
-source("data/data_simulation.R")
-source("ml_sem/F1.R")
-source("functions/h_theta.R")
-source("functions/s_implied.R")
-source("ml_sem/h_constraints.R")
-source("svd_sem/parameters_svd.R")
-source("functions/mlSEM.R")
-
-
-
+#import data
+source('data/data_simulation.R')
+#import utils functions
+source('R/utils/get_parameter_model_sem.R')
+source('R/utils/ind_exo_endo.R')
+source('R/utils/get_lengths_theta.R')
+#import functions from svd module
+source('R/svd_sem/svdSEM.R')
+source('R/svd_sem/parameters_svd.R')
+#import functions from ml module
+source('R/ml_sem/F1.R')
+source('R/ml_sem/mlSEM.R')
 
 library(Matrix)
 library(knitr)
@@ -34,7 +21,7 @@ library(pheatmap)
 
 library(MASS)
 library(lavaan)
-library(Rsolnp)
+
 
 
 
@@ -115,7 +102,7 @@ SemFC <- R6Class(
                                   mode = self$mode)
 
       self$svd_parameters$theta <- theta_svd
-      self$svd_parameters$F <- F1_bis(theta_svd, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
+      self$svd_parameters$F <- F1(theta_svd, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
 
 
     },
@@ -146,10 +133,10 @@ SemFC <- R6Class(
 
       ml_sol <- mlSEM(initial_params, block_sizes, mode, self$cov_S, self$lengths_theta, self$which_exo_endo)
       theta_ml <- ml_sol$pars
-      self$ml_parameters <- s_implied_bis( x = theta_ml, block_sizes = block_sizes, mode =mode,
-                                           lengths_parameter = self$lengths_theta, which_exo_endo = self$which_exo_endo, jac = F)
+      self$ml_parameters <- lvm_ml(x = theta_ml, block_sizes = block_sizes, mode =mode,
+                                   lengths_parameter = self$lengths_theta, which_exo_endo = self$which_exo_endo, jac = F)
       self$ml_parameters$theta <- theta_ml
-      self$ml_parameters$F <- F1_bis(theta_ml, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
+      self$ml_parameters$F <- F1(theta_ml, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
 
 
     },
@@ -214,7 +201,7 @@ mode <- c(rep("reflective", 5))
 model <- SemFC$new(data=A, relation_matrix = C, mode=mode, scale=F, bias=F)
 model$fit_svd()
 x = model$svd_parameters$theta
-res =s_implied_bis(x, model$block_sizes, model$mode, model$lengths_theta, model$which_exo_endo, jac=F)
+res =lvm_ml(x, model$block_sizes, model$mode, model$lengths_theta, model$which_exo_endo, jac=F)
 
 
 # model$svd_infer(B=1000, verbose=FALSE)
