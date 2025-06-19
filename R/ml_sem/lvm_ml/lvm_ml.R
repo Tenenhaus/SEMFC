@@ -41,7 +41,7 @@ lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac 
                       list_linked_exo_endo = which_exo_endo$Hi,
                       exo_or_endo_variable = n,
                       initial_start_index = start_indices_in_x[3])
-  rownames(G) = names(m)
+  rownames(G) <- names(m)
 
   ##################################################################
   ####### mapping of the path coefficients matrix B from x #########
@@ -52,7 +52,7 @@ lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac 
                       exo_or_endo_variable = m,
                       initial_start_index = start_indices_in_x[4])
 
-  rownames(B) = names(m)
+  rownames(B) <- names(m)
 
   ##################################################################
   ####### mapping of the endogeneous correlation matrix from x #####
@@ -87,6 +87,16 @@ lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac 
 
   # Get the residual variance for reflective blocks
   residual_variance <- lapply(BDIAG[mode == 'reflective'], diag)
+  # name the value
+  residual_variance <- unname(split(
+    `names<-`(
+      unlist(residual_variance),
+      paste0(".", names(unlist(unname(loadings[mode == "reflective"]))))
+    ),
+    rep(seq_along(residual_variance), lengths(residual_variance))
+  ))
+
+
   # Get the variance matrices for reflective blocks
   S_composites <- BDIAG[mode == 'formative']
 
