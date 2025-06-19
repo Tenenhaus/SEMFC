@@ -47,6 +47,7 @@ get_path_coeff <- function(x, list_linked_exo_endo, exo_or_endo_variable, initia
       result <- ifelse(names(exo_or_endo_variable) %in% names(linked_variable_i),
                        exo_or_endo_variable, 0)
       result[result != 0] <- x[start_ind:end_ind]
+      names(result) <- names(exo_or_endo_variable)
       return(result)
     },
     list_linked_exo_endo,                  # List of linked variables

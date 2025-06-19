@@ -41,6 +41,7 @@ lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac 
                       list_linked_exo_endo = which_exo_endo$Hi,
                       exo_or_endo_variable = n,
                       initial_start_index = start_indices_in_x[3])
+  rownames(G) = names(m)
 
   ##################################################################
   ####### mapping of the path coefficients matrix B from x #########
@@ -50,6 +51,8 @@ lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac 
                       list_linked_exo_endo = which_exo_endo$Ji,
                       exo_or_endo_variable = m,
                       initial_start_index = start_indices_in_x[4])
+
+  rownames(B) = names(m)
 
   ##################################################################
   ####### mapping of the endogeneous correlation matrix from x #####

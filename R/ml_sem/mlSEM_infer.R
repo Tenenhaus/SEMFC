@@ -64,6 +64,8 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter){
   gamma <- fit$gamma[fit$gamma!=0]
   beta <- fit$beta[fit$beta!=0]
 
+
+
   start_indices_in_x <- cumsum(c(1, head(lengths_parameter, -1)))
   lambda_start_index <- start_indices_in_x[1]
   lambda_end_index <- lambda_start_index + length(lambda) - 1
@@ -93,11 +95,23 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter){
                             pval = unlist((lapply(z_gamma, function (z) 2*pnorm(abs(z), lower.tail = FALSE))))
   )
 
+  rownames(table_gamma) <- sapply(1:NROW(table_gamma),
+                          function(b)
+                            paste(rownames(fit$gamma)[which(fit$gamma!=0, arr.ind = TRUE)[b, 1]],
+                                  colnames(fit$gamma)[which(fit$gamma!=0, arr.ind = TRUE)[b, 2]],
+                                  sep = "~")
+  )
+
   table_beta <- data.frame(Estimate = beta,
                            std = sd_beta,
                            z_score = z_beta,
                            pval = unlist(lapply(z_beta, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
   )
+  rownames(table_beta) <- sapply(1:NROW(table_beta),
+       function(b)
+         paste(colnames(fit$beta)[which(fit$beta!=0, arr.ind = TRUE)[b, ]],
+               collapse = "~")
+       )
 
 
 
