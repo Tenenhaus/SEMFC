@@ -46,9 +46,15 @@ Jac_constraints <- function(x, S, block_sizes, mode, lengths_parameter, which_ex
 P_ml <- function(x, S, block_sizes, mode, lengths_parameter,which_exo_endo){
 
   I <- information_matrix(x, block_sizes, mode, lengths_parameter,which_exo_endo)
-  H  <- Jac_constraints(x, S, block_sizes, mode, lengths_parameter, which_exo_endo)
-  r  <- ncol(H)
-  t <- nrow(H)
+  t <- nrow(I)
+  r <- length(mode[mode=='formative'])
+  H <- matrix(0, t, r)
+  if (r>0){
+    H  <- Jac_constraints(x, S, block_sizes, mode, lengths_parameter, which_exo_endo)
+  }
+
+
+
   M <- rbind(cbind(I+H%*%t(H), H),
              cbind(t(H), matrix(0, r, r)))
   P <- solve(M)[1:t, 1:t]
@@ -58,11 +64,12 @@ P_ml <- function(x, S, block_sizes, mode, lengths_parameter,which_exo_endo){
 
 }
 
-formatting_ml_infer <- function(fit, SD, lengths_parameter){
+formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
 
   lambda <- unlist(unname(fit$lambda))
   gamma <- fit$gamma[fit$gamma!=0]
   beta <- fit$beta[fit$beta!=0]
+  residual_variance <- unlist(unname(fit$residual_variance))
 
 
 
@@ -78,9 +85,18 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter){
   sd_gamma <- SD[gamma_start_index: gamma_end_index]
   sd_beta <- SD[beta_start_index: beta_end_index]
 
+  BDIAG <- get_bdiag_bis(SD,
+                         mode = mode,
+                         block_sizes = block_sizes,
+                         initial_start_index_cov = start_indices_in_x[6])
+  sd_residual_variance <- unlist(lapply(BDIAG[mode == 'reflective'], diag))
+
+
+
   z_lambda <- lambda/sd_lambda
   z_gamma<- gamma/sd_gamma
   z_beta <- beta/sd_beta
+  z_residual_variance <- residual_variance/sd_residual_variance
 
 
   table_lambda <- data.frame(Estimate = lambda,
@@ -114,11 +130,19 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter){
        )
 
 
+  table_residual_variance <- data.frame(Estimate = residual_variance,
+                           std = sd_residual_variance,
+                           z_score = z_residual_variance,
+                           pval = unlist(lapply(z_residual_variance, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+  )
+
+
 
   out <- list(
     lambda = table_lambda,
     gamma = table_gamma,
-    beta = table_beta
+    beta = table_beta,
+    residual_variance = table_residual_variance
 
   )
 
@@ -135,7 +159,7 @@ mlSEM_infer <- function(x, S, block_sizes, mode, lengths_parameter, N, fit,which
   VCOV <- P_ml/N
   SD <- sqrt(diag(VCOV))
 
-  table <- formatting_ml_infer(fit, SD, lengths_parameter)
+  table <- formatting_ml_infer(fit, SD, lengths_parameter, mode, block_sizes)
 
   out <- list(
     estimate = table,
