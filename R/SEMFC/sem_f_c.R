@@ -169,6 +169,8 @@ SemFC <- R6Class(
       printCoefmat(model$ml_infer_estimate$estimate$beta, P.values = TRUE, has.Pvalue = TRUE)
       cat("gamma:\n")
       printCoefmat(model$ml_infer_estimate$estimate$gamma, P.values = TRUE, has.Pvalue = TRUE)
+      cat("variance:\n")
+      printCoefmat(model$ml_infer_estimate$estimate$residual_variance, P.values = TRUE, has.Pvalue = TRUE)
 
 
     }
@@ -178,83 +180,83 @@ SemFC <- R6Class(
   )
 )
 
-#
-# library(readxl)
-# ECSI = as.data.frame(read_excel("data/mobil.xls"))/10
-# A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-#          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4",
-#                                "PERQ5", "PERQ6", "PERQ7")],
-#          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-#          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-#          CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
-#
-# C <- matrix(c(0, 1, 1, 1, 0,
-#               0, 0, 1, 1, 0,
-#               0, 0, 0, 1, 0,
-#               0, 0, 0, 0, 1,
-#               0, 0, 0, 0, 0), 5, 5, byrow = TRUE)
-#
-#
-# colnames(C) <- rownames(C) <- names(A)
-#
-# mode <- c(rep("reflective", 5))
-#
-#
-# model <- SemFC$new(data=A, relation_matrix = C, mode=mode, scale=F, bias=F)
-# model$fit_svd()
-# # x = model$svd_parameters$theta
-# # res =lvm_ml(x, model$block_sizes, model$mode, model$lengths_theta, model$which_exo_endo, jac=F)
-#
-#
-# # model$svd_infer(B=1000, verbose=FALSE)
-# model$fit_ml(initialisation_svd = TRUE)
-# model$ml_infer()
-#
-#
-#
-#
-#
-# A2 = data.frame(Reduce("cbind", A))
-#
-# sem.model <-  '
-# # latent variable definitions
-#     eta1 =~ CUEX1+CUEX2+CUEX3
-#     eta2 =~ PERQ1+PERQ2+PERQ3+PERQ4+PERQ5+PERQ6+PERQ7
-#     eta3 =~ PERV1+PERV2
-#     eta4 =~ CUSA1+CUSA2+CUSA3
-#     eta5 =~ CUSL1+CUSL2+CUSL3
-#
-#     # Regressions
-#     eta2 ~ eta1
-#     eta3 ~ eta1 + eta2
-#     eta4 ~ eta1 + eta2 + eta3
-#     eta5 ~ eta4'
-#
-# fit.sem.ml <- sem(sem.model, data=A2, estimator = "ML", likelihood="wishart")
-#
-#
-# estimate = parameterEstimates(fit.sem.ml, standardized = TRUE)
-#
-# std_all_ml = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$ml_parameters$residual_variance),diag(model$cov_S))
-# std_all_estimate = estimate[1:18,11]
-# df = round(cbind(std_all_ml, std_all_estimate),3)
-#
-#
-# df = cbind(df, df[,1] - df[,2])
-#
-# g =  unlist(model$ml_parameters$gamma)
-# b = unlist(model$ml_parameters$beta)
-# ml = c(g[1], g[2], b[2,1],g[3],b[3,1],b[3,2],b[4,3])
-# estim_bg = estimate[19:25,11]
-# df2 = round(cbind(ml, estim_bg),3)
-#
-# df_all = round(cbind(c(std_all_ml,ml), c(std_all_estimate,estim_bg )),3)
-#
-#
-# print('end')
-#
-#
-#
+
+library(readxl)
+ECSI = as.data.frame(read_excel("data/mobil.xls"))/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4",
+                               "PERQ5", "PERQ6", "PERQ7")],
+         PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+         CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+         CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C <- matrix(c(0, 1, 1, 1, 0,
+              0, 0, 1, 1, 0,
+              0, 0, 0, 1, 0,
+              0, 0, 0, 0, 1,
+              0, 0, 0, 0, 0), 5, 5, byrow = TRUE)
+
+
+colnames(C) <- rownames(C) <- names(A)
+
+mode <- c(rep("reflective", 5))
+
+
+model <- SemFC$new(data=A, relation_matrix = C, mode=mode, scale=F, bias=F)
+model$fit_svd()
+# x = model$svd_parameters$theta
+# res =lvm_ml(x, model$block_sizes, model$mode, model$lengths_theta, model$which_exo_endo, jac=F)
+
+
+# model$svd_infer(B=1000, verbose=FALSE)
+model$fit_ml(initialisation_svd = TRUE)
+model$ml_infer()
+
+
+
+
+
+A2 = data.frame(Reduce("cbind", A))
+
+sem.model <-  '
+# latent variable definitions
+    eta1 =~ CUEX1+CUEX2+CUEX3
+    eta2 =~ PERQ1+PERQ2+PERQ3+PERQ4+PERQ5+PERQ6+PERQ7
+    eta3 =~ PERV1+PERV2
+    eta4 =~ CUSA1+CUSA2+CUSA3
+    eta5 =~ CUSL1+CUSL2+CUSL3
+
+    # Regressions
+    eta2 ~ eta1
+    eta3 ~ eta1 + eta2
+    eta4 ~ eta1 + eta2 + eta3
+    eta5 ~ eta4'
+
+fit.sem.ml <- sem(sem.model, data=A2, estimator = "ML", likelihood="wishart")
+
+
+estimate = parameterEstimates(fit.sem.ml, standardized = TRUE)
+
+std_all_ml = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$ml_parameters$residual_variance),diag(model$cov_S))
+std_all_estimate = estimate[1:18,11]
+df = round(cbind(std_all_ml, std_all_estimate),3)
+
+
+df = cbind(df, df[,1] - df[,2])
+
+g =  unlist(model$ml_parameters$gamma)
+b = unlist(model$ml_parameters$beta)
+ml = c(g[1], g[2], b[2,1],g[3],b[3,1],b[3,2],b[4,3])
+estim_bg = estimate[19:25,11]
+df2 = round(cbind(ml, estim_bg),3)
+
+df_all = round(cbind(c(std_all_ml,ml), c(std_all_estimate,estim_bg )),3)
+
+
+print('end')
+
+
+
 
 
 
