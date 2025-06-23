@@ -54,7 +54,7 @@ print(beta_gama_comparaison)
 
 res_var_ml = unlist(unname(model$ml_parameters$residual_variance))
 res_var_svd = unlist(unname(model$svd_parameters$residual_variance))
-res_var_lavaan = estimate[25:42,11]
+res_var_lavaan = estimate[26:43,11]
 res_var_th = c(1-l1^2, 1-l2^2, 1-l3^2, 1-l4^2, 1-l5^2, 1-l6^2)
 
 res_var_comparaison = cbind(estimate[25:42,1:3], res_var_th, res_var_svd, res_var_ml, res_var_lavaan)
@@ -175,7 +175,7 @@ model$fit_svd()
 model$fit_ml(initialisation_svd = TRUE)
 
 
-
+#fit.sem.ml <- sem(sem.model, data=do.call(cbind, Y), estimator = "ML", likelihood="wishart")
 
 ##### FALSE SIGMA
 print('DATA empirical sigma = FALSE')

@@ -16,13 +16,13 @@ mlSEM <- function (init, block_sizes, mode, S, lengths_parameter,which_exo_endo)
                   fun=F1, eqfun=heq1,
                   eqB = rep(0,r), S = S, block_sizes=block_sizes, mode=mode, lengths_parameter = lengths_parameter,
                   which_exo_endo = which_exo_endo,
-                  control = list(trace = 0, tol = 1e-8))
+                  control = list(trace = 0, tol = 1e-4))
   }
   else{
     result <- solnp(pars = init,
                     fun=F1, S = S, block_sizes=block_sizes, mode=mode, lengths_parameter = lengths_parameter,
                     which_exo_endo = which_exo_endo,
-                    control = list(trace = 0, tol = 1e-16))
+                    control = list(trace = 0, tol = 1e-4))
 
   }
 

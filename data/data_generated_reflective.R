@@ -48,7 +48,11 @@ eta6 =~ X61+X62+X63
 
 # Regressions
 eta5 ~ eta1 + eta2 + eta6
-eta6 ~ eta3 + eta4 + eta5'
+eta6 ~ eta3 + eta4 + eta5
+
+# residual covariances
+eta5 ~~ eta6
+'
 
 
 
