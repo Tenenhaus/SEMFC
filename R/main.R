@@ -19,6 +19,9 @@ model$fit_ml(initialisation_svd = TRUE)
 #### lavan #######
 
 fit.sem.ml <- sem(sem.model, data=do.call(cbind, Y), estimator = "ML", likelihood="wishart")
+a = fit.sem.ml@optim
+f = fitMeasures(fit.sem.ml, "fmin")
+
 estimate = parameterEstimates(fit.sem.ml, standardized = TRUE)
 
 
