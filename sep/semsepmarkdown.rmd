@@ -1,0 +1,192 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+The [R plugin](https://www.jetbrains.com/help/pycharm/r-plugin-support.html) for IntelliJ-based IDEs provides
+handy capabilities to work with the [R Markdown](https://www.jetbrains.com/help/pycharm/r-markdown.html) files.
+To [add](https://www.jetbrains.com/help/pycharm/r-markdown.html#add-code-chunk) a new R chunk,
+position the caret at any line or the code chunk, then click "+".
+
+The code chunk appears:
+```{r}
+source('R/SEMFC/sem_f_c.R')
+library(readr)
+library(missMDA)
+library(dplyr)
+```
+
+Type any R code in the chunk, for example:
+```{r}
+
+df <- read_csv("data/df_analysis.csv",
+             col_types = cols(
+               Subject_ID = col_character(),
+               group = col_character(),
+               time = col_double(),
+               errors = col_double(),
+               front = col_double(),
+               all = col_double(),
+               speed = col_double(),
+               nboli = col_double(),
+               polig = col_double(),
+               micro = col_double(),
+               mog = col_double(),
+               ftl = col_double(),
+               pmog = col_double(),
+               pftl = col_double()
+             ))
+
+group <- df$group
+subject <- df$Subject_ID
+
+df <- df %>% select(-group)
+df <- df %>% select(-Subject_ID)
+
+
+```
+```{r}
+nb <- estim_ncpPCA(df, ncp.min=0, ncp.max=5)
+res_impute <- imputePCA(df, ncp = nb$ncp)
+df <- as.data.frame(res_impute$completeObs)
+```
+```{r}
+head(df)
+```
+
+
+
+
+
+
+### data
+
+
+```{r}
+X = as.matrix(df)
+X <- scale(X)
+
+Y <- list(clinique = X[, 1:5], biologique = X[, 6:12])
+```
+
+
+### Lavaan
+
+
+
+
+
+
+
+```{r}
+
+sem.model <-  '
+# latent variable definitions
+eta1 =~ time+errors+front+all+speed
+eta2 =~ nboli+polig+micro+mog+ftl+pmog+pftl
+
+
+# Regressions
+eta1 ~ eta2
+
+
+'
+
+
+```
+```{r}
+fit.sem.ml <- sem(sem.model, data=X, estimator = "ML", likelihood="wishart")
+estimate = parameterEstimates(fit.sem.ml, standardized = TRUE)
+```
+```{r}
+summary(fit.sem.ml)
+```
+
+
+
+
+### semfc
+
+
+
+```{r}
+
+C <- matrix(c(0, 0,
+              1, 0), 2, 2, byrow = TRUE)
+
+colnames(C) <- rownames(C) <- names(Y)
+
+mode <- rep("reflective", 2)
+
+
+
+
+```
+```{r}
+model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
+model$fit_svd()
+model$fit_ml(initialisation_svd = TRUE)
+
+
+
+
+
+```
+```{r}
+lambda_svd = model$svd_parameters$lambda
+lambda_ml = model$ml_parameters$lambda
+
+print(lambda_svd)
+print(lambda_ml)
+```
+```{r}
+std_all_ml = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$ml_parameters$residual_variance),diag(model$cov_S))
+std_all_svd = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$svd_parameters$residual_variance),diag(model$cov_S))
+std_all_lavaan = estimate[1:12,11]
+
+lambda_comparaison = cbind(estimate[1:12,1:3],std_all_svd, std_all_ml, std_all_lavaan)
+print('lambda')
+print(lambda_comparaison)
+```
+```{r}
+g =  unlist(model$ml_parameters$gamma)
+bg_ml = g[1,1]
+
+g_svd =  unlist(model$svd_parameters$gamma)
+bg_svd = g_svd[1,1]
+
+
+bg_lavaan = estimate[13,11]
+beta_gama_comparaison = cbind(estimate[13,1:3], bg_svd, bg_ml, bg_lavaan)
+print('beta et gamma')
+print(beta_gama_comparaison)
+
+```
+```{r}
+res_var_ml = unlist(unname(model$ml_parameters$residual_variance))
+res_var_svd = unlist(unname(model$svd_parameters$residual_variance))
+res_var_lavaan = estimate[14:25,11]
+
+
+res_var_comparaison = cbind(estimate[14:25,1:3], res_var_svd, res_var_ml, res_var_lavaan)
+print('residual variance')
+print(res_var_comparaison)
+```
+```{r}
+print('F1')
+f1_ml_true = model$ml_parameters$F
+f1_svd_true = model$svd_parameters$F
+
+P_exo_lavaan = lavInspect(fit.sem.ml, what = 'cor.lv')[2:2,2:2]
+P_endo_lavaan = lavInspect(fit.sem.ml, what = 'cor.lv')[1:1,1:1]
+g_lavaan = bg_lavaan[[1]]
+
+
+param_lavaan = c(std_all_lavaan, P_exo_lavaan[upper.tri(P_exo_lavaan)], g_lavaan, P_endo_lavaan[upper.tri(P_endo_lavaan)],
+                 res_var_lavaan)
+
+f1_lavaan = F1(param_lavaan, model$cov_S, model$block_sizes, model$mode, model$lengths_theta, model$which_exo_endo)
+
+f1_true = cbind(f1_svd_true, f1_ml_true, f1_lavaan )
+print(f1_true)
+```
