@@ -4,30 +4,60 @@ output: html_notebook
 ---
 
 ```{r}
-install.packages("lslx", dependencies = TRUE)
+# install.packages("lslx", dependencies = TRUE)
 ```
-```{r}
-library(lslx)
-```
+
 ```{r}
 
 
 source('data/data_generated_reflective.R')
 
+n_row <- nrow(X)
+
+pen1 <- rnorm(n_row)
+pen2 <- rnorm(n_row)
+pen3 <- rnorm(n_row)
+
+Xpen <- cbind(X, pen1, pen2, pen3)
 
 
-sem.model <-  '
+sem.model <-'
 # latent variable definitions
 eta1 =~ X11+X12+X13
 eta2 =~ X21+X22+X23
 eta3 =~ X31+X32+X33
 eta4 =~ X41+X42+X43
-eta5 =~ X51
-eta6 =~ X61
+eta5 =~ X51+X52+X53 + pen1+pen2+pen3
+eta6 =~ X61+X62+X63+ pen1+pen2+pen3
+
+# Regressions
+eta5 ~ eta1 + eta2 + eta6
+eta6 ~ eta3 + eta4 + eta5
+
+# residual covariances
+eta5 ~~ eta6
+
+'
+
+
+
+
+
+
+
+
+sem.pen.model <-  '
+# latent variable definitions
+eta1 =~ X11+X12+X13
+eta2 =~ X21+X22+X23
+eta3 =~ X31+X32+X33
+eta4 =~ X41+X42+X43
+eta5 =~ X51+X52+X53
+eta6 =~ X61+ X62+X63
 
 # penalisation
-pen() * eta5 =~ X52+X53 + X62+X63
-pen() * eta6 =~ X62+X63 + X52+X53
+pen() * eta5 =~ pen1+pen2+pen3
+pen() * eta6 =~ pen1+pen2+pen3
 
 # Regressions
 eta5 ~ eta1 + eta2 + eta6
@@ -46,12 +76,18 @@ eta5 ~~ 1 * eta5
 eta6 ~~ 1 * eta6
 '
 
+out <- sem(sem.model, Xpen)
 
 ```
 
-Type any R code in the chunk, for example:
+
 ```{r}
-lslx_fa <- lslx$new(model = sem.model, data = X)
+library(lslx)
+```
+
+
+```{r}
+lslx_fa <- lslx$new(model = sem.pen.model, data = Xpen)
 lslx_fa$fit(penalty_method = "mcp",
             lambda_grid = seq(0.01, 0.60, 0.01),
             delta_grid = c(1.5, 3.0, Inf))
@@ -61,8 +97,101 @@ lslx_fa$fit(penalty_method = "mcp",
 result = lslx_fa$summarize(selector = "bic", interval = FALSE)
 ```
 
+
+
+
+```{r}
+library(regsem)
+```
+
+
+
+```{r}
+# extractMatrices(out)$A
+out.reg <- cv_regsem(out, type="lasso", pars_pen = c(11:13,16:18),n.lambda=23,jump=.05)
+head(round(out.reg$parameters,2),5)
+head(round(out.reg$fits,2))
+plot(out.reg,show.minimum="BIC")
+out.reg$final_pars
+summary(out.reg)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+library(lessSEM)
+```
+
+```{r}
+
+lavaanSyntax <-'
+# latent variable definitions
+eta1 =~ X11+X12+X13
+eta2 =~ X21+X22+X23
+eta3 =~ X31+X32+X33
+eta4 =~ X41+X42+X43
+eta5 =~ X51+X52+X53 + l1*pen1+l2*pen2+l3*pen3
+eta6 =~ X61+X62+X63+ l4*pen1+l5*pen2+l6*pen3
+
+# Regressions
+eta5 ~ eta1 + eta2 + eta6
+eta6 ~ eta3 + eta4 + eta5
+
+# residual covariances
+eta5 ~~ eta6
+
+'
+
+lavaanModel <- lavaan::sem(lavaanSyntax,
+                           data = Xpen)
+
+
+lsem <- lasso(
+  # pass the fitted lavaan model
+  lavaanModel = lavaanModel,
+  # names of the regularized parameters:
+  regularized = c("l1", "l2", "l3", "l4", "l5","l6"),
+  # in case of lasso and adaptive lasso, we can specify the number of lambda
+  # values to use. lessSEM will automatically find lambda_max and fit
+  # models for nLambda values between 0 and lambda_max. For the other
+  # penalty functions, lambdas must be specified explicitly
+  nLambdas = 50)
+
+
+
+```
+```{r}
+plot(lsem)
+```
+```{r}
+# coef(lsem)
+# coef(lsem, criterion = "AIC")
+
+
+
+coef(lsem, criterion = "BIC")
+estimates(lsem, criterion = "BIC")
+
+```
+
+
+
 ```{r}
 install.packages("PMA", dependencies = TRUE)
+
+
+
+
 ```
 ```{r}
 library(PMA)
