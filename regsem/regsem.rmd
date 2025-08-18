@@ -3,13 +3,11 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-```{r}
-# install.packages("lslx", dependencies = TRUE)
-```
+
 
 ```{r}
 
-
+library(lavaan)
 source('data/data_generated_reflective.R')
 
 n_row <- nrow(X)
@@ -48,12 +46,12 @@ eta5 ~~ eta6
 
 sem.pen.model <-  '
 # latent variable definitions
-eta1 =~ X11+X12+X13
-eta2 =~ X21+X22+X23
-eta3 =~ X31+X32+X33
-eta4 =~ X41+X42+X43
-eta5 =~ X51+X52+X53
-eta6 =~ X61+ X62+X63
+eta1 =~ 1*X11+X12+X13
+eta2 =~ 1*X21+X22+X23
+eta3 =~ 1*X31+X32+X33
+eta4 =~ 1*X41+X42+X43
+eta5 =~ 1*X51+X52+X53
+eta6 =~ 1*X61+ X62+X63
 
 # penalisation
 pen() * eta5 =~ pen1+pen2+pen3
@@ -66,14 +64,7 @@ eta6 ~ eta3 + eta4 + eta5
 # residual covariances
 eta5 ~~ eta6
 
-# variances
 
-eta1 ~~ 1 * eta1
-eta2 ~~ 1 * eta2
-eta3 ~~ 1 * eta3
-eta4 ~~ 1 * eta4
-eta5 ~~ 1 * eta5
-eta6 ~~ 1 * eta6
 '
 
 out <- sem(sem.model, Xpen)
@@ -94,7 +85,7 @@ lslx_fa$fit(penalty_method = "mcp",
 
 ```
 ```{r}
-result = lslx_fa$summarize(selector = "bic", interval = FALSE)
+lslx_fa$summarize(selector = "bic", interval = FALSE)
 ```
 
 
@@ -186,13 +177,7 @@ estimates(lsem, criterion = "BIC")
 
 
 
-```{r}
-install.packages("PMA", dependencies = TRUE)
 
-
-
-
-```
 ```{r}
 library(PMA)
 ```
@@ -201,6 +186,7 @@ library(PMA)
  ncol=1)
  v <- matrix(c(rnorm(75),rep(0,225)), ncol=1)
  x <- u%*%t(v)+ matrix(rnorm(200*300),ncol=300)
+res <- svd(x,1,1)
 ```
 ```{r}
 cv.out <- PMD.cv(x, type="standard", sumabss=seq(0.1, 0.6, len=20))
@@ -216,6 +202,10 @@ plot(out$u[,1], main="Est. u")
 plot(out$v[,1], main="Est. v")
 plot(u, main="True u")
 plot(v, main="True v")
+plot(res$u[,1], main="svd. u")
+plot(res$v[,1], main="svd. v")
+plot(u, main="True u")
+plot(v, main="True v")
  # And if we want to cont
 ```
 ```{r}
@@ -223,12 +213,9 @@ out2 <- PMD(x, type="standard", K=2, sumabsu=6, sumabsv=8, v=out$v.init,
 cnames=paste("v", sep=" ", 1:ncol(x)), rnames=paste("u", sep=" ", 1:nrow(x)))
 print(out2)
 ```
+
 ```{r}
-x <- u%*%t(v)
-res = svd(x,1,1)
-```
-```{r}
-cbind(res$u, u, out$u)
+cbind(res$u, u, abs(res$u - u ),out$u, u , abs(out$u - u ))
 ```
 ```{r}
 u
