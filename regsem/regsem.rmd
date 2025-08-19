@@ -218,5 +218,94 @@ print(out2)
 cbind(res$u, u, abs(res$u - u ),out$u, u , abs(out$u - u ))
 ```
 ```{r}
-u
+set.seed(123)
+
+# Données simulées
+X <- matrix(rnorm(100*10), nrow = 100, ncol = 10)
+S <- cov(X)   # matrice de covariance (symétrique 10x10)
+
+# --- Cas 1 : Sparse PCA via SPC ---
+spc_res <- SPC(S, sumabsv = 3, K = 1)
+cat("SPC result (u):\n")
+print(round(spc_res$v, 3))   # vecteur sparse
+
+# --- Cas 2 : PMD avec aucune pénalisation sur u (équivaut à SPC) ---
+pmd_res <- PMD(S, type="standard",
+               sumabsu = sqrt(nrow(S)), # pas de pénalisation sur u
+               sumabsv = 3,             # pénalisation sur v
+               K = 1)
+cat("\nPMD result (u and v):\n")
+print(round(pmd_res$u, 3))
+print(round(pmd_res$v, 3))
+
+# --- Vérif que u et v sont identiques ---
+all.equal(pmd_res$u, pmd_res$v)
+```
+
+
+```{r}
+set.seed(123)
+
+
+# 1) Générer un vecteur u non normalisé
+p <- 10
+u_orig <- c(2, -1.5, 0, 0, 1, rep(0, p-5))  # non normalisé
+cat("u original (non normalisé) :\n")
+print(round(u_orig, 3))
+
+# 2) Construire X = u u^T + bruit
+X <- u_orig %*% t(u_orig) + 0.1 * matrix(rnorm(p*p), p, p)
+X <- (X + t(X))/2  # symétriser
+
+
+
+
+
+
+# 3) Appliquer PMD pour retrouver un vecteur normalisé
+res <- PMD(X, type="standard",
+           sumabsu = 3,  # pas de pénalisation sur u
+           sumabsv = 3,        # pénalisation sur v
+           K = 1)
+u_hat <- res$v          # vecteur normalisé
+cat("\nVecteur estimé par PMD (normalisé) :\n")
+print(round(u_hat, 3))
+
+# 4) Reconstruire l'échelle pour retrouver u original approximatif
+# L'échelle est sqrt(valeur propre principale)
+lambda_hat <- as.numeric(t(u_hat) %*% X %*% u_hat)
+u_reconstructed <- sqrt(lambda_hat) * u_hat
+
+cat("\nVecteur reconstruit avec échelle :\n")
+print(round(u_reconstructed, 3))
+
+# Comparaison avec u original
+cat("\nCorrélation avec u original :\n")
+print(cor(u_reconstructed, u_orig))
+```
+```{r}
+
+p <- 10
+u_orig <- c(2, -1.5, 0, 0, 1, rep(0, p-5))  # non normalisé
+cat("u original (non normalisé) :\n")
+print(round(u_orig, 3))
+
+# 2) Construire X = u u^T + bruit
+x <- u%*%t(u)+ matrix(rnorm(200*200),ncol=200)
+x <- (x + t(x))/2  # symétriser
+
+
+
+cv.out <- PMD.cv(x, type="standard", sumabss=seq(0.1, 0.6, len=20))
+
+out <- PMD(x, type="standard", sumabs=cv.out$bestsumabs, K=1, v=cv.out$v.init)
+
+res <- svd(x, 1,1)
+
+
+```
+```{r}
+cbind(round(out$u*sqrt(out$d),2), round(u,2), -round(res$u*sqrt(res$d[[1]]),2))
+
+
 ```

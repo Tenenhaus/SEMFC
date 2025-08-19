@@ -72,12 +72,69 @@ svdSEM <- function(A, C, scale = TRUE,
 
 
     # Extract first singular vector for each block.
-    a = sapply(1:J, 
-               function(x) 
-                 svd(t(A[[x]])%*%Reduce("cbind", A[-x]), 
-                     nu = 1, nv = 1)$u, 
+    # a = sapply(1:J,
+    #            function(x)
+    #              svd(t(A[[x]])%*%Reduce("cbind", A[-x]),
+    #                  nu = 1, nv = 1)$u,
+    #            simplify = FALSE
+    #            )
+
+    library(PMA)
+
+
+    psvd <- function(x){
+      data <- t(A[[x]])%*%Reduce("cbind", A[-x])%*%t(t(A[[x]])%*%Reduce("cbind", A[-x]))
+      # data <- t(A[[x]])%*%Reduce("cbind", A[-x])  u et v peuvent ne pas etre les memes attention
+
+
+
+      cv.out <- SPC.cv(data, sumabsvs=seq(1, sqrt(ncol(data)), len=20))
+
+      out <- SPC(data, sumabsv=cv.out$bestsumabsv, K=1, v=cv.out$v.init)
+
+      return(out$v)
+
+
+    }
+
+    psvd2 <- function(x){
+
+      data <- t(A[[x]])%*%Reduce("cbind", A[-x])
+
+
+
+      cv.out <- PMD.cv(data, type = 'standard',sumabss=seq(1/sqrt(nrow(data)), 1, len=50))
+
+      out <- PMD(data, type = 'standard', sumabs=cv.out$bestsumabs, K=1, v=cv.out$v.init)
+
+      return(out$u)
+
+
+    }
+
+
+
+
+
+
+
+    a = sapply(1:J,
+               function(x)
+                 psvd(x),
                simplify = FALSE
                )
+
+    a2 = sapply(1:J,
+                 function(x)
+                   psvd2(x),
+                 simplify = FALSE
+                 )
+
+
+
+
+
+
     
     #check for sign inversion 
     a = lapply(a, function(x) {if (x[1]>0) {x<-x} else {x<--x}})
