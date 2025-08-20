@@ -10,23 +10,18 @@ output: html_notebook
 library(lavaan)
 source('data/data_generated_reflective.R')
 
-n_row <- nrow(X)
 
-pen1 <- rnorm(n_row)
-pen2 <- rnorm(n_row)
-pen3 <- rnorm(n_row)
 
-Xpen <- cbind(X, pen1, pen2, pen3)
-
+X = X
 
 sem.model <-'
 # latent variable definitions
-eta1 =~ X11+X12+X13
+eta1 =~ X11+X12+X13+X14+X15+X16+X17+X18+X19
 eta2 =~ X21+X22+X23
 eta3 =~ X31+X32+X33
 eta4 =~ X41+X42+X43
-eta5 =~ X51+X52+X53 + pen1+pen2+pen3
-eta6 =~ X61+X62+X63+ pen1+pen2+pen3
+eta5 =~ X51+X52+X53
+eta6 =~ X61+X62+X63
 
 # Regressions
 eta5 ~ eta1 + eta2 + eta6
@@ -46,7 +41,7 @@ eta5 ~~ eta6
 
 sem.pen.model <-  '
 # latent variable definitions
-eta1 =~ 1*X11+X12+X13
+eta1 =~ 1*X11+X12
 eta2 =~ 1*X21+X22+X23
 eta3 =~ 1*X31+X32+X33
 eta4 =~ 1*X41+X42+X43
@@ -54,8 +49,8 @@ eta5 =~ 1*X51+X52+X53
 eta6 =~ 1*X61+ X62+X63
 
 # penalisation
-pen() * eta5 =~ pen1+pen2+pen3
-pen() * eta6 =~ pen1+pen2+pen3
+pen() * eta1 =~ X13 + X14+X15+X16+X17+X18+X19
+
 
 # Regressions
 eta5 ~ eta1 + eta2 + eta6
@@ -67,8 +62,8 @@ eta5 ~~ eta6
 
 '
 
-out <- sem(sem.model, Xpen)
-
+out <- sem(sem.model, X)
+summary(out)
 ```
 
 
@@ -78,10 +73,12 @@ library(lslx)
 
 
 ```{r}
-lslx_fa <- lslx$new(model = sem.pen.model, data = Xpen)
-lslx_fa$fit(penalty_method = "mcp",
-            lambda_grid = seq(0.01, 0.60, 0.01),
-            delta_grid = c(1.5, 3.0, Inf))
+lslx_fa <- lslx$new(model = sem.pen.model, data = X)
+lslx_fa$fit(
+  penalty_method = "mcp",
+  lambda_grid = exp(seq(log(0.001), log(1), length.out = 50)),
+  delta_grid = c(1, 1.5, 2, 3, 5, 10, Inf)
+)
 
 ```
 ```{r}
@@ -99,7 +96,7 @@ library(regsem)
 
 ```{r}
 # extractMatrices(out)$A
-out.reg <- cv_regsem(out, type="lasso", pars_pen = c(11:13,16:18),n.lambda=23,jump=.05)
+out.reg <- cv_regsem(out, type="lasso", pars_pen = 2:8,n.lambda=23,jump=.05)
 head(round(out.reg$parameters,2),5)
 head(round(out.reg$fits,2))
 plot(out.reg,show.minimum="BIC")
@@ -107,6 +104,8 @@ out.reg$final_pars
 summary(out.reg)
 
 ```
+
+
 
 
 
@@ -127,12 +126,12 @@ library(lessSEM)
 
 lavaanSyntax <-'
 # latent variable definitions
-eta1 =~ X11+X12+X13
+eta1 =~ X11+X12+l0*X13+ l1*X14+l2*X15+l3*X16 + l4*X17
 eta2 =~ X21+X22+X23
 eta3 =~ X31+X32+X33
 eta4 =~ X41+X42+X43
-eta5 =~ X51+X52+X53 + l1*pen1+l2*pen2+l3*pen3
-eta6 =~ X61+X62+X63+ l4*pen1+l5*pen2+l6*pen3
+eta5 =~ X51+X52+X53
+eta6 =~ X61+X62+X63
 
 # Regressions
 eta5 ~ eta1 + eta2 + eta6
@@ -144,14 +143,14 @@ eta5 ~~ eta6
 '
 
 lavaanModel <- lavaan::sem(lavaanSyntax,
-                           data = Xpen)
+                           data = X)
 
 
 lsem <- lasso(
   # pass the fitted lavaan model
   lavaanModel = lavaanModel,
   # names of the regularized parameters:
-  regularized = c("l1", "l2", "l3", "l4", "l5","l6"),
+  regularized = c("l0", "l1", "l2", "l3", "l4"),
   # in case of lasso and adaptive lasso, we can specify the number of lambda
   # values to use. lessSEM will automatically find lambda_max and fit
   # models for nLambda values between 0 and lambda_max. For the other
@@ -292,6 +291,7 @@ print(round(u_orig, 3))
 
 # 2) Construire X = u u^T + bruit
 x <- u%*%t(u)+ matrix(rnorm(200*200),ncol=200)
+x <- u%*%t(u)
 x <- (x + t(x))/2  # symétriser
 
 
@@ -305,7 +305,15 @@ res <- svd(x, 1,1)
 
 ```
 ```{r}
-cbind(round(out$u*sqrt(out$d),2), round(u,2), -round(res$u*sqrt(res$d[[1]]),2))
+cbind(-round(out$u*sqrt(out$d),2), round(u,2), -round(res$u*sqrt(res$d[[1]]),2))
 
+
+```
+```{r}
+X = ((t(Y$LV1) %*% Y$LV2)/299)%*%t(((t(Y$LV1) %*% Y$LV2)/299))
+cv.out <- PMD.cv(X, type="standard", sumabss=seq(1/sqrt(3), 1, len=20))
+
+out <- PMD(X, type="standard", sumabs=cv.out$bestsumabs, K=1, v=cv.out$v.init)
+out$u
 
 ```

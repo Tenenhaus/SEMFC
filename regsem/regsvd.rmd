@@ -19,32 +19,32 @@ print('DATA empirical sigma = TRUE')
 #### our code #######
 
 
-n_row <- nrow(X_2)
-
-pen1 <- rnorm(n_row)
-pen2 <- rnorm(n_row)
-pen3 <- rnorm(n_row)
-pen4 <- rnorm(n_row)
-pen5 <- rnorm(n_row)
-pen6 <- rnorm(n_row)
-pen7 <- rnorm(n_row)
-pen8 <- rnorm(n_row)
-pen9 <- rnorm(n_row)
-pen10 <- rnorm(n_row)
-
-
-X <- cbind(X, pen1, pen2, pen3, pen4, pen5, pen6, pen7, pen8, pen9, pen10)
-
-
-
-Ypen <- list(LV1 = X[, c(1:3,19:28)], LV2 = X[, 4:6], LV3 = X[, 7:9],
-         LV4 = X[, 10:12], LV5 = X[, 13:15], LV6 = X[, 16:18])
+# n_row <- nrow(X_2)
+#
+# pen1 <- rnorm(n_row)
+# pen2 <- rnorm(n_row)
+# pen3 <- rnorm(n_row)
+# pen4 <- rnorm(n_row)
+# pen5 <- rnorm(n_row)
+# pen6 <- rnorm(n_row)
+# pen7 <- rnorm(n_row)
+# pen8 <- rnorm(n_row)
+# pen9 <- rnorm(n_row)
+# pen10 <- rnorm(n_row)
+#
+#
+# X <- cbind(X, pen1, pen2, pen3, pen4, pen5, pen6, pen7, pen8, pen9, pen10)
 
 
 
+# Ypen <- list(LV1 = X[, c(1:3,19:28)], LV2 = X[, 4:6], LV3 = X[, 7:9],
+#          LV4 = X[, 10:12], LV5 = X[, 13:15], LV6 = X[, 16:18])
 
 
-model <- SemFC$new(data=Ypen, relation_matrix = C, mode=mode, scale=F, bias=F)
+
+
+
+model <- SemFC$new(data=Y_2, relation_matrix = C, mode=mode, scale=F, bias=F)
 model$fit_svd()
 
 

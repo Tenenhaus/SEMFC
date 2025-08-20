@@ -130,6 +130,13 @@ svdSEM <- function(A, C, scale = TRUE,
                  simplify = FALSE
                  )
 
+    asvd = sapply(1:J,
+                 function(x)
+                   svd(t(A[[x]])%*%Reduce("cbind", A[-x]),
+                       nu = 1, nv = 1)$u,
+                 simplify = FALSE
+                 )
+
 
 
 
