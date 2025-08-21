@@ -33,12 +33,7 @@ eta5 ~~ eta6
 
 #variance
 
-eta1 ~~ 1*eta1
-eta2 ~~ 1*eta2
-eta3 ~~ 1*eta3
-eta4 ~~ 1*eta4
-eta5 ~~ 1*eta5
-eta6 ~~ 1*eta6
+
 
 '
 
