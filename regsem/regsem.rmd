@@ -12,7 +12,8 @@ source('data/data_generated_reflective.R')
 
 
 
-X = X
+X = X_2
+Y = Y_2
 
 sem.model <-'
 # latent variable definitions
@@ -30,6 +31,15 @@ eta6 ~ eta3 + eta4 + eta5
 # residual covariances
 eta5 ~~ eta6
 
+#variance
+
+eta1 ~~ 1*eta1
+eta2 ~~ 1*eta2
+eta3 ~~ 1*eta3
+eta4 ~~ 1*eta4
+eta5 ~~ 1*eta5
+eta6 ~~ 1*eta6
+
 '
 
 
@@ -41,20 +51,32 @@ eta5 ~~ eta6
 
 sem.pen.model <-  '
 # latent variable definitions
-eta1 =~ 1*X11+X12
-eta2 =~ 1*X21+X22+X23
-eta3 =~ 1*X31+X32+X33
-eta4 =~ 1*X41+X42+X43
-eta5 =~ 1*X51+X52+X53
-eta6 =~ 1*X61+ X62+X63
+eta1 =~ X14
+eta2 =~ X21
+eta3 =~ X31+X32+X33
+eta4 =~ X41+X42+X43
+eta5 =~ X51+X52+X53
+eta6 =~ X61+ X62+X63
 
 # penalisation
-pen() * eta1 =~ X13 + X14+X15+X16+X17+X18+X19
-
+pen() * eta1 =~ X11 +X12 +X13 +X15+X16+X17+X18+X19
+pen() * eta2 =~ X22+X23
 
 # Regressions
 eta5 ~ eta1 + eta2 + eta6
 eta6 ~ eta3 + eta4 + eta5
+
+#variance
+
+eta1 ~~ 1*eta1
+eta2 ~~ 1*eta2
+eta3 ~~ 1*eta3
+eta4 ~~ 1*eta4
+eta5 ~~ 1*eta5
+eta6 ~~ 1*eta6
+
+
+
 
 # residual covariances
 eta5 ~~ eta6
@@ -73,10 +95,10 @@ library(lslx)
 
 
 ```{r}
-lslx_fa <- lslx$new(model = sem.pen.model, data = X)
+lslx_fa <- lslx$new(model = sem.model, data = X)
 lslx_fa$fit(
   penalty_method = "mcp",
-  lambda_grid = exp(seq(log(0.001), log(1), length.out = 50)),
+  lambda_grid = exp(seq(log(0.001), log(1), length.out = 10)),
   delta_grid = c(1, 1.5, 2, 3, 5, 10, Inf)
 )
 
@@ -310,10 +332,41 @@ cbind(-round(out$u*sqrt(out$d),2), round(u,2), -round(res$u*sqrt(res$d[[1]]),2))
 
 ```
 ```{r}
-X = ((t(Y$LV1) %*% Y$LV2)/299)%*%t(((t(Y$LV1) %*% Y$LV2)/299))
+X1 = (t(Y$LV2) %*% Y$LV1)%*%t((t(Y$LV2) %*% Y$LV1))
+X3 = (t(Y$LV2) %*% Y$LV3)%*%t((t(Y$LV2) %*% Y$LV3))
+X4 = (t(Y$LV2) %*% Y$LV4)%*%t((t(Y$LV2) %*% Y$LV4))
+X5 = (t(Y$LV2) %*% Y$LV5)%*%t((t(Y$LV2) %*% Y$LV5))
+X6 = (t(Y$LV2) %*% Y$LV6)%*%t((t(Y$LV2) %*% Y$LV6))
+
+X = X1+X3+X4+X5+X6
+
+A2 = (t(Y$LV1) %*% Y$LV2)%*%t((t(Y$LV1) %*% Y$LV2))
+A3 = (t(Y$LV1) %*% Y$LV3)%*%t((t(Y$LV1) %*% Y$LV3))
+A4 = (t(Y$LV1) %*% Y$LV4)%*%t((t(Y$LV1) %*% Y$LV4))
+A5 = (t(Y$LV1) %*% Y$LV5)%*%t((t(Y$LV1) %*% Y$LV5))
+A6 = (t(Y$LV1) %*% Y$LV6)%*%t((t(Y$LV1) %*% Y$LV6))
+
+A = A2+A3+A4+A5+A6
+
+
+
+
+
+
 cv.out <- PMD.cv(X, type="standard", sumabss=seq(1/sqrt(3), 1, len=20))
 
 out <- PMD(X, type="standard", sumabs=cv.out$bestsumabs, K=1, v=cv.out$v.init)
-out$u
+out$v
+
+cv.out <- SPC.cv(A, sumabsvs = seq(1, sqrt(ncol(A)), len=20))
+out <- SPC(A,  sumabsv=cv.out$bestsumabsv, K=1, v=cv.out$v.init)
+out$v
+
+
+```
+```{r}
+library(elasticnet)
+out2 <- spca(A, K=1, type='Gram', sparse="varnum", para=8)
+out2$loadings
 
 ```
