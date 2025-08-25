@@ -334,6 +334,7 @@ X5 = (t(Y$LV2) %*% Y$LV5)%*%t((t(Y$LV2) %*% Y$LV5))
 X6 = (t(Y$LV2) %*% Y$LV6)%*%t((t(Y$LV2) %*% Y$LV6))
 
 X = X1+X3+X4+X5+X6
+Z = cbind((t(Y$LV2) %*% Y$LV1), (t(Y$LV2) %*% Y$LV3), (t(Y$LV2) %*% Y$LV4), (t(Y$LV2) %*% Y$LV5),(t(Y$LV2) %*% Y$LV6))
 
 A2 = (t(Y$LV1) %*% Y$LV2)%*%t((t(Y$LV1) %*% Y$LV2))
 A3 = (t(Y$LV1) %*% Y$LV3)%*%t((t(Y$LV1) %*% Y$LV3))
