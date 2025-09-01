@@ -9,7 +9,7 @@ source('data/data_generated_reflective.R')
 print('DATA empirical sigma = TRUE')
 #### our code #######
 
-model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
+model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, pen=F)
 model$fit_svd()
 model$fit_ml(initialisation_svd = TRUE)
 # model$ml_infer()
@@ -89,7 +89,7 @@ print('DATA empirical sigma = FALSE')
 
 #### our code #######
 
-model <- SemFC$new(data=Y_2, relation_matrix = C, mode=mode, scale=F, bias=F)
+model <- SemFC$new(data=Y_2, relation_matrix = C, mode=mode, scale=F, bias=F, pen=F)
 model$fit_svd()
 model$fit_ml(initialisation_svd = TRUE)
 # model$ml_infer()
@@ -173,7 +173,7 @@ source('data/data_generated_mixed.R')
 print('DATA empirical sigma = TRUE')
 #### our code #######
 
-model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
+model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, pen=F)
 model$fit_svd()
 model$fit_ml(initialisation_svd = TRUE)
 
@@ -185,7 +185,7 @@ print('DATA empirical sigma = FALSE')
 
 #### our code #######
 
-model2 <- SemFC$new(data=Y_2, relation_matrix = C, mode=mode, scale=F, bias=F)
+model2 <- SemFC$new(data=Y_2, relation_matrix = C, mode=mode, scale=F, bias=F, pen=F)
 model2$fit_svd()
 model2$fit_ml(initialisation_svd = TRUE)
 
@@ -251,7 +251,7 @@ print("####################### ECSI #################################")
 source('data/data_ecsi.R')
 #### our code #######
 print('run our package')
-model <- SemFC$new(data=A, relation_matrix = C_ecsi, mode=mode_ecsi, scale=F, bias=F)
+model <- SemFC$new(data=A, relation_matrix = C_ecsi, mode=mode_ecsi, scale=F, bias=F, pen=F)
 model$fit_svd()
 model$fit_ml(initialisation_svd = TRUE)
 # model$ml_infer()

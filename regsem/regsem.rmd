@@ -362,7 +362,7 @@ out$v
 ```
 ```{r}
 library(elasticnet)
-out2 <- spca(A, K=1, type='Gram', sparse="varnum", para=8)
+out2 <- spca(A, K=1, type='Gram', sparse="varnum", para=4)
 out2$loadings
 
 ```

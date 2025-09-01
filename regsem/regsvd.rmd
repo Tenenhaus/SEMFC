@@ -44,7 +44,7 @@ print('DATA empirical sigma = TRUE')
 
 
 
-model <- SemFC$new(data=Y_2, relation_matrix = C, mode=mode, scale=F, bias=F)
+model <- SemFC$new(data=Y_2, relation_matrix = C, mode=mode, scale=F, bias=F, pen=T)
 model$fit_svd()
 
 
