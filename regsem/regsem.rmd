@@ -12,8 +12,8 @@ source('data/data_generated_reflective.R')
 
 
 
-X = X_2
-Y = Y_2
+# X = X_2
+# Y = Y_2
 
 sem.model <-'
 # latent variable definitions
@@ -46,16 +46,15 @@ eta5 ~~ eta6
 
 sem.pen.model <-  '
 # latent variable definitions
-eta1 =~ X14
-eta2 =~ X21
+eta1 =~ X11
+eta2 =~ X21 + X22+X23
 eta3 =~ X31+X32+X33
 eta4 =~ X41+X42+X43
 eta5 =~ X51+X52+X53
 eta6 =~ X61+ X62+X63
 
 # penalisation
-pen() * eta1 =~ X11 +X12 +X13 +X15+X16+X17+X18+X19
-pen() * eta2 =~ X22+X23
+pen() * eta1 =~ X12 +X13 +X14+X15+X16+X17+X18+X19
 
 # Regressions
 eta5 ~ eta1 + eta2 + eta6
@@ -90,7 +89,7 @@ library(lslx)
 
 
 ```{r}
-lslx_fa <- lslx$new(model = sem.model, data = X)
+lslx_fa <- lslx$new(model = sem.pen.model, data = X)
 lslx_fa$fit(
   penalty_method = "mcp",
   lambda_grid = exp(seq(log(0.001), log(1), length.out = 10)),
@@ -365,4 +364,184 @@ library(elasticnet)
 out2 <- spca(A, K=1, type='Gram', sparse="varnum", para=4)
 out2$loadings
 
+```
+
+
+
+
+```{r}
+library(RGCCA)
+
+
+
+
+C <- matrix(c(0, 1, 1, 1, 1, 1,
+             1, 0, 0, 0, 0, 0,
+             1, 0, 0, 0, 0, 0,
+             1, 0, 0, 0, 0, 0,
+             1, 0, 0, 0, 0, 0,
+             1, 0, 0, 0, 0, 0), 6, 6, byrow = TRUE)
+
+C <- matrix(c(0, 1, 1, 1, 1, 0,
+             1, 0, 1, 1, 1, 0,
+             1, 1, 0, 1, 0, 1,
+             1, 1, 1, 0, 0, 1,
+             1, 1, 0, 0, 0, 1,
+             0, 0, 1, 1, 1, 0), 6, 6, byrow = TRUE)
+
+
+
+
+
+
+psvd <- function(x){
+      data <- t(Y_2[[x]])%*%Reduce("cbind", Y_2[-x])%*%t(t(Y_2[[x]])%*%Reduce("cbind", Y_2[-x]))
+      # data <- t(A[[x]])%*%Reduce("cbind", A[-x])  u et v peuvent ne pas etre les memes attention
+
+
+
+      cv.out <- SPC.cv(data, sumabsvs=seq(1, sqrt(ncol(data)), len=20))
+
+      out <- SPC(data, sumabsv=cv.out$bestsumabsv, K=1, v=cv.out$v.init)
+
+      return(out$v)
+
+
+    }
+
+
+
+fit_rgcca = rgcca(Y, scheme = "factorial")
+fit_rgcca2 = rgcca(Y_2, scheme = "factorial")
+fit_rgcca_sparse = rgcca(Y_2, scheme = "factorial", sparsity = c(0.4,1,1,1,1,1))
+
+fit_rgcca_connexion = rgcca(Y_2,connection = C, scheme = "factorial", sparsity = 0.7)
+
+
+a = sapply(1:6,
+               function(x)
+                 svd(t(Y_2[[x]])%*%Reduce("cbind", Y_2[-x]),
+                     nu = 1, nv = 1)$u,
+               simplify = FALSE
+               )
+
+
+apmd = sapply(1:6,
+               function(x)
+                 psvd(x),
+               simplify = FALSE
+               )
+
+
+
+
+
+sparse_svd.cv <- function(L, pen, len_seq, nfold, niter){
+
+  res <-  list()
+
+  for (x in 1:length(L)){
+    if (pen[[x]] == 1){
+      data <- t(L[[x]])%*%Reduce("cbind", L[-x])%*%t(t(L[[x]])%*%Reduce("cbind", L[-x]))
+      cv.out <- SPC.cv(data, sumabsvs=seq(1, sqrt(ncol(data)), len=len_seq), nfold = nfold, niter =niter)
+      print(cv.out$bestsumabsv)
+      out <- SPC(data, sumabsv=cv.out$bestsumabsv, K=1, v=cv.out$v.init)$v
+
+      res[[x]] <- out
+
+    }
+
+  }
+
+  return (res)
+
+}
+
+
+sparse_svd <- function(L, pen, values){
+
+  res <-  list()
+
+  for (x in 1:length(L)){
+    if (pen[[x]] == 1){
+      data <- t(L[[x]])%*%Reduce("cbind", L[-x])%*%t(t(L[[x]])%*%Reduce("cbind", L[-x]))
+      out <- SPC(data, sumabsv=values[[x]], K=1)$v
+
+      res[[x]] <- out
+
+    }
+  }
+
+  return (res)
+
+}
+
+
+
+
+res = sparse_svd(Y_2, c(1,1,0,0,0,0), c(7.5,sqrt(3),0,0,0,0))
+
+
+res.cv = sparse_svd.cv(Y_2, c(1,0,0,0,0,0), 50,20,30)
+
+
+```
+```{r}
+list_a_padded <- lapply(fit_rgcca$a, function(x) {
+  length(x) <- 160
+  x
+})
+
+do.call(cbind, list_a_padded)
+
+
+```
+```{r}
+list_a_padded2 <- lapply(fit_rgcca2$a, function(x) {
+  length(x) <- 150
+  x
+})
+
+do.call(cbind, list_a_padded2)
+```
+```{r}
+list_a_padded3 <- lapply(a, function(x) {
+  length(x) <- 150
+  x
+})
+
+do.call(cbind, list_a_padded3)
+```
+```{r}
+list_a_padded4 <- lapply(fit_rgcca_connexion$a, function(x) {
+  length(x) <- 150
+  x
+})
+
+do.call(cbind, list_a_padded4)
+```
+```{r}
+list_a_padded4 <- lapply(fit_rgcca_sparse$a, function(x) {
+  length(x) <- 151
+  x
+})
+
+do.call(cbind, list_a_padded4)
+```
+```{r}
+list_a_padded5 <- lapply(apmd, function(x) {
+  length(x) <- 151
+  x
+})
+
+do.call(cbind, list_a_padded5)
+```
+```{r}
+perm_out = rgcca_permutation(Y_2, scheme = "factorial", par_type = "sparsity", par_value = cbind(seq(0.15, 1, length = 50), 1, 1, 1, 1, 1), n_perms = 10)
+xx = rgcca(perm_out)
+plot(xx$a[[1]])
+```
+```{r}
+yy = rgcca(Y_2, sparsity = c(0.93,1 ,1,1,1,1))
+plot(yy$a[[1]])
 ```

@@ -1,0 +1,103 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+
+
+library(lavaan)
+source('data/data_generated_mixed.R')
+
+library(RGCCA)
+
+library(PMA)
+
+
+C <- matrix(c(0, 1, 1, 1, 1, 1,
+             1, 0, 0, 0, 0, 0,
+             1, 0, 0, 0, 0, 0,
+             1, 0, 0, 0, 0, 0,
+             1, 0, 0, 0, 0, 0,
+             1, 0, 0, 0, 0, 0), 6, 6, byrow = TRUE)
+
+C <- matrix(c(0, 1, 1, 1, 1, 0,
+             1, 0, 1, 1, 1, 0,
+             1, 1, 0, 1, 0, 1,
+             1, 1, 1, 0, 0, 1,
+             1, 1, 0, 0, 0, 1,
+             0, 0, 1, 1, 1, 0), 6, 6, byrow = TRUE)
+
+
+
+
+
+
+psvd <- function(x){
+      data <- t(Y_2[[x]])%*%Reduce("cbind", Y_2[-x])%*%t(t(Y_2[[x]])%*%Reduce("cbind", Y_2[-x]))
+      # data <- t(A[[x]])%*%Reduce("cbind", A[-x])  u et v peuvent ne pas etre les memes attention
+
+
+
+      cv.out <- SPC.cv(data, sumabsvs=seq(1, sqrt(ncol(data)), len=20))
+
+      out <- SPC(data, sumabsv=cv.out$bestsumabsv, K=1, v=cv.out$v.init)
+
+      return(out$v)
+
+
+    }
+
+
+
+fit_rgcca = rgcca(Y, scheme = "factorial")
+fit_rgcca2 = rgcca(Y_2, scheme = "factorial")
+fit_rgcca_sparse = rgcca(Y_2, scheme = "factorial", sparsity = 0.578)
+
+fit_rgcca_connexion = rgcca(Y_2,connection = C, scheme = "factorial", sparsity = 0.7)
+
+
+a = sapply(1:6,
+               function(x)
+                 svd(t(Y_2[[x]])%*%Reduce("cbind", Y_2[-x]),
+                     nu = 1, nv = 1)$u,
+               simplify = FALSE
+               )
+
+
+apmd = sapply(1:6,
+               function(x)
+                 psvd(x),
+               simplify = FALSE
+               )
+
+
+```
+
+
+```{r}
+list_a_padded <- lapply(fit_rgcca$a, function(x) {
+  length(x) <- 10
+  x
+})
+
+do.call(cbind, list_a_padded)
+```
+```{r}
+list_a_padded3 <- lapply(a, function(x) {
+  length(x) <- 10
+  x
+})
+
+do.call(cbind, list_a_padded3)
+```
+```{r}
+list_a_padded4 <- lapply(fit_rgcca_sparse$a, function(x) {
+  length(x) <- 10
+  x
+})
+
+do.call(cbind, list_a_padded4)
+```
+
+

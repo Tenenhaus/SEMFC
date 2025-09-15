@@ -75,7 +75,7 @@ svdSEM <- function(A, C, scale = TRUE,
     library(PMA)
 
 
-    psvd <- function(x){
+    psvd.cv <- function(x){
       data <- t(A[[x]])%*%Reduce("cbind", A[-x])%*%t(t(A[[x]])%*%Reduce("cbind", A[-x]))
       # data <- t(A[[x]])%*%Reduce("cbind", A[-x])  u et v peuvent ne pas etre les memes attention
 
@@ -89,6 +89,35 @@ svdSEM <- function(A, C, scale = TRUE,
 
 
     }
+    psvd <- function(x){
+
+      if (x==1){
+        data <- t(A[[x]])%*%Reduce("cbind", A[-x])%*%t(t(A[[x]])%*%Reduce("cbind", A[-x]))
+
+
+
+        out <- SPC(data, sumabsv=3.1, K=1)
+        return(out$v)
+
+
+
+      } else {
+
+        return(svd(t(A[[x]])%*%Reduce("cbind", A[-x]),
+                         nu = 1, nv = 1)$u)
+
+
+
+      }
+
+
+
+
+
+    }
+
+
+
 
     psvd2 <- function(x){
 
@@ -121,18 +150,20 @@ svdSEM <- function(A, C, scale = TRUE,
                simplify = FALSE
                )
 
-      a2 = sapply(1:J,
-                   function(x)
-                     psvd2(x),
-                   simplify = FALSE
-                   )
+      # a2 = sapply(1:J,
+      #              function(x)
+      #                psvd2(x),
+      #              simplify = FALSE
+      #              )
 
-      asvd = sapply(1:J,
-                   function(x)
-                     svd(t(A[[x]])%*%Reduce("cbind", A[-x]),
-                         nu = 1, nv = 1)$u,
-                   simplify = FALSE
-                   )
+      # asvd = sapply(1:J,
+      #              function(x)
+      #                svd(t(A[[x]])%*%Reduce("cbind", A[-x]),
+      #                    nu = 1, nv = 1)$u,
+      #              simplify = FALSE
+      #              )
+
+
 
     }
 

@@ -27,18 +27,20 @@ R = rbind(
 )
 
 
-R2_1 = 1-PSI[1, 1] ; R2_2 = 1-PSI[2, 2] ; R2 = c(R2_1, R2_2)
+R2 = 1- diag(PSI)
 
 
 
+# l1 = c(rep(0.9, 50) ,rep(0, 100))
+l1 = c(rep(0.9, 10) ,rep(0, 10))
+# l1 = rep(.7, 3)
 # l1 = c(rep(0.9, 3), 0.2, rep(0, 5))
-l1 = rep(.7, 3)
 l2 = rep(.7, 3)
 l3 = l4 = rep(.7, 3)
 l5 = l6 = rep(.7, 3)
 
 lambda = list(l1, l2, l3, l4, l5, l6)
-LAMBDA = Matrix::bdiag(list(l1, l2, l3, l4, l5, l6))
+LAMBDA = Matrix::bdiag(lambda)
 
 J = length(lambda)
 

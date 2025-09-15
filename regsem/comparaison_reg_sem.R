@@ -11,9 +11,14 @@ source('data/data_generated_reflective.R')
 source('R/SEMFC/sem_f_c.R')
 
 
-sem.model <-'
+pen_vars <- paste0("X1", 2:20, collapse = " + ")
+pen_line <- paste0("pen() * eta1 =~ ", pen_vars)
+
+
+
+sem.model <-paste0('
 # latent variable definitions
-eta1 =~ X11+X12+X13+X14+X15+X16+X17+X18+X19
+eta1 =~ X11+',pen_vars,'
 eta2 =~ X21+X22+X23
 eta3 =~ X31+X32+X33
 eta4 =~ X41+X42+X43
@@ -25,10 +30,10 @@ eta5 ~ eta1 + eta2 + eta6
 eta6 ~ eta3 + eta4 + eta5
 
 # residual covariances
-eta5 ~~ eta6'
+eta5 ~~ eta6')
 
 
-sem.model.lslx <-  '
+sem.model.lslx <-  paste0('
 # latent variable definitions
 eta1 =~ X11
 eta2 =~ X21+X22+X23
@@ -38,7 +43,7 @@ eta5 =~ X51+X52+X53
 eta6 =~ X61+ X62+X63
 
 # penalisation
-pen() * eta1 =~ X12 +X13 +X14+X15+X16+X17+X18+X19
+',pen_line,'
 
 # Regressions
 eta5 ~ eta1 + eta2 + eta6
@@ -60,12 +65,12 @@ eta6 ~~ 1*eta6
 eta5 ~~ eta6
 
 
-'
+')
 
 
-sem.model.lsem <-'
+sem.model.lsem <-paste0('
 # latent variable definitions
-eta1 =~ X11+X12+X13+X14+X15+X16+X17+X18+X19
+eta1 =~ X11+',pen_vars,'
 eta2 =~ X21+X22+X23
 eta3 =~ X31+X32+X33
 eta4 =~ X41+X42+X43
@@ -79,7 +84,8 @@ eta6 ~ eta3 + eta4 + eta5
 # residual covariances
 eta5 ~~ eta6
 
-'
+')
+
 X = X_2
 Y = Y_2
 
@@ -92,20 +98,40 @@ estimate = parameterEstimates(lav, standardized = TRUE)
 
 
 lslx_fa <- lslx$new(model = sem.model.lslx, data = X)
+
+start <- proc.time()
+
 lslx_fa$fit(
   penalty_method = "mcp",
   lambda_grid = exp(seq(log(0.001), log(1), length.out = 10)),
   delta_grid = c(1, 1.5, 2, 3, 5, 10, Inf)
 )
+end <- proc.time()
+elapsed <- end - start
+print('time lslx:')
+print(elapsed)
 
-regsem.out <- cv_regsem(lav, type="lasso", pars_pen = 1:8,n.lambda=23,jump=.05)
 
+start <- proc.time()
+regsem.out <- cv_regsem(lav, type="lasso", pars_pen = 1:19,n.lambda=23,jump=.05)
+end <- proc.time()
+elapsed <- end - start
+print('time regsem:')
+print(elapsed)
+
+regularised <- paste0("eta1=~X1", 2:20)
 lavaanModel <- sem(sem.model.lsem, data = X)
+
+start <- proc.time()
 lsem <- lasso(
   lavaanModel = lavaanModel,
-  regularized = c("eta1=~X12", "eta1=~X13", "eta1=~X14", "eta1=~X15", "eta1=~X16", "eta1=~X17", "eta1=~X18", "eta1=~X19"),
+  regularized =regularised,
   nLambdas = 50)
 
+end <- proc.time()
+elapsed <- end - start
+print('time lsem:')
+print(elapsed)
 
 
 
@@ -162,6 +188,6 @@ modelpen$fit_svd()
 pensvd = mapply(function(x,y) sqrt(1-(x/y)), unlist(modelpen$svd_parameters$residual_variance),diag(modelpen$cov_S))
 
 table_lambda_empirical = cbind(lambda_th, lambda_lavaan, std_all_ml, std_all_svd, pensvd, lambda_lslx, lambda_regsem, lambda_lsem)
-
+# table_lambda_empirical = cbind(lambda_th, lambda_lavaan, std_all_ml, std_all_svd, lambda_lslx, lambda_regsem, lambda_lsem)
 
 
