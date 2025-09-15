@@ -49,7 +49,7 @@ source("R/utils/scale2.R")
 #' @export rgcca
 svdSEM <- function(A, C, scale = TRUE,
                    mode = rep("formative", length(A)), 
-                   bias = FALSE, pen=FALSE){
+                   bias = FALSE, pen=FALSE, len_seq = NULL, nfold=NULL, niter=NULL, sparse_val=NULL){
 
     # vecteur qui code le nombre des variables observes de chaque bloc
     pjs <- sapply(A, NCOL)
@@ -76,16 +76,23 @@ svdSEM <- function(A, C, scale = TRUE,
 
 
     psvd.cv <- function(x){
-      data <- t(A[[x]])%*%Reduce("cbind", A[-x])%*%t(t(A[[x]])%*%Reduce("cbind", A[-x]))
-      # data <- t(A[[x]])%*%Reduce("cbind", A[-x])  u et v peuvent ne pas etre les memes attention
+      if (x==1){
+        data <- t(A[[x]])%*%Reduce("cbind", A[-x])%*%t(t(A[[x]])%*%Reduce("cbind", A[-x]))
+        # data <- t(A[[x]])%*%Reduce("cbind", A[-x])  u et v peuvent ne pas etre les memes attention
 
 
 
-      cv.out <- SPC.cv(data, sumabsvs=seq(1, sqrt(ncol(data)), len=20))
+        cv.out <- SPC.cv(data, sumabsvs=seq(1, sqrt(ncol(data)), len=len_seq), nfold = nfold, niter =niter)
 
-      out <- SPC(data, sumabsv=cv.out$bestsumabsv, K=1, v=cv.out$v.init)
+        out <- SPC(data, sumabsv=cv.out$bestsumabsv, K=1, v=cv.out$v.init)
 
-      return(out$v)
+        return(out$v)
+      } else {
+        return(svd(t(A[[x]])%*%Reduce("cbind", A[-x]),
+                         nu = 1, nv = 1)$u)
+
+
+      }
 
 
     }
@@ -96,7 +103,7 @@ svdSEM <- function(A, C, scale = TRUE,
 
 
 
-        out <- SPC(data, sumabsv=3.1, K=1)
+        out <- SPC(data, sumabsv=sparse_val, K=1)
         return(out$v)
 
 
@@ -110,13 +117,28 @@ svdSEM <- function(A, C, scale = TRUE,
 
       }
 
-
-
-
-
     }
 
 
+    rgcca_sparse <- function(x){
+
+        if (x==1){
+          data <- t(A[[x]])%*%Reduce("cbind", A[-x])%*%t(t(A[[x]])%*%Reduce("cbind", A[-x]))
+
+
+
+          out <- SPC(data, sumabsv=sparse_val, K=1)
+          return(out$v)
+
+
+
+        } else {
+
+          return(svd(t(A[[x]])%*%Reduce("cbind", A[-x]),
+                           nu = 1, nv = 1)$u)
+
+        }
+      }
 
 
     psvd2 <- function(x){
@@ -143,7 +165,7 @@ svdSEM <- function(A, C, scale = TRUE,
                      nu = 1, nv = 1)$u,
                simplify = FALSE
                )
-    } else {
+    } else if (pen=='pmd'){
       a = sapply(1:J,
                function(x)
                  psvd(x),
@@ -165,7 +187,31 @@ svdSEM <- function(A, C, scale = TRUE,
 
 
 
+    } else if (pen=='pmd.cv'){
+      a = sapply(1:J,
+               function(x)
+                 psvd.cv(x),
+               simplify = FALSE
+               )
+
+    } else if (pen=='rgcca'){
+
+
+      a = rgcca(A, sparsity = c(sparse_val,1 ,1,1,1,1))$a
+
+
+
+
+    } else if (pen=='rgcca.cv'){
+
+      perm_out = rgcca_permutation(A, scheme = "factorial", par_type = "sparsity",
+                             par_value = cbind(seq(0.1, 1, length = len_seq ), 1, 1, 1, 1, 1), n_perms = niter)
+      rgcca_final = rgcca(perm_out)
+
+
+      a = rgcca_final$a
     }
+
 
 
 

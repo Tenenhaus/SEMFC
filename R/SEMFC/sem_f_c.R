@@ -50,6 +50,10 @@ SemFC <- R6Class(
     svd_parameters = list(),
     ml_parameters = list(),
     pen = NULL,
+    len_seq = NULL,
+    nfold=NULL,
+    niter=NULL,
+    sparse_val=NULL,
 
 
 
@@ -58,13 +62,17 @@ SemFC <- R6Class(
 
 
     # Méthode d'initialisation
-    initialize = function(data, relation_matrix, mode,scale, bias, pen) {
+    initialize = function(data, relation_matrix, mode,scale, bias, pen, len_seq, nfold, niter, sparse_val) {
       self$data <- data
       self$relation_matrix <- relation_matrix
       self$scale <- ifelse(is.null(scale), FALSE, scale)
       self$bias <- ifelse(is.null(bias), FALSE, bias)
       self$mode <- mode
       self$pen <- pen
+      self$len_seq <- len_seq
+      self$nfold <- nfold
+      self$niter <- niter
+      self$sparse_val <- sparse_val
 
       parameter_model <- get_parameter_model_sem(data, mode)
       self$n_blocks <- parameter_model$n_blocks
@@ -92,7 +100,11 @@ SemFC <- R6Class(
                            self$scale,
                            self$mode,
                            self$bias,
-                           self$pen)
+                           self$pen,
+                           self$len_seq,
+                           self$nfold,
+                           self$niter,
+                           self$sparse_val)
 
       self$svd_parameters <- svd_result
       theta_svd <- parameters_svd(lambda = svd_result$lambda,

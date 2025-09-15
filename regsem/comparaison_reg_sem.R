@@ -89,7 +89,11 @@ eta5 ~~ eta6
 X = X_2
 Y = Y_2
 
-model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, pen=F)
+model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, pen=F,
+                   len_seq = NULL,
+                   nfold=NULL,
+                   niter=NULL,
+                   sparse_val=NULL)
 model$fit_svd()
 model$fit_ml(initialisation_svd = TRUE)
 
@@ -182,7 +186,11 @@ std_all_ml = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$ml_parameters$resi
 std_all_svd = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$svd_parameters$residual_variance),diag(model$cov_S))
 
 
-modelpen <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, pen=T)
+modelpen <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, pen='pmd',
+                      len_seq = NULL,
+                      nfold=NULL,
+                      niter=NULL,
+                      sparse_val=3.1)
 modelpen$fit_svd()
 
 pensvd = mapply(function(x,y) sqrt(1-(x/y)), unlist(modelpen$svd_parameters$residual_variance),diag(modelpen$cov_S))
