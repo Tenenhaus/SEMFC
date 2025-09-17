@@ -41,7 +41,7 @@ modelpmd <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, p
                       len_seq = NULL,
                       nfold=NULL,
                       niter=NULL,
-                      sparse_val=7)
+                      sparse_val=7.0628614)
 modelpmd$fit_svd()
 
 pensvd = mapply(function(x,y) sqrt(1-(x/y)), unlist(modelpmd$svd_parameters$residual_variance),diag(modelpmd$cov_S))
@@ -62,7 +62,7 @@ modelrgcca <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F,
                       len_seq = NULL,
                       nfold=NULL,
                       niter=NULL,
-                      sparse_val=0.57)
+                      sparse_val=0.5635770)
 
 modelrgcca$fit_svd()
 
@@ -87,16 +87,12 @@ table_lambda_empirical = cbind(lambda_th, lambda_lavaan, pensvd, pensvdcv,penrgc
 
 
 
-plot(table_lambda_empirical$pensvdcv)
+plot(table_lambda_empirical$penrgccacv)
 
 
 
 
 
-perm_out = rgcca_permutation(Y_2, scheme = "factorial", par_type = "sparsity",
-                             par_value = cbind(seq(0.1, 1, length = 50), 1, 1, 1, 1, 1), n_perms = 10)
-rgcca_final = rgcca(perm_out)
-plot(rgcca_final$a[[1]])
 
 
 
@@ -144,21 +140,131 @@ sparse_svd <- function(L, pen, values){
 
 
 
-sparse.svd = sparse_svd(Y_2, c(1,1,0,0,0,0), c(8.3,sqrt(3),0,0,0,0))
+sparse.svd = sparse_svd(Y_2, c(1,1,0,0,0,0), c(7.0628614,sqrt(3),0,0,0,0))
 plot(sparse.svd[[1]])
 
 sparse.svd.cv = sparse_svd.cv(Y_2, c(1,0,0,0,0,0), 50,20,30)
 plot(sparse.svd.cv[[1]])
 
 
+perm_out = rgcca_permutation(Y_2, scheme = "factorial", par_type = "sparsity",
+                             par_value = cbind(seq(0.1, 1, length = 70), 1, 1, 1, 1, 1), n_perms = 30)
+rgcca_final = rgcca(perm_out)
+plot(rgcca_final$a[[1]])
 
 
-yy = rgcca(Y_2, sparsity = c(0.6,1 ,1,1,1,1))
+yy = rgcca(Y_2, sparsity = c(0.5635770,1 ,1,1,1,1))
 plot(yy$a[[1]])
 
 
 
+classification <- function(pred){
+  true_val <- as.integer(l1 !=0)
+  pred_val <- as.integer(pred !=0)
+  true_val <- factor(true_val, levels = c(0, 1))
+  pred_val <- factor(pred_val, levels = c(0, 1))
+
+  matrice_confusion <- table(Observation = true_val, Prediction = pred_val)
+
+  TP <- matrice_confusion["1","1"]
+  FP <- matrice_confusion["0","1"]
+  FN <- matrice_confusion["1","0"]
+
+  precision <- TP / (TP + FP)
+  recall <- TP / (TP + FN)
+  f1 <- 2 * (precision * recall) / (precision + recall)
+
+  return (list(precision, recall, f1))
+
+}
+
+
+
+n_rep = 20
+
+tab_svd <- matrix(NA, nrow = n_rep, ncol = 3)
+colnames(tab_svd) <- c("precision", "recall", "f1")
+
+tab_rgcca <- matrix(NA, nrow = n_rep, ncol = 4)
+colnames(tab_rgcca) <- c("precision", "recall", "f1", 'val')
 
 
 
 
+for (i in 1:n_rep){
+  # print('svd iteration :')
+  # print(i)
+  #
+  # sparse.svd.cv = sparse_svd.cv(Y, c(1,0,0,0,0,0), 50,20,30)
+  # res_svd = classification(sparse.svd.cv[[1]])
+  # tab_svd[i,] <- unlist(res_svd)
+
+  print('rgcca iteration :')
+  print(i)
+
+
+
+  perm_out = rgcca_permutation(Y, scheme = "factorial", par_type = "sparsity",
+                               par_value = cbind(seq(0.1, 1, length = 70), 1, 1, 1, 1, 1), n_perms = 30)
+  rgcca_final = rgcca(perm_out)
+
+  res_rgcca <- classification(rgcca_final$a[[1]])
+  tab_rgcca[i,] <- c(unlist(res_rgcca), perm_out$best_params[[1]])
+
+
+
+
+}
+
+
+
+find_max_sparsity_svd <-function(len){
+  tab<- matrix(nrow=0, ncol = 2)
+  colnames(tab) <- c("val","f1")
+
+
+  for (val in seq(1, sqrt(ncol(Y[[1]])), length = len)){
+    ssvd = sparse_svd(Y, c(1,0,0,0,0,0), c(val,0,0,0,0,0))
+    res_svd = classification(ssvd[[1]])
+    f1 = res_svd[[3]]
+    tab = rbind(tab,c(val, f1))
+
+
+  }
+
+  f1max = max(tab[,2])
+  imax= which.max(tab[,2])
+  valmax= tab[imax, 1]
+
+  return(c(valmax,f1max))
+
+
+}
+
+
+find_max_sparsity_rgcca <-function(len){
+  tab<- matrix(nrow=0, ncol = 2)
+  colnames(tab) <- c("val","f1")
+
+
+  for (val in seq(1/sqrt(ncol(Y[[1]])), 1, length = len)){
+    sgcca = rgcca(Y_2, sparsity = c(val,1 ,1,1,1,1))
+    res_sgcca = classification(sgcca$a[[1]])
+    f1 = res_sgcca[[3]]
+    tab = rbind(tab,c(val, f1))
+
+
+  }
+
+  f1max = max(tab[,2])
+  imax= which.max(tab[,2])
+  valmax= tab[imax, 1]
+
+  return(c(valmax,f1max))
+
+
+}
+
+
+optsvd = find_max_sparsity_svd(300)
+optrgcca = find_max_sparsity_rgcca(300)
