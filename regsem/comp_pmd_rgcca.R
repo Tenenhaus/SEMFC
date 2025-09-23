@@ -125,7 +125,7 @@ sparse_svd <- function(L, pen, values){
 
   for (x in 1:length(L)){
     if (pen[[x]] == 1){
-      data <- t(L[[x]])%*%Reduce("cbind", L[-x])%*%t(t(L[[x]])%*%Reduce("cbind", L[-x]))
+      data <- t(t(L[[x]])%*%Reduce("cbind", L[-x]))
       out <- SPC(data, sumabsv=values[[x]], K=1)$v
 
       res[[x]] <- out
@@ -180,7 +180,7 @@ classification <- function(pred){
 
 
 
-n_rep = 20
+n_rep = 10
 
 tab_svd <- matrix(NA, nrow = n_rep, ncol = 3)
 colnames(tab_svd) <- c("precision", "recall", "f1")
@@ -192,12 +192,12 @@ colnames(tab_rgcca) <- c("precision", "recall", "f1", 'val')
 
 
 for (i in 1:n_rep){
-  # print('svd iteration :')
-  # print(i)
-  #
-  # sparse.svd.cv = sparse_svd.cv(Y, c(1,0,0,0,0,0), 50,20,30)
-  # res_svd = classification(sparse.svd.cv[[1]])
-  # tab_svd[i,] <- unlist(res_svd)
+  print('svd iteration :')
+  print(i)
+
+  sparse.svd.cv = sparse_svd.cv(Y, c(1,0,0,0,0,0), 50,20,30)
+  res_svd = classification(sparse.svd.cv[[1]])
+  tab_svd[i,] <- unlist(res_svd)
 
   print('rgcca iteration :')
   print(i)

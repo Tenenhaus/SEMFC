@@ -195,7 +195,7 @@ modelpen$fit_svd()
 
 pensvd = mapply(function(x,y) sqrt(1-(x/y)), unlist(modelpen$svd_parameters$residual_variance),diag(modelpen$cov_S))
 
-table_lambda_empirical = cbind(lambda_th, lambda_lavaan, std_all_ml, std_all_svd, pensvd, lambda_lslx, lambda_regsem, lambda_lsem)
+table_reg_empirical = cbind(lambda_th, lambda_lavaan, std_all_ml, std_all_svd, pensvd, lambda_lslx, lambda_regsem, lambda_lsem)
 # table_lambda_empirical = cbind(lambda_th, lambda_lavaan, std_all_ml, std_all_svd, lambda_lslx, lambda_regsem, lambda_lsem)
 
 
