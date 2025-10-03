@@ -55,7 +55,7 @@ svdSEM_infer <- function(fit, B = 100, verbose = TRUE){
   t_ratio = lambda/std_lambda 
   pval_lambda = sapply(1:length(t_ratio),
                              function(x)
-                               2*pnorm(t_ratio[x],
+                               2*pnorm(abs(t_ratio[x]),
                                        lower.tail = FALSE)
   )
   

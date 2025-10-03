@@ -11,6 +11,7 @@ position the caret at any line or the code chunk, then click "+".
 The code chunk appears:
 ```{r}
 source('R/SEMFC/sem_f_c.R')
+source("R/svd_sem/svdSEM_gof.R")
 library(readr)
 library(missMDA)
 library(dplyr)
@@ -130,12 +131,19 @@ mode <- rep("reflective", 2)
 ```{r}
 model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
 model$fit_svd()
-model$fit_ml(initialisation_svd = TRUE)
+# model$fit_ml(initialisation_svd = TRUE)
 
 
 
 
 
+```
+```{r}
+
+gof = svdSEM_gof(model, B = 2000) #~half of improper solutions
+hist(gof$Tb_LS) ; abline(v = gof$T_LS, col = "red")
+pval_svd = mean(gof$T_LS <= gof$Tb_LS, na.rm = T)
+pval_svd
 ```
 ```{r}
 lambda_svd = model$svd_parameters$lambda
