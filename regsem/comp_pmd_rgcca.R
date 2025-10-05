@@ -103,7 +103,8 @@ sparse_svd.cv <- function(L, pen, len_seq, nfold, niter){
 
   for (x in 1:length(L)){
     if (pen[[x]] == 1){
-      data <- t(L[[x]])%*%Reduce("cbind", L[-x])%*%t(t(L[[x]])%*%Reduce("cbind", L[-x]))
+      # data <- t(L[[x]])%*%Reduce("cbind", L[-x])%*%t(t(L[[x]])%*%Reduce("cbind", L[-x]))
+      data <- t(t(L[[x]])%*%Reduce("cbind", L[-x]))
       cv.out <- SPC.cv(data, sumabsvs=seq(1, sqrt(ncol(data)), len=len_seq), nfold = nfold, niter =niter)
       print(cv.out$bestsumabsv)
       out <- SPC(data, sumabsv=cv.out$bestsumabsv, K=1, v=cv.out$v.init)$v
@@ -140,7 +141,7 @@ sparse_svd <- function(L, pen, values){
 
 
 
-sparse.svd = sparse_svd(Y_2, c(1,1,0,0,0,0), c(7.0628614,sqrt(3),0,0,0,0))
+sparse.svd = sparse_svd(Y_2, c(1,1,0,0,0,0), c(optsvd[[1]],sqrt(3),0,0,0,0))
 plot(sparse.svd[[1]])
 
 sparse.svd.cv = sparse_svd.cv(Y_2, c(1,0,0,0,0,0), 50,20,30)
@@ -153,10 +154,16 @@ rgcca_final = rgcca(perm_out)
 plot(rgcca_final$a[[1]])
 
 
-yy = rgcca(Y_2, sparsity = c(0.5635770,1 ,1,1,1,1))
+yy = rgcca(Y_2, sparsity = c(optrgcca[[1]],1 ,1,1,1,1))
 plot(yy$a[[1]])
 
+clas_opt_svd = unlist(classification(sparse.svd[[1]]))
+clas_cv_svd = unlist(classification(sparse.svd.cv[[1]]))
+class_opt_rgcca = unlist(classification(yy$a[[1]]))
+class_perm_rgcca = unlist(classification(rgcca_final$a[[1]]))
 
+
+performance = rbind(clas_opt_svd, clas_cv_svd, class_opt_rgcca,class_perm_rgcca)
 
 classification <- function(pred){
   true_val <- as.integer(l1 !=0)
@@ -330,11 +337,22 @@ roc_svd = function(len){
 
 
 
+
+
+
     # Tracé de la ROC
     plot(tab$fpr, tab$recall, type = "l", col = "blue", lwd = 2,
          xlab = "False Positive Rate", ylab = "True Positive Rate",
          main = "ROC Curve PMD")
     abline(0, 1, col = "red", lty = 2)  # Ligne diagonale
+
+    # Tri par FPR croissant (nécessaire pour l’intégration)
+    tab <- tab[order(tab$fpr), ]
+
+    # Calcul de l’AUC via la règle du trapèze
+    auc <- sum(diff(tab$fpr) * (head(tab$recall, -1) + tail(tab$recall, -1)) / 2)
+
+    return(list(tab = tab, auc = auc))
 
 
 
@@ -342,7 +360,7 @@ roc_svd = function(len){
 
 
 
-roc_svd(300)
+auc_pmd = roc_svd(300)
 
 
 
@@ -364,12 +382,18 @@ roc_rgcca = function(len){
 
     tab <- as.data.frame(tab)
 
+    # Tri par FPR croissant (nécessaire pour l’intégration)
+    tab <- tab[order(tab$fpr), ]
 
-    inverted_tab <- data.frame(
-      val = tab$val,
-      recall = 1 - tab$fpr,  # TPR pour la classe inversée
-      fpr = 1 - tab$recall   # FPR pour la classe inversée
-    )
+    # Calcul de l’AUC via la règle du trapèze
+    auc <- sum(diff(tab$fpr) * (head(tab$recall, -1) + tail(tab$recall, -1)) / 2)
+
+
+    # inverted_tab <- data.frame(
+    #   val = tab$val,
+    #   recall = 1 - tab$fpr,  # TPR pour la classe inversée
+    #   fpr = 1 - tab$recall   # FPR pour la classe inversée
+    # )
 
 
 
@@ -381,14 +405,14 @@ roc_rgcca = function(len){
          main = "ROC Curve RGCCA")
     abline(0, 1, col = "red", lty = 2)  # Ligne diagonale
 
-  return(tab)
+    return(list(tab = tab, auc = auc))
 
 
 
 }
 
 
-tab = roc_rgcca(300)
+res_rgcca_auc = roc_rgcca(300)
 
 
 
