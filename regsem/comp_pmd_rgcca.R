@@ -169,14 +169,43 @@ classification <- function(pred){
   TP <- matrice_confusion["1","1"]
   FP <- matrice_confusion["0","1"]
   FN <- matrice_confusion["1","0"]
+  TN <- matrice_confusion["0","0"]
 
   precision <- TP / (TP + FP)
   recall <- TP / (TP + FN)
+  FPR <- FP / (FP + TN)
+  FNR <- 1 - recall
   f1 <- 2 * (precision * recall) / (precision + recall)
 
-  return (list(precision, recall, f1))
+  return (list(precision = precision, recall = recall, f1 = f1, FPR = FPR, FNR = FNR))
 
 }
+
+
+classification_inv <- function(pred){
+  true_val <- as.integer(l1 ==0)
+  pred_val <- as.integer(pred ==0)
+  true_val <- factor(true_val, levels = c(0, 1))
+  pred_val <- factor(pred_val, levels = c(0, 1))
+
+  matrice_confusion <- table(Observation = true_val, Prediction = pred_val)
+
+  TP <- matrice_confusion["1","1"]
+  FP <- matrice_confusion["0","1"]
+  FN <- matrice_confusion["1","0"]
+  TN <- matrice_confusion["0","0"]
+
+  precision <- TP / (TP + FP)
+  recall <- TP / (TP + FN)
+  FPR <- FP / (FP + TN)
+  FNR <- 1 - recall
+  f1 <- 2 * (precision * recall) / (precision + recall)
+
+  return (list(precision = precision, recall = recall, f1 = f1, FPR = FPR, FNR = FNR))
+
+}
+
+
 
 
 
@@ -268,3 +297,105 @@ find_max_sparsity_rgcca <-function(len){
 
 optsvd = find_max_sparsity_svd(300)
 optrgcca = find_max_sparsity_rgcca(300)
+
+
+
+
+
+roc_svd = function(len){
+    tab<- matrix(nrow=0, ncol = 3)
+    colnames(tab) <- c("val","recall", "fpr")
+
+
+    for (val in seq(1, sqrt(ncol(Y[[1]])), length = len)){
+      ssvd = sparse_svd(Y, c(1,0,0,0,0,0), c(val,0,0,0,0,0))
+      res_svd = classification(ssvd[[1]])
+      recall = res_svd[[2]]
+      fpr = res_svd[[4]]
+      tab = rbind(tab,c(val,recall, fpr))
+
+
+    }
+
+    tab <- as.data.frame(tab)
+
+
+    inverted_tab <- data.frame(
+      val = tab$val,
+      recall = 1 - tab$fpr,  # TPR pour la classe inversée
+      fpr = 1 - tab$recall   # FPR pour la classe inversée
+    )
+
+
+
+
+
+    # Tracé de la ROC
+    plot(tab$fpr, tab$recall, type = "l", col = "blue", lwd = 2,
+         xlab = "False Positive Rate", ylab = "True Positive Rate",
+         main = "ROC Curve PMD")
+    abline(0, 1, col = "red", lty = 2)  # Ligne diagonale
+
+
+
+}
+
+
+
+roc_svd(300)
+
+
+
+roc_rgcca = function(len){
+    tab<- matrix(nrow=0, ncol = 4)
+    colnames(tab) <- c("val","recall", "fpr", "f1")
+
+
+    for (val in seq(1/sqrt(ncol(Y[[1]])), 1, length = len)){
+      sgcca = rgcca(Y_2, sparsity = c(val,1 ,1,1,1,1))
+      res_sgcca = classification(sgcca$a[[1]])
+      recall = res_sgcca[[2]]
+      fpr = res_sgcca[[4]]
+      f1 = res_sgcca[[3]]
+      tab = rbind(tab,c(val,recall, fpr, f1))
+
+
+    }
+
+    tab <- as.data.frame(tab)
+
+
+    inverted_tab <- data.frame(
+      val = tab$val,
+      recall = 1 - tab$fpr,  # TPR pour la classe inversée
+      fpr = 1 - tab$recall   # FPR pour la classe inversée
+    )
+
+
+
+
+
+    # Tracé de la ROC
+    plot(tab$fpr, tab$recall, type = "l", col = "blue", lwd = 2,
+         xlab = "False Positive Rate", ylab = "True Positive Rate",
+         main = "ROC Curve RGCCA")
+    abline(0, 1, col = "red", lty = 2)  # Ligne diagonale
+
+  return(tab)
+
+
+
+}
+
+
+tab = roc_rgcca(300)
+
+
+
+sgcca_opt = rgcca(Y_2, sparsity = c(optrgcca[[1]],1 ,1,1,1,1))
+class_rgcca_opt = classification(sgcca_opt$a[[1]])
+
+ssvd_opt = sparse_svd(Y, c(1,0,0,0,0,0), c(optsvd[[1]],0,0,0,0,0))
+res_svd = classification(ssvd_opt[[1]])
+
+
