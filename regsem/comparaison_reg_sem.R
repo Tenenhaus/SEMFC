@@ -11,7 +11,7 @@ source('data/data_generated_reflective.R')
 source('R/SEMFC/sem_f_c.R')
 
 
-pen_vars <- paste0("X1", 2:20, collapse = " + ")
+pen_vars <- paste0("X1", 2:60, collapse = " + ")
 pen_line <- paste0("pen() * eta1 =~ ", pen_vars)
 
 
@@ -117,13 +117,13 @@ print(elapsed)
 
 
 start <- proc.time()
-regsem.out <- cv_regsem(lav, type="lasso", pars_pen = 1:19,n.lambda=23,jump=.05)
+regsem.out <- cv_regsem(lav, type="lasso", pars_pen = 1:59,n.lambda=23,jump=.05)
 end <- proc.time()
 elapsed <- end - start
 print('time regsem:')
 print(elapsed)
 
-regularised <- paste0("eta1=~X1", 2:20)
+regularised <- paste0("eta1=~X1", 2:60)
 lavaanModel <- sem(sem.model.lsem, data = X)
 
 start <- proc.time()
@@ -190,12 +190,97 @@ modelpen <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, p
                       len_seq = NULL,
                       nfold=NULL,
                       niter=NULL,
-                      sparse_val=3.1)
+                      sparse_val=6.279452)
 modelpen$fit_svd()
 
 pensvd = mapply(function(x,y) sqrt(1-(x/y)), unlist(modelpen$svd_parameters$residual_variance),diag(modelpen$cov_S))
 
+
+modelrgcca <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, pen='rgcca',
+                      len_seq = NULL,
+                      nfold=NULL,
+                      niter=NULL,
+                      sparse_val=0.6329984)
+
+
+start <- proc.time()
+modelrgcca$fit_svd()
+end <- proc.time()
+elapsed <- end - start
+print('time rgcca:')
+print(elapsed)
+
+
+penrgcca = mapply(function(x,y) sqrt(1-(x/y)), unlist(modelrgcca$svd_parameters$residual_variance),diag(modelrgcca$cov_S))
+
+
+
+
+
+
+
+modelpmdcv <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, pen='pmd.cv',
+                      len_seq = 50,
+                      nfold=20,
+                      niter=30,
+                      sparse_val=NULL)
+
+
+start <- proc.time()
+modelpmdcv$fit_svd()
+end <- proc.time()
+elapsed <- end - start
+print('time pmd cv:')
+print(elapsed)
+
+
+
+pensvdcv = mapply(function(x,y) sqrt(1-(x/y)), unlist(modelpmdcv$svd_parameters$residual_variance),diag(modelpmdcv$cov_S))
+
+
+
+
+
+
+
+modelrgccacv <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, pen='rgcca.cv',
+                      len_seq = 50,
+                      nfold=NULL,
+                      niter=10,
+                      sparse_val=NULL)
+
+start <- proc.time()
+modelrgccacv$fit_svd()
+end <- proc.time()
+elapsed <- end - start
+print('time rgcca cv:')
+print(elapsed)
+
+
+
+penrgccacv = mapply(function(x,y) sqrt(1-(x/y)), unlist(modelrgccacv$svd_parameters$residual_variance),diag(modelrgccacv$cov_S))
+
+
+
+
+
+
+
+
 table_reg_empirical = cbind(lambda_th, lambda_lavaan, std_all_ml, std_all_svd, pensvd, lambda_lslx, lambda_regsem, lambda_lsem)
 # table_lambda_empirical = cbind(lambda_th, lambda_lavaan, std_all_ml, std_all_svd, lambda_lslx, lambda_regsem, lambda_lsem)
+
+
+clas_svd = unlist(classification(pensvd[1:60]))
+clas_rgcca = unlist(classification(penrgcca[1:60]))
+clas_svd_cv = unlist(classification(pensvdcv[1:60]))
+clas_rgcca_perm = unlist(classification(penrgccacv[1:60]))
+
+class_lslx = unlist(classification(lambda_lslx[1:60]))
+class_regsem = unlist(classification(lambda_regsem[1:60]))
+class_lsem = unlist(classification(lambda_lsem[1:60]))
+
+performance = rbind(clas_svd, clas_svd_cv, clas_rgcca, clas_rgcca_perm,class_lslx,class_regsem, class_lsem)
+
 
 

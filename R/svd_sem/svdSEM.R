@@ -99,7 +99,8 @@ svdSEM <- function(A, C, scale = TRUE,
     psvd <- function(x){
 
       if (x==1){
-        data <- t(A[[x]])%*%Reduce("cbind", A[-x])%*%t(t(A[[x]])%*%Reduce("cbind", A[-x]))
+        # data <- t(A[[x]])%*%Reduce("cbind", A[-x])%*%t(t(A[[x]])%*%Reduce("cbind", A[-x]))
+        data <- t(t(A[[x]])%*%Reduce("cbind", A[-x]))
 
 
 
@@ -205,7 +206,7 @@ svdSEM <- function(A, C, scale = TRUE,
     } else if (pen=='rgcca.cv'){
 
       perm_out = rgcca_permutation(A, scheme = "factorial", par_type = "sparsity",
-                             par_value = cbind(seq(0.1, 1, length = len_seq ), 1, 1, 1, 1, 1), n_perms = niter)
+                             par_value = cbind(seq(0.13, 1, length = len_seq ), 1, 1, 1, 1, 1), n_perms = niter)
       rgcca_final = rgcca(perm_out)
 
 
