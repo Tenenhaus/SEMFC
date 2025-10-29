@@ -123,11 +123,14 @@ sparse_svd.cv <- function(L, pen, len_seq, nfold, niter){
 sparse_svd <- function(L, pen, values){
 
   res <-  list()
+  L = lapply(L,scale)
+  L = lapply(L, function (x) x/sqrt(NCOL(x)))
 
   for (x in 1:length(L)){
     if (pen[[x]] == 1){
       data <- t(t(L[[x]])%*%Reduce("cbind", L[-x]))
-      out <- SPC(data, sumabsv=values[[x]], K=1)$v
+
+      out <- SPC(data, sumabsv=values[[x]], K=1, center = FALSE)$v
 
       res[[x]] <- out
 
