@@ -192,29 +192,6 @@ classification <- function(pred){
 }
 
 
-classification_inv <- function(pred){
-  true_val <- as.integer(l1 ==0)
-  pred_val <- as.integer(pred ==0)
-  true_val <- factor(true_val, levels = c(0, 1))
-  pred_val <- factor(pred_val, levels = c(0, 1))
-
-  matrice_confusion <- table(Observation = true_val, Prediction = pred_val)
-
-  TP <- matrice_confusion["1","1"]
-  FP <- matrice_confusion["0","1"]
-  FN <- matrice_confusion["1","0"]
-  TN <- matrice_confusion["0","0"]
-
-  precision <- TP / (TP + FP)
-  recall <- TP / (TP + FN)
-  FPR <- FP / (FP + TN)
-  FNR <- 1 - recall
-  f1 <- 2 * (precision * recall) / (precision + recall)
-
-  return (list(precision = precision, recall = recall, f1 = f1, FPR = FPR, FNR = FNR))
-
-}
-
 
 
 
@@ -311,111 +288,61 @@ optrgcca = find_max_sparsity_rgcca(300)
 
 
 
-
-roc_svd = function(len){
-    tab<- matrix(nrow=0, ncol = 3)
-    colnames(tab) <- c("val","recall", "fpr")
-
-
-    for (val in seq(1, sqrt(ncol(Y[[1]])), length = len)){
-      ssvd = sparse_svd(Y, c(1,0,0,0,0,0), c(val,0,0,0,0,0))
-      res_svd = classification(ssvd[[1]])
-      recall = res_svd[[2]]
-      fpr = res_svd[[4]]
-      tab = rbind(tab,c(val,recall, fpr))
+roc = function(len, method){
+  tab<- matrix(nrow=0, ncol = 4)
+  colnames(tab) <- c("val","recall", "fpr", "f1")
 
 
-    }
-
-    tab <- as.data.frame(tab)
+  for (val in seq(1/sqrt(ncol(Y[[1]])), 1, length = len)){
 
 
-    inverted_tab <- data.frame(
-      val = tab$val,
-      recall = 1 - tab$fpr,  # TPR pour la classe inversée
-      fpr = 1 - tab$recall   # FPR pour la classe inversée
-    )
+      if (method=='sgcca'){
+        fit = rgcca(Y_2, sparsity = c(val,1 ,1,1,1,1))
+        serie = fit$a[[1]]
+      }
+      else if (method=='pmd'){
+        val_pmd = val * sqrt(ncol(Y[[1]]))
+        fit = sparse_svd(Y, c(1,0,0,0,0,0), c(val_pmd,0,0,0,0,0))
+        serie = fit[[1]]
 
+      }
 
-
-
-
-
-
-
-    # Tracé de la ROC
-    plot(tab$fpr, tab$recall, type = "l", col = "blue", lwd = 2,
-         xlab = "False Positive Rate", ylab = "True Positive Rate",
-         main = "ROC Curve PMD")
-    abline(0, 1, col = "red", lty = 2)  # Ligne diagonale
-
-    # Tri par FPR croissant (nécessaire pour l’intégration)
-    tab <- tab[order(tab$fpr), ]
-
-    # Calcul de l’AUC via la règle du trapèze
-    auc <- sum(diff(tab$fpr) * (head(tab$recall, -1) + tail(tab$recall, -1)) / 2)
-
-    return(list(tab = tab, auc = auc))
-
-
-
-}
-
-
-
-auc_pmd = roc_svd(300)
-
-
-
-roc_rgcca = function(len){
-    tab<- matrix(nrow=0, ncol = 4)
-    colnames(tab) <- c("val","recall", "fpr", "f1")
-
-
-    for (val in seq(1/sqrt(ncol(Y[[1]])), 1, length = len)){
-      sgcca = rgcca(Y_2, sparsity = c(val,1 ,1,1,1,1))
-      res_sgcca = classification(sgcca$a[[1]])
-      recall = res_sgcca[[2]]
-      fpr = res_sgcca[[4]]
-      f1 = res_sgcca[[3]]
+      res = classification(serie)
+      recall = res[[2]]
+      fpr = res[[4]]
+      f1 = res[[3]]
       tab = rbind(tab,c(val,recall, fpr, f1))
 
 
     }
 
-    tab <- as.data.frame(tab)
+  tab <- as.data.frame(tab)
 
-    # Tri par FPR croissant (nécessaire pour l’intégration)
-    tab <- tab[order(tab$fpr), ]
+  # Tri par FPR croissant (nécessaire pour l’intégration)
+  tab <- tab[order(tab$fpr), ]
 
-    # Calcul de l’AUC via la règle du trapèze
-    auc <- sum(diff(tab$fpr) * (head(tab$recall, -1) + tail(tab$recall, -1)) / 2)
-
-
-    # inverted_tab <- data.frame(
-    #   val = tab$val,
-    #   recall = 1 - tab$fpr,  # TPR pour la classe inversée
-    #   fpr = 1 - tab$recall   # FPR pour la classe inversée
-    # )
+  # Calcul de l’AUC via la règle du trapèze
+  auc <- sum(diff(tab$fpr) * (head(tab$recall, -1) + tail(tab$recall, -1)) / 2)
 
 
-
-
-
-    # Tracé de la ROC
-    plot(tab$fpr, tab$recall, type = "l", col = "blue", lwd = 2,
+  # Tracé de la ROC
+  plot(tab$fpr, tab$recall, type = "l", col = "blue", lwd = 2,
          xlab = "False Positive Rate", ylab = "True Positive Rate",
-         main = "ROC Curve RGCCA")
-    abline(0, 1, col = "red", lty = 2)  # Ligne diagonale
+         main = paste("ROC Curve", method))
+  abline(0, 1, col = "red", lty = 2)  # Ligne diagonale
 
-    return(list(tab = tab, auc = auc))
+  return(list(tab = tab, auc = auc))
 
 
 
 }
 
 
-res_rgcca_auc = roc_rgcca(300)
+roc(300, 'sgcca')
+roc(300, 'pmd')
+
+
+
 
 
 
