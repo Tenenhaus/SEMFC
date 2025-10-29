@@ -10,6 +10,7 @@ source('R/utils/get_lengths_theta.R')
 source('R/svd_sem/svdSEM.R')
 source('R/svd_sem/parameters_svd.R')
 source('R/svd_sem/svdSEM_infer.R')
+source("R/svd_sem/svdSEM_gof.R")
 #import functions from ml module
 source('R/ml_sem/F1.R')
 source('R/ml_sem/mlSEM.R')
@@ -112,6 +113,9 @@ SemFC <- R6Class(
       }
       boot_out <- svdSEM_infer(self$svd_parameters, B = 1000, verbose = TRUE)
       self$boot_svd <- boot_out
+      gof = svdSEM_gof(self$svd_parameters, B)
+      self$boot_svd$gof <- gof
+
     },
 
 

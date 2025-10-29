@@ -86,18 +86,24 @@ svdSEM_infer <- function(fit, B = 100, verbose = TRUE){
                          function(x)
                            2*pnorm(abs(t_ratio[x]), lower.tail = FALSE)
   )
-  
-  beta = data.frame(beta = beta, 
+
+
+  if (length(beta) != 0){
+
+    beta = data.frame(beta = beta,
                     std = std_beta,
                     z = t_ratio,
                     pval = pval_beta)
-  
-  rownames(beta) = sapply(1:NROW(beta),
-         function(b) 
-           paste(colnames(fit$beta)[which(fit$beta!=0, arr.ind = TRUE)[b, ]], 
-                 collapse = "~")
-         )
-  
+
+    rownames(beta) = sapply(1:NROW(beta),
+           function(b)
+             paste(colnames(fit$beta)[which(fit$beta!=0, arr.ind = TRUE)[b, ]],
+                   collapse = "~")
+           )
+
+  }
+
+
   std_gamma = apply(boot_gamma, 2, sd)
   
   t_ratio = gamma[gamma!=0]/std_gamma
