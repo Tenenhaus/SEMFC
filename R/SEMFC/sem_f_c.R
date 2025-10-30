@@ -6,6 +6,7 @@ library(R6)
 source('R/utils/get_parameter_model_sem.R')
 source('R/utils/ind_exo_endo.R')
 source('R/utils/get_lengths_theta.R')
+source('R/utils/reliability.R')
 #import functions from svd module
 source('R/svd_sem/svdSEM.R')
 source('R/svd_sem/parameters_svd.R')
@@ -46,6 +47,7 @@ SemFC <- R6Class(
     S_composites = NULL,
     boot_svd = NULL,
     ml_infer_estimate = NULL,
+    reliability_value = NULL,
     SD = NULL,
     VCOV = NULL,
     svd_parameters = list(),
@@ -111,9 +113,9 @@ SemFC <- R6Class(
       if (is.null(self$svd_parameters)) {
         self$fit_svd()
       }
-      boot_out <- svdSEM_infer(self$svd_parameters, B = 1000, verbose = TRUE)
+      boot_out <- svdSEM_infer(self$svd_parameters, B, verbose = TRUE)
       self$boot_svd <- boot_out
-      gof = svdSEM_gof(self$svd_parameters, B)
+      gof <- svdSEM_gof(self$svd_parameters, B)
       self$boot_svd$gof <- gof
 
     },
@@ -160,6 +162,26 @@ SemFC <- R6Class(
 
       self$ml_infer_estimate <- ml_infer_estimate
     },
+
+    reliability = function(fit, metric='Dillon'){
+      if (fit=='svd'){
+        lambdas <- self$svd_parameters$lambda
+        residual_variances <- self$svd_parameters$residual_variance
+      }
+      else if (fit=='ml'){
+        lambdas <- self$ml_parameters$lambda
+        residual_variances <- self$ml_parameters$residual_variance
+
+      }
+
+      res_reliability <- reliability(metric, lambdas, residual_variances)
+
+      self$reliability_value <- res_reliability
+
+
+    },
+
+
 
 
 
