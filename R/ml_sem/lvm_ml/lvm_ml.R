@@ -10,7 +10,7 @@ source("R/utils/get_lengths_theta.R")
 
 
 
-lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac = TRUE){
+lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac = TRUE, varnames = NULL){
 
   n <- which_exo_endo$ind_exo
   m <- which_exo_endo$ind_endo
@@ -24,6 +24,11 @@ lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac 
   ######################################################
 
   loadings <- get_loadings(x, block_sizes = block_sizes)
+
+  if (!is.null(varnames)){
+    loadings <- mapply(function(x, nms) {names(x) <- nms; x}, loadings, varnames, SIMPLIFY = FALSE)
+  }
+
 
   ##################################################################
   ####### mapping of the exogeneous correlation matrix from x ######

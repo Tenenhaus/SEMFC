@@ -118,6 +118,10 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
                                   sep = "~")
   )
 
+  table_beta <- data.frame()
+
+  if (length(beta) != 0){
+
   table_beta <- data.frame(Estimate = beta,
                            std = sd_beta,
                            z_score = z_beta,
@@ -128,7 +132,7 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
          paste(colnames(fit$beta)[which(fit$beta!=0, arr.ind = TRUE)[b, ]],
                collapse = "~")
        )
-
+  }
 
   table_residual_variance <- data.frame(Estimate = residual_variance,
                            std = sd_residual_variance,

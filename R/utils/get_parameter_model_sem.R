@@ -8,6 +8,7 @@ get_parameter_model_sem <- function(data, mode){
 
   block_sizes <- sapply(data, NCOL)
   n_blocks <- length(block_sizes)
+  varnames <- lapply(data, function(x) colnames(x))
 
 
   # get composite covariance bloc
@@ -24,6 +25,7 @@ get_parameter_model_sem <- function(data, mode){
     data = data,
     n_blocks = n_blocks,
     n_row = n_row,
+    varnames = varnames,
     block_sizes = block_sizes,
     S = S,
     S_diag_composites = S_diag_composites

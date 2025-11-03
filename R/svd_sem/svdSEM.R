@@ -106,7 +106,7 @@ svdSEM <- function(A, C, scale = TRUE,
     
         
     for (b in seq_len(J))
-      rownames(a[[b]]) = rownames(lambda[[b]]) = colnames(A[[b]])  
+      rownames(a[[b]]) = rownames(lambda[[b]]) = colnames(A[[b]])
       
 
     # reliability coefficients 
@@ -163,7 +163,10 @@ svdSEM <- function(A, C, scale = TRUE,
     
     #Measure of goodness-of(fit)
     T_LS = d_LS(cov2(Reduce("cbind", A), bias = bias), SIGMA_LVM)
-    
+
+    lambda <- lapply(lambda, function(x) setNames(as.vector(x), rownames(x)))
+    residual_variance <- lapply(residual_variance, function(x) setNames(as.vector(x), paste0(".", rownames(x))))
+
 
     out <- list(a = a, 
                 lambda = lambda,

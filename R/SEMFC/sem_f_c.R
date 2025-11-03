@@ -42,6 +42,7 @@ SemFC <- R6Class(
     svd_result = NULL,
     n_blocks = NULL,
     n_row = NULL,
+    varnames = NULL,
     block_sizes = NULL,
     lengths_theta = NULL,
     S_composites = NULL,
@@ -70,6 +71,7 @@ SemFC <- R6Class(
       parameter_model <- get_parameter_model_sem(data, mode)
       self$n_blocks <- parameter_model$n_blocks
       self$n_row <- parameter_model$n_row
+      self$varnames <- parameter_model$varnames
       self$block_sizes <- parameter_model$block_sizes
       self$cov_S <- parameter_model$S
       self$S_composites <- parameter_model$S_diag_composites
@@ -140,7 +142,8 @@ SemFC <- R6Class(
       ml_sol <- mlSEM(initial_params, block_sizes, mode, self$cov_S, self$lengths_theta, self$which_exo_endo)
       theta_ml <- ml_sol$pars
       self$ml_parameters <- lvm_ml(x = theta_ml, block_sizes = block_sizes, mode =mode,
-                                   lengths_parameter = self$lengths_theta, which_exo_endo = self$which_exo_endo, jac = F)
+                                   lengths_parameter = self$lengths_theta, which_exo_endo = self$which_exo_endo,
+                                   jac = F, varnames = self$varnames)
       self$ml_parameters$theta <- theta_ml
       self$ml_parameters$F <- F1(theta_ml, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
 
@@ -185,17 +188,39 @@ SemFC <- R6Class(
 
 
 
-    summary = function(){
+    summary = function(method){
+
+      if (method == 'ml'){
+        estimate <- model$ml_infer_estimate$estimate
+      } else if (method == 'svd'){
+        estimate <- model$boot_svd
+      }
+
+      lambda_infer <- estimate$lambda
+      beta_infer <- estimate$beta
+      gamma_infer <- estimate$gamma
+      residualvariance_infer <- estimate$residual_variance
+
+
       cat("\nCoefficients:\n")
       cat("lambda:\n")
-      printCoefmat(model$ml_infer_estimate$estimate$lambda, P.values = TRUE, has.Pvalue = TRUE)
-      cat("beta:\n")
-      printCoefmat(model$ml_infer_estimate$estimate$beta, P.values = TRUE, has.Pvalue = TRUE)
-      cat("gamma:\n")
-      printCoefmat(model$ml_infer_estimate$estimate$gamma, P.values = TRUE, has.Pvalue = TRUE)
-      cat("variance:\n")
-      printCoefmat(model$ml_infer_estimate$estimate$residual_variance, P.values = TRUE, has.Pvalue = TRUE)
+      if (nrow(lambda_infer) != 0){
+        printCoefmat(lambda_infer, P.values = TRUE, has.Pvalue = TRUE)
+      }
 
+      if (nrow(beta_infer) != 0){
+        cat("beta:\n")
+        printCoefmat(beta_infer, P.values = TRUE, has.Pvalue = TRUE)
+      }
+      cat("gamma:\n")
+      if (nrow(gamma_infer) != 0){
+        printCoefmat(gamma_infer, P.values = TRUE, has.Pvalue = TRUE)
+      }
+
+      cat("variance:\n")
+      if (nrow(residualvariance_infer) != 0){
+        printCoefmat(residualvariance_infer, P.values = TRUE, has.Pvalue = TRUE)
+      }
 
     }
 
