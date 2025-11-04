@@ -175,12 +175,6 @@ mlSEM_infer <- function(x, S, block_sizes, mode, lengths_parameter, N, fit,which
 
 }
 
-
-
-
-
-
-
 z_H0 <- function(x, S, X, C, mode, L){
   N <- nrow(X)
   P <- P_ml(x, S, X, C, mode)

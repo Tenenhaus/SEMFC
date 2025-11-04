@@ -24,7 +24,7 @@ lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac 
   ######################################################
 
   loadings <- get_loadings(x, block_sizes = block_sizes)
-
+  # naming loadings
   if (!is.null(varnames)){
     loadings <- mapply(function(x, nms) {names(x) <- nms; x}, loadings, varnames, SIMPLIFY = FALSE)
   }
