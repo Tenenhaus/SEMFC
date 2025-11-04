@@ -1,6 +1,5 @@
-get_lengths_theta <- function(C, block_sizes, mode){
+get_lengths_theta <- function(which_exo_endo, block_sizes, mode){
 
-  which_exo_endo <- ind_exo_endo(C)
   n <- which_exo_endo$ind_exo
   m <- which_exo_endo$ind_endo
 

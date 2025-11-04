@@ -17,6 +17,7 @@ source('R/ml_sem/F1.R')
 source('R/ml_sem/mlSEM.R')
 source('R/ml_sem/mlSEM_infer.R')
 
+
 library(Matrix)
 library(knitr)
 library(pheatmap)
@@ -33,6 +34,7 @@ SemFC <- R6Class(
   public = list(
     # Attributs
     data = NULL,
+    estimator = NULL,
     relation_matrix = NULL,
     which_exo_endo = NULL,
     scale = FALSE,
@@ -77,9 +79,9 @@ SemFC <- R6Class(
       self$S_composites <- parameter_model$S_diag_composites
 
       which_exo_endo <- ind_exo_endo(relation_matrix)
-      self$which_exo_endo <-which_exo_endo
+      self$which_exo_endo <- which_exo_endo
 
-      self$lengths_theta <- get_lengths_theta(relation_matrix, self$block_sizes, mode)
+      self$lengths_theta <- get_lengths_theta(self$which_exo_endo, self$block_sizes, self$mode)
 
 
 
@@ -126,7 +128,6 @@ SemFC <- R6Class(
     fit_ml = function(initialisation_svd = TRUE) {
 
       block_sizes <- self$block_sizes
-      C <- self$relation_matrix
       mode <- self$mode
 
       # Initialisation par SVD si demandé
@@ -136,7 +137,8 @@ SemFC <- R6Class(
 
         initial_params <- self$svd_parameters$theta
       } else {
-        initial_params <- NULL
+        len_theta <- sum(self$lengths_theta)
+        initial_params <- runif(len_theta)
       }
 
       ml_sol <- mlSEM(initial_params, block_sizes, mode, self$cov_S, self$lengths_theta, self$which_exo_endo)
@@ -181,12 +183,31 @@ SemFC <- R6Class(
 
       self$reliability_value <- res_reliability
 
+    },
+
+    gof = function(){
+
+      p <- sum(self$block_sizes)
+      q <- sum(model$lengths_theta)
+      F
+
+      chi2 <- chi2sem(p, q, F, N)
+
+
 
     },
 
 
 
-
+    semf = function(method, B = 1000, initialisation_svd = TRUE){
+      if (method == 'svd'){
+        self$fit_svd()
+        self$svd_infer(B)
+      } else if(method == 'ml'){
+        self$fit_ml(initialisation_svd)
+        self$ml_infer()
+      }
+    },
 
     summary = function(method){
 
@@ -200,6 +221,14 @@ SemFC <- R6Class(
       beta_infer <- estimate$beta
       gamma_infer <- estimate$gamma
       residualvariance_infer <- estimate$residual_variance
+
+
+      cat("\n")
+      cat("Estimator", sprintf("%44s\n", toupper(method)))
+      cat("Number of model parameters", sprintf("%23d\n", sum(model$lengths_theta)))
+      cat("\n")
+      cat("Number of observations", sprintf("%32d\n", self$n_row))
+      cat("\n\n")
 
 
       cat("\nCoefficients:\n")

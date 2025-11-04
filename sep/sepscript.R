@@ -41,3 +41,6 @@ model$reliability_value
 
 model$summary('svd')
 model$summary('ml')
+
+
+model$semf('svd', B=500)
