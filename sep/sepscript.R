@@ -23,24 +23,38 @@ summary(fit.sep.lav, fit.measures = T)
 #semfc
 
 model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
-model$fit_svd()
-model$fit_ml(initialisation_svd = TRUE)
-
-#bootstrap inference
-model$svd_infer(500)
-model$boot_svd$gof$pval
-model$boot_svd$lambda
-model$boot_svd$gamma
-
-#ml inference
-model$ml_infer()
+model$fit(estimator = 'svd', B=2000)
+model$summary()
 
 
-model$reliability('svd', 'Dillon')
-model$reliability_value
-
-model$summary('svd')
-model$summary('ml')
+modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
+modelml$fit(estimator = 'ml', B=2000)
+modelml$summary()
 
 
-model$semf('svd', B=500)
+
+
+modelml$get_gof()
+
+#
+#
+# model$fit_svd()
+# model$fit_ml(initialisation_svd = TRUE)
+#
+# #bootstrap inference
+# model$svd_infer(500)
+# model$boot_svd$gof$pval
+# model$boot_svd$lambda
+# model$boot_svd$gamma
+#
+# #ml inference
+# model$ml_infer()
+#
+#
+# model$reliability('svd', 'Dillon')
+# model$reliability_value
+#
+# model$summary('svd')
+# model$summary('ml')
+
+

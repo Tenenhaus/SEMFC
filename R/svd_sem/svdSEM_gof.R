@@ -8,9 +8,9 @@ svdSEM_gof <- function(fit, B = 100, bias = FALSE){
   }else{
     # Tranforms the data sets in the way proposed 
     # by Yuan & Hayashi (2003)
-    df = Reduce("cbind", fit$blocks)
-    Z0 = scaleDataSet(df, fit$SIGMA_IMPLIED)
-    Z0 = lapply(split(data.frame(t(Z0)), 
+    df <- Reduce("cbind", fit$blocks)
+    Z0 <- scaleDataSet(df, fit$SIGMA_IMPLIED)
+    Z0 <- lapply(split(data.frame(t(Z0)),
                       as.factor(rep(seq_along(fit$blocks),
                                     sapply(fit$blocks, NCOL)))),
                 t)
@@ -19,12 +19,12 @@ svdSEM_gof <- function(fit, B = 100, bias = FALSE){
     gamma = fit$gamma
     Tb_LS = rep(NA, B)
     
-    Tb_LS = pbapply::pbsapply(1:B, 
+    Tb_LS <- pbapply::pbsapply(1:B,
                       function(b){
-                        ind = sample(NROW(df), replace = TRUE)
-                        Zb = lapply(Z0, function(x) x[ind, ])
-                        S = cov2(Reduce("cbind", Zb), bias = bias)
-                        fit_b = svdSEM(Zb, 
+                        ind <- sample(NROW(df), replace = TRUE)
+                        Zb <- lapply(Z0, function(x) x[ind, ])
+                        S <- cov2(Reduce("cbind", Zb), bias = bias)
+                        fit_b <- svdSEM(Zb,
                                        C = fit$C,
                                        scale = fit$scale, 
                                        mode = fit$mode, 
@@ -38,7 +38,7 @@ svdSEM_gof <- function(fit, B = 100, bias = FALSE){
                       )
     
     
-    pval = mean(fit$T_LS <= Tb_LS, na.rm = TRUE)
+    pval <- mean(fit$T_LS <= Tb_LS, na.rm = TRUE)
     return(list(T_LS = fit$T_LS,
                 Tb_LS = Tb_LS,
                 pval = pval, 

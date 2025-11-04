@@ -7,6 +7,7 @@ source('R/utils/get_parameter_model_sem.R')
 source('R/utils/ind_exo_endo.R')
 source('R/utils/get_lengths_theta.R')
 source('R/utils/reliability.R')
+source('R/utils/chi2sem.R')
 #import functions from svd module
 source('R/svd_sem/svdSEM.R')
 source('R/svd_sem/parameters_svd.R')
@@ -48,13 +49,13 @@ SemFC <- R6Class(
     block_sizes = NULL,
     lengths_theta = NULL,
     S_composites = NULL,
-    boot_svd = NULL,
-    ml_infer_estimate = NULL,
+    infer_estimate = NULL,
+    boot_rep = NULL,
     reliability_value = NULL,
     SD = NULL,
     VCOV = NULL,
-    svd_parameters = list(),
-    ml_parameters = list(),
+    gof = NULL,
+    parameters = list(),
 
 
 
@@ -84,8 +85,6 @@ SemFC <- R6Class(
       self$lengths_theta <- get_lengths_theta(self$which_exo_endo, self$block_sizes, self$mode)
 
 
-
-
     },
 
 
@@ -98,7 +97,7 @@ SemFC <- R6Class(
                            self$mode,
                            self$bias)
 
-      self$svd_parameters <- svd_result
+      self$parameters <- svd_result
       theta_svd <- parameters_svd(lambda = svd_result$lambda,
                                   P_EXO = svd_result$P_EXO,
                                   G = svd_result$gamma,
@@ -108,19 +107,17 @@ SemFC <- R6Class(
                                   S_composites = self$S_composites,
                                   mode = self$mode)
 
-      self$svd_parameters$theta <- theta_svd
-      self$svd_parameters$F <- F1(theta_svd, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
-
-
+      self$parameters$theta <- theta_svd
+      self$parameters$F <- F1(theta_svd, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
     },
+
     svd_infer = function(B = 1000, verbose = TRUE){
-      if (is.null(self$svd_parameters)) {
+      if (is.null(self$parameters)) {
         self$fit_svd()
       }
-      boot_out <- svdSEM_infer(self$svd_parameters, B, verbose = TRUE)
-      self$boot_svd <- boot_out
-      gof <- svdSEM_gof(self$svd_parameters, B)
-      self$boot_svd$gof <- gof
+      boot_out <- svdSEM_infer(self$parameters, B, verbose = TRUE)
+      self$infer_estimate <- boot_out
+
 
     },
 
@@ -132,10 +129,10 @@ SemFC <- R6Class(
 
       # Initialisation par SVD si demandé
       if (initialisation_svd) {
-        if (is.null(self$svd_parameters$theta)) {
+        if (is.null(self$parameters$theta)) {
           self$fit_svd() }
 
-        initial_params <- self$svd_parameters$theta
+        initial_params <- self$parameters$theta
       } else {
         len_theta <- sum(self$lengths_theta)
         initial_params <- runif(len_theta)
@@ -143,11 +140,11 @@ SemFC <- R6Class(
 
       ml_sol <- mlSEM(initial_params, block_sizes, mode, self$cov_S, self$lengths_theta, self$which_exo_endo)
       theta_ml <- ml_sol$pars
-      self$ml_parameters <- lvm_ml(x = theta_ml, block_sizes = block_sizes, mode =mode,
+      self$parameters <- lvm_ml(x = theta_ml, block_sizes = block_sizes, mode =mode,
                                    lengths_parameter = self$lengths_theta, which_exo_endo = self$which_exo_endo,
                                    jac = F, varnames = self$varnames)
-      self$ml_parameters$theta <- theta_ml
-      self$ml_parameters$F <- F1(theta_ml, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
+      self$parameters$theta <- theta_ml
+      self$parameters$F <- F1(theta_ml, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
 
 
     },
@@ -155,27 +152,25 @@ SemFC <- R6Class(
 
 
     ml_infer = function(){
-      theta_ml <- self$ml_parameters$theta
+      theta_ml <- self$parameters$theta
       block_sizes <- self$block_sizes
       mode <- self$mode
       S <- self$cov_S
       N <- self$n_row
 
+      ml_infer_estimate <- mlSEM_infer(theta_ml, S, block_sizes, mode, self$lengths_theta, N, self$parameters,self$which_exo_endo)
 
-
-      ml_infer_estimate <- mlSEM_infer(theta_ml, S, block_sizes, mode, self$lengths_theta, N, self$ml_parameters,self$which_exo_endo)
-
-      self$ml_infer_estimate <- ml_infer_estimate
+      self$infer_estimate <- ml_infer_estimate$estimate
     },
 
     reliability = function(fit, metric='Dillon'){
       if (fit=='svd'){
-        lambdas <- self$svd_parameters$lambda
-        residual_variances <- self$svd_parameters$residual_variance
+        lambdas <- self$parameters$lambda
+        residual_variances <- self$parameters$residual_variance
       }
       else if (fit=='ml'){
-        lambdas <- self$ml_parameters$lambda
-        residual_variances <- self$ml_parameters$residual_variance
+        lambdas <- self$parameters$lambda
+        residual_variances <- self$parameters$residual_variance
 
       }
 
@@ -185,50 +180,144 @@ SemFC <- R6Class(
 
     },
 
-    gof = function(){
+    get_gof = function(B = 1000){
+
+      estimator <- self$estimator
 
       p <- sum(self$block_sizes)
-      q <- sum(model$lengths_theta)
-      F
+      q <- sum(self$lengths_theta)
+      F <- self$parameters$F
+      N <- self$n_row
+      S <- self$cov_S
+      Sigma <- self$parameters$SIGMA_IMPLIED
+
+      res_gof <- list()
 
       chi2 <- chi2sem(p, q, F, N)
+      res_gof$chi2 <- chi2
+
+      # basline test
+      S_baseline <- diag(diag(S))
+      F_baseline <- log(det(S_baseline)) + sum(diag(S%*%solve(S_baseline))) - log(det(S)) - NCOL(S)
+      baseline <- chi2sem(p, p, F_baseline, N)
+      res_gof$baseline <- baseline
+
+      if (estimator == 'svd'){
+        bollen_stine <- svdSEM_gof(self$parameters, B)
+        res_gof$bollen_stine <- bollen_stine
+      }
 
 
+      cfi <- 1 - (max(chi2$test - chi2$df, 0)) /
+           (max(baseline$test - baseline$df, chi2$test - chi2$df, 0))
+
+      tli <- ( (baseline$test /  baseline$df) - (chi2$test / chi2$df) ) /
+             ( (baseline$test /  baseline$df) - 1 )
+
+      res_gof$cfi <- cfi
+      res_gof$tli <- tli
+
+      # loglik
+      loglik_H0 <- -(N/2)*(p*log(2*pi) + log(det(Sigma)) + sum(diag(solve(Sigma) %*% S)))
+      loglik_H1 <- -(N/2)*(p*log(2*pi) + log(det(S)) + sum(diag(solve(S) %*% S)))
+      AIC <- -2 * loglik_H0 + 2 * q
+      BIC <- -2 * loglik_H0 + q * log(N)
+      SABIC <- -2 * loglik_H0 + q * log((N + 2) / 24)
+
+
+
+      self$gof <- res_gof
 
     },
 
 
 
-    semf = function(method, B = 1000, initialisation_svd = TRUE){
-      if (method == 'svd'){
+    fit = function(estimator, B = 1000, initialisation_svd = TRUE){
+      self$estimator <- estimator
+      self$boot_rep <- B
+      if (estimator == 'svd'){
         self$fit_svd()
         self$svd_infer(B)
-      } else if(method == 'ml'){
+      } else if(estimator == 'ml'){
         self$fit_ml(initialisation_svd)
         self$ml_infer()
       }
+      self$get_gof(B)
+
     },
 
-    summary = function(method){
+    summary = function(){
 
-      if (method == 'ml'){
-        estimate <- model$ml_infer_estimate$estimate
-      } else if (method == 'svd'){
-        estimate <- model$boot_svd
-      }
+      estimator <- self$estimator
+      infer_estimate <- self$infer_estimate
 
-      lambda_infer <- estimate$lambda
-      beta_infer <- estimate$beta
-      gamma_infer <- estimate$gamma
-      residualvariance_infer <- estimate$residual_variance
+      #gof
+      # user test
+      testchi2 <- self$gof$chi2$test
+      dfchi2 <- self$gof$chi2$df
+      pvalchi2 <- self$gof$chi2$pval
+
+      # baseline test
+
+      testbaseline <- self$gof$baseline$test
+      dfbaseline <- self$gof$baseline$df
+      pvalbaseline <- self$gof$baseline$pval
+
+      #  vs
+      cfi <- self$gof$cfi
+      tli <- self$gof$tli
+
+
+
+
+      # inference estimation
+      lambda_infer <- infer_estimate$lambda
+      beta_infer <- infer_estimate$beta
+      gamma_infer <- infer_estimate$gamma
+      residualvariance_infer <- infer_estimate$residual_variance
 
 
       cat("\n")
-      cat("Estimator", sprintf("%44s\n", toupper(method)))
-      cat("Number of model parameters", sprintf("%23d\n", sum(model$lengths_theta)))
+      cat("Estimator", sprintf("%44s\n", toupper(estimator)))
+      cat("Number of model parameters", sprintf("%23d\n", sum(self$lengths_theta)))
       cat("\n")
       cat("Number of observations", sprintf("%32d\n", self$n_row))
       cat("\n\n")
+
+      cat("Model Test User Model :\n")
+      cat("                                                      \n")
+      cat(sprintf("  Test statistic%38.3f\n", testchi2))
+      cat(sprintf("  Degrees of freedom%33d\n", dfchi2))
+      cat(sprintf("  P-value (Chi-square)%29.3f\n", pvalchi2))
+      cat("\n")
+
+
+      cat("Model Test Baseline Model :\n")
+      cat("                                                      \n")
+      cat(sprintf("  Test statistic%38.3f\n", testbaseline))
+      cat(sprintf("  Degrees of freedom%33d\n", dfbaseline))
+      cat(sprintf("  P-value %29.3f\n", pvalbaseline))
+      cat("\n")
+
+
+      cat("User Model versus Baseline Model:\n")
+      cat("\n")
+      cat(sprintf("  Comparative Fit Index (CFI)%22.3f\n", cfi))
+      cat(sprintf("  Tucker-Lewis Index (TLI)%25.3f\n", tli))
+      cat("\n")
+
+
+
+      if (estimator == 'svd'){
+        B <- self$boot_rep
+        pvalbs <- self$gof$bollen_stine$pval
+
+        cat("Bootstrap Test (Bollen Stine):\n")
+        cat("\n")
+        cat(sprintf("  Number of bootstrap replications%17d\n", B))
+        cat(sprintf("  Bollen Stine bootstrap p-value%20.3f\n", pvalbs))
+        cat("\n")
+      }
 
 
       cat("\nCoefficients:\n")
