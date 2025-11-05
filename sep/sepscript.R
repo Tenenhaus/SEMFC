@@ -34,27 +34,6 @@ modelml$summary()
 
 
 
-modelml$get_gof()
 
-#
-#
-# model$fit_svd()
-# model$fit_ml(initialisation_svd = TRUE)
-#
-# #bootstrap inference
-# model$svd_infer(500)
-# model$boot_svd$gof$pval
-# model$boot_svd$lambda
-# model$boot_svd$gamma
-#
-# #ml inference
-# model$ml_infer()
-#
-#
-# model$reliability('svd', 'Dillon')
-# model$reliability_value
-#
-# model$summary('svd')
-# model$summary('ml')
 
 
