@@ -258,7 +258,7 @@ SemFC <- R6Class(
 
     },
 
-    parameterEstimates = function()
+    #parameterEstimates = function()
 
 
 
