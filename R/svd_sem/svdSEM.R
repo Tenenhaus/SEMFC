@@ -51,28 +51,23 @@ svdSEM <- function(A, C, scale = TRUE,
                    mode = rep("formative", length(A)), 
                    bias = FALSE){
 
-    # vecteur qui code le nombre des variables observes de chaque bloc
-    pjs <- sapply(A, NCOL)
-    # nombre d'individu
-    nb_row <- NROW(A[[1]])
-    
     #-------------------------------------------------------
-    blocks = A
+    blocks <- A
     if(scale){
-      A = lapply(A, function(x) scale2(x, bias = bias))
+      A <- lapply(A, function(x) scale2(x, bias = bias))
     }else{
-      A = lapply(A, function(x) scale2(x, bias = bias, scale = FALSE))
+      A <- lapply(A, function(x) scale2(x, bias = bias, scale = FALSE))
     }
     
 
-    lambda = list()
-    omega = list()
+    lambda <- list()
+    omega <- list()
     nb_ind <- NROW(A[[1]])
     J <- length(A)
 
 
     # Extract first singular vector for each block.
-    a = sapply(1:J, 
+    a <- sapply(1:J,
                function(x) 
                  svd(t(A[[x]])%*%Reduce("cbind", A[-x]), 
                      nu = 1, nv = 1)$u, 
@@ -80,8 +75,8 @@ svdSEM <- function(A, C, scale = TRUE,
                )
     
     #check for sign inversion 
-    a = lapply(a, function(x) {if (x[1]>0) {x<-x} else {x<--x}})
-    names(a) = names(A)
+    a <- lapply(a, function(x) {if (x[1]>0) {x<-x} else {x<--x}})
+    names(a) <- names(A)
 
     #Compute disattenuation 
     d <- rep(0, J)
@@ -92,25 +87,25 @@ svdSEM <- function(A, C, scale = TRUE,
                          bias = bias)$d
     }
     
-    names(d) = names(A)
+    names(d) <- names(A)
     
     #... and apply the correction
-    lambda = mapply("*", a, d, SIMPLIFY = FALSE)
+    lambda <- mapply("*", a, d, SIMPLIFY = FALSE)
     
     for (j in which(mode == "formative")){
-        omega[[j]] = solve(cov2(A[[j]], bias = bias))%*%a[[j]]*d[j]
+        omega[[j]] <- solve(cov2(A[[j]], bias = bias))%*%a[[j]]*d[j]
     }
     
     if(any(mode == "formative")) 
-      names(omega) = names(A)[which(mode=="formative")]
+      names(omega) <- names(A)[which(mode=="formative")]
     
         
     for (b in seq_len(J))
-      rownames(a[[b]]) = rownames(lambda[[b]]) = colnames(A[[b]])
+      rownames(a[[b]]) <- rownames(lambda[[b]]) <- colnames(A[[b]])
       
 
     # reliability coefficients 
-    reliability_coef = d^2/mapply("%*%", 
+    reliability_coef <- d^2/mapply("%*%",
                                   lapply(a, t), 
                                   mapply("%*%", 
                                   lapply(A, function(x) cov2(x, bias= bias)), 
@@ -119,50 +114,50 @@ svdSEM <- function(A, C, scale = TRUE,
         
       
     # rho_jk (Expected value : -1 <=rho_jk <=1)
-    Phat = matrix(0, J, J)
+    Phat <- matrix(0, J, J)
     for (j in seq_len(J)){
       for (k in j:J){
-            Phat[j, k] = t(a[[j]])%*%cov2(A[[j]], A[[k]], bias = bias)%*%a[[k]]/(d[j]*d[k])
+            Phat[j, k] <- t(a[[j]])%*%cov2(A[[j]], A[[k]], bias = bias)%*%a[[k]]/(d[j]*d[k])
       }
     }
     
-    Phat = Phat + t(Phat)
-    diag(Phat) = 1
-    colnames(Phat) = rownames(Phat) = names(A)
+    Phat <- Phat + t(Phat)
+    diag(Phat) <- 1
+    colnames(Phat) <- rownames(Phat) <- names(A)
     
     #Call lvm() for the structural model
-    lv = lvm(Phat, C)
+    lv <- lvm(Phat, C)
     
-    var_MVs = lapply(A, function(x) diag(cov2(x, bias = bias)))
+    var_MVs <- lapply(A, function(x) diag(cov2(x, bias = bias)))
     
     #standardized loadings     
     # Expected value : -1 <= cor(y_jh, eta_j) <=1
-    std_lambda = mapply("/", lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
+    std_lambda <- mapply("/", lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
     
     #residual variance    
-    residual_variance = mapply("-", var_MVs, lapply(lambda, function(x) x^2), 
+    residual_variance <- mapply("-", var_MVs, lapply(lambda, function(x) x^2),
                                SIMPLIFY = FALSE)
     
     #Compute the implied covariance matrix implied by the model
-    BDIAG = list()
+    BDIAG <- list()
 
     for (i in seq_len(J)){
       if(mode[i] == "formative"){
-        BDIAG [[i]] = cov2(A[[i]], bias = bias)-lambda[[i]]%*%t(lambda[[i]])
+        BDIAG [[i]] <- cov2(A[[i]], bias = bias)-lambda[[i]]%*%t(lambda[[i]])
       }else{
-        BDIAG [[i]] = diag(drop(residual_variance[[i]]))
+        BDIAG [[i]] <- diag(drop(residual_variance[[i]]))
       }
     }
     
-    LAMBDA = as.matrix(Matrix::bdiag(lambda))
-    BDIAG = as.matrix(Matrix::bdiag(BDIAG))
-    SIGMA_LVM = LAMBDA%*%lv$R_LVM%*%t(LAMBDA) + BDIAG
+    LAMBDA <- as.matrix(Matrix::bdiag(lambda))
+    BDIAG <- as.matrix(Matrix::bdiag(BDIAG))
+    SIGMA_LVM <- LAMBDA%*%lv$R_LVM%*%t(LAMBDA) + BDIAG
     
-    var_Names = colnames(Reduce("cbind", A))
-    dimnames(SIGMA_LVM) = list(var_Names, var_Names) 
+    var_Names <- colnames(Reduce("cbind", A))
+    dimnames(SIGMA_LVM) <- list(var_Names, var_Names)
     
     #Measure of goodness-of(fit)
-    T_LS = d_LS(cov2(Reduce("cbind", A), bias = bias), SIGMA_LVM)
+    T_LS <- d_LS(cov2(Reduce("cbind", A), bias = bias), SIGMA_LVM)
 
     lambda <- lapply(lambda, function(x) setNames(as.vector(x), rownames(x)))
     residual_variance <- lapply(residual_variance, function(x) setNames(as.vector(x), paste0(".", rownames(x))))

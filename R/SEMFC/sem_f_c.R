@@ -258,6 +258,12 @@ SemFC <- R6Class(
 
     },
 
+    parameterEstimates = function()
+
+
+
+
+
     summary = function(){
 
       estimator <- self$estimator
@@ -374,7 +380,7 @@ SemFC <- R6Class(
         printCoefmat(gamma_infer, P.values = TRUE, has.Pvalue = TRUE)
       }
 
-      cat("variance:\n")
+      cat("residual variance:\n")
       if (nrow(residualvariance_infer) != 0){
         printCoefmat(residualvariance_infer, P.values = TRUE, has.Pvalue = TRUE)
       }
