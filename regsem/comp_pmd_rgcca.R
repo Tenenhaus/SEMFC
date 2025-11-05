@@ -145,7 +145,7 @@ sparse_svd <- function(L, pen, values){
 
 
 sparse.svd = sparse_svd(Y_2, c(1,1,0,0,0,0), c(optsvd[[1]],sqrt(3),0,0,0,0))
-plot(sparse.svd[[1]])
+plot(-sparse.svd[[1]])
 
 sparse.svd.cv = sparse_svd.cv(Y_2, c(1,0,0,0,0,0), 50,20,30)
 plot(sparse.svd.cv[[1]])
