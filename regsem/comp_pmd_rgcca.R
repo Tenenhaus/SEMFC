@@ -181,13 +181,29 @@ classification <- function(pred){
   FN <- matrice_confusion["1","0"]
   TN <- matrice_confusion["0","0"]
 
+  total <- TP + FP + TN + FN
   precision <- TP / (TP + FP)
   recall <- TP / (TP + FN)
+  specificity <- TN / (TN + FP)
+  balanced_accuracy <- (recall + specificity) / 2
+  accuracy <- (TP + TN) / total
   FPR <- FP / (FP + TN)
   FNR <- 1 - recall
   f1 <- 2 * (precision * recall) / (precision + recall)
+  youden <- recall + specificity - 1
 
-  return (list(precision = precision, recall = recall, f1 = f1, FPR = FPR, FNR = FNR))
+  return (list(
+    precision = precision,
+    recall = recall,
+    f1 = f1,
+    FPR = FPR,
+    FNR = FNR,
+    specificity = specificity,
+    accuracy = accuracy,
+    balanced_accuracy = balanced_accuracy,
+    youden = youden
+  ))
+
 
 }
 
@@ -333,17 +349,18 @@ roc = function(len, method){
 
   return(list(tab = tab, auc = auc))
 
-
-
 }
 
+rocsggcca = roc(300, 'sgcca')
+rocsvd = roc(300, 'pmd')
 
-roc(300, 'sgcca')
-roc(300, 'pmd')
+time_rocrgcca <- system.time(rocsggcca <- roc(300, 'sgcca'))
+print(time_rocrgcca)
 
+rocsggcca <- roc(300, 'sgcca')
 
-
-
+time_rocsvd <- system.time(rocsvd <- roc(300, 'pmd'))
+print(time_rocsvd)
 
 
 sgcca_opt = rgcca(Y_2, sparsity = c(optrgcca[[1]],1 ,1,1,1,1))
@@ -353,3 +370,21 @@ ssvd_opt = sparse_svd(Y, c(1,0,0,0,0,0), c(optsvd[[1]],0,0,0,0,0))
 res_svd = classification(ssvd_opt[[1]])
 
 
+val_diff = rocsggcca$tab$val[ which(abs(rocsggcca$tab$f1 - rocsvd$tab$f1) != 0)]
+ind = val_diff[4]
+
+sgcca_diff = rgcca(Y_2, sparsity = c(ind,1 ,1,1,1,1))
+plot(sgcca_diff$a[[1]])
+
+svd_diff = sparse_svd(Y, c(1,0,0,0,0,0), c(ind*sqrt(180),0,0,0,0,0))
+plot(svd_diff[[1]])
+
+plot(abs(sgcca_diff$a[[1]] - svd_diff[[1]]))
+
+
+for (val in rocsggcca$tab$val){
+  sgcca_diff = rgcca(Y_2, sparsity = c(val,1 ,1,1,1,1))
+  plot(sgcca_diff$a[[1]])
+
+
+}
