@@ -32,3 +32,18 @@ ssvd_opt <- sparse_svd(Y, c(1,0,0,0,0,0), c(optsvd[[1]],0,0,0,0,0))
 res_svd <- classification(ssvd_opt[[1]])
 
 
+val_diff = rocsggcca$tab$val[ which(abs(rocsggcca$tab$f1 - rocsvd$tab$f1) != 0)]
+ind = val_diff[1]
+vinit = load("regsem/vinit.RData")
+mon_vecteur <- as.matrix(scan("regsem/v_init.txt"))
+
+
+sgcca_diff = rgcca(Y_2, sparsity = c(ind,1 ,1,1,1,1), tol = 1e-07, verbose = TRUE)
+plot(sgcca_diff$a[[1]])
+
+svd_diff = sparse_svd(Y, c(1,0,0,0,0,0), c(ind*sqrt(180),0,0,0,0,0), trace = TRUE, v = mon_vecteur)
+plot(svd_diff[[1]])
+
+plot(abs(sgcca_diff$a[[1]] - svd_diff[[1]]))
+
+

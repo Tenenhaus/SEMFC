@@ -1,7 +1,7 @@
 
 
 
-sparse_svd <- function(L, pen, values){
+sparse_svd <- function(L, pen, values, trace=FALSE, v=NULL){
 
   res <-  list()
   L = lapply(L,scale)
@@ -11,7 +11,7 @@ sparse_svd <- function(L, pen, values){
     if (pen[[x]] == 1){
       data <- t(t(L[[x]])%*%Reduce("cbind", L[-x]))
 
-      out <- SPC(data, sumabsv=values[[x]], K=1, center = FALSE)$v
+      out <- SPC(data, sumabsv=values[[x]], K=1, center = FALSE, , niter = 1000, trace = trace, v=v)$v
 
       res[[x]] <- out
 
@@ -94,7 +94,7 @@ find_max_sparsity_rgcca <-function(len){
 
 
   for (val in seq(1/sqrt(ncol(Y[[1]])), 1, length = len)){
-    sgcca <- rgcca(Y_2, sparsity = c(val,1 ,1,1,1,1))
+    sgcca <- rgcca(Y_2, sparsity = c(val,1 ,1,1,1,1), tol = 1e-07)
     res_sgcca <- classification(sgcca$a[[1]])
     f1 <- res_sgcca[[3]]
     tab <- rbind(tab,c(val, f1))
@@ -128,7 +128,7 @@ roc <- function(len, method){
 
 
       if (method=='sgcca'){
-        fit <- rgcca(Y_2, sparsity = c(val,1 ,1,1,1,1))
+        fit <- rgcca(Y_2, sparsity = c(val,1 ,1,1,1,1), tol = 1e-07)
         serie <- fit$a[[1]]
       }
       else if (method=='pmd'){

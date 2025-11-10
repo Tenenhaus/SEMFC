@@ -371,7 +371,7 @@ res_svd = classification(ssvd_opt[[1]])
 
 
 val_diff = rocsggcca$tab$val[ which(abs(rocsggcca$tab$f1 - rocsvd$tab$f1) != 0)]
-ind = val_diff[4]
+ind = val_diff[1]
 
 sgcca_diff = rgcca(Y_2, sparsity = c(ind,1 ,1,1,1,1))
 plot(sgcca_diff$a[[1]])
@@ -385,6 +385,4 @@ plot(abs(sgcca_diff$a[[1]] - svd_diff[[1]]))
 for (val in rocsggcca$tab$val){
   sgcca_diff = rgcca(Y_2, sparsity = c(val,1 ,1,1,1,1))
   plot(sgcca_diff$a[[1]])
-
-
 }
