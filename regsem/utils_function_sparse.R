@@ -4,8 +4,8 @@
 sparse_svd <- function(L, pen, values, trace=FALSE, v=NULL){
 
   res <-  list()
-  L = lapply(L,scale)
-  L = lapply(L, function (x) x/sqrt(NCOL(x)))
+  L <- lapply(L,scale)
+  L <- lapply(L, function (x) x/sqrt(NCOL(x)))
 
   for (x in 1:length(L)){
     if (pen[[x]] == 1){
@@ -56,7 +56,8 @@ classification <- function(pred){
     specificity = specificity,
     accuracy = accuracy,
     balanced_accuracy = balanced_accuracy,
-    youden = youden
+    youden = youden,
+    lambda = pred
   ))
 
 
@@ -119,6 +120,7 @@ roc <- function(len, method){
   all_cols <- c(first_cols, other_metrics)
 
   tab <- matrix(nrow=0, ncol = length(all_cols))
+  lambda_tab <- matrix(nrow=0, ncol = 180)
   colnames(tab) <- all_cols
 
 
@@ -143,6 +145,7 @@ roc <- function(len, method){
                 res$recall, res$FPR, res$f1,
                 res$precision, res$FNR, res$specificity, res$accuracy, res$balanced_accuracy, res$youden)
       tab <- rbind(tab, vals)
+      lambda_tab <- rbind(lambda_tab, as.vector(res$lambda))
 
     }
 
@@ -161,6 +164,29 @@ roc <- function(len, method){
          main = paste("ROC Curve", method))
   abline(0, 1, col = "red", lty = 2)  # Ligne diagonale
 
-  return(list(tab = tab, auc = auc))
+  return(list(tab = tab, auc = auc, lambdas = lambda_tab) )
 
 }
+
+
+
+plot_compare_metric <- function(class_diff_svd, class_diff_sgcca, metric = "f1",
+                               legend_names = c("SVD", "SGCCA"),
+                               colors = c("blue", "red")) {
+  # Vérification d'existence de la métrique
+  if (!(metric %in% names(class_diff_svd))) stop(paste("La métrique", metric, "n'existe pas dans class_diff_svd"))
+  if (!(metric %in% names(class_diff_sgcca))) stop(paste("La métrique", metric, "n'existe pas dans class_diff_sgcca"))
+
+  v1 <- class_diff_svd[[metric]]
+  v2 <- class_diff_sgcca[[metric]]
+
+  plot(v1, type = "l", col = colors[1], lwd = 2,
+       xlab = "Index", ylab = metric,
+       main = paste("Comparaison de", metric, "entre SVD et SGCCA"),
+       ylim = range(c(v1, v2), na.rm = TRUE))
+
+  lines(v2, col = colors[2], lwd = 2)
+
+  legend("topright", legend = legend_names, col = colors, lwd = 2)
+}
+

@@ -24,6 +24,9 @@ time_rocsvd <- system.time(rocsvd <- roc(300, 'pmd'))
 mean_svd <- colMeans(rocsvd$tab)
 print(time_rocsvd)
 
+cors <- sapply(1:300, function(i) abs(cor(rocsvd$lambdas[i, ], rocsggcca$lambdas[i, ])))
+
+
 
 sgcca_opt <- rgcca(Y_2, sparsity = c(optrgcca[[1]],1 ,1,1,1,1))
 class_rgcca_opt <- classification(sgcca_opt$a[[1]])
@@ -32,16 +35,23 @@ ssvd_opt <- sparse_svd(Y, c(1,0,0,0,0,0), c(optsvd[[1]],0,0,0,0,0))
 res_svd <- classification(ssvd_opt[[1]])
 
 
-val_diff = rocsggcca$tab$val[ which(abs(rocsggcca$tab$f1 - rocsvd$tab$f1) != 0)]
-ind = val_diff[1]
-vinit = load("regsem/vinit.RData")
-mon_vecteur <- as.matrix(scan("regsem/v_init.txt"))
+# val_diff <- rocsggcca$tab$val[ which(abs(rocsggcca$tab$f1 - rocsvd$tab$f1) != 0)]
+#
+# class_diff_svd <- rocsvd$tab[ which(abs(rocsggcca$tab$f1 - rocsvd$tab$f1) != 0), ]
+# class_diff_sgcca <- rocsggcca$tab[ which(abs(rocsggcca$tab$f1 - rocsvd$tab$f1) != 0), ]
+#
+# rownames(class_diff_svd) <- paste0('svd', seq_len(nrow(class_diff_svd)))
+# rownames(class_diff_sgcca) <- paste0('sgcca', seq_len(nrow(class_diff_sgcca)))
+
+plot_compare_metric(rocsvd$tab, rocsggcca$tab, 'f1')
 
 
-sgcca_diff = rgcca(Y_2, sparsity = c(ind,1 ,1,1,1,1), tol = 1e-07, verbose = TRUE)
+
+
+sgcca_diff <- rgcca(Y_2, sparsity = c(ind,1 ,1,1,1,1), tol = 1e-07, verbose = TRUE)
 plot(sgcca_diff$a[[1]])
 
-svd_diff = sparse_svd(Y, c(1,0,0,0,0,0), c(ind*sqrt(180),0,0,0,0,0), trace = TRUE, v = mon_vecteur)
+svd_diff <- sparse_svd(Y, c(1,0,0,0,0,0), c(ind*sqrt(180),0,0,0,0,0), trace = TRUE, v = mon_vecteur)
 plot(svd_diff[[1]])
 
 plot(abs(sgcca_diff$a[[1]] - svd_diff[[1]]))
