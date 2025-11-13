@@ -1,0 +1,105 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+library(RGCCA)
+library(PMA)
+
+
+source('data/data_generated_reflective.R')
+source('R/SEMFC/sem_f_c.R')
+source('regsem/utils_function_sparse.R')
+
+X <- X_2
+Y <- Y_2
+
+
+
+```
+
+### ROC sgcca
+```{r}
+time_rocrgcca <- system.time(rocsggcca <- roc(300, 'sgcca'))
+mean_sgcca <- colMeans(rocsggcca$tab)
+```
+
+### ROC pmd
+```{r}
+time_rocsvd <- system.time(rocsvd <- roc(300, 'pmd'))
+mean_svd <- colMeans(rocsvd$tab)
+```
+```{r, message = FALSE, warning = FALSE}
+optsvd <- find_max_sparsity_svd(300)
+optrgcca <- find_max_sparsity_rgcca(300)
+
+
+
+
+
+tls_sgcca <- comp_tls(300, 'sgcca')
+
+tls_pmd <- comp_tls(300, 'pmd')
+
+
+#model svd
+model<- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, pen=FALSE,
+                       len_seq = NULL,
+                       nfold=NULL,
+                       niter=NULL,
+                       sparse_val=NULL)
+model$fit_svd()
+
+```
+```{r}
+print('Temps execution sgcca:')
+print(time_rocrgcca)
+print('Temps execution pmd:')
+print(time_rocsvd)
+```
+
+# Comparaison
+
+## F1 score
+
+
+```{r}
+plot_compare_metric(rocsvd$tab, rocsggcca$tab, 'f1')
+```
+
+## Balanced Accuracy
+```{r}
+plot_compare_metric(rocsvd$tab, rocsggcca$tab, 'balanced_accuracy')
+```
+```{r}
+cors <- sapply(1:300, function(i) abs(cor(rocsvd$lambdas[i, ], rocsggcca$lambdas[i, ])))
+plot(cors)
+```
+
+
+## distance with theorical sigma
+```{r}
+plot_compare_metric(tls_pmd, tls_sgcca, 'theorical_ls')
+thsvd_ls <- d_LS(SIGMA, model$svd_parameters$SIGMA_IMPLIED)
+
+abline(h=thsvd_ls, col='red', lty=2)
+legend("right", legend = "svd", col = "red", lty = 2, bty = "n")
+
+```
+
+## distance with empirical sigma
+
+
+```{r}
+plot_compare_metric(tls_pmd, tls_sgcca, 'empirical_ls')
+
+
+abline(h=model$svd_parameters$T_LS, col='red', lty=2)
+legend("right", legend = "svd", col = "red", lty = 2, bty = "n")
+
+```
+
+

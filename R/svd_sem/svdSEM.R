@@ -104,7 +104,7 @@ svdSEM <- function(A, C, scale = TRUE,
 
 
 
-        out <- SPC(data, sumabsv=sparse_val, K=1)
+        out <- SPC(data, sumabsv=sparse_val, K=1, center = FALSE, niter = 1000, trace = FALSE)
         return(out$v)
 
 
@@ -198,7 +198,7 @@ svdSEM <- function(A, C, scale = TRUE,
     } else if (pen=='rgcca'){
 
 
-      a = rgcca(A, sparsity = c(sparse_val,1 ,1,1,1,1))$a
+      a = rgcca(A, sparsity = c(sparse_val,0.635 ,1,1,1,1), tol = 1e-07)$a
 
 
 

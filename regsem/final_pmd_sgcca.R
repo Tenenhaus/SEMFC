@@ -57,3 +57,48 @@ plot(svd_diff[[1]])
 plot(abs(sgcca_diff$a[[1]] - svd_diff[[1]]))
 
 
+modelrgcca <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, pen='rgcca',
+                      len_seq = NULL,
+                      nfold=NULL,
+                      niter=NULL,
+                      sparse_val=0.5635770)
+
+modelrgcca$fit_svd()
+
+modelpmd <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F, pen='pmd',
+                      len_seq = NULL,
+                      nfold=NULL,
+                      niter=NULL,
+                      sparse_val=7.0628614)
+modelpmd$fit_svd()
+
+
+tls_sgcca <- comp_tls(300, 'sgcca')
+
+tls_pmd <- comp_tls(300, 'pmd')
+
+plot_compare_metric(tls_pmd, tls_sgcca, 'theorical_ls')
+plot_compare_metric(tls_pmd, tls_sgcca, 'empirical_ls')
+
+
+
+
+
+source('newpmd/pmd_coordonate_descente.R')
+
+
+lambdas_newpmd <- newpmd(Y, C, mode, c(7.56,0.632 * sqrt(100),sqrt(3),sqrt(3),sqrt(3),sqrt(3)),
+                         niter=50, tol=1e-07)
+
+time_rocnewsvd <- system.time(rocnewsvd <- roc(300, 'newpmd'))
+
+lambdas_test <- newpmd(Y, C, mode, c( 0.1488204,sqrt(3),sqrt(3),sqrt(3),sqrt(3),sqrt(3)),
+                         niter=50, tol=1e-07)
+
+
+
+plot_compare_metric(rocnewsvd$tab, rocsggcca$tab, 'f1')
+plot_compare_metric(rocnewsvd$tab, rocsggcca$tab, 'balanced_accuracy')
+
+
+
