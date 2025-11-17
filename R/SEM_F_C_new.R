@@ -148,8 +148,8 @@ for (b in seq_len(n_simu)){
 
 
       # SIGMA
-      S <- model$cov_S
-      S_composites_empirical <-list(S[1:3,1:3], S[4:6,4:6], S[7:9,7:9], S[10:12,10:12])
+      # S <- model$cov_S
+      # S_composites_empirical <-list(S[1:3,1:3], S[4:6,4:6], S[7:9,7:9], S[10:12,10:12])
       S_composites_ML <- model_ml$S_composites
       S_composites_true <- list(SIGMA11, SIGMA22,SIGMA33,SIGMA44)
 
@@ -157,7 +157,7 @@ for (b in seq_len(n_simu)){
       dls_ml_true <- mapply(d_LS, S_composites_ML,S_composites_true, SIMPLIFY = T)
       dls_ml_empirical <- mapply(d_LS, S_composites_ML,S_composites_empirical, SIMPLIFY = T)
 
-      sigma_hat[, b] <- c(dls_empirical_true, dls_ml_true, dls_ml_empirical)
+      sigma_hat[, b] <- c(dls_empirical_true, dls_ml_true)
 
       #goodness of fit
       gof[1, b] <- d_LS(SIGMA_SVD, SIGMA)
