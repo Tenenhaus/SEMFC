@@ -34,8 +34,8 @@ R <- rbind(cbind(PHI, PHI%*%t(GAMMA)%*%t(solve(diag(NROW(BETA))-BETA))),
 R2 <- 1- diag(PSI)
 
 
-n1 <- 4
-n2 <- 10
+n1 <- 1
+n2 <- 1
 somme <- (n2 - n1 + 1) * (n1 + n2  - 2) / 2
 
 
