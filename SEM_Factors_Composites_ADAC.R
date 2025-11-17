@@ -23,7 +23,7 @@ library(mvtnorm)
 library(MASS)
 library(lavaan)
 library(Rsolnp)
-load_all("RGCCA")
+load_all("SEMFC")
 
 #functions
 source("functions/data_simulation.R")
