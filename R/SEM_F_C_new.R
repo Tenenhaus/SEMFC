@@ -23,7 +23,7 @@ source('R/SEMFC/sem_f_c.R')
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
 set.seed(20091979) #my date of birth
-n_simu <- 1000
+n_simu <- 100
 N <- 300
 sol_svd <- matrix(0, 61, n_simu)
 sol_ml <- matrix(0, 61, n_simu)
@@ -148,16 +148,15 @@ for (b in seq_len(n_simu)){
 
 
       # SIGMA
-      # S <- model$cov_S
-      # S_composites_empirical <-list(S[1:3,1:3], S[4:6,4:6], S[7:9,7:9], S[10:12,10:12])
-      S_composites_ML <- model_ml$S_composites
+      S_composites_empirical <-model$S_composites
+      S_composites_ML <- model_ml$parameters$S_composites
       S_composites_true <- list(SIGMA11, SIGMA22,SIGMA33,SIGMA44)
 
       dls_empirical_true <- mapply(d_LS, S_composites_empirical,S_composites_true, SIMPLIFY = T)
       dls_ml_true <- mapply(d_LS, S_composites_ML,S_composites_true, SIMPLIFY = T)
       dls_ml_empirical <- mapply(d_LS, S_composites_ML,S_composites_empirical, SIMPLIFY = T)
 
-      sigma_hat[, b] <- c(dls_empirical_true, dls_ml_true)
+      sigma_hat[, b] <- c(dls_empirical_true, dls_ml_true, dls_ml_empirical)
 
       #goodness of fit
       gof[1, b] <- d_LS(SIGMA_SVD, SIGMA)
