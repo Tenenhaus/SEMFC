@@ -148,7 +148,8 @@ for (b in seq_len(n_simu)){
 
 
       # SIGMA
-
+      S <- model$cov_S
+      S_composites_empirical <-list(S[1:3,1:3], S[4:6,4:6], S[7:9,7:9], S[10:12,10:12])
       S_composites_ML <- model_ml$S_composites
       S_composites_true <- list(SIGMA11, SIGMA22,SIGMA33,SIGMA44)
 
