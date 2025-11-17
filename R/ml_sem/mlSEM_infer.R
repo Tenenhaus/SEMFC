@@ -167,7 +167,8 @@ mlSEM_infer <- function(x, S, block_sizes, mode, lengths_parameter, N, fit,which
 
   out <- list(
     estimate = table,
-    VCOV = VCOV
+    VCOV = VCOV,
+    SD = SD
   )
 
   return(out)

@@ -1,7 +1,7 @@
 source('data/data_simulation_mixed.R')
 
 
-set.seed(20091979)
+# set.seed(20091979)
 N <- 300
 library(mvtnorm)
 X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = TRUE)

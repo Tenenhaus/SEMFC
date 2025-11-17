@@ -131,8 +131,7 @@ SemFC <- R6Class(
 
       # Initialisation par SVD si demandé
       if (initialisation_svd) {
-        if (is.null(self$parameters$theta)) {
-          self$fit_svd() }
+        self$fit_svd()
 
         initial_params <- self$parameters$theta
       } else {
@@ -163,6 +162,8 @@ SemFC <- R6Class(
       ml_infer_estimate <- mlSEM_infer(theta_ml, S, block_sizes, mode, self$lengths_theta, N, self$parameters,self$which_exo_endo)
 
       self$infer_estimate <- ml_infer_estimate$estimate
+      self$VCOV <- ml_infer_estimate$VCOV
+      self$SD <- ml_infer_estimate$SD
     },
 
     reliability = function(fit, metric='Dillon'){
@@ -194,7 +195,6 @@ SemFC <- R6Class(
       Sigma <- self$parameters$SIGMA_IMPLIED
 
       res_gof <- list()
-
       chi2 <- chi2sem(p, q, F, N)
       res_gof$chi2 <- chi2
 

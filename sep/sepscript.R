@@ -28,7 +28,7 @@ model$summary()
 
 
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
-modelml$fit(estimator = 'ml', initialisation_svd  = FALSE)
+modelml$fit(estimator = 'ml', initialisation_svd  = TRUE)
 modelml$summary()
 
 
