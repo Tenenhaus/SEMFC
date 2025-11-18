@@ -184,3 +184,11 @@ for (b in seq_len(n_simu)){
 
 
 
+
+
+
+
+
+
+
+

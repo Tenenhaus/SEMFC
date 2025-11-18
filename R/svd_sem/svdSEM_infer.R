@@ -111,7 +111,7 @@ svdSEM_infer <- function(fit, B = 100, verbose = TRUE){
                            2*pnorm(abs(t_ratio[x]), lower.tail = FALSE)
   )
 
-  beta <- data.frame()
+  # beta <- data.frame()
   if (length(beta) != 0){
 
     beta = data.frame(beta = beta,
@@ -126,6 +126,7 @@ svdSEM_infer <- function(fit, B = 100, verbose = TRUE){
            )
 
   }
+  beta <- data.frame(beta)
 
 
   std_gamma = apply(boot_gamma, 2, sd)

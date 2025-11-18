@@ -15,6 +15,7 @@ source('R/svd_sem/svdSEM.R')
 source('R/svd_sem/parameters_svd.R')
 source('R/svd_sem/svdSEM_infer.R')
 source("R/svd_sem/svdSEM_gof.R")
+source("R/svd_sem/improper.R")
 #import functions from ml module
 source('R/ml_sem/F1.R')
 source('R/ml_sem/mlSEM.R')
@@ -23,10 +24,10 @@ source('R/ml_sem/mlSEM_infer.R')
 
 library(Matrix)
 library(knitr)
-library(pheatmap)
+# library(pheatmap)
+#
+# library(MASS)
 
-library(MASS)
-library(lavaan)
 
 
 
@@ -144,6 +145,11 @@ SemFC <- R6Class(
       self$parameters <- lvm_ml(x = theta_ml, block_sizes = block_sizes, mode =mode,
                                    lengths_parameter = self$lengths_theta, which_exo_endo = self$which_exo_endo,
                                    jac = F, varnames = self$varnames)
+
+      var_MVs <- lapply(self$data, function(x) diag(cov2(x, bias = self$bias)))
+      std_lambda <- mapply("/", self$parameters$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
+      self$parameters$std_lambda <- std_lambda
+
       self$parameters$theta <- theta_ml
       self$parameters$F <- F1(theta_ml, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
 
