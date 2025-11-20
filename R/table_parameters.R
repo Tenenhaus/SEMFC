@@ -9,7 +9,9 @@ Table1 <- matrix(rowMeans(sigma_hat), 4, 3)
 rownames(Table1) <- c("Sigma_11", "Sigma_22", "Sigma_33", "Sigma_44")
 colnames(Table1) <- c("d_LS(empirical_S, Sigma)",
                      "d_LS(implied_S, Sigma)",
-                     "d_LS(implied_S, empirical_S)")
+                     "d_LS(implied_S, empirical_S)",
+                     "d_LS(implied_S_csem, Sigma)",
+                     "d_LS(implied_S_csem, empirical_S)")
 
 Table1
 
@@ -26,14 +28,18 @@ Table2[, 2] <- rowMeans(lambda_hat_svd)
 Table2[, 3] <- rowMeans(abs(lambda_hat_svd - Reduce("c", lambda)))
 Table2[, 4] <- rowMeans(lambda_hat_ml)
 Table2[, 5] <- rowMeans(abs(lambda_hat_ml - Reduce("c", lambda)))
-Table2[, 6] <- apply(lambda_hat_svd, 1, sd)
-Table2[, 7] <- apply(lambda_hat_ml, 1, sd)
-Table2[, 8] <- rowMeans(std_err_ml[1:18, ])
+Table2[, 6] <- rowMeans(lambda_hat_csem)
+Table2[, 7] <- rowMeans(abs(lambda_hat_csem - Reduce("c", lambda)))
+Table2[, 8] <- apply(lambda_hat_svd, 1, sd)
+Table2[, 9] <- apply(lambda_hat_ml, 1, sd)
+Table2[, 10] <- apply(lambda_hat_csem, 1, sd)
+Table2[, 11] <- rowMeans(std_err_ml[1:18, ])
+
 
 rownames(Table2) <- paste0("lambda_", rep(1:6, each <- 3), rep(1:3, 6))
 colnames(Table2) <- c("Population", "Mean_SVD", "MAD_SVD",
-                     "Mean_ML", "MAD_ML", "std_SVD",
-                     "std_ML", "std_RML")
+                     "Mean_ML", "MAD_ML", "Mean_CSEM", "MAD_CSEM", "std_SVD",
+                     "std_ML", "std_CSEM", "std_RML")
 
 round(Table2, 3)
 
@@ -48,16 +54,21 @@ Table3[, 2] <- rowMeans(var_hat_svd)
 Table3[, 3] <- rowMeans(abs(var_hat_svd - (1-0.7^2)))
 Table3[, 4] <- rowMeans(var_hat_ml)
 Table3[, 5] <- rowMeans(abs(var_hat_ml - (1-0.7^2)))
-Table3[, 6] <- apply(var_hat_svd, 1, sd)
-Table3[, 7] <- apply(var_hat_ml, 1, sd)
-Table3[, 8] <- rowMeans(std_err_ml[56:61, ])
+Table3[, 6] <- rowMeans(var_hat_csem)
+Table3[, 7] <- rowMeans(abs(var_hat_csem - (1-0.7^2)))
+
+
+Table3[, 8] <- apply(var_hat_svd, 1, sd)
+Table3[, 9] <- apply(var_hat_ml, 1, sd)
+Table3[, 10] <- apply(var_hat_csem, 1, sd)
+Table3[, 11] <- rowMeans(std_err_ml[56:61, ])
 
 rownames(Table3) <- c("theta_51", "theta_52", "theta_53",
                      "theta_61", "theta_62", "theta_63")
 
 colnames(Table3) <- c("Population", "Mean_SVD", "MAD_SVD",
-                     "Mean_ML", "MAD_ML",
-                     "std_SVD", "std_ML", "std_RML")
+                     "Mean_ML", "MAD_ML", "Mean_CSEM", "MAD_CSEM",
+                     "std_SVD", "std_ML", "std_CSEM", "std_RML")
 round(Table3, 3)
 
 
@@ -73,12 +84,18 @@ Table4[, 2] <- rowMeans(omega_hat_svd)
 Table4[, 3] <- rowMeans(abs(omega_hat_svd - Reduce("c", omega)))
 Table4[, 4] <- rowMeans(omega_hat_ml)
 Table4[, 5] <- rowMeans(abs(omega_hat_ml - Reduce("c", omega)))
-Table4[, 6] <- apply(omega_hat_svd, 1, sd)
-Table4[, 7] <- apply(omega_hat_ml, 1, sd)
+Table4[, 6] <- rowMeans(omega_hat_csem)
+Table4[, 7] <- rowMeans(abs(omega_hat_csem - Reduce("c", omega)))
+
+Table4[, 8] <- apply(omega_hat_svd, 1, sd)
+Table4[, 9] <- apply(omega_hat_ml, 1, sd)
+Table4[, 10] <- apply(omega_hat_csem, 1, sd)
 
 rownames(Table4) <- paste0("omega_", rep(1:4, each <- 3), rep(1:3, 4))
 colnames(Table4) <- c("Population", "Mean_SVD", "MAD_SVD",
-                     "Mean_ML", "MAD_ML", "std_SVD", "std_ML")
+                     "Mean_ML", "MAD_ML",
+                      "Mean_CSEM", "MAD_CSEM",
+                      "std_SVD", "std_ML", "std_CSEM")
 
 round(Table4, 3)
 
@@ -95,26 +112,38 @@ Table5[1:4, 2] <- rowMeans(gamma_hat_svd)
 Table5[1:4, 3] <- rowMeans(abs(gamma_hat_svd - GAMMA[GAMMA!=0]))
 Table5[1:4, 4] <- rowMeans(gamma_hat_ml)
 Table5[1:4, 5] <- rowMeans(abs(gamma_hat_ml - GAMMA[GAMMA!=0]))
-Table5[1:4, 6] <- apply(gamma_hat_svd, 1, sd)
-Table5[1:4, 7] <- apply(gamma_hat_ml, 1, sd)
-Table5[1:4, 8] <- rowMeans(std_err_ml[25:28, ])
+Table5[1:4, 6] <- rowMeans(gamma_hat_csem)
+Table5[1:4, 7] <- rowMeans(abs(gamma_hat_csem - GAMMA[GAMMA!=0]))
+
+
+Table5[1:4, 8] <- apply(gamma_hat_svd, 1, sd)
+Table5[1:4, 9] <- apply(gamma_hat_ml, 1, sd)
+Table5[1:4, 10] <- apply(gamma_hat_csem, 1, sd)
+Table5[1:4, 11] <- rowMeans(std_err_ml[25:28, ])
 
 Table5[5:6, 1] <- BETA[BETA!=0]
 Table5[5:6, 2] <- rowMeans(beta_hat_svd)
 Table5[5:6, 3] <- rowMeans(abs(beta_hat_svd - BETA[BETA!=0]))
 Table5[5:6, 4] <- rowMeans(beta_hat_ml)
 Table5[5:6, 5] <- rowMeans(abs(beta_hat_ml - BETA[BETA!=0]))
-Table5[5:6, 6] <- apply(beta_hat_svd, 1, sd)
-Table5[5:6, 7] <- apply(beta_hat_ml, 1, sd)
-Table5[5:6, 8] <- rowMeans(std_err_ml[29:30, ])
+Table5[5:6, 6] <- rowMeans(beta_hat_csem)
+Table5[5:6, 7] <- rowMeans(abs(beta_hat_csem - BETA[BETA!=0]))
+
+Table5[5:6, 8] <- apply(beta_hat_svd, 1, sd)
+Table5[5:6, 9] <- apply(beta_hat_ml, 1, sd)
+Table5[5:6, 10] <- apply(beta_hat_csem, 1, sd)
+Table5[5:6, 11] <- rowMeans(std_err_ml[29:30, ])
 
 Table5[7:9, 1] <- PSI[as.vector(upper.tri(PSI, diag = TRUE))]
 Table5[7:9, 2] <- rowMeans(psi_hat_svd)
 Table5[7:9, 3] <- rowMeans(abs(psi_hat_svd - PSI[as.vector(upper.tri(PSI, diag = TRUE))]))
 Table5[7:9, 4] <- rowMeans(psi_hat_ml)
 Table5[7:9, 5] <- rowMeans(abs(psi_hat_ml - PSI[as.vector(upper.tri(PSI, diag = TRUE))]))
-Table5[7:9, 6] <- apply(psi_hat_svd, 1, sd)
-Table5[7:9, 7] <- apply(psi_hat_ml, 1, sd)
+Table5[7:9, 6] <- rowMeans(psi_hat_csem)
+Table5[7:9, 7] <- rowMeans(abs(psi_hat_csem - PSI[as.vector(upper.tri(PSI, diag = TRUE))]))
+Table5[7:9, 8] <- apply(psi_hat_svd, 1, sd)
+Table5[7:9, 9] <- apply(psi_hat_ml, 1, sd)
+Table5[7:9, 10] <- apply(psi_hat_csem, 1, sd)
 
 
 Table5[10:11, 1] <- R2
@@ -122,8 +151,12 @@ Table5[10:11, 2] <- rowMeans(r2_hat_svd)
 Table5[10:11, 3] <- rowMeans(abs(r2_hat_svd - R2))
 Table5[10:11, 4] <- rowMeans(r2_hat_ml)
 Table5[10:11, 5] <- rowMeans(abs(r2_hat_ml - R2))
-Table5[10:11, 6] <- apply(r2_hat_svd, 1, sd)
-Table5[10:11, 7] <- apply(r2_hat_ml, 1, sd)
+Table5[10:11, 6] <- rowMeans(r2_hat_csem)
+Table5[10:11, 7] <- rowMeans(abs(r2_hat_csem - R2))
+
+Table5[10:11, 8] <- apply(r2_hat_svd, 1, sd)
+Table5[10:11, 9] <- apply(r2_hat_ml, 1, sd)
+Table5[10:11, 10] <- apply(r2_hat_csem, 1, sd)
 
 rownames(Table5) <- c("gamma_11", "gamma_12", "gamma_23", "gamma_24",
                      "beta_21", "beta_12", "psi11", "psi12", "psi22",
@@ -131,7 +164,9 @@ rownames(Table5) <- c("gamma_11", "gamma_12", "gamma_23", "gamma_24",
 
 colnames(Table5) <- c("Population", "Mean_SVD", "MAD_SVD",
                      "Mean_ML", "MAD_ML",
-                     "std_SVD", "std_ML", "std_RML")
+                      "Mean_CSEM", "MAD_CSEM",
+                     "std_SVD", "std_ML","std_CSEM",
+                      "std_RML")
 
 round(Table5, 3)
 
@@ -147,9 +182,13 @@ Table6[, 2] <- rowMeans(rho_hat_svd)
 Table6[, 3] <- rowMeans(abs(rho_hat_svd - R[as.vector(upper.tri(R))]))
 Table6[, 4] <- rowMeans(rho_hat_ml)
 Table6[, 5] <- rowMeans(abs(rho_hat_ml - R[as.vector(upper.tri(R))]))
-Table6[, 6] <- apply(rho_hat_svd, 1, sd)
-Table6[, 7] <- apply(rho_hat_ml, 1, sd)
-Table6[c(1:6, 15), 8] <- rowMeans(std_err_ml[c(19:24, 31), ])
+Table6[, 6] <- rowMeans(rho_hat_csem)
+Table6[, 7] <- rowMeans(abs(rho_hat_csem - R[as.vector(upper.tri(R))]))
+
+Table6[, 8] <- apply(rho_hat_svd, 1, sd)
+Table6[, 9] <- apply(rho_hat_ml, 1, sd)
+Table6[, 10] <- apply(rho_hat_csem, 1, sd)
+Table6[c(1:6, 15), 11] <- rowMeans(std_err_ml[c(19:24, 31), ])
 
 
 rownames(Table6) <- c("p12", "p13", "p23", "p14", "p24",
@@ -158,7 +197,9 @@ rownames(Table6) <- c("p12", "p13", "p23", "p14", "p24",
 
 colnames(Table6) <- c("Population", "Mean_SVD", "MAD_SVD",
                      "Mean_ML", "MAD_ML",
-                     "std_err_SVD", "std_err_ML", "std_RML")
+                     "Mean_CSEM", "MAD_CSEM",
+                     "std_err_SVD", "std_err_ML", "std_err_CSEM",
+                      "std_RML")
 
 round(Table6, 3)
 

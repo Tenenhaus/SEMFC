@@ -25,8 +25,8 @@ eta3 <~ X31 + X32 + X33
 eta4 <~ X41 + X42 + X43
 
 # Regressions
-eta5 ~ eta1 + eta2 + eta6
-eta6 ~ eta3 + eta4 + eta5
+eta5 ~ eta1 + eta2
+eta6 ~ eta3 + eta4
 
 # residual covariances
 eta5 ~~ eta6
@@ -43,6 +43,10 @@ model2$fit_ml(initialisation_svd = TRUE)
 #### lavan #######
 fit.sem.ml <- sem(sem.model, data=X_2)
 
+
+fit <- sem(sem.model , data = X_2 , optim.gradient = "numerical")
+
+
 fit <- sem(sem.model, data = X_2, verbose = TRUE)
 summary (fit , standardized = T, fit.measures = T)
 
@@ -54,6 +58,6 @@ estimate = parameterEstimates(fit.sem.ml, standardized = TRUE)
 #### csem #####
 library(cSEM)
 # Results for PLSc
-fit_PLSc <- csem(.model = sem.model, .data = X_2)
+fit_PLSc <- csem(.model = sem.model, .data = X)
 summarize(fit_PLSc)
 assess(fit_PLSc)
