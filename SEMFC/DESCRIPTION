@@ -1,16 +1,21 @@
-Package: RGCCA
+Package: SEMFC
 Type: Package
-Title: Regularized and Sparse Generalized Canonical Correlation
-        Analysis for Multiblock Data
-Version: 2.1.2
-Date: 2017-04-26
-Author: Arthur Tenenhaus and Vincent Guillemot
+Title: Structural Equation Modeling for Factors and Composites
+Version: 1.0
+Date: 2025-11-25
+Author: Arthur Tenenhaus and Alain Luong
 Maintainer: Arthur Tenenhaus <arthur.tenenhaus@centralesupelec.fr>
-Description: Multiblock data analysis concerns the analysis of several sets of variables (blocks) observed on the same group of individuals. The main aims of the RGCCA package are: (i) to study the relationships between blocks and (ii) to identify subsets of variables of each block which are active in their relationships with the other blocks. 
+Description: We propose an R package for Structural Equation Modeling with 
+factors and composites within the framework of the basic design. 
+We implement SVD-SEM which relies on a non-iterative SVD-based 
+algorithm for parameter estimation, producing consistent and asymptotically 
+normal estimators, offering a statistically and computationally sound 
+alternative to PLS-SEM. Additionally, we implement the restricted maximum-likelihood 
+approach (RML-SEM) for the basic design with factors and composites. SVD-SEM 
+can serve as an initial solution for RML-SEM. 
 License: GPL (>= 2)
 Suggests: knitr, rmarkdown, ggplot2
 VignetteBuilder: knitr
 Imports: MASS, Deriv
 RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2017-04-27 11:39:46 UTC; tenenhaus_art
