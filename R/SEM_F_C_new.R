@@ -20,7 +20,7 @@ library(cSEM)
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
 set.seed(20091979) #my date of birth
-n_simu <- 100
+n_simu <- 15
 N <- 300
 sol_svd <- matrix(0, 61, n_simu)
 sol_ml <- matrix(0, 61, n_simu)
@@ -165,7 +165,17 @@ for (b in seq_len(n_simu)){
 
       # csem
 
-      fit.csem <- csem(.model = sem.model, .data = X)
+      # fit.csem <- csem(.model = sem.model, .data = X)
+
+      fit.csem <- csem(.data = X,
+                 .model = sem.model,
+                 .approach_weights = "PLS-PM",
+                 .PLS_weight_scheme_inner = "factorial",
+                 .approach_paths = "2SLS",
+                 .instruments = list( eta5 = c("eta1", "eta2", "eta3", "eta4"),
+                                      eta6 = c("eta1", "eta2", "eta3", "eta4")),
+                 .PLS_ignore_structural_model = TRUE, .tolerance = 1e-8,
+                 .disattenuate = TRUE)
 
 
       lambda_CSEM <- fit.csem$Estimates$Loading_estimates

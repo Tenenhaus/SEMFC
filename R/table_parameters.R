@@ -5,7 +5,7 @@
 ############ Table SIGMA ############
 #####################################
 
-Table1 <- matrix(rowMeans(sigma_hat), 4, 3)
+Table1 <- matrix(rowMeans(sigma_hat), 4, 5)
 rownames(Table1) <- c("Sigma_11", "Sigma_22", "Sigma_33", "Sigma_44")
 colnames(Table1) <- c("d_LS(empirical_S, Sigma)",
                      "d_LS(implied_S, Sigma)",
@@ -22,7 +22,7 @@ Table1
 ############ Table LAMBDA ###########
 #####################################
 
-Table2 <- matrix(0, 18, 8)
+Table2 <- matrix(0, 18, 11)
 Table2[, 1] <- unlist(lambda)
 Table2[, 2] <- rowMeans(lambda_hat_svd)
 Table2[, 3] <- rowMeans(abs(lambda_hat_svd - Reduce("c", lambda)))
@@ -48,7 +48,7 @@ round(Table2, 3)
 ############ Table residual variance ############
 #################################################
 
-Table3 <- matrix(0, 6, 8)
+Table3 <- matrix(0, 6, 11)
 Table3[, 1] <- 1-0.7^2
 Table3[, 2] <- rowMeans(var_hat_svd)
 Table3[, 3] <- rowMeans(abs(var_hat_svd - (1-0.7^2)))
@@ -78,7 +78,7 @@ round(Table3, 3)
 ##########    OMEGA    #########
 ################################
 
-Table4 <- matrix(0, 12, 7)
+Table4 <- matrix(0, 12, 10)
 Table4[, 1] <- unlist(omega)
 Table4[, 2] <- rowMeans(omega_hat_svd)
 Table4[, 3] <- rowMeans(abs(omega_hat_svd - Reduce("c", omega)))
@@ -106,7 +106,7 @@ round(Table4, 3)
 ############ Table structural model parameters ########
 #######################################################
 
-Table5 <- matrix(NA, 11, 8)
+Table5 <- matrix(NA, 11, 11)
 Table5[1:4, 1] <- GAMMA[GAMMA!=0]
 Table5[1:4, 2] <- rowMeans(gamma_hat_svd)
 Table5[1:4, 3] <- rowMeans(abs(gamma_hat_svd - GAMMA[GAMMA!=0]))
@@ -176,7 +176,7 @@ round(Table5, 3)
 ############ Table rho ###########
 ##################################
 
-Table6 <- matrix(NA, 15, 8)
+Table6 <- matrix(NA, 15, 11)
 Table6[, 1] <- R[as.vector(upper.tri(R))]
 Table6[, 2] <- rowMeans(rho_hat_svd)
 Table6[, 3] <- rowMeans(abs(rho_hat_svd - R[as.vector(upper.tri(R))]))
