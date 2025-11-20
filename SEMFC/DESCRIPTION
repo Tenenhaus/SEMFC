@@ -1,21 +1,9 @@
 Package: SEMFC
-Type: Package
 Title: Structural Equation Modeling for Factors and Composites
 Version: 1.0
-Date: 2025-11-25
 Author: Arthur Tenenhaus and Alain Luong
 Maintainer: Arthur Tenenhaus <arthur.tenenhaus@centralesupelec.fr>
-Description: We propose an R package for Structural Equation Modeling with 
-factors and composites within the framework of the basic design. 
-We implement SVD-SEM which relies on a non-iterative SVD-based 
-algorithm for parameter estimation, producing consistent and asymptotically 
-normal estimators, offering a statistically and computationally sound 
-alternative to PLS-SEM. Additionally, we implement the restricted maximum-likelihood 
-approach (RML-SEM) for the basic design with factors and composites. SVD-SEM 
-can serve as an initial solution for RML-SEM. 
+Description: We propose an R package for Structural Equation Modeling with factors and composites within the framework of the basic design. We implement SVD-SEM which relies on a non-iterative SVD-based algorithm for parameter estimation, producing consistent and asymptotically normal estimators, offering a statistically and computationally sound alternative to PLS-SEM. Additionally, we implement the restricted maximum-likelihood approach (RML-SEM) for the basic design with factors and composites. SVD-SEM can serve as an initial solution for RML-SEM. 
 License: GPL (>= 2)
-Suggests: knitr, rmarkdown, ggplot2
-VignetteBuilder: knitr
-Imports: MASS, Deriv
-RoxygenNote: 7.1.1
+RoxygenNote: 7.3.3
 NeedsCompilation: no
