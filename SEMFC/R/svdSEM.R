@@ -4,13 +4,13 @@
 #' @param bias A logical value for biaised or unbiaised estimator of the var/cov (default: bias = TRUE).
 #' @param mode a vector of lenght J indication the mode for each block formative or reflective.
 #' @return \item{a}{A list of \eqn{J} elements. Each element of \eqn{a} is a matrix that contains the first singular vector for each block.}
-#' @references Tenenhaus M., Tenenhaus A. and Groenen PJF (2017), Regularized generalized canonical correlation analysis: A framework for sequential multiblock component methods, Psychometrika, in press
+#' @references Tenenhaus A., Tenenhaus M. and Dijkstra (2025), 
 #' @title Structural Equation Modeling with Factors and Composites (svdSEM) 
 #' @examples
 #' #############
 #' # Example 1 #
 #' #############
-#' ECSI = as.data.frame(read_excel("mobil.xls"))/10
+#' ECSI = read.table("mobil.txt")/10
 #' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
 #'          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", 
 #'                                "PERQ5", "PERQ6", "PERQ7")],
@@ -28,7 +28,7 @@
 #'              mode = rep("reflective", length(A)),
 #'             bias = FALSE)
 #'             
-#' @export rgcca
+#' @export svdSEM
 svdSEM <- function(A, C, scale = TRUE,
                    mode = rep("formative", length(A)), 
                    bias = FALSE){
