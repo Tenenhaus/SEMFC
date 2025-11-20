@@ -14,11 +14,6 @@ rm(list = ls())
 
 source('R/SEMFC/sem_f_c.R')
 
-
-
-
-
-
 #############################################
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
@@ -182,7 +177,7 @@ for (b in seq_len(n_simu)){
 
 }
 
-
+source('R/table_parameters.R')
 
 
 
