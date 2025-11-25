@@ -2,10 +2,11 @@
 ############ Table IMPROPER SOLUTIONS ############
 ##################################################
 
-
+source('inst/model/model_mixed.R')
+source('R/SEMFC/sem_f_c.R')
 
 N <- c(seq(20, 100, by = 10), 200, 300, 400, 500, 600, 700)
-n_simu <-  1000
+n_simu <-  10
 n_improper <- 9
 n_improper_ml <- 7
 improper_sol <- array(NA, dim = c(n_simu, n_improper, length(N)))
@@ -20,7 +21,7 @@ for (n in seq_along(N)){
   for(s in 1:n_simu){
 
     print(paste(N[n], " & ", s))
-    X <- mvrnorm(N[n], rep(0, 18), SIGMA, empirical = FALSE)
+    X <- MASS::mvrnorm(N[n], rep(0, 18), SIGMA, empirical = FALSE)
     colnames(X) <- paste("X", rep(1:6, each = 3), rep(1:3, 6))
 
     Y <- list(X1 = X[, 1:3], X2 = X[, 4:6], X3 = X[, 7:9],

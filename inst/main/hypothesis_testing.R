@@ -1,5 +1,8 @@
 
 
+source('inst/model/model_mixed.R')
+source('R/SEMFC/sem_f_c.R')
+
 #########################################
 ###      hypothesis testing with      ###
 ###           ML-SEM, eigenSEM        ###
@@ -7,7 +10,7 @@
 
 
 # Bootstrap testing
-nsimu <- 1000
+nsimu <- 10
 nboot <- 1000
 N <- c(300, 600, 1200)
 

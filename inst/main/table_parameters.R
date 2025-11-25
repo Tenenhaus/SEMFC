@@ -5,13 +5,11 @@
 ############ Table SIGMA ############
 #####################################
 
-Table1 <- matrix(rowMeans(sigma_hat), 4, 5)
+Table1 <- matrix(rowMeans(sigma_hat), 4, 3)
 rownames(Table1) <- c("Sigma_11", "Sigma_22", "Sigma_33", "Sigma_44")
 colnames(Table1) <- c("d_LS(empirical_S, Sigma)",
                      "d_LS(implied_S, Sigma)",
-                     "d_LS(implied_S, empirical_S)",
-                     "d_LS(implied_S_csem, Sigma)",
-                     "d_LS(implied_S_csem, empirical_S)")
+                     "d_LS(implied_S, empirical_S)")
 
 Table1
 

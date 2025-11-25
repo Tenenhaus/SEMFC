@@ -9,7 +9,7 @@
 ############################
 
 source('R/SEMFC/sem_f_c.R')
-source('data/data_ecsi.R')
+source('inst/model/model_ecsi.R')
 library(lavaan)
 
 

@@ -1,16 +1,15 @@
-Package: RGCCA
-Type: Package
-Title: Regularized and Sparse Generalized Canonical Correlation
-        Analysis for Multiblock Data
-Version: 2.1.2
-Date: 2017-04-26
-Author: Arthur Tenenhaus and Vincent Guillemot
-Maintainer: Arthur Tenenhaus <arthur.tenenhaus@centralesupelec.fr>
-Description: Multiblock data analysis concerns the analysis of several sets of variables (blocks) observed on the same group of individuals. The main aims of the RGCCA package are: (i) to study the relationships between blocks and (ii) to identify subsets of variables of each block which are active in their relationships with the other blocks. 
-License: GPL (>= 2)
-Suggests: knitr, rmarkdown, ggplot2
-VignetteBuilder: knitr
-Imports: MASS, Deriv
-RoxygenNote: 7.2.3
-NeedsCompilation: no
-Packaged: 2017-04-27 11:39:46 UTC; tenenhaus_art
+Package: SEMFC
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R:
+    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
+Description: What the package does (one paragraph).
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports: readxl, igraph, R6, Matrix, knitr, MASS, mvtnorm
+Depends: 
+    R (>= 3.5)
+LazyData: true

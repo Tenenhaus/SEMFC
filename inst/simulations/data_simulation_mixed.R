@@ -121,3 +121,5 @@ true_param_with_S <- c(l1, l2 , l3, l4, l5, l6,
                       1 - l5^2,
                       1 - l6^2
 )
+
+

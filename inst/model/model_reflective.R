@@ -1,9 +1,11 @@
-source('data/data_simulation_reflective.R')
+source('inst/simulations/data_simulation_reflective.R')
 
+library(MASS)
+library(mvtnorm)
 
 # set.seed(20091979)
 N <- 300
-library(mvtnorm)
+
 X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = TRUE)
 colnames(X) <- paste("X", rep(1:6, each = 3), rep(1:3, 6), sep ="")
 

@@ -2,7 +2,7 @@ source('R/SEMFC/sem_f_c.R')
 
 
 print('###### modele all reflective #############')
-source('data/data_generated_reflective.R')
+source('inst/model/model_reflective.R')
 
 
 ######  True SIGMA ########
@@ -167,7 +167,7 @@ print(f1_false)
 print("######################   MIXED MODEL #####################################")
 
 
-source('data/data_generated_mixed.R')
+source('../../R/model/model_mixed.R')
 
 ######  True SIGMA ########
 print('DATA empirical sigma = TRUE')
@@ -248,7 +248,7 @@ print(f1_mixed)
 
 print("####################### ECSI #################################")
 
-source('data/data_ecsi.R')
+source('../inst/model/model_ecsi.R')
 #### our code #######
 print('run our package')
 model <- SemFC$new(data=A, relation_matrix = C_ecsi, mode=mode_ecsi, scale=F, bias=F)

@@ -1,12 +1,4 @@
-##################################################################
-# Reproducible results for Tenenhaus, Tenenhaus & Dijkstra paper #
-#              submitted to ADAC in July 15th, 2024              #
-##################################################################
 
-#############################################
-# Remove all objects from the R environment #
-#############################################
-rm(list = ls())
 
 ######################################
 # Load useful packages and functions #
@@ -66,7 +58,7 @@ beta_hat_ml <- matrix(0, 2, n_simu)
 gamma_hat_ml <- matrix(0, 4, n_simu)
 r2_hat_ml <- matrix(0, 2, n_simu)
 psi_hat_ml <- matrix(0, 3, n_simu)
-sigma_hat <- matrix(0, 20, n_simu)
+sigma_hat <- matrix(0, 12, n_simu)
 var_hat_ml <- matrix(0, 6, n_simu)
 std_err_ml <- matrix(NA, 61, n_simu)
 f_ml <- rep(0, n_simu)
@@ -83,7 +75,7 @@ for (b in seq_len(n_simu)){
   try(
     {
 
-      source('data/data_generated_mixed.R')
+      source('inst/model/model_mixed.R')
       Y <- Y_2
       X <- X_2
 
@@ -178,74 +170,93 @@ for (b in seq_len(n_simu)){
                  .disattenuate = TRUE)
 
 
-      lambda_CSEM <- fit.csem$Estimates$Loading_estimates
+      lambda_CSEM <- fit.csem$Estimates$Loading_estimates[fit.csem$Estimates$Loading_estimates!=0]*apply(X, 2, sd)
       omega_CSEM <- fit.csem$Estimates$Weight_estimates
       beta_CSEM <- fit.csem$Estimates$Path_estimates[5:6,5:6]
       gamma_CSEM <- fit.csem$Estimates$Path_estimates[5:6,1:4]
-      R2_CSEM <- fit.csem$Estimates$R2
+
+
+
+
 
       P_EXO_CSEM <- fit.csem$Estimates$Construct_VCV[1:4,1:4]
       P_ENDO_CSEM <- fit.csem$Estimates$Construct_VCV[5:6,5:6]
       psi_CSEM <- (diag(2)-beta_CSEM)%*%P_ENDO_CSEM%*%t(diag(2)-beta_CSEM) - gamma_CSEM%*%P_EXO_CSEM%*%t(gamma_CSEM)
-      residual_variance_CSEM <- diag(fit.csem$Estimates$Residual_correlation)[13:18]
-
-      R_LVM_CSEM  <- fit.csem$Estimates$Construct_VCV
-      SIGMA_CSEM <- fit.csem$Estimates$Indicator_VCV
-
-      SIGMA11_CSEM <- SIGMA_CSEM[1:3, 1:3]
-      SIGMA22_CSEM <- SIGMA_CSEM[4:6, 4:6]
-      SIGMA33_CSEM <- SIGMA_CSEM[7:9, 7:9]
-      SIGMA44_CSEM <- SIGMA_CSEM[10:12, 10:12]
-
-
-      parameter_csem <- Reduce("c",
-                                c(Reduce("c", colSums(lambda_CSEM, na.rm = TRUE)),
-                                  P_EXO_CSEM[upper.tri(P_EXO_CSEM)],
-                                  apply(gamma_CSEM, 1, function(row) row[row != 0]),
-                                  apply(beta_CSEM, 1, function(row) row[row != 0]),
-                                  P_ENDO_CSEM[upper.tri(P_ENDO_CSEM)],
-                                  SIGMA11_CSEM[upper.tri(SIGMA11_CSEM, diag = TRUE)],
-                                  SIGMA22_CSEM[upper.tri(SIGMA22_CSEM, diag = TRUE)],
-                                  SIGMA33_CSEM[upper.tri(SIGMA33_CSEM, diag = TRUE)],
-                                  SIGMA44_CSEM[upper.tri(SIGMA44_CSEM, diag = TRUE)],
-                                  residual_variance_CSEM
-                                )
-    )
+      residual_variance_CSEM <- list(
+        LV5 =
+        apply(Y[[5]], 2, var)-(fit.csem$Estimates$Loading_estimates[5, 13:15]*apply(X[, 13:15], 2, sd))^2,
+        LV6 =
+        apply(Y[[6]], 2, var)-(fit.csem$Estimates$Loading_estimates[6, 16:18]*apply(X[, 16:18], 2, sd))^2
+      )
 
 
 
-      lambda_hat_csem[, b] <- colSums(lambda_CSEM, na.rm = TRUE)
+      I_B_1_CSEM <- solve(diag(2)-beta_CSEM)
+      r2_1_hat_CSEM <- 1 - I_B_1_CSEM[1, ]%*%psi_CSEM%*%I_B_1_CSEM[1, ]
+      r2_2_hat_CSEM <- 1 - I_B_1_CSEM[2, ]%*%psi_CSEM%*%I_B_1_CSEM[2, ]
+      R2_CSEM <- c(r2_1_hat_CSEM, r2_2_hat_CSEM)
+
+
+      R_LVM_11_CSEM <- P_EXO_CSEM
+      R_LVM_12_CSEM <- P_EXO_CSEM%*%t(gamma_CSEM)%*%t(I_B_1_CSEM)
+      R_LVM_21_CSEM <- I_B_1_CSEM%*%gamma_CSEM%*%t(P_EXO_CSEM)
+      R_LVM_22_CSEM <- I_B_1_CSEM%*%(gamma_CSEM%*%P_EXO_CSEM%*%t(gamma_CSEM) + psi_CSEM)%*%t(I_B_1_CSEM)
+      R_LVM_CSEM <- rbind(cbind(R_LVM_11_CSEM, R_LVM_12_CSEM),
+                         cbind(R_LVM_21_CSEM, R_LVM_22_CSEM))
+
+
+
+
+      parameter_csem <- parameters_svd(lambda = lambda_CSEM,
+                            P_EXO = P_EXO_CSEM,
+                            G = gamma_CSEM,
+                            B = beta_CSEM,
+                            P_ENDO = P_ENDO_CSEM,
+                            residual_variance = residual_variance_CSEM,
+                            S_composites = model$S_composites,
+                            mode = model$mode)
+
+      SIGMA_CSEM <- lvm_ml(x = parameter_csem,
+                           block_sizes = model$block_sizes,
+                           mode = model$mode,
+                           lengths_parameter = model$lengths_theta,
+                           which_exo_endo = model$which_exo_endo,
+                           jac = F,
+                           varnames = model$varnames)$SIGMA_IMPLIED
+
+
+
+      lambda_hat_csem[, b] <- lambda_CSEM
       omega_hat_csem[, b] <- colSums(omega_CSEM, na.rm = TRUE)[1:12]
       beta_hat_csem[, b] <- beta_CSEM[beta_CSEM!=0]
       gamma_hat_csem[, b] <- gamma_CSEM[gamma_CSEM!=0]
       r2_hat_csem[, b] <- R2_CSEM
       psi_hat_csem[, b] <- psi_CSEM[upper.tri(psi_CSEM, diag = TRUE)]
-      var_hat_csem[, b] <- residual_variance_CSEM
+      var_hat_csem[, b] <- Reduce("c", residual_variance_CSEM)
 
 
 
       # SIGMA
       S_composites_empirical <-model$S_composites
       S_composites_ML <- model_ml$parameters$S_composites
-      S_composites_CSEM <- list(SIGMA11_CSEM,
-                                SIGMA22_CSEM,
-                                SIGMA33_CSEM,
-                                SIGMA44_CSEM)
+
       S_composites_true <- list(SIGMA11, SIGMA22,SIGMA33,SIGMA44)
 
       dls_empirical_true <- mapply(d_LS, S_composites_empirical,S_composites_true, SIMPLIFY = T)
 
-      dls_csem_true <- mapply(d_LS, S_composites_CSEM,S_composites_true, SIMPLIFY = T)
+
       dls_ml_true <- mapply(d_LS, S_composites_ML,S_composites_true, SIMPLIFY = T)
-      dls_csem_empirical <- mapply(d_LS, S_composites_CSEM,S_composites_empirical, SIMPLIFY = T)
+
       dls_ml_empirical <- mapply(d_LS, S_composites_ML,S_composites_empirical, SIMPLIFY = T)
 
-      sigma_hat[, b] <- c(dls_empirical_true, dls_ml_true, dls_ml_empirical, dls_csem_true, dls_csem_empirical)
+      sigma_hat[, b] <- c(dls_empirical_true, dls_ml_true, dls_ml_empirical)
 
       #goodness of fit
       gof[1, b] <- d_LS(SIGMA_SVD, SIGMA)
       gof[2, b] <- d_LS(SIGMA_ML, SIGMA)
       gof[3, b] <- d_LS(SIGMA_CSEM, SIGMA)
+
+
 
 
       # param eigen
@@ -274,7 +285,6 @@ for (b in seq_len(n_simu)){
 
 }
 
-source('R/table_parameters.R')
 
 
 

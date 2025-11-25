@@ -24,12 +24,6 @@ source('R/ml_sem/mlSEM_infer.R')
 
 library(Matrix)
 library(knitr)
-# library(pheatmap)
-#
-# library(MASS)
-
-
-
 
 
 

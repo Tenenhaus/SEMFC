@@ -1,5 +1,5 @@
-library(readxl)
-ECSI <- as.data.frame(read_excel("data/mobil.xls"))/10
+data(ECSI)
+ECSI <- ECSI/10
 A <- list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4",
                                "PERQ5", "PERQ6", "PERQ7")],
