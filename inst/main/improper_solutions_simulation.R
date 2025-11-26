@@ -6,7 +6,7 @@ source('inst/model/model_mixed.R')
 source('R/SEMFC/sem_f_c.R')
 
 N <- c(seq(20, 100, by = 10), 200, 300, 400, 500, 600, 700)
-n_simu <-  10
+n_simu <-  1000
 n_improper <- 9
 n_improper_ml <- 7
 improper_sol <- array(NA, dim = c(n_simu, n_improper, length(N)))

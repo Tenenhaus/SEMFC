@@ -10,7 +10,7 @@ source('R/SEMFC/sem_f_c.R')
 
 
 # Bootstrap testing
-nsimu <- 10
+nsimu <- 1000
 nboot <- 1000
 N <- c(300, 600, 1200)
 
@@ -26,8 +26,10 @@ f_ml <- matrix(NA, nsimu, length(N))
 set.seed(20091979)
 
 for(n in seq_along(N)){
+  print(n)
 
   for (s in 1:nsimu){
+    print(s)
     X <- mvrnorm(N[n], rep(0, 18), SIGMA, empirical = FALSE)
     colnames(X) <- paste0("X", rep(1:6, each = 3), rep(1:3, 6))
 
