@@ -1,32 +1,38 @@
-library(R6)
+# library(R6)
+#
+#
+#
+# #import utils functions
+# source('R/utils/get_parameter_model_sem.R')
+# source('R/utils/ind_exo_endo.R')
+# source('R/utils/get_lengths_theta.R')
+# source('R/utils/reliability.R')
+# source('R/utils/chi2sem.R')
+# source('R/utils/rmseasem.R')
+# source('R/utils/srmrsem.R')
+# #import functions from svd module
+# source('R/svd_sem/svdSEM.R')
+# source('R/svd_sem/parameters_svd.R')
+# source('R/svd_sem/svdSEM_infer.R')
+# source("R/svd_sem/svdSEM_gof.R")
+# source("R/svd_sem/improper.R")
+# #import functions from ml module
+# source('R/ml_sem/F1.R')
+# source('R/ml_sem/mlSEM.R')
+# source('R/ml_sem/mlSEM_infer.R')
+#
+#
+# library(Matrix)
+# library(knitr)
 
-
-
-#import utils functions
-source('R/utils/get_parameter_model_sem.R')
-source('R/utils/ind_exo_endo.R')
-source('R/utils/get_lengths_theta.R')
-source('R/utils/reliability.R')
-source('R/utils/chi2sem.R')
-source('R/utils/rmseasem.R')
-source('R/utils/srmrsem.R')
-#import functions from svd module
-source('R/svd_sem/svdSEM.R')
-source('R/svd_sem/parameters_svd.R')
-source('R/svd_sem/svdSEM_infer.R')
-source("R/svd_sem/svdSEM_gof.R")
-source("R/svd_sem/improper.R")
-#import functions from ml module
-source('R/ml_sem/F1.R')
-source('R/ml_sem/mlSEM.R')
-source('R/ml_sem/mlSEM_infer.R')
-
-
-library(Matrix)
-library(knitr)
-
-
-
+#' @import R6
+#' @import Matrix
+#' @importFrom knitr kable
+#' @title SemFC Class
+#'
+#' @description lorem ipsum
+#'
+#' @export
 SemFC <- R6Class(
   "SemFC",
   public = list(

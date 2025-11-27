@@ -1,3 +1,41 @@
+
+#' Detect Improper Solutions in SEM Estimation
+#'
+#' Checks for nine types of inadmissible or improper solutions in structural
+#' equation models, including out-of-range estimates and non-positive definite
+#' matrices.
+#'
+#' @param fit List containing model fit results from `lvm_*()` functions, including:
+#'   \itemize{
+#'     \item `reliability_coef`: Reliability coefficients for each block
+#'     \item `P_IMPLIED`: Implied correlation matrix of latent variables
+#'     \item `Ptilde`: Corrected correlation matrix of latent variables
+#'     \item `residual_variance`: List of residual variances
+#'     \item `std_lambda`: Standardized loadings
+#'     \item `SIGMA_IMPLIED`: Implied covariance matrix of observed variables
+#'     \item `R2`: R-squared values for endogenous latent variables
+#'     \item `psi`: Residual covariance matrix of latent variables
+#'   }
+#'
+#' @return Named logical vector of length 9 indicating presence of each type
+#'   of improper solution:
+#'   \item{RELIABILITY_COEF}{`TRUE` if any reliability coefficient is outside [0, 1].}
+#'   \item{RHO_JH}{`TRUE` if any correlation in P_IMPLIED is outside [-1, 1].}
+#'   \item{P_TILDE}{`TRUE` if P_TILDE has negative eigenvalues (not positive definite).}
+#'   \item{P_IMPLIED}{`TRUE` if P_IMPLIED has negative eigenvalues (not positive definite).}
+#'   \item{THETA_JH}{`TRUE` if any residual variance is negative.}
+#'   \item{STD_LAMBDA}{`TRUE` if any standardized loading is outside [-1, 1].}
+#'   \item{SIGMA_IMPLIED}{`TRUE` if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
+#'   \item{R2}{`TRUE` if any R-squared is outside [0, 1].}
+#'   \item{PSI}{`TRUE` if PSI has negative eigenvalues (not positive definite).}
+#'
+#' @details
+#' A value of `TRUE` indicates an improper solution for that criterion. An
+#' admissible solution should have all values set to `FALSE`. Common causes
+#' of improper solutions include poor model specification, insufficient sample
+#' size, or convergence to a boundary solution.
+#'
+#' @export
 improper <- function(fit){
   
   improper_sol = rep(FALSE, 9)

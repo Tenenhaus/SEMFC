@@ -2,14 +2,63 @@
 #       return \Sigma(\theta) for       #
 #         hessian computation           #
 #########################################
-source("R/ml_sem/lvm_ml/get_loadings.R")
-source("R/ml_sem/lvm_ml/get_correlation_coeff.R")
-source("R/ml_sem/lvm_ml/get_path_coeff.R")
-source("R/ml_sem/lvm_ml/get_bdiag.R")
-source("R/utils/get_lengths_theta.R")
+# source("R/ml_sem/lvm_ml/get_loadings.R")
+# source("R/ml_sem/lvm_ml/get_correlation_coeff.R")
+# source("R/ml_sem/lvm_ml/get_path_coeff.R")
+# source("R/ml_sem/lvm_ml/get_bdiag.R")
+# source("R/utils/get_lengths_theta.R")
 
 
-
+#' Compute Implied Covariance Matrix for Latent Variable Model
+#'
+#' This function computes the implied covariance matrix (SIGMA) for a structural
+#' equation model with latent variables. It extracts model parameters from the
+#' optimization vector `x` and returns either the upper triangular values of the
+#' implied covariance matrix or the full model structure.
+#'
+#' @param x Numeric vector containing all model parameters (loadings, correlations,
+#'   path coefficients, and variance/covariance parameters).
+#' @param block_sizes Integer vector specifying the number of indicators in each block.
+#' @param mode Character vector indicating the measurement mode for each block
+#'   ("formative" or "reflective").
+#' @param lengths_parameter Integer vector specifying the length of each parameter
+#'   group in `x` (loadings, exogenous correlations, gamma, beta, endogenous correlations,
+#'   variance/covariance).
+#' @param which_exo_endo List containing indices and structure information for
+#'   exogenous and endogenous latent variables (output from `ind_exo_endo()`).
+#' @param jac Logical value. If TRUE, returns only the upper triangular values of
+#'   the implied covariance matrix (for Jacobian computation). If FALSE, returns
+#'   the complete model structure (default: TRUE).
+#' @param varnames Optional list of character vectors containing variable names
+#'   for each block (default: NULL).
+#'
+#' @return If `jac = TRUE`, returns a numeric vector of upper triangular values
+#'   (including diagonal) of the implied covariance matrix.
+#'   If `jac = FALSE`, returns a list containing:
+#'   \item{lambda}{List of loading vectors for each block.}
+#'   \item{beta}{Matrix of path coefficients between endogenous latent variables.}
+#'   \item{gamma}{Matrix of path coefficients from exogenous to endogenous variables.}
+#'   \item{psi}{Covariance matrix of structural disturbances.}
+#'   \item{R2}{Vector of R-squared values for endogenous variables.}
+#'   \item{residual_variance}{List of residual variances for reflective indicators.}
+#'   \item{S_composites}{List of variance-covariance matrices for formative composites.}
+#'   \item{omega}{List of composite weights (omega) for formative blocks.}
+#'   \item{P_EXO}{Correlation matrix of exogenous latent variables.}
+#'   \item{P_ENDO}{Correlation matrix of endogenous latent variables.}
+#'   \item{R_LVM}{Full correlation matrix of all latent variables.}
+#'   \item{SIGMA_IMPLIED}{Implied covariance matrix of observed variables.}
+#'
+#' @details
+#' The function follows these steps:
+#' 1. Extracts loadings from parameter vector `x`
+#' 2. Constructs correlation matrices for exogenous (P_EXO) and endogenous (P_ENDO) variables
+#' 3. Builds path coefficient matrices gamma (G) and beta (B)
+#' 4. Computes structural disturbance covariance (PSI) and R-squared values
+#' 5. Constructs variance/covariance blocks (BDIAG) for formative and reflective indicators
+#' 6. Computes the implied covariance matrix using the LISREL equation:
+#'   SIGMA = L * R * L' + BDIAG
+#'
+#' @export
 lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac = TRUE, varnames = NULL){
 
   n <- which_exo_endo$ind_exo

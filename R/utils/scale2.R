@@ -5,7 +5,7 @@
 #' @param bias Logical value for biaised (\eqn{1/n}) or unbiaised (\eqn{1/(n-1)}) estimator of the var/cov (default = TRUE).
 #' @return \item{A}{The centered and/or scaled matrix. The centering and scaling values (if any) are returned as attributes "scaled:center" and "scaled:scale".}
 #' @title Scaling and Centering of Matrix-like Objects
-#' @export scale2
+#' @export
 
 scale2<-function (A, center = TRUE, scale = TRUE, bias = TRUE) 
 {

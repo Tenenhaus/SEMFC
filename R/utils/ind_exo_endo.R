@@ -5,14 +5,13 @@
 #'
 #' @return list of H, J, index of the endogenous variables and 
 #' index of the exogenous variables of the C matrix
-#' 
-#' @export
+#'
 #'
 #' @examples
 #' C = matrix(c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,
 #' 0,0,1,1,1,0),6,6)
 #' ind_exo_endo(C)
-
+#' @export
 
 
 

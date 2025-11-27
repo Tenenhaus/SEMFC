@@ -1,6 +1,16 @@
 # restrictions for the minimization of the Loglikelihood function
 
-
+#' @title Equality Constraints for Loglikelihood Minimization (H0)
+#'
+#' @description
+#' Restrictions for the minimization of the Loglikelihood function.
+#'
+#' @param x Numeric vector of parameters.
+#' @param S Sample covariance matrix.
+#'
+#' @return Vector of equality constraints.
+#'
+#' @export
 heq0 <- function(x, S) {
   
   #cov between MVs
@@ -52,7 +62,21 @@ heq0 <- function(x, S) {
   return(h)
 }
 
-
+#' @title Equality Constraints for Loglikelihood Minimization (H1)
+#'
+#' @description
+#' Generalized version for multiple blocks with formative/reflective modes.
+#'
+#' @param x Numeric vector of parameters.
+#' @param S Sample covariance matrix.
+#' @param block_sizes Vector of block sizes.
+#' @param mode Character vector indicating mode for each block.
+#' @param lengths_parameter Lengths of parameters.
+#' @param which_exo_endo Indices of exogenous/endogenous variables.
+#'
+#' @return Vector of equality constraints.
+#'
+#' @export
 heq1 <- function (x, S, block_sizes, mode, lengths_parameter, which_exo_endo){
 
   loadings <- get_loadings(x, block_sizes)

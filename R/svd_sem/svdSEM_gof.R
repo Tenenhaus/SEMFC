@@ -1,4 +1,4 @@
-source("R/utils/scaleDataSet.R")
+# source("R/utils/scaleDataSet.R")
 
 #global fit & test of fit
 svdSEM_gof <- function(fit, B = 100, bias = FALSE){

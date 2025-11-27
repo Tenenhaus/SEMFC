@@ -6,9 +6,8 @@
 #' If bias = FALSE, \eqn{n-1} is used (default: TRUE).
 #' @return \item{C}{Estimation of the variance (resp. covariance) of x (resp. x and y).}
 #' @title Variance and Covariance (Matrices)
-#' @export cov2
 #' @importFrom stats cov
-
+#' @export
 cov2 = function (x, y = NULL, bias = TRUE) 
 {
   n = NROW(x)

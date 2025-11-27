@@ -2,6 +2,28 @@
 
 # source('R/ml_sem/h_constraints.R')
 
+#' Compute Information Matrix for ML Estimation
+#'
+#' Computes the Fisher information matrix using numerical derivatives of the
+#' implied covariance matrix with respect to model parameters.
+#'
+#' @param x Numeric vector of model parameters.
+#' @param block_sizes Integer vector specifying the number of indicators in each block.
+#' @param mode Character vector indicating the measurement mode for each block
+#'   ("formative" or "reflective").
+#' @param lengths_parameter Integer vector specifying the length of each parameter group.
+#' @param which_exo_endo List containing indices for exogenous/endogenous variables.
+#'
+#' @return Symmetric information matrix of dimension length(x) × length(x).
+#'
+#' @details
+#' The information matrix is computed as:
+#' \deqn{I_{ij} = \frac{1}{2} \text{tr}(\Sigma^{-1} \frac{\partial\Sigma}{\partial\theta_i} \Sigma^{-1} \frac{\partial\Sigma}{\partial\theta_j})}
+#' Only the upper triangular part is computed for efficiency.
+#'
+#' @importFrom numDeriv jacobian
+#'
+#' @keywords internal
 information_matrix <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo){
   JAC <- numDeriv::jacobian(lvm_ml, x = x, block_sizes = block_sizes, mode =mode ,
                             lengths_parameter = lengths_parameter, which_exo_endo = which_exo_endo, jac = TRUE)
@@ -33,6 +55,25 @@ information_matrix <- function(x, block_sizes, mode, lengths_parameter, which_ex
   return(I)
 }
 
+
+
+#' Compute Jacobian of Constraint Functions
+#'
+#' Computes the transpose of the Jacobian matrix for equality constraints
+#' in formative measurement models.
+#'
+#' @param x Numeric vector of model parameters.
+#' @param S Sample covariance matrix.
+#' @param block_sizes Integer vector specifying the number of indicators in each block.
+#' @param mode Character vector indicating the measurement mode for each block.
+#' @param lengths_parameter Integer vector specifying the length of each parameter group.
+#' @param which_exo_endo List containing indices for exogenous/endogenous variables.
+#'
+#' @return Matrix H of dimension length(x) × r, where r is the number of formative blocks.
+#'
+#' @importFrom numDeriv jacobian
+#'
+#' @keywords internal
 Jac_constraints <- function(x, S, block_sizes, mode, lengths_parameter, which_exo_endo){
   # transpose of the jacobian of constraint function
   H <- t(numDeriv::jacobian(heq1, x = x, S=S, block_sizes=block_sizes, mode = mode,
@@ -42,7 +83,27 @@ Jac_constraints <- function(x, S, block_sizes, mode, lengths_parameter, which_ex
 
 }
 
-
+' Compute Projection Matrix for Constrained ML Estimation
+#'
+#' Computes the projection matrix P for variance-covariance estimation under
+#' equality constraints in structural equation models with formative blocks.
+#'
+#' @param x Numeric vector of model parameters.
+#' @param S Sample covariance matrix.
+#' @param block_sizes Integer vector specifying the number of indicators in each block.
+#' @param mode Character vector indicating the measurement mode for each block.
+#' @param lengths_parameter Integer vector specifying the length of each parameter group.
+#' @param which_exo_endo List containing indices for exogenous/endogenous variables.
+#'
+#' @return Projection matrix P of dimension length(x) × length(x).
+#'
+#' @details
+#' For constrained optimization, the projection matrix is computed as:
+#' \deqn{P = [M]_{1:t,1:t}^{-1}}
+#' where M is the bordered information matrix:
+#' \deqn{M = \begin{bmatrix} I + HH' & H \\ H' & 0 \end{bmatrix}}
+#'
+#' @keywords internal
 P_ml <- function(x, S, block_sizes, mode, lengths_parameter,which_exo_endo){
 
   I <- information_matrix(x, block_sizes, mode, lengths_parameter,which_exo_endo)
@@ -64,6 +125,29 @@ P_ml <- function(x, S, block_sizes, mode, lengths_parameter,which_exo_endo){
 
 }
 
+
+#' Format ML Inference Results
+#'
+#' Organizes parameter estimates, standard errors, z-scores and p-values into
+#' structured data frames for loadings, path coefficients and residual variances.
+#'
+#' @param fit List containing model fit results from `lvm_ml()`.
+#' @param SD Numeric vector of standard errors for all parameters.
+#' @param lengths_parameter Integer vector specifying the length of each parameter group.
+#' @param mode Character vector indicating the measurement mode for each block.
+#' @param block_sizes Integer vector specifying the number of indicators in each block.
+#'
+#' @return List containing:
+#'   \item{lambda}{Data frame with loadings estimates, std errors, z-scores and p-values.}
+#'   \item{gamma}{Data frame with gamma coefficients estimates, std errors, z-scores and p-values.}
+#'   \item{beta}{Data frame with beta coefficients estimates, std errors, z-scores and p-values.}
+#'   \item{residual_variance}{Data frame with residual variances estimates, std errors, z-scores and p-values.}
+#'
+#' @details
+#' Z-scores are computed as estimate/std error. P-values are two-tailed using
+#' the standard normal distribution.
+#'
+#' @keywords internal
 formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
 
   lambda <- unlist(unname(fit$lambda))
@@ -157,6 +241,30 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
 
 
 
+#' Statistical Inference for ML-SEM
+#'
+#' Performs statistical inference for maximum likelihood structural equation models,
+#' computing variance-covariance matrix and organizing results into tables.
+#'
+#' @param x Numeric vector of optimal parameter values.
+#' @param S Sample covariance matrix.
+#' @param block_sizes Integer vector specifying the number of indicators in each block.
+#' @param mode Character vector indicating the measurement mode for each block.
+#' @param lengths_parameter Integer vector specifying the length of each parameter group.
+#' @param N Integer sample size.
+#' @param fit List containing model fit results from `lvm_ml()`.
+#' @param which_exo_endo List containing indices for exogenous/endogenous variables.
+#'
+#' @return List containing:
+#'   \item{estimate}{List of data frames with parameter estimates and inference statistics.}
+#'   \item{VCOV}{Variance-covariance matrix of parameter estimates.}
+#'   \item{SD}{Vector of standard errors for all parameters.}
+#'
+#' @details
+#' The variance-covariance matrix is computed as VCOV = P/N, where P is the
+#' projection matrix and N is the sample size.
+#'
+#' @keywords internal
 mlSEM_infer <- function(x, S, block_sizes, mode, lengths_parameter, N, fit,which_exo_endo){
 
   P_ml <-P_ml(x, S, block_sizes, mode, lengths_parameter, which_exo_endo)
@@ -176,6 +284,27 @@ mlSEM_infer <- function(x, S, block_sizes, mode, lengths_parameter, N, fit,which
 
 }
 
+
+#' Compute Z-Score and P-Value for Hypothesis Test
+#'
+#' Computes the z-score and p-value for testing linear hypotheses H0: L*theta = 0
+#' on model parameters.
+#'
+#' @param x Numeric vector of optimal parameter values.
+#' @param S Sample covariance matrix.
+#' @param X Data matrix (currently unused in function body).
+#' @param C Constraint-related parameter (currently unused in function body).
+#' @param mode Character vector indicating the measurement mode for each block.
+#' @param L Contrast matrix defining the linear hypothesis.
+#'
+#' @return P-value for the two-tailed test.
+#'
+#' @details
+#' The z-score is computed as:
+#' \deqn{z = \frac{\sqrt{N} L\theta}{\sqrt{LPL'}}}
+#' The p-value is two-tailed using the standard normal distribution.
+#'
+#' @keywords internal
 z_H0 <- function(x, S, X, C, mode, L){
   N <- nrow(X)
   P <- P_ml(x, S, X, C, mode)

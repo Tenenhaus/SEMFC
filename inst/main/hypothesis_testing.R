@@ -118,8 +118,8 @@ for(n in seq_along(N)){
 
 Table7 <- matrix(NA, 2, 3)
 
-Table7 <- rbind(colMeans(decision_svd),
-                    colMeans(decision_ml))
+Table7 <- rbind(colMeans(decision_svd, na.rm = TRUE),
+                colMeans(decision_ml, na.rm = TRUE))
 
 rownames(Table7) <- c("SVD-SEM", "ML-SEM")
 colnames(Table7) <- c("N=300", "N=600", "N=1200")
@@ -127,5 +127,6 @@ round(Table7, 3)
 
 
 
-
+n_valid <- rbind(colSums(!is.na(decision_svd)),
+                 colSums(!is.na(decision_ml)))
 

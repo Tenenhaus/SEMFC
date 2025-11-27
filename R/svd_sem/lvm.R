@@ -1,3 +1,33 @@
+
+
+#' Latent Variable Model (LVM) Estimation
+#'
+#' Estimates the parameters of a latent variable model (LVM) using the provided
+#' correlation matrix  and the adjacency matrix of the structural model.
+#'
+#' @param R Numeric matrix representing the correlation matrix.
+#' @param C Numeric matrix representing the adjacency matrix of the structural model.
+#'
+#' @return A list containing:
+#'   \item{gr}{Graph object representing the structural model.}
+#'   \item{BETA}{Matrix of path coefficients between endogenous variables.}
+#'   \item{GAMMA}{Matrix of path coefficients from exogenous to endogenous variables.}
+#'   \item{PSI}{Residual covariance matrix of endogenous variables.}
+#'   \item{R2}{Vector of R-squared values for endogenous variables.}
+#'   \item{P_EXO}{Implied covariance matrix of exogenous latent variables.}
+#'   \item{P_ENDO}{Implied covariance matrix of endogenous latent variables.}
+#'   \item{R_LVM}{Implied covariance matrix of all latent variables.}
+#'
+#' @details
+#' The function performs the following steps:
+#' - Identifies exogenous and endogenous latent variables using the adjacency matrix.
+#' - Computes path coefficients (BETA, GAMMA) and residual covariance matrix (PSI).
+#' - Constructs the implied covariance matrix of latent variables (R_LVM).
+#' - Handles both directed acyclic graphs (DAGs) and non-DAGs.
+#'
+#' @importFrom igraph graph_from_adjacency_matrix is_dag
+#'
+#' @export
 lvm <- function(R, C){
   gr = igraph::graph_from_adjacency_matrix(C)
   which_exo_endo = ind_exo_endo(C)
