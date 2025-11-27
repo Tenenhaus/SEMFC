@@ -12,7 +12,7 @@ library(cSEM)
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
 set.seed(20091979) #my date of birth
-n_simu <- 1000
+n_simu <- 5
 N <- 300
 sol_svd <- matrix(0, 61, n_simu)
 sol_ml <- matrix(0, 61, n_simu)
@@ -127,18 +127,18 @@ for (b in seq_len(n_simu)){
       SD <- model_ml$SD
 
       # Likelihood Ratio Test
-      fit.ml0 <- solnp(pars = init_ml_with_S,
-                      fun=F1, eqfun=heq0,
-                      eqB = rep(0,5), S = model$S,
-                      control = list(trace = 0, tol = 1e-8))
-
-      # ML output
-      x0 <- fit.ml0$pars
-
-      lrt_pval[b] <- pchisq((N-1)*(
-         F1(x0, model_ml$S, model_ml$block_sizes, model_ml$mode, model_ml$lengths_parameter, model_ml$which_exo_endo) -
-           model_ml$parameters$F
-      ), 1, lower.tail = F)
+      # fit.ml0 <- solnp(pars = init_ml_with_S,
+      #                 fun=F1, eqfun=heq0,
+      #                 eqB = rep(0,5), S = model$S,
+      #                 control = list(trace = 0, tol = 1e-8))
+      #
+      # # ML output
+      # x0 <- fit.ml0$pars
+      #
+      # lrt_pval[b] <- pchisq((N-1)*(
+      #    F1(x0, model_ml$S, model_ml$block_sizes, model_ml$mode, model_ml$lengths_parameter, model_ml$which_exo_endo) -
+      #      model_ml$parameters$F
+      # ), 1, lower.tail = F)
 
       z <- abs(diff(x[26:27]))/sqrt(VCOV[26, 26] + VCOV[27, 27] - 2*VCOV[26, 27])
       vcov_pval[b] <- 2*pnorm(z, lower.tail = F)
