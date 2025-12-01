@@ -30,8 +30,60 @@
 #' @importFrom knitr kable
 #' @title SemFC Class
 #'
-#' @description lorem ipsum
+#' @description
+#' R6 class for estimating and analyzing Structural Equation Models (SEM) that
+#' incorporate both latent factors and composite variables. Supports SVD-based
+#' and maximum likelihood estimation methods.
+#' @details
+#' This class provides a complete framework for SEM analysis including:
+#' \itemize{
+#'   \item Model estimation using SVD or ML
+#'   \item Statistical inference via bootstrap or asymptotic methods
+#'   \item Goodness-of-fit assessment
+#'   \item Reliability coefficients calculation
+#'   \item Support for formative and reflective measurement models
+#' }
+#' @field data Data frame or matrix containing observed variables
+#' @field estimator Character string specifying estimation method ("svd" or "ml")
+#' @field relation_matrix Square matrix defining structural relationships between latent variables
+#' @field which_exo_endo List identifying exogenous/endogenous variables and their relationships
+#' @field scale Logical indicating whether to standardize input data
+#' @field mode Character vector specifying measurement model type for each block ("formative" or "reflective")
+#' @field cov_S Covariance matrix of observed variables
+#' @field bias Logical indicating whether to apply bias correction in covariance estimation
+#' @field svd_result List containing SVD estimation results
+#' @field n_blocks Integer number of measurement blocks
+#' @field n_row Integer number of observations
+#' @field varnames List of variable names for each block
+#' @field block_sizes Integer vector of sizes for each measurement block
+#' @field lengths_theta Integer vector of parameter counts for each model component
+#' @field S_composites Covariance matrix for composite scores
+#' @field infer_estimate Data frame containing inference results (estimates, SE, z-values, p-values)
+#' @field boot_rep Integer number of bootstrap replications
+#' @field reliability_value List of reliability coefficients for each block
+#' @field SD Numeric vector of standard errors for ML estimates
+#' @field VCOV Variance-covariance matrix of ML parameter estimates
+#' @field gof List containing goodness-of-fit statistics
+#' @field parameters List containing all estimated model parameters
 #'
+#' @examples
+#' \dontrun{
+#' # Create relation matrix
+#' rel_matrix <- matrix(0, 3, 3)
+#' rel_matrix[1, 3] <- 1
+#' rel_matrix[2, 3] <- 1
+#'
+#' # Fit model
+#' model <- SemFC$new(
+#'   data = my_data,
+#'   relation_matrix = rel_matrix,
+#'   mode = c("reflective", "reflective", "reflective"),
+#'   scale = TRUE,
+#'   bias = FALSE
+#' )
+#' model$fit(estimator = "svd", B = 1000)
+#' model$summary()
+#' }
 #' @export
 SemFC <- R6Class(
   "SemFC",
@@ -62,10 +114,19 @@ SemFC <- R6Class(
 
 
 
-
-
-
-
+    #' @description
+    #' Create a new SemFC object and initialize model parameters
+    #'
+    #' @param data Data frame or matrix where each column represents an observed variable
+    #' @param relation_matrix Square adjacency matrix (n_blocks x n_blocks) defining structural
+    #'   paths between latent variables (1 = path exists, 0 = no path)
+    #' @param mode Character vector of length n_blocks specifying measurement model type
+    #'   ("formative" or "reflective") for each block
+    #' @param scale Logical indicating whether to standardize input data (default: FALSE)
+    #' @param bias Logical indicating whether to apply bias correction in covariance
+    #'   estimation (default: FALSE)
+    #'
+    #' @return A new `SemFC` object
     # Méthode d'initialisation
     initialize = function(data, relation_matrix, mode,scale, bias) {
       self$data <- data
@@ -91,7 +152,14 @@ SemFC <- R6Class(
     },
 
 
-
+    #' @description
+    #' Fit the model using Singular Value Decomposition (SVD) method
+    #'
+    #' @details
+    #' Estimates model parameters using SVD-based approach which is computationally
+    #' efficient and provides good starting values for ML estimation.
+    #'
+    #' @return Invisible self (for method chaining)
     # Méthode fit utilisant la technique SVD
     fit_svd = function() {
       svd_result <- svdSEM(self$data,
@@ -114,6 +182,18 @@ SemFC <- R6Class(
       self$parameters$F <- F1(theta_svd, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
     },
 
+
+     #' @description
+    #' Perform statistical inference for SVD estimates using bootstrap
+    #'
+    #' @param B Integer number of bootstrap replications (default: 1000)
+    #' @param verbose Logical indicating whether to print progress messages (default: TRUE)
+    #'
+    #' @details
+    #' Uses non-parametric bootstrap to estimate standard errors, confidence intervals,
+    #' and p-values for all model parameters.
+    #'
+    #' @return Invisible self (for method chaining)
     svd_infer = function(B = 1000, verbose = TRUE){
       if (is.null(self$parameters)) {
         self$fit_svd()
@@ -124,7 +204,17 @@ SemFC <- R6Class(
 
     },
 
-
+    #' @description
+    #' Fit the model using Maximum Likelihood (ML) estimation
+    #'
+    #' @param initialisation_svd Logical indicating whether to use SVD estimates as
+    #'   starting values (default: TRUE). If FALSE, random starting values are used.
+    #'
+    #' @details
+    #' Uses numerical optimization (via SOLNP) to minimize the ML fit function.
+    #' SVD initialization is recommended for better convergence.
+    #'
+    #' @return Invisible self (for method chaining)
     fit_ml = function(initialisation_svd = TRUE) {
 
       block_sizes <- self$block_sizes
@@ -157,7 +247,14 @@ SemFC <- R6Class(
     },
 
 
-
+    #' @description
+    #' Perform asymptotic statistical inference for ML estimates
+    #'
+    #' @details
+    #' Computes standard errors using the inverse of the information matrix.
+    #' Provides z-statistics and p-values based on asymptotic normality.
+    #'
+    #' @return Invisible self (for method chaining)
     ml_infer = function(){
       theta_ml <- self$parameters$theta
       block_sizes <- self$block_sizes
@@ -172,6 +269,20 @@ SemFC <- R6Class(
       self$SD <- ml_infer_estimate$SD
     },
 
+
+
+    #' @description
+    #' Calculate reliability coefficients for measurement blocks
+    #'
+    #' @param fit Character string specifying which fit to use ("svd" or "ml")
+    #' @param metric Character string specifying reliability metric (default: "Dillon").
+    #'   Options include "Dillon" (Dillon-Goldstein's rho) and other composite reliability measures.
+    #'
+    #' @details
+    #' Reliability is only applicable to reflective measurement models.
+    #' For formative models, reliability is not computed.
+    #'
+    #' @return Invisible self (for method chaining)
     reliability = function(fit, metric='Dillon'){
       if (fit=='svd'){
         lambdas <- self$parameters$lambda
@@ -188,6 +299,27 @@ SemFC <- R6Class(
       self$reliability_value <- res_reliability
 
     },
+
+
+    #' @description
+    #' Calculate goodness-of-fit statistics
+    #'
+    #' @param B Integer number of bootstrap replications for Bollen-Stine test (default: 1000).
+    #'   Only used when estimator is "svd".
+    #'
+    #' @details
+    #' Computes multiple fit indices including:
+    #' \itemize{
+    #'   \item Chi-square test statistic
+    #'   \item CFI (Comparative Fit Index)
+    #'   \item TLI (Tucker-Lewis Index)
+    #'   \item RMSEA (Root Mean Square Error of Approximation)
+    #'   \item SRMR (Standardized Root Mean Square Residual)
+    #'   \item Information criteria (AIC, BIC, SABIC)
+    #'   \item Bollen-Stine bootstrap p-value (for SVD only)
+    #' }
+    #'
+    #' @return Invisible self (for method chaining)
 
     get_gof = function(B = 1000){
 
@@ -250,6 +382,30 @@ SemFC <- R6Class(
 
 
 
+     #' @description
+    #' Fit the complete model with inference and goodness-of-fit
+    #'
+    #' @param estimator Character string specifying estimation method: "svd" or "ml"
+    #' @param B Integer number of bootstrap replications (default: 1000)
+    #' @param initialisation_svd Logical indicating whether to use SVD initialization
+    #'   for ML estimation (default: TRUE). Ignored when estimator is "svd".
+    #'
+    #' @details
+    #' This is the main wrapper function that performs:
+    #' \enumerate{
+    #'   \item Parameter estimation
+    #'   \item Statistical inference
+    #'   \item Goodness-of-fit assessment
+    #' }
+    #'
+    #' @return Invisible self (for method chaining)
+    #'
+    #' @examples
+    #' \dontrun{
+    #' model$fit(estimator = "svd", B = 1000)
+    #' model$fit(estimator = "ml", B = 500, initialisation_svd = TRUE)
+    #' }
+
     fit = function(estimator, B = 1000, initialisation_svd = TRUE){
       self$estimator <- estimator
       self$boot_rep <- B
@@ -264,11 +420,24 @@ SemFC <- R6Class(
 
     },
 
-    #parameterEstimates = function()
-
-
-
-
+    #' @description
+    #' Print comprehensive summary of model estimation results
+    #'
+    #' @details
+    #' Displays:
+    #' \itemize{
+    #'   \item Model information (estimator, sample size, number of parameters)
+    #'   \item Chi-square test results
+    #'   \item Baseline model comparison
+    #'   \item Fit indices (CFI, TLI)
+    #'   \item Information criteria (AIC, BIC, SABIC)
+    #'   \item RMSEA with confidence intervals
+    #'   \item SRMR
+    #'   \item Bollen-Stine bootstrap results (SVD only)
+    #'   \item Parameter estimates with standard errors and p-values
+    #' }
+    #'
+    #' @return Invisible NULL
 
     summary = function(){
 

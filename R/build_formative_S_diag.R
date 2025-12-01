@@ -13,7 +13,7 @@
 #' upper_values <- c(1, 0.3, 0.5, 1, 0.2, 1)
 #' dim_block <- 3
 #' build_formative_S_diag(upper_values, dim_block)
-
+#' @export
 
 
 build_formative_S_diag <- function(upper_values_composite_i, dim_block) {

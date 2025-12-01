@@ -20,7 +20,7 @@
 #' x <- c(0.5, 0.3, 0.2, 0.5, 0.4) # upper triangle values for a 3x3 matrix
 #' start_index <- 1
 #' get_correlation_coeff(x, latent_variables, start_index)
-
+#' @export
 
 get_correlation_coeff <- function(x, latent_variables, start_index) {
 

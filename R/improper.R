@@ -19,14 +19,14 @@
 #'
 #' @return Named logical vector of length 9 indicating presence of each type
 #'   of improper solution:
-#'   \item{RELIABILITY_COEF}{`TRUE` if any reliability coefficient is outside [0, 1].}
-#'   \item{RHO_JH}{`TRUE` if any correlation in P_IMPLIED is outside [-1, 1].}
+#'   \item{RELIABILITY_COEF}{`TRUE` if any reliability coefficient is outside (0, 1).}
+#'   \item{RHO_JH}{`TRUE` if any correlation in P_IMPLIED is outside (-1, 1).}
 #'   \item{P_TILDE}{`TRUE` if P_TILDE has negative eigenvalues (not positive definite).}
 #'   \item{P_IMPLIED}{`TRUE` if P_IMPLIED has negative eigenvalues (not positive definite).}
 #'   \item{THETA_JH}{`TRUE` if any residual variance is negative.}
-#'   \item{STD_LAMBDA}{`TRUE` if any standardized loading is outside [-1, 1].}
+#'   \item{STD_LAMBDA}{`TRUE` if any standardized loading is outside (-1, 1).}
 #'   \item{SIGMA_IMPLIED}{`TRUE` if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
-#'   \item{R2}{`TRUE` if any R-squared is outside [0, 1].}
+#'   \item{R2}{`TRUE` if any R-squared is outside (0, 1).}
 #'   \item{PSI}{`TRUE` if PSI has negative eigenvalues (not positive definite).}
 #'
 #' @details

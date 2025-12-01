@@ -1,3 +1,40 @@
+
+
+
+#' Statistical Inference for svdSEM Models
+#'
+#' This function performs bootstrap-based statistical inference for svdSEM models,
+#' computing standard errors, z-statistics, and p-values for all model parameters
+#' including factor loadings, structural coefficients, and residual variances.
+#'
+#' @param fit A svdSEM fit object containing the fitted model information
+#' @param B Number of bootstrap replications (default: 100)
+#' @param verbose Logical indicating whether to display a progress bar (default: TRUE)
+#'
+#' @return A list containing:
+#'   \item{out}{List of bootstrap replications for lambda, standardized loadings, beta, gamma, and residual variance}
+#'   \item{lambda}{Data frame with factor loadings, standard errors, z-statistics, and p-values}
+#'   \item{std_lambda}{Data frame with standardized loadings, standard errors, z-statistics, and p-values}
+#'   \item{beta}{Data frame with structural coefficients between latent variables, standard errors, z-statistics, and p-values}
+#'   \item{gamma}{Data frame with regression coefficients from observed to latent variables, standard errors, z-statistics, and p-values}
+#'   \item{residual_variance}{Data frame with residual variances, standard errors, z-statistics, and p-values}
+#'   \item{improper}{Number of improper bootstrap solutions (negative eigenvalues) encountered}
+#'
+#' @details The function uses bootstrap resampling to estimate the sampling distribution
+#' of all model parameters. Z-statistics are computed as parameter estimates divided by
+#' bootstrap standard errors, and p-values are calculated using a two-tailed normal test.
+#' Bootstrap samples with negative eigenvalues are considered improper and excluded from
+#' the analysis.
+#'
+#' @examples
+#' \dontrun{
+#' inference_results <- svdSEM_infer(fit, B = 500, verbose = TRUE)
+#' print(inference_results$lambda)
+#' print(inference_results$gamma)
+#' }
+#'
+#' @export
+
 svdSEM_infer <- function(fit, B = 100, verbose = TRUE){
   
   df <- data.frame(Reduce("cbind", fit$blocks))

@@ -145,7 +145,7 @@ lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac 
   residual_variance <- unname(split(
     `names<-`(
       unlist(residual_variance),
-      paste0(".", names(unlist(unname(loadings[mode == "reflective"]))))
+      paste0("lvm_ml", names(unlist(unname(loadings[mode == "reflective"]))))
     ),
     rep(seq_along(residual_variance), lengths(residual_variance))
   ))

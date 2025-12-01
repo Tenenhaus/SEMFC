@@ -22,6 +22,7 @@
 #' exo_or_endo_variable <- c(X1 = 1, X2 = 2, X3 = 3, X4 = 4)
 #' initial_start_index <- 1
 #' get_path_coeff(x, list_linked_exo_endo, exo_or_endo_variable, initial_start_index)
+#' @export
 
 get_path_coeff <- function(x, list_linked_exo_endo, exo_or_endo_variable, initial_start_index) {
 

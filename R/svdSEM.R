@@ -15,7 +15,6 @@
 # source("R/utils/scale2.R")
 
 #' @import Matrix
-#' Structural equation models with factors and composites with svd-SEM
 #' @param A  A list that contains the \eqn{J} blocks of variables \eqn{X_1, X_2, ..., X_J}.
 #' @param scale  If scale = TRUE, each block is standardized to zero means and unit variances.
 #' @param bias A logical value for biaised or unbiaised estimator of the var/cov (default: bias = TRUE).
@@ -27,7 +26,8 @@
 #' #############
 #' # Example 1 #
 #' #############
-#' ECSI = as.data.frame(read_excel("mobil.xls"))/10
+#' data(ECSI)
+#' ECSI = ECSI/10
 #' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
 #'          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", 
 #'                                "PERQ5", "PERQ6", "PERQ7")],
@@ -159,7 +159,7 @@ svdSEM <- function(A, C, scale = TRUE,
     T_LS <- d_LS(cov2(Reduce("cbind", A), bias = bias), SIGMA_LVM)
 
     lambda <- lapply(lambda, function(x) setNames(as.vector(x), rownames(x)))
-    residual_variance <- lapply(residual_variance, function(x) setNames(as.vector(x), paste0(".", rownames(x))))
+    residual_variance <- lapply(residual_variance, function(x) setNames(as.vector(x), paste0("svd_sem", rownames(x))))
 
 
     out <- list(a = a, 

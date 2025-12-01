@@ -17,7 +17,7 @@
 #' block_sizes <- c(3, 2)
 #' x <- c(0.2, 0.4, 0.6, 0.1, 0.3)
 #' get_loadings(x, block_sizes)
-
+#' @export
 get_loadings <- function(x, block_sizes) {
 
 

@@ -13,8 +13,6 @@
 #' @param mode A character vector indicating the mode ("formative" or "reflective") for each block.
 #' @param block_sizes A numeric vector where each element specifies the size (number of variables)
 #'   of each block.
-#' @param loadings A list of numeric vectors representing loadings for each block. Each vector corresponds
-#'   to the respective block size.
 #' @param initial_start_index_cov An integer indicating the starting index in `x` for covariance/variance
 #'   parameters.
 #'
@@ -26,10 +24,9 @@
 #' x <- c(1, 0.3, 1, 0.2, 0.4, 1, 2, 0.5, 3)
 #' mode <- c("formative", "reflective")
 #' block_sizes <- c(2, 3)
-#' loadings <- list(c(0.8, 0.6), c(0.7, 0.5, 0.4))
 #' initial_start_index_cov <- 1
-#' get_bdiag_bis(x, mode, block_sizes, loadings, initial_start_index_cov)
-
+#' get_bdiag_bis(x, mode, block_sizes, initial_start_index_cov)
+#' @export
 
 get_bdiag_bis <- function(x, mode, block_sizes, initial_start_index_cov) {
 

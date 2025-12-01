@@ -1,6 +1,39 @@
 # source("R/utils/scaleDataSet.R")
 
 #global fit & test of fit
+
+
+
+
+#' Global Fit Assessment for svdSEM Models
+#'
+#' This function computes the global fit test statistic for a svdSEM model
+#' and optionally performs a bootstrap test to assess the significance of the fit.
+#' The method is based on the Yuan & Hayashi (2003) approach for data transformation.
+#'
+#' @param fit A svdSEM fit object containing the fitted model information
+#' @param B Number of bootstrap replications. If NULL, only the T_LS statistic is returned
+#' @param bias Logical indicating whether a biased covariance estimator should be used (default: FALSE)
+#'
+#' @return If B is NULL, returns the T_LS statistic. Otherwise, returns a list containing:
+#'   \item{T_LS}{The observed test statistic}
+#'   \item{Tb_LS}{Vector of bootstrap test statistics}
+#'   \item{pval}{The p-value of the fit test}
+#'   \item{improper}{Number of improper solutions (negative eigenvalues) encountered}
+#'
+#' @details The function first transforms the data according to Yuan & Hayashi (2003),
+#' then performs bootstrap to estimate the empirical distribution of the test statistic.
+#' Solutions with negative eigenvalues are considered improper and excluded.
+#'
+#' @examples
+#' \dontrun{
+#' gof_results <- svdSEM_gof(fit, B = 100, bias = FALSE)
+#' print(gof_results$pval)
+#' }
+#'
+#'
+#' @export
+
 svdSEM_gof <- function(fit, B = 100, bias = FALSE){
   
   if(is.null(B)){
