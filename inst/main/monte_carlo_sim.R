@@ -76,8 +76,8 @@ for (b in seq_len(n_simu)){
     {
 
       source('inst/model/model_mixed.R')
-      Y <- Y_2
-      X <- X_2
+      # Y <- Y_2
+      # X <- X_2
 
       model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
       model$fit_svd()
