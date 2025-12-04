@@ -7,9 +7,23 @@ rmseasem <- function(chi2, df, N, conf.level = 0.90, close = 0.05, notclose = 0.
 
   # CI
   find_ncp <- function(p_target) {
+    f0 <- pchisq(chi2, df = df, ncp = 0) - p_target
+
+    if (f0 <= 0) return(0)
+
+
+    upper <- 1e5
+    f_upper <- pchisq(chi2, df = df, ncp = upper) - p_target
+    max_upper <- 1e10
+    while (f_upper > 0 && upper < max_upper) {
+      upper <- upper * 10
+      f_upper <- pchisq(chi2, df = df, ncp = upper) - p_target
+    }
+    if (f_upper > 0) return(NA)
+
     uniroot(
       function(lambda) pchisq(chi2, df = df, ncp = lambda) - p_target,
-      lower = 0, upper = 1e5
+      lower = 0, upper = upper
     )$root
   }
   lambda.lower <- find_ncp(1 - alpha / 2)

@@ -105,8 +105,8 @@ source('inst/model/model_mixed.R')
 model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
 model$fit_svd()
 
-
-
+model$fit('ml')
+model$summary()
 
 init_ml_with_S <- model$parameters$theta
 

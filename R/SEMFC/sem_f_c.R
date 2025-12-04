@@ -52,6 +52,7 @@ SemFC <- R6Class(
     SD = NULL,
     VCOV = NULL,
     gof = NULL,
+    dof = NULL,
     parameters = list(),
 
 
@@ -79,7 +80,13 @@ SemFC <- R6Class(
       which_exo_endo <- ind_exo_endo(relation_matrix)
       self$which_exo_endo <- which_exo_endo
 
+
       self$lengths_theta <- get_lengths_theta(self$which_exo_endo, self$block_sizes, self$mode)
+
+      p <- sum(self$block_sizes)
+      q <- sum(self$lengths_theta)
+      r <- sum(self$mode == "formative")
+      self$dof  <- (p * (p+1)/2) - q + r
 
 
     },
@@ -88,6 +95,7 @@ SemFC <- R6Class(
 
     # Méthode fit utilisant la technique SVD
     fit_svd = function() {
+      self$estimator <- 'svd'
       svd_result <- svdSEM(self$data,
                            self$relation_matrix,
                            self$scale,
@@ -127,7 +135,7 @@ SemFC <- R6Class(
       # Initialisation par SVD si demandé
       if (initialisation_svd) {
         self$fit_svd()
-
+        self$estimator <- 'ml'
         initial_params <- self$parameters$theta
       } else {
         len_theta <- sum(self$lengths_theta)
@@ -189,35 +197,44 @@ SemFC <- R6Class(
 
       p <- sum(self$block_sizes)
       q <- sum(self$lengths_theta)
+      r <- sum(self$mode == "formative")
       F <- self$parameters$F
       N <- self$n_row
       S <- self$cov_S
       Sigma <- self$parameters$SIGMA_IMPLIED
-
       res_gof <- list()
-      chi2 <- chi2sem(p, q, F, N)
-      res_gof$chi2 <- chi2
-
-      # basline test
-      S_baseline <- diag(diag(S))
-      F_baseline <- log(det(S_baseline)) + sum(diag(S%*%solve(S_baseline))) - log(det(S)) - NCOL(S)
-      baseline <- chi2sem(p, p, F_baseline, N)
-      res_gof$baseline <- baseline
 
       if (estimator == 'svd'){
         bollen_stine <- svdSEM_gof(self$parameters, B)
         res_gof$bollen_stine <- bollen_stine
+      } else if (estimator == 'ml'){
+
+        chi2 <- chi2sem(p, q, r, F, N)
+        res_gof$chi2 <- chi2
+
+        # basline test
+        S_baseline <- diag(diag(S))
+        F_baseline <- log(det(S_baseline)) + sum(diag(S%*%solve(S_baseline))) - log(det(S)) - NCOL(S)
+        baseline <- chi2sem(p, p, 0, F_baseline, N)
+        res_gof$baseline <- baseline
+
+
+        cfi <- 1 - (max(chi2$test - chi2$df, 0)) /
+             (max(baseline$test - baseline$df, chi2$test - chi2$df, 0))
+
+        tli <- ( (baseline$test /  baseline$df) - (chi2$test / chi2$df) ) /
+               ( (baseline$test /  baseline$df) - 1 )
+
+        res_gof$cfi <- cfi
+        res_gof$tli <- tli
+
+
+        # rmsea
+        RMSEA <- rmseasem(chi2$test, chi2$df, N)
+        res_gof$RMSEA <- RMSEA
+        SRMR <- srmrsem(S, Sigma)
+        res_gof$SRMR <- SRMR
       }
-
-
-      cfi <- 1 - (max(chi2$test - chi2$df, 0)) /
-           (max(baseline$test - baseline$df, chi2$test - chi2$df, 0))
-
-      tli <- ( (baseline$test /  baseline$df) - (chi2$test / chi2$df) ) /
-             ( (baseline$test /  baseline$df) - 1 )
-
-      res_gof$cfi <- cfi
-      res_gof$tli <- tli
 
       # loglik
       loglik_H0 <- -(N/2)*(p*log(2*pi) + log(det(Sigma)) + sum(diag(solve(Sigma) %*% S)))
@@ -230,13 +247,6 @@ SemFC <- R6Class(
       res_gof$info_criteria$BIC <- BIC
       SABIC <- -2 * loglik_H0 + q * log((N + 2) / 24)
       res_gof$info_criteria$SABIC <- SABIC
-
-
-      # rmsea
-      RMSEA <- rmseasem(chi2$test, chi2$df, N)
-      res_gof$RMSEA <- RMSEA
-      SRMR <- srmrsem(S, Sigma)
-      res_gof$SRMR <- SRMR
 
       self$gof <- res_gof
 
@@ -269,38 +279,11 @@ SemFC <- R6Class(
       estimator <- self$estimator
       infer_estimate <- self$infer_estimate
 
+
+
+
       #gof
-      # user test
-      testchi2 <- self$gof$chi2$test
-      dfchi2 <- self$gof$chi2$df
-      pvalchi2 <- self$gof$chi2$pval
 
-      # baseline test
-
-      testbaseline <- self$gof$baseline$test
-      dfbaseline <- self$gof$baseline$df
-      pvalbaseline <- self$gof$baseline$pval
-
-      #  vs
-      cfi <- self$gof$cfi
-      tli <- self$gof$tli
-
-      # Information criteria
-
-      loglik_H0 <-  self$gof$info_criteria$loglik_H0
-      loglik_H1 <-  self$gof$info_criteria$loglik_H1
-      AIC <-  self$gof$info_criteria$AIC
-      BIC <-  self$gof$info_criteria$BIC
-      SABIC <-  self$gof$info_criteria$SABIC
-
-
-      # RMSEA and srmr
-      rmsea_val <- self$gof$RMSEA$estimate
-      rmsea_ci_lower <- self$gof$RMSEA$CI_lower
-      rmsea_ci_upper <- self$gof$RMSEA$CI_upper
-      p_rmsea_le_005 <- self$gof$RMSEA$p_close_fit
-      p_rmsea_ge_008 <- self$gof$RMSEA$p_notclose_fit
-      srmr_val <- self$gof$SRMR
 
 
       # inference estimation
@@ -314,45 +297,69 @@ SemFC <- R6Class(
       cat(sprintf("%-45s%15s\n", "Estimator", toupper(estimator)))
       cat(sprintf("%-45s%15d\n", "Number of model parameters", sum(self$lengths_theta)))
       cat(sprintf("%-45s%15d\n", "Number of observations", self$n_row))
+      cat(sprintf("%-45s%15d\n", "Degrees of freedom", self$dof))
       cat("\n")
 
-      cat("Model Test User Model :\n\n")
-      cat(sprintf("  %-40s%12.3f\n", "Test statistic", testchi2))
-      cat(sprintf("  %-40s%12d\n", "Degrees of freedom", dfchi2))
-      cat(sprintf("  %-40s%12.3f\n", "P-value (Chi-square)", pvalchi2))
-      cat("\n")
+      if (estimator == 'ml'){
 
-      cat("Model Test Baseline Model :\n\n")
-      cat(sprintf("  %-40s%12.3f\n", "Test statistic", testbaseline))
-      cat(sprintf("  %-40s%12d\n", "Degrees of freedom", dfbaseline))
-      cat(sprintf("  %-40s%12.3f\n", "P-value", pvalbaseline))
-      cat("\n")
+        # user test
+        testchi2 <- self$gof$chi2$test
+        dfchi2 <- self$gof$chi2$df
+        pvalchi2 <- self$gof$chi2$pval
 
-      cat("User Model versus Baseline Model:\n\n")
-      cat(sprintf("  %-40s%12.3f\n", "Comparative Fit Index (CFI)", cfi))
-      cat(sprintf("  %-40s%12.3f\n", "Tucker-Lewis Index (TLI)", tli))
-      cat("\n")
+        # baseline test
 
-      cat("Loglikelihood and Information Criteria:\n\n")
-      cat(sprintf("  %-40s%12.3f\n", "Loglikelihood user model (H0)", loglik_H0))
-      cat(sprintf("  %-40s%12.3f\n", "Loglikelihood unrestricted model (H1)", loglik_H1))
-      cat("\n")
-      cat(sprintf("  %-40s%12.3f\n", "Akaike (AIC)", AIC))
-      cat(sprintf("  %-40s%12.3f\n", "Bayesian (BIC)", BIC))
-      cat(sprintf("  %-40s%12.3f\n", "Sample-size adjusted BIC (SABIC)", SABIC))
-      cat("\n")
+        testbaseline <- self$gof$baseline$test
+        dfbaseline <- self$gof$baseline$df
+        pvalbaseline <- self$gof$baseline$pval
 
-      cat("Root Mean Square Error of Approximation:\n\n")
-      cat(sprintf("  %-40s%12.3f\n", "RMSEA", rmsea_val))
-      cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - lower", rmsea_ci_lower))
-      cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - upper", rmsea_ci_upper))
-      cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA <= 0.050", p_rmsea_le_005))
-      cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA >= 0.080", p_rmsea_ge_008))
-      cat("\n")
+        #  vs
+        cfi <- self$gof$cfi
+        tli <- self$gof$tli
 
-      cat("Standardized Root Mean Square Residual:\n\n")
-      cat(sprintf("  %-40s%12.3f\n", "SRMR", srmr_val))
-      cat("\n")
+
+
+
+        # RMSEA and srmr
+        rmsea_val <- self$gof$RMSEA$estimate
+        rmsea_ci_lower <- self$gof$RMSEA$CI_lower
+        rmsea_ci_upper <- self$gof$RMSEA$CI_upper
+        p_rmsea_le_005 <- self$gof$RMSEA$p_close_fit
+        p_rmsea_ge_008 <- self$gof$RMSEA$p_notclose_fit
+        srmr_val <- self$gof$SRMR
+        cat("Model Test User Model :\n\n")
+        cat(sprintf("  %-40s%12.3f\n", "Test statistic", testchi2))
+        cat(sprintf("  %-40s%12d\n", "Degrees of freedom", dfchi2))
+        cat(sprintf("  %-40s%12.3f\n", "P-value (Chi-square)", pvalchi2))
+        cat("\n")
+
+        cat("Model Test Baseline Model :\n\n")
+        cat(sprintf("  %-40s%12.3f\n", "Test statistic", testbaseline))
+        cat(sprintf("  %-40s%12d\n", "Degrees of freedom", dfbaseline))
+        cat(sprintf("  %-40s%12.3f\n", "P-value", pvalbaseline))
+        cat("\n")
+
+        cat("User Model versus Baseline Model:\n\n")
+        cat(sprintf("  %-40s%12.3f\n", "Comparative Fit Index (CFI)", cfi))
+        cat(sprintf("  %-40s%12.3f\n", "Tucker-Lewis Index (TLI)", tli))
+        cat("\n")
+
+
+
+
+        cat("Root Mean Square Error of Approximation:\n\n")
+        cat(sprintf("  %-40s%12.3f\n", "RMSEA", rmsea_val))
+        cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - lower", rmsea_ci_lower))
+        cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - upper", rmsea_ci_upper))
+        cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA <= 0.050", p_rmsea_le_005))
+        cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA >= 0.080", p_rmsea_ge_008))
+        cat("\n")
+
+        cat("Standardized Root Mean Square Residual:\n\n")
+        cat(sprintf("  %-40s%12.3f\n", "SRMR", srmr_val))
+        cat("\n")
+
+      }
 
       if (estimator == 'svd'){
         B <- self$boot_rep
@@ -362,6 +369,22 @@ SemFC <- R6Class(
         cat(sprintf("  %-40s%12.3f\n", "Bollen Stine bootstrap p-value", pvalbs))
         cat("\n")
       }
+      # Information criteria
+
+      loglik_H0 <-  self$gof$info_criteria$loglik_H0
+      loglik_H1 <-  self$gof$info_criteria$loglik_H1
+      AIC <-  self$gof$info_criteria$AIC
+      BIC <-  self$gof$info_criteria$BIC
+      SABIC <-  self$gof$info_criteria$SABIC
+
+      cat("Loglikelihood and Information Criteria:\n\n")
+      cat(sprintf("  %-40s%12.3f\n", "Loglikelihood user model (H0)", loglik_H0))
+      cat(sprintf("  %-40s%12.3f\n", "Loglikelihood unrestricted model (H1)", loglik_H1))
+      cat("\n")
+      cat(sprintf("  %-40s%12.3f\n", "Akaike (AIC)", AIC))
+      cat(sprintf("  %-40s%12.3f\n", "Bayesian (BIC)", BIC))
+      cat(sprintf("  %-40s%12.3f\n", "Sample-size adjusted BIC (SABIC)", SABIC))
+      cat("\n")
 
 
 
