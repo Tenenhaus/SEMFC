@@ -97,7 +97,7 @@ heq1_oldvers <- function(x, S) {
 
 
 
-
+set.seed(1)
 source('R/SEMFC/sem_f_c.R')
 
 source('inst/model/model_mixed.R')
@@ -121,6 +121,8 @@ F1_new = F1(x = init_ml_with_S,
             S = model$cov_S, block_sizes=model$block_sizes, mode=model$mode, lengths_parameter = model$lengths_theta,
             which_exo_endo = model$which_exo_endo)
 
+
+implied_S_new <- lvm_ml(init_ml_with_S, model$block_sizes, model$mode, model$lengths_theta, model$which_exo_endo, jac = FALSE)
 
 heq1_new = heq1(x = init_ml_with_S,
                   S = model$cov_S, block_sizes=model$block_sizes, mode=model$mode, lengths_parameter = model$lengths_theta,
