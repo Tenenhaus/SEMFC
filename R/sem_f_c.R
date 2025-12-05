@@ -64,6 +64,7 @@
 #' @field SD Numeric vector of standard errors for ML estimates
 #' @field VCOV Variance-covariance matrix of ML parameter estimates
 #' @field gof List containing goodness-of-fit statistics
+#' @field dof Integer degrees of freedom for the model
 #' @field parameters List containing all estimated model parameters
 #'
 #' @examples

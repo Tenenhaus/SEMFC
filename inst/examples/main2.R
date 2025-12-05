@@ -167,7 +167,7 @@ print(f1_false)
 print("######################   MIXED MODEL #####################################")
 
 
-source('../../R/model/model_mixed.R')
+source('inst/model/model_mixed.R')
 
 ######  True SIGMA ########
 print('DATA empirical sigma = TRUE')

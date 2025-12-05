@@ -6,6 +6,7 @@
 #'
 #' @param p Number of observed variables in the model
 #' @param q Number of estimated parameters in the model
+#' @param r Number of formative blocks
 #' @param F The fit function value (discrepancy between observed and implied covariance matrices)
 #' @param N Sample size
 #'
@@ -27,9 +28,9 @@
 #' }
 #'
 #' @export
-chi2sem <- function(p, q, F, N){
+chi2sem <- function(p, q, r, F, N){
   chi2 <- (N-1) * F
-  df <- (p * (p+1)/2) - q
+  df <- (p * (p+1)/2) - q + r
   p_value <- 1 - pchisq(chi2, df)
 
   return(list(test = chi2, df = df, pval = p_value))
