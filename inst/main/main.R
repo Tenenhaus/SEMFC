@@ -46,4 +46,5 @@ fit.csem <- csem(.data = X,
            .PLS_ignore_structural_model = TRUE, .tolerance = 1e-8,
            .disattenuate = TRUE)
 
+summarize(fit.csem)
 
