@@ -408,6 +408,8 @@ SemFC <- R6Class(
         printCoefmat(residualvariance_infer, P.values = TRUE, has.Pvalue = TRUE)
       }
 
+      #IC
+
     }
 
   )
