@@ -159,7 +159,7 @@ svdSEM <- function(A, C, scale = TRUE,
     T_LS <- d_LS(cov2(Reduce("cbind", A), bias = bias), SIGMA_LVM)
 
     lambda <- lapply(lambda, function(x) setNames(as.vector(x), rownames(x)))
-    residual_variance <- lapply(residual_variance, function(x) setNames(as.vector(x), paste0("svd_sem", rownames(x))))
+    residual_variance <- lapply(residual_variance, function(x) setNames(as.vector(x), paste0(".", rownames(x))))
 
 
     out <- list(a = a, 

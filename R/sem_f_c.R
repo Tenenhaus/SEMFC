@@ -332,19 +332,19 @@ SemFC <- R6Class(
 
       estimator <- self$estimator
 
-      p <- sum(self$block_sizes)
-      q <- sum(self$lengths_theta)
-      r <- sum(self$mode == "formative")
-      F <- self$parameters$F
-      N <- self$n_row
-      S <- self$cov_S
-      Sigma <- self$parameters$SIGMA_IMPLIED
       res_gof <- list()
 
       if (estimator == 'svd'){
         bollen_stine <- svdSEM_gof(self$parameters, B)
         res_gof$bollen_stine <- bollen_stine
       } else if (estimator == 'ml'){
+        p <- sum(self$block_sizes)
+        q <- sum(self$lengths_theta)
+        r <- sum(self$mode == "formative")
+        F <- self$parameters$F
+        N <- self$n_row
+        S <- self$cov_S
+        Sigma <- self$parameters$SIGMA_IMPLIED
 
         chi2 <- chi2sem(p, q, r, F, N)
         res_gof$chi2 <- chi2
@@ -371,20 +371,20 @@ SemFC <- R6Class(
         res_gof$RMSEA <- RMSEA
         SRMR <- srmrsem(S, Sigma)
         res_gof$SRMR <- SRMR
+
+        # loglik
+        loglik_H0 <- -(N/2)*(p*log(2*pi) + log(det(Sigma)) + sum(diag(solve(Sigma) %*% S)))
+        res_gof$info_criteria$loglik_H0 <- loglik_H0
+        loglik_H1 <- -(N/2)*(p*log(2*pi) + log(det(S)) + sum(diag(solve(S) %*% S)))
+        res_gof$info_criteria$loglik_H1 <- loglik_H1
+        AIC <- -2 * loglik_H0 + 2 * q
+        res_gof$info_criteria$AIC <- AIC
+        BIC <- -2 * loglik_H0 + q * log(N)
+        res_gof$info_criteria$BIC <- BIC
+        SABIC <- -2 * loglik_H0 + q * log((N + 2) / 24)
+        res_gof$info_criteria$SABIC <- SABIC
+
       }
-
-      # loglik
-      loglik_H0 <- -(N/2)*(p*log(2*pi) + log(det(Sigma)) + sum(diag(solve(Sigma) %*% S)))
-      res_gof$info_criteria$loglik_H0 <- loglik_H0
-      loglik_H1 <- -(N/2)*(p*log(2*pi) + log(det(S)) + sum(diag(solve(S) %*% S)))
-      res_gof$info_criteria$loglik_H1 <- loglik_H1
-      AIC <- -2 * loglik_H0 + 2 * q
-      res_gof$info_criteria$AIC <- AIC
-      BIC <- -2 * loglik_H0 + q * log(N)
-      res_gof$info_criteria$BIC <- BIC
-      SABIC <- -2 * loglik_H0 + q * log((N + 2) / 24)
-      res_gof$info_criteria$SABIC <- SABIC
-
       self$gof <- res_gof
 
     },
@@ -451,20 +451,7 @@ SemFC <- R6Class(
     summary = function(){
 
       estimator <- self$estimator
-      infer_estimate <- self$infer_estimate
 
-
-
-
-      #gof
-
-
-
-      # inference estimation
-      lambda_infer <- infer_estimate$lambda
-      beta_infer <- infer_estimate$beta
-      gamma_infer <- infer_estimate$gamma
-      residualvariance_infer <- infer_estimate$residual_variance
 
 
       cat("\n")
@@ -518,9 +505,6 @@ SemFC <- R6Class(
         cat(sprintf("  %-40s%12.3f\n", "Tucker-Lewis Index (TLI)", tli))
         cat("\n")
 
-
-
-
         cat("Root Mean Square Error of Approximation:\n\n")
         cat(sprintf("  %-40s%12.3f\n", "RMSEA", rmsea_val))
         cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - lower", rmsea_ci_lower))
@@ -533,7 +517,24 @@ SemFC <- R6Class(
         cat(sprintf("  %-40s%12.3f\n", "SRMR", srmr_val))
         cat("\n")
 
+        # Information criteria
+
+        loglik_H0 <-  self$gof$info_criteria$loglik_H0
+        loglik_H1 <-  self$gof$info_criteria$loglik_H1
+        AIC <-  self$gof$info_criteria$AIC
+        BIC <-  self$gof$info_criteria$BIC
+        SABIC <-  self$gof$info_criteria$SABIC
+
+        cat("Loglikelihood and Information Criteria:\n\n")
+        cat(sprintf("  %-40s%12.3f\n", "Loglikelihood user model (H0)", loglik_H0))
+        cat(sprintf("  %-40s%12.3f\n", "Loglikelihood unrestricted model (H1)", loglik_H1))
+        cat("\n")
+        cat(sprintf("  %-40s%12.3f\n", "Akaike (AIC)", AIC))
+        cat(sprintf("  %-40s%12.3f\n", "Bayesian (BIC)", BIC))
+        cat(sprintf("  %-40s%12.3f\n", "Sample-size adjusted BIC (SABIC)", SABIC))
+        cat("\n")
       }
+
 
       if (estimator == 'svd'){
         B <- self$boot_rep
@@ -543,23 +544,13 @@ SemFC <- R6Class(
         cat(sprintf("  %-40s%12.3f\n", "Bollen Stine bootstrap p-value", pvalbs))
         cat("\n")
       }
-      # Information criteria
 
-      loglik_H0 <-  self$gof$info_criteria$loglik_H0
-      loglik_H1 <-  self$gof$info_criteria$loglik_H1
-      AIC <-  self$gof$info_criteria$AIC
-      BIC <-  self$gof$info_criteria$BIC
-      SABIC <-  self$gof$info_criteria$SABIC
-
-      cat("Loglikelihood and Information Criteria:\n\n")
-      cat(sprintf("  %-40s%12.3f\n", "Loglikelihood user model (H0)", loglik_H0))
-      cat(sprintf("  %-40s%12.3f\n", "Loglikelihood unrestricted model (H1)", loglik_H1))
-      cat("\n")
-      cat(sprintf("  %-40s%12.3f\n", "Akaike (AIC)", AIC))
-      cat(sprintf("  %-40s%12.3f\n", "Bayesian (BIC)", BIC))
-      cat(sprintf("  %-40s%12.3f\n", "Sample-size adjusted BIC (SABIC)", SABIC))
-      cat("\n")
-
+      # inference estimation
+      infer_estimate <- self$infer_estimate
+      lambda_infer <- infer_estimate$lambda
+      beta_infer <- infer_estimate$beta
+      gamma_infer <- infer_estimate$gamma
+      residualvariance_infer <- infer_estimate$residual_variance
 
 
       cat("\nParameter Estimates:\n")

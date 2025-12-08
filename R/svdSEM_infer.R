@@ -136,14 +136,14 @@ svdSEM_infer <- function(fit, B = 100, verbose = TRUE){
   )
   
   
-  std_lambda = data.frame(std_loadings = std_loadings, 
+  std_lambda <- data.frame(std_loadings = std_loadings,
                           std = std_std_loadings,
                           z = t_ratio,
                           pval = pval_std_loadings)
   
-  std_beta = apply(boot_beta, 2, sd)
-  t_ratio = beta[beta!=0]/apply(boot_beta, 2, sd)
-  pval_beta = sapply(1:length(t_ratio),
+  std_beta <- apply(boot_beta, 2, sd)
+  t_ratio <- beta[beta!=0]/apply(boot_beta, 2, sd)
+  pval_beta <- sapply(1:length(t_ratio),
                          function(x)
                            2*pnorm(abs(t_ratio[x]), lower.tail = FALSE)
   )
@@ -151,12 +151,12 @@ svdSEM_infer <- function(fit, B = 100, verbose = TRUE){
   # beta <- data.frame()
   if (length(beta) != 0){
 
-    beta = data.frame(beta = beta,
+    beta <- data.frame(beta = beta,
                     std = std_beta,
                     z = t_ratio,
                     pval = pval_beta)
 
-    rownames(beta) = sapply(1:NROW(beta),
+    rownames(beta) <- sapply(1:NROW(beta),
            function(b)
              paste(colnames(fit$beta)[which(fit$beta!=0, arr.ind = TRUE)[b, ]],
                    collapse = "~")
@@ -166,20 +166,20 @@ svdSEM_infer <- function(fit, B = 100, verbose = TRUE){
   beta <- data.frame(beta)
 
 
-  std_gamma = apply(boot_gamma, 2, sd)
+  std_gamma <- apply(boot_gamma, 2, sd)
   
-  t_ratio = gamma[gamma!=0]/std_gamma
-  pval_gamma = sapply(1:length(t_ratio),
+  t_ratio <- gamma[gamma!=0]/std_gamma
+  pval_gamma <- sapply(1:length(t_ratio),
                           function(x)
                             2*pnorm(abs(t_ratio[x]), lower.tail = FALSE)
   )
   
-  gamma = data.frame(gamma = gamma, 
+  gamma <- data.frame(gamma = gamma,
                      std = std_gamma,
                      z = t_ratio,
                      pval = pval_gamma)
   
-  rownames(gamma) = sapply(1:NROW(gamma),
+  rownames(gamma) <- sapply(1:NROW(gamma),
                           function(b) 
                             paste(rownames(fit$gamma)[which(fit$gamma!=0, arr.ind = TRUE)[b, 1]], 
                                   colnames(fit$gamma)[which(fit$gamma!=0, arr.ind = TRUE)[b, 2]],
