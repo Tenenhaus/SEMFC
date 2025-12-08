@@ -26,8 +26,9 @@ source('inst/model/model_mixed.R')
 Y <- Y_2
 X <- X_2
 
+set.seed(20091979)
 model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
-model$fit('svd')
+model$fit('svd', B = 2000)
 model$summary()
 
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
@@ -44,3 +45,5 @@ fit.csem <- csem(.data = X,
                                 eta6 = c("eta1", "eta2", "eta3", "eta4")),
            .PLS_ignore_structural_model = TRUE, .tolerance = 1e-8,
            .disattenuate = TRUE)
+
+

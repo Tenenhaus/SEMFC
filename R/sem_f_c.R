@@ -26,8 +26,6 @@
 # library(knitr)
 
 #' @import R6
-#' @import Matrix
-#' @importFrom knitr kable
 #' @title SemFC Class
 #'
 #' @description
@@ -418,14 +416,17 @@ SemFC <- R6Class(
     fit = function(estimator, B = 1000, initialisation_svd = TRUE){
       self$estimator <- estimator
       self$boot_rep <- B
+      self$gof <- list()
       if (estimator == 'svd'){
         self$fit_svd()
-        self$svd_infer(B)
+        boot_out <- bootstrap_svd(self$parameters, B, verbose = TRUE)
+        self$infer_estimate <- boot_out$infer
+        self$gof$bollen_stine <- boot_out$gof
       } else if(estimator == 'ml'){
         self$fit_ml(initialisation_svd)
         self$ml_infer()
+        self$get_gof()
       }
-      self$get_gof(B)
 
     },
 
