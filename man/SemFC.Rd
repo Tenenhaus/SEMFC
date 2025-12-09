@@ -105,7 +105,6 @@ model$fit(estimator = "ml", B = 500, initialisation_svd = TRUE)
 \item \href{#method-SemFC-svd_infer}{\code{SemFC$svd_infer()}}
 \item \href{#method-SemFC-fit_ml}{\code{SemFC$fit_ml()}}
 \item \href{#method-SemFC-ml_infer}{\code{SemFC$ml_infer()}}
-\item \href{#method-SemFC-reliability}{\code{SemFC$reliability()}}
 \item \href{#method-SemFC-get_gof}{\code{SemFC$get_gof()}}
 \item \href{#method-SemFC-fit}{\code{SemFC$fit()}}
 \item \href{#method-SemFC-summary}{\code{SemFC$summary()}}
@@ -233,34 +232,6 @@ Invisible self (for method chaining)
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-reliability"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-reliability}{}}}
-\subsection{Method \code{reliability()}}{
-Calculate reliability coefficients for measurement blocks
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$reliability(fit, metric = "Dillon")}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{fit}}{Character string specifying which fit to use ("svd" or "ml")}
-
-\item{\code{metric}}{Character string specifying reliability metric (default: "Dillon").
-Options include "Dillon" (Dillon-Goldstein's rho) and other composite reliability measures.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-Reliability is only applicable to reflective measurement models.
-For formative models, reliability is not computed.
-}
-
-\subsection{Returns}{
-Invisible self (for method chaining)
-}
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SemFC-get_gof"></a>}}
 \if{latex}{\out{\hypertarget{method-SemFC-get_gof}{}}}
 \subsection{Method \code{get_gof()}}{
@@ -280,6 +251,7 @@ Only used when estimator is "svd".}
 \subsection{Details}{
 Computes multiple fit indices including:
 \itemize{
+\item Reliability coefficients for reflective blocks (Dillon)
 \item Chi-square test statistic
 \item CFI (Comparative Fit Index)
 \item TLI (Tucker-Lewis Index)

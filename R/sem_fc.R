@@ -184,7 +184,8 @@ SemFC <- R6Class(
                                   mode = self$mode)
 
       self$parameters$theta <- theta_svd
-      self$parameters$F <- F1(theta_svd, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
+      self$parameters$effect <- compute_effect(self$parameters$beta, self$parameters$gamma)
+      self$gof$F <- F1(theta_svd, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
     },
 
 
@@ -246,7 +247,8 @@ SemFC <- R6Class(
       self$parameters$std_lambda <- std_lambda
 
       self$parameters$theta <- theta_ml
-      self$parameters$F <- F1(theta_ml, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
+      self$parameters$effect <- compute_effect(self$parameters$beta, self$parameters$gamma)
+      self$gof$F <- F1(theta_ml, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
 
 
     },
@@ -276,34 +278,7 @@ SemFC <- R6Class(
 
 
 
-    #' @description
-    #' Calculate reliability coefficients for measurement blocks
-    #'
-    #' @param fit Character string specifying which fit to use ("svd" or "ml")
-    #' @param metric Character string specifying reliability metric (default: "Dillon").
-    #'   Options include "Dillon" (Dillon-Goldstein's rho) and other composite reliability measures.
-    #'
-    #' @details
-    #' Reliability is only applicable to reflective measurement models.
-    #' For formative models, reliability is not computed.
-    #'
-    #' @return Invisible self (for method chaining)
-    reliability = function(fit, metric='Dillon'){
-      if (fit=='svd'){
-        lambdas <- self$parameters$lambda
-        residual_variances <- self$parameters$residual_variance
-      }
-      else if (fit=='ml'){
-        lambdas <- self$parameters$lambda
-        residual_variances <- self$parameters$residual_variance
 
-      }
-
-      res_reliability <- reliability(metric, lambdas, residual_variances)
-
-      self$reliability_value <- res_reliability
-
-    },
 
 
     #' @description
@@ -315,6 +290,7 @@ SemFC <- R6Class(
     #' @details
     #' Computes multiple fit indices including:
     #' \itemize{
+    #'   \item Reliability coefficients for reflective blocks (Dillon)
     #'   \item Chi-square test statistic
     #'   \item CFI (Comparative Fit Index)
     #'   \item TLI (Tucker-Lewis Index)
@@ -332,6 +308,13 @@ SemFC <- R6Class(
 
       res_gof <- list()
 
+      # reliability only for relflective block (Dillon)
+      if (sum(self$mode == "reflective") > 0){
+        res_reliability <- reliability('Dillon', self$parameters$lambda, self$parameters$residual_variance)
+        res_gof$reliability <- res_reliability[self$mode == 'reflective']
+      }
+
+
       if (estimator == 'svd'){
         bollen_stine <- svdSEM_gof(self$parameters, B)
         res_gof$bollen_stine <- bollen_stine
@@ -339,7 +322,7 @@ SemFC <- R6Class(
         p <- sum(self$block_sizes)
         q <- sum(self$lengths_theta)
         r <- sum(self$mode == "formative")
-        F <- self$parameters$F
+        F <- self$gof$F
         N <- self$n_row
         S <- self$cov_S
         Sigma <- self$parameters$SIGMA_IMPLIED

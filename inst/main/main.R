@@ -26,9 +26,11 @@ source('inst/model/model_mixed.R')
 Y <- Y_2
 X <- X_2
 
-set.seed(20091979)
+set.seed(1)
 model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
-model$fit('svd', B = 2000)
+model$fit_svd()
+model$get_gof()
+model$fit('svd', B = 1000)
 model$summary()
 
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
