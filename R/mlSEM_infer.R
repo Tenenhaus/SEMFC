@@ -150,7 +150,7 @@ P_ml <- function(x, S, block_sizes, mode, lengths_parameter,which_exo_endo){
 #' @keywords internal
 formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
 
-  lambda <- unlist(unname(fit$lambda))
+  lambda <- unlist(fit$lambda)
   gamma <- fit$gamma[fit$gamma!=0]
   beta <- fit$beta[fit$beta!=0]
   residual_variance <- unlist(unname(fit$residual_variance))
@@ -188,6 +188,7 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
                              z_score = z_lambda,
                              pval = unlist(lapply(z_lambda, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
   )
+  rownames(table_lambda) <- gsub("\\.", "~", rownames(table_lambda))
 
   table_gamma <- data.frame(Estimate = gamma,
                             std = sd_gamma,

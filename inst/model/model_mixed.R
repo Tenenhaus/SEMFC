@@ -9,8 +9,8 @@ X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = TRUE)
 colnames(X) <- paste("X", rep(1:6, each = 3), rep(1:3, 6), sep ="")
 
 
-Y <- list(X1 = X[, 1:3], X2 = X[, 4:6], X3 = X[, 7:9],
-         X4 = X[, 10:12], X5 = X[, 13:15], X6 = X[, 16:18])
+Y <- list(LV1 = X[, 1:3], LV2 = X[, 4:6], LV3 = X[, 7:9],
+         LV4 = X[, 10:12], LV5 = X[, 13:15], LV6 = X[, 16:18])
 
 
 
