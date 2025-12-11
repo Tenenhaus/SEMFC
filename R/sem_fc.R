@@ -63,7 +63,7 @@
 #' @field VCOV Variance-covariance matrix of ML parameter estimates
 #' @field gof List containing goodness-of-fit statistics
 #' @field dof Integer degrees of freedom for the model
-#' @field parameters List containing all estimated model parameters
+#' @field estimate List containing all estimated model parameters
 #'
 #' @examples
 #' \dontrun{
@@ -110,7 +110,7 @@ SemFC <- R6Class(
     VCOV = NULL,
     gof = NULL,
     dof = NULL,
-    parameters = list(),
+    estimate = list(),
 
 
 
@@ -122,17 +122,19 @@ SemFC <- R6Class(
     #'   paths between latent variables (1 = path exists, 0 = no path)
     #' @param mode Character vector of length n_blocks specifying measurement model type
     #'   ("formative" or "reflective") for each block
+    #' @param estimator Character string specifying estimation method: "svd" or "ml"
     #' @param scale Logical indicating whether to standardize input data (default: FALSE)
     #' @param bias Logical indicating whether to apply bias correction in covariance
     #'   estimation (default: FALSE)
     #'
     #' @return A new `SemFC` object
     # Méthode d'initialisation
-    initialize = function(data, relation_matrix, mode,scale, bias) {
+    initialize = function(data, relation_matrix, mode, estimator = 'ml', scale = FALSE, bias = FALSE) {
       self$data <- data
       self$relation_matrix <- relation_matrix
-      self$scale <- ifelse(is.null(scale), FALSE, scale)
-      self$bias <- ifelse(is.null(bias), FALSE, bias)
+      self$estimator <- estimator
+      self$scale <- scale
+      self$bias <- bias
       self$mode <- mode
 
       parameter_model <- get_parameter_model_sem(data, mode)
@@ -173,7 +175,7 @@ SemFC <- R6Class(
                            self$mode,
                            self$bias)
 
-      self$parameters <- svd_result
+      self$estimate <- svd_result
       theta_svd <- parameters_svd(lambda = svd_result$lambda,
                                   P_EXO = svd_result$P_EXO,
                                   G = svd_result$gamma,
@@ -183,8 +185,8 @@ SemFC <- R6Class(
                                   S_composites = self$S_composites,
                                   mode = self$mode)
 
-      self$parameters$theta <- theta_svd
-      self$parameters$effect <- compute_effect(self$parameters$beta, self$parameters$gamma)
+      self$estimate$theta <- theta_svd
+      self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
       self$gof$F <- F1(theta_svd, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
     },
 
@@ -201,10 +203,10 @@ SemFC <- R6Class(
     #'
     #' @return Invisible self (for method chaining)
     svd_infer = function(B = 1000, verbose = TRUE){
-      if (is.null(self$parameters)) {
+      if (is.null(self$estimate)) {
         self$fit_svd()
       }
-      boot_out <- svdSEM_infer(self$parameters, B, verbose = TRUE)
+      boot_out <- svdSEM_infer(self$estimate, B, verbose = TRUE)
       self$infer_estimate <- boot_out
 
 
@@ -230,7 +232,7 @@ SemFC <- R6Class(
       if (initialisation_svd) {
         self$fit_svd()
         self$estimator <- 'ml'
-        initial_params <- self$parameters$theta
+        initial_params <- self$estimate$theta
       } else {
         len_theta <- sum(self$lengths_theta)
         initial_params <- runif(len_theta)
@@ -238,16 +240,16 @@ SemFC <- R6Class(
 
       ml_sol <- mlSEM(initial_params, block_sizes, mode, self$cov_S, self$lengths_theta, self$which_exo_endo)
       theta_ml <- ml_sol$pars
-      self$parameters <- lvm_ml(x = theta_ml, block_sizes = block_sizes, mode =mode,
+      self$estimate <- lvm_ml(x = theta_ml, block_sizes = block_sizes, mode =mode,
                                    lengths_parameter = self$lengths_theta, which_exo_endo = self$which_exo_endo,
                                    jac = F, varnames = self$varnames)
 
       var_MVs <- lapply(self$data, function(x) diag(cov2(x, bias = self$bias)))
-      std_lambda <- mapply("/", self$parameters$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
-      self$parameters$std_lambda <- std_lambda
+      std_lambda <- mapply("/", self$estimate$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
+      self$estimate$std_lambda <- std_lambda
 
-      self$parameters$theta <- theta_ml
-      self$parameters$effect <- compute_effect(self$parameters$beta, self$parameters$gamma)
+      self$estimate$theta <- theta_ml
+      self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
       self$gof$F <- F1(theta_ml, self$cov_S, self$block_sizes, self$mode, self$lengths_theta, self$which_exo_endo)
 
 
@@ -263,13 +265,13 @@ SemFC <- R6Class(
     #'
     #' @return Invisible self (for method chaining)
     ml_infer = function(){
-      theta_ml <- self$parameters$theta
+      theta_ml <- self$estimate$theta
       block_sizes <- self$block_sizes
       mode <- self$mode
       S <- self$cov_S
       N <- self$n_row
 
-      ml_infer_estimate <- mlSEM_infer(theta_ml, S, block_sizes, mode, self$lengths_theta, N, self$parameters,self$which_exo_endo)
+      ml_infer_estimate <- mlSEM_infer(theta_ml, S, block_sizes, mode, self$lengths_theta, N, self$estimate,self$which_exo_endo)
 
       self$infer_estimate <- ml_infer_estimate$estimate
       self$VCOV <- ml_infer_estimate$VCOV
@@ -310,13 +312,13 @@ SemFC <- R6Class(
 
       # reliability only for relflective block (Dillon)
       if (sum(self$mode == "reflective") > 0){
-        res_reliability <- reliability('Dillon', self$parameters$lambda, self$parameters$residual_variance)
+        res_reliability <- reliability('Dillon', self$estimate$lambda, self$estimate$residual_variance)
         res_gof$reliability <- res_reliability[self$mode == 'reflective']
       }
 
 
-      if (estimator == 'svd'){
-        bollen_stine <- svdSEM_gof(self$parameters, B)
+      if (estimator == 'svd' && is.null(self$gof$bollen_stine)){
+        bollen_stine <- svdSEM_gof(self$estimate, B)
         res_gof$bollen_stine <- bollen_stine
       } else if (estimator == 'ml'){
         p <- sum(self$block_sizes)
@@ -325,7 +327,7 @@ SemFC <- R6Class(
         F <- self$gof$F
         N <- self$n_row
         S <- self$cov_S
-        Sigma <- self$parameters$SIGMA_IMPLIED
+        Sigma <- self$estimate$SIGMA_IMPLIED
 
         chi2 <- chi2sem(p, q, r, F, N)
         res_gof$chi2 <- chi2
@@ -366,7 +368,7 @@ SemFC <- R6Class(
         res_gof$info_criteria$SABIC <- SABIC
 
       }
-      self$gof <- res_gof
+      self$gof <- c(self$gof, res_gof)
 
     },
 
@@ -375,8 +377,8 @@ SemFC <- R6Class(
      #' @description
     #' Fit the complete model with inference and goodness-of-fit
     #'
-    #' @param estimator Character string specifying estimation method: "svd" or "ml"
-    #' @param B Integer number of bootstrap replications (default: 1000)
+    #' @param infer Logical indicating whether to perform statistical inference (default: FALSE)
+    #' @param B Integer number of bootstrap replications for svd (default: 1000)
     #' @param initialisation_svd Logical indicating whether to use SVD initialization
     #'   for ML estimation (default: TRUE). Ignored when estimator is "svd".
     #'
@@ -396,20 +398,29 @@ SemFC <- R6Class(
     #' model$fit(estimator = "ml", B = 500, initialisation_svd = TRUE)
     #' }
 
-    fit = function(estimator, B = 1000, initialisation_svd = TRUE){
-      self$estimator <- estimator
+    fit = function(infer = FALSE, B = 1000, initialisation_svd = TRUE){
+      estimator <- self$estimator
       self$boot_rep <- B
-      self$gof <- list()
       if (estimator == 'svd'){
         self$fit_svd()
-        boot_out <- bootstrap_svd(self$parameters, B, verbose = TRUE)
-        self$infer_estimate <- boot_out$infer
-        self$gof$bollen_stine <- boot_out$gof
+
       } else if(estimator == 'ml'){
         self$fit_ml(initialisation_svd)
-        self$ml_infer()
         self$get_gof()
       }
+      if (infer){
+        if (estimator == 'svd'){
+          boot_out <- bootstrap_svd(self$estimate, B, verbose = TRUE)
+          self$infer_estimate <- boot_out$infer
+          self$gof$bollen_stine <- boot_out$gof
+          self$get_gof()
+        }
+      else if(estimator == 'ml'){
+          self$ml_infer()
+        }
+      }
+
+
 
     },
 
@@ -443,6 +454,7 @@ SemFC <- R6Class(
       cat(sprintf("%-45s%15d\n", "Number of model parameters", sum(self$lengths_theta)))
       cat(sprintf("%-45s%15d\n", "Number of observations", self$n_row))
       cat(sprintf("%-45s%15d\n", "Degrees of freedom", self$dof))
+      cat(sprintf("%-45s%15.3f\n", "F", self$gof$F))
       cat("\n")
 
       if (estimator == 'ml'){
@@ -520,7 +532,7 @@ SemFC <- R6Class(
       }
 
 
-      if (estimator == 'svd'){
+      if (estimator == 'svd' && !is.null(self$gof$bollen_stine)){
         B <- self$boot_rep
         pvalbs <- self$gof$bollen_stine$pval
         cat("Bootstrap Test (Bollen Stine):\n\n")
@@ -529,32 +541,79 @@ SemFC <- R6Class(
         cat("\n")
       }
 
-      # inference estimation
-      infer_estimate <- self$infer_estimate
-      lambda_infer <- infer_estimate$lambda
-      beta_infer <- infer_estimate$beta
-      gamma_infer <- infer_estimate$gamma
-      residualvariance_infer <- infer_estimate$residual_variance
+
+      # reliability
+
+      if (!is.null(self$gof$reliability)){
+        cat("Reliability Coefficients (Dillon):\n\n")
+        print(self$gof$reliability)
+        cat("\n")
+      }
+
+      # R2
+
+      if (!is.null(self$estimate$R2)){
+          cat("R2:\n\n")
+          print(self$estimate$R2)
+          cat("\n")
+      }
+
+
+      # estimation
+      estimate <- formatting_estimate(self$estimate)
+      lambda <- estimate$lambda
+      beta <- estimate$beta
+      gamma <- estimate$gamma
+      residualvariance <- estimate$residual_variance
+      total_effects <- estimate$total_effects
+      indirect_effects <- estimate$indirect_effects
+
+
+
+
+      if (!is.null(self$infer_estimate)){
+
+        # inference estimation
+        estimate <- self$infer_estimate
+        lambda <- estimate$lambda
+        beta<- estimate$beta
+        gamma<- estimate$gamma
+        residualvariance<- estimate$residual_variance
+
+      }
+
+
+
 
 
       cat("\nParameter Estimates:\n")
       cat("lambda:\n")
-      if (nrow(lambda_infer) != 0){
-        printCoefmat(lambda_infer, P.values = TRUE, has.Pvalue = TRUE)
+      if (nrow(lambda) != 0){
+        printCoefmat(lambda, P.values = TRUE, has.Pvalue = TRUE)
       }
 
-      if (nrow(beta_infer) != 0){
+      if (nrow(beta) != 0){
         cat("beta:\n")
-        printCoefmat(beta_infer, P.values = TRUE, has.Pvalue = TRUE)
+        printCoefmat(beta, P.values = TRUE, has.Pvalue = TRUE)
       }
       cat("gamma:\n")
-      if (nrow(gamma_infer) != 0){
-        printCoefmat(gamma_infer, P.values = TRUE, has.Pvalue = TRUE)
+      if (nrow(gamma) != 0){
+        printCoefmat(gamma, P.values = TRUE, has.Pvalue = TRUE)
       }
 
       cat("residual variance:\n")
-      if (nrow(residualvariance_infer) != 0){
-        printCoefmat(residualvariance_infer, P.values = TRUE, has.Pvalue = TRUE)
+      if (nrow(residualvariance) != 0){
+        printCoefmat(residualvariance, P.values = TRUE, has.Pvalue = TRUE)
+      }
+
+      if (nrow(total_effects) != 0){
+          cat("total effects:\n")
+          printCoefmat(total_effects, P.values = TRUE, has.Pvalue = TRUE)
+      }
+
+      if (nrow(indirect_effects) != 0){
+          cat("indirect effects:\n")
+          printCoefmat(indirect_effects, P.values = TRUE, has.Pvalue = TRUE)
       }
 
     }
