@@ -11,13 +11,13 @@ X <- X_2
 
 set.seed(1)
 model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "svd")
-model$fit_svd()
-model$get_gof()
+# model$fit_svd()
+# model$get_gof()
 model$fit(infer = T, B = 100)
 model$fit(infer = F)
 model$summary()
 
-modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
+modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode)
 modelml$fit(infer=T)
 modelml$summary()
 

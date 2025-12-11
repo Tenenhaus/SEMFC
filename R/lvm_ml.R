@@ -161,6 +161,12 @@ lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac 
   omega <- mapply(function(Sjj, lambda_j) solve(Sjj) %*% lambda_j,
                   S_composites, loadings[mode == "formative"], SIMPLIFY = FALSE)
 
+  for (b in seq_len(length(omega))){
+    rownames(omega[[b]]) <- names(loadings[mode == "formative"][[b]])
+  }
+
+
+
   ########################################################################
   ####### Compute the implied covariance matrix implied by the model #####
   ########################################################################

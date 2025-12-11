@@ -46,6 +46,7 @@ get_bdiag_bis <- function(x, mode, block_sizes, initial_start_index_cov) {
   # list of parameters corresponding to each covariance bloc
   list_cov <- split(extracted_parameters_cov,
                     rep(seq_along(lengths_values_cov), lengths_values_cov))
+  names(list_cov) <- names(lengths_values_cov)
 
   # Building list of formative matrices
   S_composites <- lapply(list_cov[mode == "formative"], build_formative_S_diag)
@@ -56,6 +57,7 @@ get_bdiag_bis <- function(x, mode, block_sizes, initial_start_index_cov) {
   BDIAG <- vector("list", J)
   BDIAG[mode == "formative"] <- S_composites
   BDIAG[mode == "reflective"] <- reflective_blocks
+  names(BDIAG) <- names(lengths_values_cov)
 
   return(BDIAG)
 

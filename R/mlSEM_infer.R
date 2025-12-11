@@ -186,13 +186,19 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
   table_lambda <- data.frame(Estimate = lambda,
                              std = sd_lambda,
                              z_score = z_lambda,
+                             ci_lower = lambda - 1.96 * sd_lambda,
+                             ci_upper = lambda + 1.96 * sd_lambda,
                              pval = unlist(lapply(z_lambda, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+
   )
   rownames(table_lambda) <- gsub("\\.", "~", rownames(table_lambda))
 
   table_gamma <- data.frame(Estimate = gamma,
                             std = sd_gamma,
                             z_score = z_gamma,
+                            ci_lower = gamma - 1.96 * sd_gamma,
+                            ci_upper = gamma + 1.96 * sd_gamma,
+
                             pval = unlist((lapply(z_gamma, function (z) 2*pnorm(abs(z), lower.tail = FALSE))))
   )
 
@@ -210,6 +216,8 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
   table_beta <- data.frame(Estimate = beta,
                            std = sd_beta,
                            z_score = z_beta,
+                           ci_lower = beta - 1.96 * sd_beta,
+                           ci_upper = beta + 1.96 * sd_beta,
                            pval = unlist(lapply(z_beta, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
   )
   rownames(table_beta) <- sapply(1:NROW(table_beta),
@@ -222,6 +230,8 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
   table_residual_variance <- data.frame(Estimate = residual_variance,
                            std = sd_residual_variance,
                            z_score = z_residual_variance,
+                           ci_lower = residual_variance - 1.96 * sd_residual_variance,
+                           ci_upper = residual_variance + 1.96 * sd_residual_variance,
                            pval = unlist(lapply(z_residual_variance, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
   )
 
