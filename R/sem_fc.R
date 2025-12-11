@@ -567,6 +567,7 @@ SemFC <- R6Class(
       residualvariance <- estimate$residual_variance
       total_effects <- estimate$total_effects
       indirect_effects <- estimate$indirect_effects
+      omega <- estimate$omega
 
 
 
@@ -579,6 +580,9 @@ SemFC <- R6Class(
         beta<- estimate$beta
         gamma<- estimate$gamma
         residualvariance<- estimate$residual_variance
+        total_effects <- estimate$total_effects
+        indirect_effects <- estimate$indirect_effects
+        omega <- estimate$omega
 
       }
 
@@ -591,6 +595,13 @@ SemFC <- R6Class(
       if (nrow(lambda) != 0){
         printCoefmat(lambda, P.values = TRUE, has.Pvalue = TRUE)
       }
+
+      cat("omega:\n")
+      if (nrow(omega) != 0){
+        printCoefmat(omega, P.values = TRUE, has.Pvalue = TRUE)
+      }
+
+
 
       if (nrow(beta) != 0){
         cat("beta:\n")

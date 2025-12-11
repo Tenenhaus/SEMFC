@@ -18,12 +18,15 @@
 #' @return A list containing:
 #'   \item{infer}{A list containing statistical inference results:
 #'     \itemize{
-#'       \item \code{out}: List of bootstrap replications for lambda, standardized loadings, beta, gamma, and residual variance
-#'       \item \code{lambda}: Data frame with factor loadings, standard errors, z-statistics, and p-values
+#'       \item \code{out}: List of bootstrap replications for lambda, standardized loadings, beta, gamma, residual variance, total effects, indirect effects, and omega
 #'       \item \code{std_lambda}: Data frame with standardized loadings, standard errors, z-statistics, and p-values
 #'       \item \code{beta}: Data frame with structural coefficients between latent variables, standard errors, z-statistics, and p-values
 #'       \item \code{gamma}: Data frame with regression coefficients from observed to latent variables, standard errors, z-statistics, and p-values
 #'       \item \code{residual_variance}: Data frame with residual variances, standard errors, z-statistics, and p-values
+#'       \item \code{total_effects}: Data frame with total effects, standard errors, z-statistics, and p-values
+#'       \item \code{indirect_effects}: Data frame with indirect effects, standard errors, z-statistics, and p-values
+#'       \item \code{omega}: Data frame with error variances for latent variables, standard errors, z-statistics, and p-values
+#'
 #'       \item \code{improper}: Number of improper bootstrap solutions (negative eigenvalues) encountered
 #'     }
 #'   }
@@ -72,10 +75,14 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
 
   beta <- fit$beta[fit$beta!=0]
   gamma <- fit$gamma[fit$gamma!=0]
-  lambda <- unlist(unname(fit$lambda))
-  # names(lambda) <- unlist(lapply(fit$lambda, names))
+  lambda <- unlist(fit$lambda)
   std_loadings <- lambda/sd_init
   residual_variance <- unlist(unname(fit$residual_variance))
+  total_effects <- fit$effect$total_effect[fit$effect$total_effect!=0]
+  indirect_effects <- fit$effect$indirect_effect[fit$effect$total_effect!=0]
+  omega <- unlist(lapply(names(fit$omega), function(lv) {
+    setNames(as.vector(fit$omega[[lv]]), paste(lv, rownames(fit$omega[[lv]]), sep = "~"))
+  }))
 
   Z0 <- lapply(split(data.frame(t(df)),
                     as.factor(rep(seq_along(fit$blocks),
@@ -115,6 +122,8 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                                          mode = fit$mode,
                                          bias = fit$bias)
 
+
+
                           fit_bs_b <- svdSEM(Zb_bs,
                                          C = fit$C,
                                          scale = fit$scale,
@@ -123,12 +132,20 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
 
 
                           if (!any(eigen(fit_b$Ptilde)$values<=0)){
+                            effect_b <- compute_effect(fit_b$beta, fit_b$gamma)
+                            total_effects_b <- effect_b$total_effect
+                            indirect_effects_b <- effect_b$indirect_effect
+
                             res <- list(
                               boot_lambda  = as.vector(Reduce("c", fit_b$lambda)),
                               boot_std_loadings = as.vector(Reduce("c", fit_b$lambda)/SD),
                               boot_beta = fit_b$beta[fit_b$beta!=0],
                               boot_gamma = fit_b$gamma[fit_b$gamma!=0],
-                              boot_residual_variance = as.vector(Reduce("c", fit_b$residual_variance)))
+                              boot_residual_variance = as.vector(Reduce("c", fit_b$residual_variance)),
+                              boot_total_effects = total_effects_b[total_effects_b!=0],
+                              boot_indirect_effects = indirect_effects_b[indirect_effects_b!=0],
+                              boot_omega = as.vector(Reduce("c", fit_b$omega))
+                            )
 
                           }
                           else{
@@ -137,7 +154,11 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                               boot_std_loadings = NA,
                               boot_beta = NA,
                               boot_gamma = NA,
-                              boot_residual_variance = NA)
+                              boot_residual_variance = NA,
+                              boot_total_effects = NA,
+                              boot_indirect_effects = NA,
+                              boot_omega = NA
+                            )
                           }
                           if (!any(eigen(fit_bs_b$Ptilde)$values<=0)){
                             res$Tb_LS <- NA
@@ -153,7 +174,11 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
   boot_beta <- Reduce("rbind", L[3, ][!is.na(L[3, ])])
   boot_gamma <- Reduce("rbind", L[4, ][!is.na(L[4, ])])
   boot_residual_variance <- Reduce("rbind", L[5, ][!is.na(L[5, ])])
-  boot_Tb_LS <- unlist(L[6, ])
+  boot_total_effects <- Reduce("rbind", L[6, ][!is.na(L[6, ])])
+  boot_indirect_effects <- Reduce("rbind", L[7, ][!is.na(L[7, ])])
+  boot_omega <- Reduce("rbind", L[8, ][!is.na(L[8, ])])
+
+  boot_Tb_LS <- unlist(L[9, ])
 
 
   std_residual_variance <- apply(boot_residual_variance, 2, sd)
@@ -184,6 +209,26 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                       std = std_lambda,
                       z = t_ratio,
                       pval = pval_lambda)
+  rownames(lambda) <- gsub("\\.", "~", rownames(lambda))
+
+
+  std_omega <- apply(boot_omega, 2, sd)
+  t_ratio <- omega/std_omega
+  pval_omega <- sapply(seq_along(t_ratio),
+                          function(x)
+                              2*pnorm(abs(t_ratio[x]),
+                                      lower.tail = FALSE)
+  )
+
+
+  omega <- data.frame(lambda = omega,
+                    std = std_omega,
+                    z = t_ratio,
+                    pval = pval_omega)
+
+
+
+
 
   std_std_loadings <- apply(boot_std_loadings, 2, sd)
 
@@ -246,21 +291,74 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
   )
 
 
-  return(list(infer = list(out = list(boot_lambda,
-                                      boot_std_loadings,
-                                      boot_beta,
-                                      boot_gamma,
-                                      boot_residual_variance),
-                           lambda = lambda,
-                           std_lambda = std_lambda,
-                           beta = beta,
-                           gamma = gamma,
-                           residual_variance = residual_variance,
-                           improper = sum(is.na(L[1, ]))),
-              gof = list(T_LS = fit$T_LS,
-                         Tb_LS = boot_Tb_LS,
-                         pval = mean(fit$T_LS <= boot_Tb_LS, na.rm = TRUE),
-                         improper = sum(is.na(boot_Tb_LS))
-              )
+  std_total_effects <- apply(boot_total_effects, 2, sd)
+  t_ratio <- total_effects/std_total_effects
+  pval_total_effects <- sapply(seq_along(t_ratio),
+                               function(x)
+                                   2*pnorm(abs(t_ratio[x]), lower.tail = FALSE)
+  )
+
+  total_effects <- data.frame(total_effects = total_effects,
+                              std = std_total_effects,
+                              z = t_ratio,
+                              pval = pval_total_effects)
+
+  rownames(total_effects) <- sapply(seq_len(NROW(total_effects)),
+                          function(b)
+                          paste(rownames(fit$effect$total_effect)[which(fit$effect$total_effect!=0, arr.ind = TRUE)[b, 1]],
+                                colnames(fit$effect$total_effect)[which(fit$effect$total_effect!=0, arr.ind = TRUE)[b, 2]],
+                                sep = "~")
+  )
+
+
+
+  std_indirect_effects <- apply(boot_indirect_effects, 2, sd)
+  t_ratio <- indirect_effects/std_indirect_effects
+  pval_indirect_effects <- sapply(seq_along(t_ratio),
+                                  function(x)
+                                      2*pnorm(abs(t_ratio[x]), lower.tail = FALSE)
+  )
+  indirect_effects <- data.frame(indirect_effects = indirect_effects,
+                                   std = std_indirect_effects,
+                                   z = t_ratio,
+                                   pval = pval_indirect_effects)
+
+
+  rownames(indirect_effects) <- sapply(seq_len(NROW(indirect_effects)),
+                        function(b)
+                        paste(rownames(fit$effect$indirect_effect)[which(fit$effect$indirect_effect!=0, arr.ind = TRUE)[b, 1]],
+                              colnames(fit$effect$indirect_effect)[which(fit$effect$indirect_effect!=0, arr.ind = TRUE)[b, 2]],
+                              sep = "~")
+  )
+
+
+
+  return(list(
+    infer = list(
+      out = list(
+        boot_lambda,
+        boot_std_loadings,
+        boot_beta,
+        boot_gamma,
+        boot_residual_variance,
+        boot_total_effects,
+        boot_indirect_effects,
+        boot_omega
+      ),
+      lambda = lambda,
+      std_lambda = std_lambda,
+      beta = beta,
+      gamma = gamma,
+      residual_variance = residual_variance,
+      total_effects = total_effects,
+      indirect_effects = indirect_effects,
+      omega = omega,
+      improper = sum(is.na(L[1, ]))
+    ),
+    gof = list(T_LS = fit$T_LS,
+               Tb_LS = boot_Tb_LS,
+               pval = mean(fit$T_LS <= boot_Tb_LS, na.rm = TRUE),
+               improper = sum(is.na(boot_Tb_LS))
+    )
   ))
 }

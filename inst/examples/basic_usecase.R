@@ -2,6 +2,8 @@
 # exemple
 
 library(cSEM)
+library(devtools)
+load_all()
 
 source('inst/model/model_mixed.R')
 Y <- Y_2

@@ -13,6 +13,8 @@
 #'   - `residual_variance`: A vector of residual variances.
 #'   - `effect$total_effect`: A matrix of total effects (non-zero values are used).
 #'   - `effect$indirect_effect`: A matrix of indirect effects (non-zero values are used).
+#'   - `omega`: A list of matrices containing weigths of indicators for composites blocs.
+#'
 #'
 #' @return A list of data frames:
 #'   - `lambda`: Data frame of loadings with columns for estimates, standard errors, z-scores, and p-values.
@@ -21,6 +23,8 @@
 #'   - `residual_variance`: Data frame of residual variances with the same columns as `lambda`.
 #'   - `total_effects`: Data frame of total effects with the same columns as `lambda`.
 #'   - `indirect_effects`: Data frame of indirect effects with the same columns as `lambda`.
+#'   - `omega`: Data frame of omega values with the same columns as `lambda`.
+#'
 #'
 #' @examples
 #' \dontrun{
@@ -37,6 +41,9 @@ formatting_estimate <- function(fit){
   residual_variance <- unlist(unname(fit$residual_variance))
   total_effects <- fit$effect$total_effect[fit$effect$total_effect!=0]
   indirect_effects <- fit$effect$indirect_effect[fit$effect$total_effect!=0]
+  omega <- unlist(lapply(names(fit$omega), function(lv) {
+    setNames(as.vector(fit$omega[[lv]]), paste(lv, rownames(fit$omega[[lv]]), sep = "~"))
+  }))
 
 
   table_lambda <- data.frame(Estimate = lambda,
@@ -100,6 +107,13 @@ formatting_estimate <- function(fit){
                                 sep = "~")
   )
 
+  table_omega <- data.frame(Estimate = omega,
+                         std = NA,
+                         z_score = NA,
+                         pval = NA)
+
+
+
 
 
   return(list(lambda = table_lambda,
@@ -107,9 +121,8 @@ formatting_estimate <- function(fit){
               beta = table_beta,
               residual_variance = table_residual_variance,
               total_effects = table_total_effects,
-              indirect_effects = table_indirect_effects))
-
-
+              indirect_effects = table_indirect_effects,
+              omega = table_omega))
 
 
 

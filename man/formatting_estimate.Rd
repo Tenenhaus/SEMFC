@@ -15,6 +15,7 @@ formatting_estimate(fit)
 \item \code{residual_variance}: A vector of residual variances.
 \item \code{effect$total_effect}: A matrix of total effects (non-zero values are used).
 \item \code{effect$indirect_effect}: A matrix of indirect effects (non-zero values are used).
+\item \code{omega}: A list of matrices containing weigths of indicators for composites blocs.
 }}
 }
 \value{
@@ -26,6 +27,7 @@ A list of data frames:
 \item \code{residual_variance}: Data frame of residual variances with the same columns as \code{lambda}.
 \item \code{total_effects}: Data frame of total effects with the same columns as \code{lambda}.
 \item \code{indirect_effects}: Data frame of indirect effects with the same columns as \code{lambda}.
+\item \code{omega}: Data frame of omega values with the same columns as \code{lambda}.
 }
 }
 \description{
