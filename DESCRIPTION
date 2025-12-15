@@ -12,6 +12,7 @@ Imports:
     igraph,
     R6,
     Matrix,
+    MASS,
     Rsolnp,
     numDeriv
 Depends:

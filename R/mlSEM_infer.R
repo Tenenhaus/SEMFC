@@ -103,6 +103,9 @@ Jac_constraints <- function(x, S, block_sizes, mode, lengths_parameter, which_ex
 #' where M is the bordered information matrix:
 #' \deqn{M = \begin{bmatrix} I + HH' & H \\ H' & 0 \end{bmatrix}}
 #'
+#'
+#' @importFrom MASS ginv
+#'
 #' @keywords internal
 P_ml <- function(x, S, block_sizes, mode, lengths_parameter,which_exo_endo){
 
@@ -118,7 +121,16 @@ P_ml <- function(x, S, block_sizes, mode, lengths_parameter,which_exo_endo){
 
   M <- rbind(cbind(I+H%*%t(H), H),
              cbind(t(H), matrix(0, r, r)))
-  P <- solve(M)[1:t, 1:t]
+
+  invM <- tryCatch(
+    solve(M),
+    error = function(e) {
+      warning("Inversion of M failed; using MASS::ginv().")
+      MASS::ginv(M)
+    }
+  )
+
+  P <- invM[1:t, 1:t]
 
   return(P)
 
@@ -150,7 +162,10 @@ P_ml <- function(x, S, block_sizes, mode, lengths_parameter,which_exo_endo){
 #' @keywords internal
 formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
 
+
+
   lambda <- unlist(fit$lambda)
+  std_lambda <- unlist(fit$std_lambda)
   gamma <- fit$gamma[fit$gamma!=0]
   beta <- fit$beta[fit$beta!=0]
   residual_variance <- unlist(unname(fit$residual_variance))
@@ -166,6 +181,7 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
   beta_end_index <- beta_start_index + length(beta) - 1
 
   sd_lambda <- SD[lambda_start_index: lambda_end_index]
+  sd_std_lambda <- sd_lambda*std_lambda/lambda
   sd_gamma <- SD[gamma_start_index: gamma_end_index]
   sd_beta <- SD[beta_start_index: beta_end_index]
 
@@ -192,6 +208,23 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
 
   )
   rownames(table_lambda) <- gsub("\\.", "~", rownames(table_lambda))
+
+
+  table_std_lambda <- data.frame(Estimate = std_lambda,
+                           std = sd_std_lambda,
+                           z_score = z_lambda,
+                           ci_lower = std_lambda - 1.96 * sd_std_lambda,
+                           ci_upper = std_lambda + 1.96 * sd_std_lambda,
+                           pval = unlist(lapply(z_lambda, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+
+  )
+  rownames(table_std_lambda) <- rownames(table_lambda)
+
+
+
+
+
+
 
   table_gamma <- data.frame(Estimate = gamma,
                             std = sd_gamma,
@@ -239,6 +272,7 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
 
   out <- list(
     lambda = table_lambda,
+    std_lambda = table_std_lambda,
     gamma = table_gamma,
     beta = table_beta,
     residual_variance = table_residual_variance

@@ -40,7 +40,7 @@ formatting_estimate <- function(fit){
   beta <- fit$beta[fit$beta!=0]
   residual_variance <- unlist(unname(fit$residual_variance))
   total_effects <- fit$effect$total_effect[fit$effect$total_effect!=0]
-  indirect_effects <- fit$effect$indirect_effect[fit$effect$total_effect!=0]
+  indirect_effects <- fit$effect$indirect_effect[fit$effect$indirect_effect!=0]
   omega <- unlist(lapply(names(fit$omega), function(lv) {
     setNames(as.vector(fit$omega[[lv]]), paste(lv, rownames(fit$omega[[lv]]), sep = "~"))
   }))
@@ -108,10 +108,15 @@ formatting_estimate <- function(fit){
                                 sep = "~")
   )
 
-  table_omega <- data.frame(Estimate = omega,
-                         std = NA,
-                         z_score = NA,
-                         pval = NA)
+  table_omega <- data.frame()
+
+  if (length(omega) != 0){
+
+    table_omega <- data.frame(Estimate = omega,
+                           std = NA,
+                           z_score = NA,
+                           pval = NA)
+  }
 
 
 

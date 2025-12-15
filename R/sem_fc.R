@@ -600,7 +600,7 @@ SemFC <- R6Class(
       }
 
       cat("omega:\n")
-      if (!is.null(omega)){
+      if (nrow(omega) != 0){
         printCoefmat(omega, P.values = TRUE, has.Pvalue = TRUE)
       }
 
