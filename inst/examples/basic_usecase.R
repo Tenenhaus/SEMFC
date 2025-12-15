@@ -5,11 +5,12 @@ library(cSEM)
 library(devtools)
 load_all()
 
+set.seed(27)
 source('inst/model/model_mixed.R')
 Y <- Y_2
 X <- X_2
 
-set.seed(1)
+set.seed(27)
 model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "svd")
 # model$fit_svd()
 # model$get_gof()
@@ -18,8 +19,17 @@ model$fit(infer = F)
 model$summary()
 
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode)
-modelml$fit(infer=T)
+modelml$fit(infer=F)
 modelml$summary()
+
+
+
+
+source('inst/model/model_ecsi.R')
+model_ecsi <- SemFC$new(data=A, relation_matrix = C_ecsi, mode=mode_ecsi, estimator = "ml")
+model_ecsi$fit(infer=T)
+model_ecsi$summary()
+
 
 
 fit.csem <- csem(.data = X,
