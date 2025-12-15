@@ -94,6 +94,8 @@ svdSEM <- function(A, C, scale = TRUE,
     for (j in which(mode == "formative")){
         omega[[j]] <- solve(cov2(A[[j]], bias = bias))%*%a[[j]]*d[j]
     }
+    omega <- omega[!sapply(omega, is.null)]
+
     
     if(any(mode == "formative")) 
       names(omega) <- names(A)[which(mode=="formative")]
