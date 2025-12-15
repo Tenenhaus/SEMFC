@@ -79,7 +79,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
   std_loadings <- lambda/sd_init
   residual_variance <- unlist(unname(fit$residual_variance))
   total_effects <- fit$effect$total_effect[fit$effect$total_effect!=0]
-  indirect_effects <- fit$effect$indirect_effect[fit$effect$total_effect!=0]
+  indirect_effects <- fit$effect$indirect_effect[fit$effect$indirect_effect!=0]
   omega <- unlist(lapply(names(fit$omega), function(lv) {
     setNames(as.vector(fit$omega[[lv]]), paste(lv, rownames(fit$omega[[lv]]), sep = "~"))
   }))
@@ -212,19 +212,22 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
   rownames(lambda) <- gsub("\\.", "~", rownames(lambda))
 
 
-  std_omega <- apply(boot_omega, 2, sd)
-  t_ratio <- omega/std_omega
-  pval_omega <- sapply(seq_along(t_ratio),
-                          function(x)
-                              2*pnorm(abs(t_ratio[x]),
-                                      lower.tail = FALSE)
-  )
 
+  if (length(omega) != 0){
+    std_omega <- apply(boot_omega, 2, sd)
+    t_ratio <- omega/std_omega
+    pval_omega <- sapply(seq_along(t_ratio),
+                         function(x)
+                           2*pnorm(abs(t_ratio[x]),
+                                   lower.tail = FALSE)
+    )
+    omega <- data.frame(lambda = omega,
+                        std = std_omega,
+                        z = t_ratio,
+                        pval = pval_omega)
 
-  omega <- data.frame(lambda = omega,
-                    std = std_omega,
-                    z = t_ratio,
-                    pval = pval_omega)
+  }
+  omega <- data.frame(omega)
 
 
 
