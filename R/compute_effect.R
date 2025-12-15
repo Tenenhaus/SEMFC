@@ -54,7 +54,7 @@ compute_effect  <- function(BETA, GAMMA) {
 
   indirect_effect <- cbind(indirect_exo, indirect_endo)
 
-  return(list(total_effect = total_effect,
-              indirect_effect = indirect_effect))
+  return(list(total_effect = round(total_effect, 6),
+              indirect_effect = round(indirect_effect, 6)))
 
 }
