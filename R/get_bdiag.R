@@ -16,12 +16,13 @@
 #'   - A diagonal matrix for reflective blocks.
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(27)
 #' x <- rnorm(61)
 #' mode <- c("formative", "formative", "formative", "formative", "reflective", "reflective")
 #' block_sizes <- rep(3, 6)
 #' initial_start_index_cov <- 32
-#' get_bdiag(x, mode, block_sizes, initial_start_index_cov)
+#' get_bdiag(x, mode, block_sizes, initial_start_index_cov)}
 #' @keywords internal
 
 get_bdiag <- function(x, mode, block_sizes, initial_start_index_cov) {

@@ -36,10 +36,4 @@ This function processes a fitted model object to extract and format its estimate
 into data frames. Each data frame includes columns for estimates, standard errors,
 z-scores, and p-values, which are initialized as \code{NA}.
 }
-\examples{
-\dontrun{
-# Assuming `fit` is a fitted model object:
-formatted_estimates <- formatting_estimate(fit)
-print(formatted_estimates$lambda)
-}
-}
+\keyword{internal}
