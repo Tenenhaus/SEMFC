@@ -134,10 +134,10 @@ lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac 
   ############## Compute the variance blocks #############################
   ########################################################################
 
-  BDIAG <- get_bdiag_bis(x,
-                         mode = mode,
-                         block_sizes = block_sizes,
-                         initial_start_index_cov = start_indices_in_x[6])
+  BDIAG <- get_bdiag(x,
+                     mode = mode,
+                     block_sizes = block_sizes,
+                     initial_start_index_cov = start_indices_in_x[6])
 
   # Get the residual variance for reflective blocks
   residual_variance <- lapply(BDIAG[mode == 'reflective'], diag)
