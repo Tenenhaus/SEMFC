@@ -18,11 +18,9 @@
 #'   between the observed and model-implied covariance matrices.
 #'
 #' @examples
-#' \dontrun{
-#' S <- cov(data)
-#' SIGMA <- model_implied_cov
+#' S <- diag(2)
+#' SIGMA <- diag(2) * 0.5
 #' discrepancy <- d_LS(S, SIGMA)
-#' }
 #'
 #' @export
 d_LS = function(A, B){

@@ -26,12 +26,7 @@
 #'   - `omega`: Data frame of omega values with the same columns as `lambda`.
 #'
 #'
-#' @examples
-#' \dontrun{
-#' # Assuming `fit` is a fitted model object:
-#' formatted_estimates <- formatting_estimate(fit)
-#' print(formatted_estimates$lambda)
-#' }
+#' @keywords internal
 
 formatting_estimate <- function(fit){
 

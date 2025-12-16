@@ -185,10 +185,10 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
   sd_gamma <- SD[gamma_start_index: gamma_end_index]
   sd_beta <- SD[beta_start_index: beta_end_index]
 
-  BDIAG <- get_bdiag_bis(SD,
-                         mode = mode,
-                         block_sizes = block_sizes,
-                         initial_start_index_cov = start_indices_in_x[6])
+  BDIAG <- get_bdiag(SD,
+                     mode = mode,
+                     block_sizes = block_sizes,
+                     initial_start_index_cov = start_indices_in_x[6])
   sd_residual_variance <- unlist(lapply(BDIAG[mode == 'reflective'], diag))
 
 

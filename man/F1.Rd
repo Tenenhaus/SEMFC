@@ -19,7 +19,7 @@ path coefficients, and variance/covariance parameters).}
 
 \item{lengths_parameter}{Integer vector specifying the length of each parameter
 group in \code{x} (loadings, exogenous correlations, gamma, beta, endogenous correlations,
-variance/covariance).}
+covariance of composite blocks and residual variances).}
 
 \item{which_exo_endo}{List containing indices and structure information for
 exogenous and endogenous latent variables (output from \code{ind_exo_endo()}).}
@@ -46,6 +46,53 @@ where:
 The function first computes the implied covariance matrix using \code{lvm_ml()},
 then evaluates the fit between sample and implied covariances.
 }
+\examples{
+# Example with 6 blocks: 4 formative exogenous, 2 reflective endogenous
+set.seed(123)
+n <- 300
+
+
+# Generate sample data (6 blocks with 3 indicators each)
+X <- matrix(rnorm(n * 18), ncol = 18)
+S <- cov(X)
+
+# Model specification
+block_sizes <- c(3, 3, 3, 3, 3, 3)
+mode <- c("formative", "formative", "formative", "formative",
+          "reflective", "reflective")
+
+# Structure information (hard-coded for this example)
+which_exo_endo <- list(
+  Hi = list(
+    c(LV1 = 1, LV2 = 2),
+    c(LV3 = 3, LV4 = 4)
+  ),
+  Ji = list(
+    c(LV6 = 6),
+    c(LV5 = 5)
+  ),
+  ind_endo = c(LV5 = 5, LV6 = 6),
+  ind_exo = c(LV1 = 1, LV2 = 2, LV3 = 3, LV4 = 4)
+)
+
+
+# Parameter vector structure:
+# - 18 loadings (3 per  block)
+# - 6 exogenous correlations
+# - 4 non zero gamma coefficients
+# - 2 non zero beta coefficient
+# - 1 endogenous correlations
+# - 30 covariances and residual variances
+lengths_parameter <- c(18, 6, 4, 2, 1, 30)
+
+# Initialize parameters
+x  = rnorm(61)
+# Compute log-likelihood
+f <- F1(x, S, block_sizes, mode, lengths_parameter, which_exo_endo)
+print(f)
+
+}
 \seealso{
-\code{\link{lvm_ml}} for implied covariance matrix computation
+\code{\link{lvm_ml}} for implied covariance matrix computation,
+\code{\link{ind_exo_endo}} for structure information generation
 }

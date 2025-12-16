@@ -1,34 +1,31 @@
 
-
-
-# source("R/ml_sem/lvm_ml/build_formative_S_diag.R")
-
-
 #' Construct Block Diagonal Covariance Structures for Formative and Reflective Blocks
 #'
-#' This function creates a block diagonal covariance matrix for both formative and reflective blocks
+#' This function creates a list of block diagonal covariance matrix for both formative and reflective blocks
 #' using the parameter vector `x`, block sizes, and the starting index of covariance parameters.
 #'
 #' @param x A numeric vector of parameters from which covariance or variance values are extracted.
 #' @param mode A character vector indicating the mode ("formative" or "reflective") for each block.
-#' @param block_sizes A numeric vector where each element specifies the size (number of variables)
+#' @param block_sizes A numeric vector where each element specifies the number of indicators
 #'   of each block.
 #' @param initial_start_index_cov An integer indicating the starting index in `x` for covariance/variance
 #'   parameters.
 #'
-#' @return A list of block diagonal matrices, where each block corresponds to either:
+#' @return A list of block matrices, where each block corresponds to either:
 #'   - A covariance matrix for formative blocks.
 #'   - A diagonal matrix for reflective blocks.
 #'
 #' @examples
-#' x <- c(1, 0.3, 1, 0.2, 0.4, 1, 2, 0.5, 3)
-#' mode <- c("formative", "reflective")
-#' block_sizes <- c(2, 3)
-#' initial_start_index_cov <- 1
-#' get_bdiag_bis(x, mode, block_sizes, initial_start_index_cov)
-#' @export
+#' \dontrun{
+#' set.seed(27)
+#' x <- rnorm(61)
+#' mode <- c("formative", "formative", "formative", "formative", "reflective", "reflective")
+#' block_sizes <- rep(3, 6)
+#' initial_start_index_cov <- 32
+#' get_bdiag(x, mode, block_sizes, initial_start_index_cov)}
+#' @keywords internal
 
-get_bdiag_bis <- function(x, mode, block_sizes, initial_start_index_cov) {
+get_bdiag <- function(x, mode, block_sizes, initial_start_index_cov) {
 
 
   # number of blocks
