@@ -1,15 +1,3 @@
-# correction of the RGCCA estimates
-
-
-# source("R/utils/cov2.R")
-
-
-# correction = function(A, a, bias = FALSE){
-#   S = cov2(A, bias = bias)
-#   diag(S) = 0
-#   d = drop(sqrt((t(a)%*%S%*%a)/(1-sum(a^4))))
-#   return(list(d = d, n = 0))
-# }
 
 
 #' Correct Block Weight Estimates in Component-Based SEM

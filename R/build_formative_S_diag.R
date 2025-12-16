@@ -10,13 +10,13 @@
 #' @return A symmetric formative covariance matrix of dimensions `dim_block x dim_block`.
 #'
 #' @examples
+#' dontrun{
 #' upper_values <- c(1, 0.3, 0.5, 1, 0.2, 1)
-#' dim_block <- 3
-#' build_formative_S_diag(upper_values, dim_block)
-#' @export
+#' build_formative_S_diag(upper_values)}
+#' @keywords internal
 
 
-build_formative_S_diag <- function(upper_values_composite_i, dim_block) {
+build_formative_S_diag <- function(upper_values_composite_i) {
 
 
   # dim of the matrix extracted from the length of the upper values
