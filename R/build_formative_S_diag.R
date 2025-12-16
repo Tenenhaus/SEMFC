@@ -10,7 +10,7 @@
 #' @return A symmetric formative covariance matrix of dimensions `dim_block x dim_block`.
 #'
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' upper_values <- c(1, 0.3, 0.5, 1, 0.2, 1)
 #' build_formative_S_diag(upper_values)}
 #' @keywords internal

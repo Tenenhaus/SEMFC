@@ -3,7 +3,6 @@
 export(F1)
 export(SemFC)
 export(bootstrap_svd)
-export(build_formative_S_diag)
 export(chi2sem)
 export(compute_effect)
 export(cov2)

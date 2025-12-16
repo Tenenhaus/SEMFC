@@ -29,15 +29,10 @@ structural equation models, along with its degrees of freedom and p-value.
 }
 \details{
 The chi-square statistic is calculated as (N-1) * F, where F is the
-fit function value. The degrees of freedom are computed as p(p+1)/2 - q, representing
-the difference between the number of unique elements in the covariance matrix
-and the number of estimated parameters. A significant p-value (typically < 0.05)
-suggests poor model fit.
+fit function value. The degrees of freedom are computed as p(p+1)/2 - q + r
 }
 \examples{
-\dontrun{
-chi2_results <- chi2sem(p = 10, q = 15, F = 0.25, N = 200)
+chi2_results <- chi2sem(p = 18, q = 61, r = 4, F = 0.428, N = 300)
 print(chi2_results$pval)
-}
 
 }

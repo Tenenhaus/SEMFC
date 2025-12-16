@@ -86,7 +86,7 @@ which_exo_endo <- list(
 lengths_parameter <- c(18, 6, 4, 2, 1, 30)
 
 # Initialize parameters
-x  = rnorm(61)
+x  <- rnorm(61)
 # Compute log-likelihood
 f <- F1(x, S, block_sizes, mode, lengths_parameter, which_exo_endo)
 print(f)

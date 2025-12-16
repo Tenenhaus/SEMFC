@@ -4,7 +4,7 @@
 \alias{build_formative_S_diag}
 \title{Construct Symmetric Formative S Matrix}
 \usage{
-build_formative_S_diag(upper_values_composite_i, dim_block)
+build_formative_S_diag(upper_values_composite_i)
 }
 \arguments{
 \item{upper_values_composite_i}{A numeric vector containing the values for the upper
@@ -18,7 +18,8 @@ This function builds a symmetric covariance matrix (S_composite_i) for a formati
 using the upper triangular values provided in \code{upper_values_composite_i}.
 }
 \examples{
+\dontrun{
 upper_values <- c(1, 0.3, 0.5, 1, 0.2, 1)
-dim_block <- 3
-build_formative_S_diag(upper_values, dim_block)
+build_formative_S_diag(upper_values)}
 }
+\keyword{internal}
