@@ -33,7 +33,14 @@
 #' parameters <- get_parameter_model_sem(data, mode)
 #' print(parameters$S_diag_composites)
 #' }
-get_parameter_model_sem <- function(data, mode){
+#'
+#'
+#'
+#' @importFrom igraph graph_from_adjacency_matrix is_dag
+#'
+#'
+#'
+get_parameter_model_sem <- function(data, mode, relation_matrix){
 
   X <- do.call(cbind, data)
   S <- cov(X)
@@ -54,14 +61,31 @@ get_parameter_model_sem <- function(data, mode){
 
   S_diag_composites <- S_diag[mode == 'formative']
 
+  dag <- igraph::is_dag(graph_from_adjacency_matrix(relation_matrix))
+  which_exo_endo <- ind_exo_endo(relation_matrix)
+  lengths_theta <- get_lengths_theta(which_exo_endo, block_sizes, mode, dag)
+
+  p <- sum(block_sizes)
+  q <- sum(lengths_theta)
+  r <- sum(mode == "formative")
+
+  dof  <- (p * (p+1)/2) - q + r
+
   out <- list(
     data = data,
     n_blocks = n_blocks,
     n_row = n_row,
     varnames = varnames,
     block_sizes = block_sizes,
-    S = S,
-    S_diag_composites = S_diag_composites
+    cov_S = S,
+    S_diag_composites = S_diag_composites,
+    dag = dag,
+    which_exo_endo = which_exo_endo,
+    lengths_theta = lengths_theta,
+    p = p,
+    q = q,
+    r = r,
+    dof = dof
 
   )
 

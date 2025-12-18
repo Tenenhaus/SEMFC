@@ -2,11 +2,7 @@
 #       return \Sigma(\theta) for       #
 #         hessian computation           #
 #########################################
-# source("R/ml_sem/lvm_ml/get_loadings.R")
-# source("R/ml_sem/lvm_ml/get_correlation_coeff.R")
-# source("R/ml_sem/lvm_ml/get_path_coeff.R")
-# source("R/ml_sem/lvm_ml/get_bdiag.R")
-# source("R/utils/get_lengths_theta.R")
+
 
 
 #' Compute Implied Covariance Matrix for Latent Variable Model
@@ -59,7 +55,14 @@
 #'   SIGMA = L * R * L' + BDIAG
 #'
 #' @export
-lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac = TRUE, varnames = NULL){
+lvm_ml <- function(x, model, jac = TRUE){
+
+  block_sizes <- model$block_sizes
+  mode <- model$mode
+  lengths_parameter <- model$lengths_theta
+  which_exo_endo <- model$which_exo_endo
+  varnames <- model$varnames
+  dag <- model$dag
 
   n <- which_exo_endo$ind_exo
   m <- which_exo_endo$ind_endo
@@ -112,6 +115,9 @@ lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac 
   ####### mapping of the endogeneous correlation matrix from x #####
   ##################################################################
 
+  if (!dag){
+
+
   P_ENDO <- get_correlation_coeff(x,
                                   latent_variables = m,
                                   start_index = start_indices_in_x[5])
@@ -121,6 +127,23 @@ lvm_ml <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo, jac 
   ##################################################################
 
   PSI <-  (diag(NROW(B)) - B)%*%P_ENDO%*%t((diag(NROW(B)) - B)) - G%*%P_EXO%*%t(G)
+
+  } else {
+
+
+    I_B_1 <- solve(diag(ncol(B)) - B)
+    D <- diag(diag(ncol(B)) - (I_B_1%*%G%*%P_EXO%*%t(G)%*%t(I_B_1)))
+    diag_PSI <- drop(solve(I_B_1*I_B_1)%*%D)
+    PSI <- diag(diag_PSI)
+    dimnames(PSI) <- list(rownames(B), rownames(B))
+
+    P_ENDO <- I_B_1%*%(G%*%P_EXO%*%t(G) + PSI)%*%t(I_B_1)
+
+
+  }
+
+
+
   R2 <- 1-diag(PSI)
 
   ########################################################################

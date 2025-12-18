@@ -48,9 +48,11 @@ parameters_svd <- function(lambda,
                            P_ENDO,
                            residual_variance,
                            S_composites,
-                           mode){
+                           model){
 
-  J <- length(mode)
+  J <- model$n_blocks
+  mode <- model$mode
+  dag <- model$dag
 
   S_composites_upper <- lapply(S_composites, function(matrix) matrix[upper.tri(matrix, diag = TRUE)])
 
@@ -60,17 +62,31 @@ parameters_svd <- function(lambda,
   diag_jj[mode != "formative"] <- residual_variance
 
 
+  vect_lambda <- Reduce("c", lambda)
+  vect_exo <- P_EXO[upper.tri(P_EXO)]
+  vect_endo <- P_ENDO[upper.tri(P_ENDO)]
+  if (dag){
+      vect_endo <- numeric(0)
+  }
+
+  vect_beta <- apply(B, 1, function(row) row[row != 0])
+  vect_gamma <- apply(G, 1, function(row) row[row != 0])
+  vect_cov <- Reduce("c", diag_jj)
+
+
+
   theta_vect <-
     Reduce("c",
-      c(Reduce("c", lambda),
-        P_EXO[upper.tri(P_EXO)],
-        apply(G, 1, function(row) row[row != 0]),
-        apply(B, 1, function(row) row[row != 0]),
-        P_ENDO[upper.tri(P_ENDO)],
-        Reduce("c", diag_jj)
-
+      c(vect_lambda,
+        vect_exo,
+        vect_gamma,
+        vect_beta,
+        vect_endo,
+        vect_cov
       )
     )
+
+
 
   return(unname(theta_vect))
 }

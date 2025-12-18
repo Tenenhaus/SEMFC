@@ -77,7 +77,10 @@ heq0 <- function(x, S) {
 #' @return Vector of equality constraints.
 #'
 #' @export
-heq1 <- function (x, S, block_sizes, mode, lengths_parameter, which_exo_endo){
+heq1 <- function (x, S, model){
+
+  block_sizes <- model$block_sizes
+  mode <- model$mode
 
   loadings <- get_loadings(x, block_sizes)
 

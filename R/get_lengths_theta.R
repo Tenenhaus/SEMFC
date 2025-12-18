@@ -36,7 +36,7 @@
 #' lengths <- get_lengths_theta(which_exo_endo, block_sizes, mode = "reflective")
 #' }
 #'
-get_lengths_theta <- function(which_exo_endo, block_sizes, mode){
+get_lengths_theta <- function(which_exo_endo, block_sizes, mode, dag){
 
   n <- which_exo_endo$ind_exo
   m <- which_exo_endo$ind_endo
@@ -51,6 +51,9 @@ get_lengths_theta <- function(which_exo_endo, block_sizes, mode){
   # number_non_zero_B <- sum(lengths(which_exo_endo$Ji))
   number_non_zero_B <- sum(length(unlist(which_exo_endo$Ji)[unlist(which_exo_endo$Ji) != 0]))
   number_upper_values_endo <- length(m) * (length(m) - 1) / 2
+  if (dag){
+    number_upper_values_endo <- 0
+  }
   number_cov <- sum(ifelse(mode == "formative", (block_sizes^2 + block_sizes) / 2, block_sizes))
 
   lengths_parameter <- c(number_loadings,
