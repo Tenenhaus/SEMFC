@@ -12,8 +12,8 @@ model <- SemFC$new(data=A, relation_matrix = C_ecsi, mode=mode_ecsi, scale=F, bi
 modelml <- SemFC$new(data=A, relation_matrix = C_ecsi, mode=mode_ecsi, scale=F, bias=F)
 
 
-model$fit(infer = F)
-modelml$fit(infer = F)
+model$fit(infer = T, B = 100)
+modelml$fit(infer = T)
 
 #### lavan #######
 print('run lavaan')
@@ -62,24 +62,49 @@ print('residual variance')
 print(res_var_comparaison_ecsi)
 
 
+
+
+
+r2_svd = model$estimate$R2
+r2_ml = modelml$estimate$R2
+r2_lavaan = 1 -estimate[45:48,11]
+
+r2_comparaison_ecsi = cbind(estimate[45:48,1:3], r2_svd, r2_ml, r2_lavaan)
+
+print('R2')
+print(r2_comparaison_ecsi)
+
+
+
+
+
+
+
+
 print('F1')
 f1_ml_ecsi = modelml$gof$F
 f1_svd_ecsi = model$gof$F
 
-lambda_lavaan = estimate[1:18,4]
+# lambda_lavaan = estimate[1:18,4]
+
+
+var_MVs <- lapply(model$data$data, function(x) diag(cov2(x, bias = model$model$bias)))
+lambda_lavaan_nostd <- mapply("*", std_all_lavaan, unlist(lapply(var_MVs, sqrt)),  SIMPLIFY = TRUE)
+
 P_exo_lavaan = lavInspect(fit.sem.ml, what = 'cor.lv')[1:1,1:1]
 P_endo_lavaan = lavInspect(fit.sem.ml, what = 'cor.lv')[2:5,2:5]
 g_lavaan = c(bg_lavaan[[1]], bg_lavaan[[2]], bg_lavaan[[4]])
 b_lavaan = c(bg_lavaan[[3]], bg_lavaan[[5]],  bg_lavaan[[6]],  bg_lavaan[[7]])
 
-param_lavaan = c(std_all_lavaan, g_lavaan, b_lavaan,
+param_lavaan = c(lambda_lavaan_nostd, g_lavaan, b_lavaan,
                  res_var_lavaan)
 
-f1_lavaan = F1(param_lavaan, model$model$cov_S, model$model)
+f1_lavaan_ourfitting_function = F1(param_lavaan, model$data$cov_S, model$model)
 
 
 
+f1_lavaan = fitMeasures(fit.sem.ml, "fmin")
 
 
-f1_ecsi= cbind(f1_svd_ecsi,f1_ml_ecsi, f1_lavaan)
+f1_ecsi= cbind(f1_svd_ecsi,f1_ml_ecsi, f1_lavaan_ourfitting_function, f1_lavaan)
 print(f1_ecsi)
