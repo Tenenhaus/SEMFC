@@ -24,20 +24,18 @@
 #' @importFrom numDeriv jacobian
 #'
 #' @keywords internal
-information_matrix <- function(x, block_sizes, mode, lengths_parameter, which_exo_endo){
-  JAC <- numDeriv::jacobian(lvm_ml, x = x, block_sizes = block_sizes, mode =mode ,
-                            lengths_parameter = lengths_parameter, which_exo_endo = which_exo_endo, jac = TRUE)
+information_matrix <- function(x, model){
+  JAC <- numDeriv::jacobian(lvm_ml, x = x, model = model, jac = TRUE)
   full_jac <- sapply(1:NCOL(JAC),
                         function(col){
-                          ds_dt <- matrix(0, sum(block_sizes), sum(block_sizes))
+                          ds_dt <- matrix(0, sum(model$block_sizes), sum(model$block_sizes))
                           ds_dt[upper.tri(ds_dt, diag = T)] <- JAC[, col]
                           ds_dt <- ds_dt + t(ds_dt) - diag(diag(ds_dt))
                         }, simplify = FALSE
       )
 
   nb_param <- length(x)
-  Sinv <- solve(lvm_ml(x = x, block_sizes = block_sizes, mode =mode,
-                       lengths_parameter = lengths_parameter, which_exo_endo = which_exo_endo, jac = F)$SIGMA_IMPLIED)
+  Sinv <- solve(lvm_ml(x = x, model = model, jac = F)$SIGMA_IMPLIED)
   Sinv_full_jac <- lapply(full_jac, function(fj) as.matrix(Sinv %*% fj))
   I_ij <- function(i, j) {
     0.5 * sum(diag(Sinv_full_jac[[i]] %*% Sinv_full_jac[[j]]))
@@ -74,10 +72,9 @@ information_matrix <- function(x, block_sizes, mode, lengths_parameter, which_ex
 #' @importFrom numDeriv jacobian
 #'
 #' @keywords internal
-Jac_constraints <- function(x, S, block_sizes, mode, lengths_parameter, which_exo_endo){
+Jac_constraints <- function(x, S, model){
   # transpose of the jacobian of constraint function
-  H <- t(numDeriv::jacobian(heq1, x = x, S=S, block_sizes=block_sizes, mode = mode,
-                            lengths_parameter = lengths_parameter, which_exo_endo = which_exo_endo))
+  H <- t(numDeriv::jacobian(heq1, x = x, S=S, model = model))
 
   return(H)
 
@@ -107,14 +104,16 @@ Jac_constraints <- function(x, S, block_sizes, mode, lengths_parameter, which_ex
 #' @importFrom MASS ginv
 #'
 #' @keywords internal
-P_ml <- function(x, S, block_sizes, mode, lengths_parameter,which_exo_endo){
+P_ml <- function(x, S, model){
 
-  I <- information_matrix(x, block_sizes, mode, lengths_parameter,which_exo_endo)
+  mode <- model$mode
+
+  I <- information_matrix(x, model)
   t <- nrow(I)
   r <- length(mode[mode=='formative'])
   H <- matrix(0, t, r)
   if (r>0){
-    H  <- Jac_constraints(x, S, block_sizes, mode, lengths_parameter, which_exo_endo)
+    H  <- Jac_constraints(x, S, model)
   }
 
 
@@ -160,8 +159,12 @@ P_ml <- function(x, S, block_sizes, mode, lengths_parameter,which_exo_endo){
 #' the standard normal distribution.
 #'
 #' @keywords internal
-formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
+formatting_ml_infer <- function(fit, SD, model){
 
+
+  mode <- model$mode
+  lengths_parameter <- model$lengths_theta
+  block_sizes <- model$block_sizes
 
 
   lambda <- unlist(fit$lambda)
@@ -310,13 +313,13 @@ formatting_ml_infer <- function(fit, SD, lengths_parameter, mode, block_sizes){
 #' projection matrix and N is the sample size.
 #'
 #' @keywords internal
-mlSEM_infer <- function(x, S, block_sizes, mode, lengths_parameter, N, fit,which_exo_endo){
+mlSEM_infer <- function(x, S, model, N, fit){
 
-  P_ml <-P_ml(x, S, block_sizes, mode, lengths_parameter, which_exo_endo)
+  P_ml <- P_ml(x, S, model)
   VCOV <- P_ml/N
   SD <- sqrt(diag(VCOV))
 
-  table <- formatting_ml_infer(fit, SD, lengths_parameter, mode, block_sizes)
+  table <- formatting_ml_infer(fit, SD, model)
 
   out <- list(
     estimate = table,

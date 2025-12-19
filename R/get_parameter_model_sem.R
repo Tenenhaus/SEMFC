@@ -40,10 +40,10 @@
 #'
 #'
 #'
-get_parameter_model_sem <- function(data, mode, relation_matrix){
+get_parameter_model_sem <- function(data, mode, relation_matrix, bias){
 
   X <- do.call(cbind, data)
-  S <- cov(X)
+  S <- cov2(X, bias = bias)
   n_row <- NROW(X)
 
   block_sizes <- sapply(data, NCOL)
@@ -72,20 +72,28 @@ get_parameter_model_sem <- function(data, mode, relation_matrix){
   dof  <- (p * (p+1)/2) - q + r
 
   out <- list(
-    data = data,
-    n_blocks = n_blocks,
-    n_row = n_row,
-    varnames = varnames,
-    block_sizes = block_sizes,
-    cov_S = S,
-    S_diag_composites = S_diag_composites,
-    dag = dag,
-    which_exo_endo = which_exo_endo,
-    lengths_theta = lengths_theta,
-    p = p,
-    q = q,
-    r = r,
-    dof = dof
+    data = list(
+      data = data,
+      n_row = n_row,
+      cov_S = S,
+      S_diag_composites = S_diag_composites
+    ),
+
+
+    model = list(
+      relation_matrix = relation_matrix,
+      mode = mode,
+      n_blocks = n_blocks,
+      varnames = varnames,
+      block_sizes = block_sizes,
+      dag = dag,
+      which_exo_endo = which_exo_endo,
+      lengths_theta = lengths_theta,
+      p = p,
+      q = q,
+      r = r,
+      dof = dof
+    )
 
   )
 

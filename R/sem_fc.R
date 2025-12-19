@@ -62,30 +62,15 @@ SemFC <- R6Class(
   "SemFC",
   public = list(
     # Attributs
-    data = NULL,
     estimator = NULL,
-    relation_matrix = NULL,
-    which_exo_endo = NULL,
-    scale = FALSE,
-    mode = NULL,
-    cov_S = NULL,
-    bias = FALSE,
-    svd_result = NULL,
-    model = NULL,
-    n_blocks = NULL,
-    n_row = NULL,
-    varnames = NULL,
-    block_sizes = NULL,
-    lengths_theta = NULL,
-    S_composites = NULL,
+    data = list(),
+    model = list(),
+    estimate = list(),
     infer_estimate = NULL,
     boot_rep = NULL,
-    reliability_value = NULL,
     SD = NULL,
     VCOV = NULL,
     gof = NULL,
-    dof = NULL,
-    estimate = list(),
 
 
 
@@ -103,19 +88,16 @@ SemFC <- R6Class(
     #'   estimation (default: FALSE)
     #'
     #' @return A new `SemFC` object
-    # Méthode d'initialisation
+
     initialize = function(data, relation_matrix, mode, estimator = 'ml', scale = FALSE, bias = FALSE) {
 
-
-      self$model <- get_parameter_model_sem(data, mode, relation_matrix)
-      self$model$data <- data
-      self$model$relation_matrix <- relation_matrix
       self$estimator <- estimator
+      init <- get_parameter_model_sem(data, mode, relation_matrix, bias)
+      self$model <- init$model
+      self$data <- init$data
+
       self$model$scale <- scale
       self$model$bias <- bias
-      self$model$mode <- mode
-
-
 
     },
 
@@ -131,7 +113,7 @@ SemFC <- R6Class(
     # Méthode fit utilisant la technique SVD
     fit_svd = function() {
       self$estimator <- 'svd'
-      svd_result <- svdSEM(self$model$data,
+      svd_result <- svdSEM(self$data$data,
                            self$model$relation_matrix,
                            self$model$scale,
                            self$model$mode,
@@ -149,7 +131,7 @@ SemFC <- R6Class(
 
       self$estimate$theta <- theta_svd
       self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
-      self$gof$F <- F1(theta_svd, self$model$cov_S, self$model)
+      self$gof$F <- F1(theta_svd, self$data$cov_S, self$model)
     },
 
 
@@ -187,8 +169,6 @@ SemFC <- R6Class(
     #' @return Invisible self (for method chaining)
     fit_ml = function(initialisation_svd = TRUE) {
 
-      block_sizes <- self$model$block_sizes
-      mode <- self$model$mode
 
       # Initialisation par SVD si demandé
       if (initialisation_svd) {
@@ -200,18 +180,18 @@ SemFC <- R6Class(
         initial_params <- runif(len_theta)
       }
 
-      ml_sol <- mlSEM(initial_params, self$model$cov_S, self$model)
+      ml_sol <- mlSEM(initial_params, self$data$cov_S, self$model)
       theta_ml <- ml_sol$pars
-      self$estimate <- lvm_ml(x = theta_ml, model = self$model,
-                                   jac = F)
+      self$estimate <- lvm_ml(x = theta_ml, model = self$model, jac = F)
+      self$estimate$T_LS <- d_LS(self$data$cov_S, self$estimate$SIGMA_IMPLIED)
 
-      var_MVs <- lapply(self$model$data, function(x) diag(cov2(x, bias = self$model$bias)))
+      var_MVs <- lapply(self$data$data, function(x) diag(cov2(x, bias = self$model$bias)))
       std_lambda <- mapply("/", self$estimate$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
       self$estimate$std_lambda <- std_lambda
 
       self$estimate$theta <- theta_ml
       self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
-      self$gof$F <- F1(theta_ml, self$model$cov_S, self$model)
+      self$gof$F <- F1(theta_ml, self$data$cov_S, self$model)
 
 
     },
@@ -227,17 +207,14 @@ SemFC <- R6Class(
     #' @return Invisible self (for method chaining)
     ml_infer = function(){
       theta_ml <- self$estimate$theta
-      block_sizes <- self$model$block_sizes
-      mode <- self$model$mode
-      S <- self$model$cov_S
-      N <- self$model$n_row
+      S <- self$data$cov_S
+      N <- self$data$n_row
 
-      ml_infer_estimate <- mlSEM_infer(theta_ml, S, block_sizes, mode,
-                                       self$model$lengths_theta, N, self$estimate,self$model$which_exo_endo)
+      ml_infer_estimate <- mlSEM_infer(theta_ml, S, self$model, N, self$estimate)
 
       self$infer_estimate <- ml_infer_estimate$estimate
-      self$VCOV <- ml_infer_estimate$VCOV
-      self$SD <- ml_infer_estimate$SD
+      self$infer_estimate$VCOV <- ml_infer_estimate$VCOV
+      self$infer_estimate$SD <- ml_infer_estimate$SD
     },
 
 
@@ -284,11 +261,11 @@ SemFC <- R6Class(
         res_gof$bollen_stine <- bollen_stine
       } else if (estimator == 'ml'){
         p <- self$model$p
-        q <- self$modelq
+        q <- self$model$q
         r <- self$model$r
         F <- self$gof$F
-        N <- self$model$n_row
-        S <- self$model$cov_S
+        N <- self$data$n_row
+        S <- self$data$cov_S
         Sigma <- self$estimate$SIGMA_IMPLIED
 
         chi2 <- chi2sem(p, q, r, F, N)
@@ -310,12 +287,12 @@ SemFC <- R6Class(
         res_gof$cfi <- cfi
         res_gof$tli <- tli
 
-        #
-        # # rmsea
-        # RMSEA <- rmseasem(chi2$test, chi2$df, N)
-        # res_gof$RMSEA <- RMSEA
-        # SRMR <- srmrsem(S, Sigma)
-        # res_gof$SRMR <- SRMR
+
+        # rmsea
+        RMSEA <- rmseasem(chi2$test, chi2$df, N)
+        res_gof$RMSEA <- RMSEA
+        SRMR <- srmrsem(S, Sigma)
+        res_gof$SRMR <- SRMR
 
         # loglik
         loglik_H0 <- -(N/2)*(p*log(2*pi) + log(det(Sigma)) + sum(diag(solve(Sigma) %*% S)))
@@ -414,9 +391,10 @@ SemFC <- R6Class(
       cat("\n")
       cat(sprintf("%-45s%15s\n", "Estimator", toupper(estimator)))
       cat(sprintf("%-45s%15d\n", "Number of model parameters", sum(self$model$lengths_theta)))
-      cat(sprintf("%-45s%15d\n", "Number of observations", self$model$n_row))
+      cat(sprintf("%-45s%15d\n", "Number of observations", self$data$n_row))
       cat(sprintf("%-45s%15d\n", "Degrees of freedom", self$model$dof))
       cat(sprintf("%-45s%15.3f\n", "F", self$gof$F))
+      cat(sprintf("%-45s%15.3f\n", "d_LS", self$estimate$T_LS))
       cat("\n")
 
       if (estimator == 'ml'){
@@ -439,13 +417,13 @@ SemFC <- R6Class(
 
 
 
-        # # RMSEA and srmr
-        # rmsea_val <- self$gof$RMSEA$estimate
-        # rmsea_ci_lower <- self$gof$RMSEA$CI_lower
-        # rmsea_ci_upper <- self$gof$RMSEA$CI_upper
-        # p_rmsea_le_005 <- self$gof$RMSEA$p_close_fit
-        # p_rmsea_ge_008 <- self$gof$RMSEA$p_notclose_fit
-        # srmr_val <- self$gof$SRMR
+        # RMSEA and srmr
+        rmsea_val <- self$gof$RMSEA$estimate
+        rmsea_ci_lower <- self$gof$RMSEA$CI_lower
+        rmsea_ci_upper <- self$gof$RMSEA$CI_upper
+        p_rmsea_le_005 <- self$gof$RMSEA$p_close_fit
+        p_rmsea_ge_008 <- self$gof$RMSEA$p_notclose_fit
+        srmr_val <- self$gof$SRMR
         cat("Model Test User Model :\n\n")
         cat(sprintf("  %-40s%12.3f\n", "Test statistic", testchi2))
         cat(sprintf("  %-40s%12d\n", "Degrees of freedom", dfchi2))
@@ -463,17 +441,17 @@ SemFC <- R6Class(
         cat(sprintf("  %-40s%12.3f\n", "Tucker-Lewis Index (TLI)", tli))
         cat("\n")
 
-        # cat("Root Mean Square Error of Approximation:\n\n")
-        # cat(sprintf("  %-40s%12.3f\n", "RMSEA", rmsea_val))
-        # cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - lower", rmsea_ci_lower))
-        # cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - upper", rmsea_ci_upper))
-        # cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA <= 0.050", p_rmsea_le_005))
-        # cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA >= 0.080", p_rmsea_ge_008))
-        # cat("\n")
-        #
-        # cat("Standardized Root Mean Square Residual:\n\n")
-        # cat(sprintf("  %-40s%12.3f\n", "SRMR", srmr_val))
-        # cat("\n")
+        cat("Root Mean Square Error of Approximation:\n\n")
+        cat(sprintf("  %-40s%12.3f\n", "RMSEA", rmsea_val))
+        cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - lower", rmsea_ci_lower))
+        cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - upper", rmsea_ci_upper))
+        cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA <= 0.050", p_rmsea_le_005))
+        cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA >= 0.080", p_rmsea_ge_008))
+        cat("\n")
+
+        cat("Standardized Root Mean Square Residual:\n\n")
+        cat(sprintf("  %-40s%12.3f\n", "SRMR", srmr_val))
+        cat("\n")
 
         # Information criteria
 

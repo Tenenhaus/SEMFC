@@ -149,6 +149,7 @@ lvm <- function(R, C){
     PSI = (diag(NROW(BETA))- BETA)%*%R[J,J]%*%t(diag(NROW(BETA))- BETA) -
       GAMMA%*%R[H,H]%*%t(GAMMA)
   }
+  dimnames(PSI) <- list(rownames(BETA), rownames(BETA))
   
   R2 = 1-diag(PSI)
 
