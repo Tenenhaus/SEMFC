@@ -68,8 +68,6 @@ SemFC <- R6Class(
     estimate = list(),
     infer_estimate = NULL,
     boot_rep = NULL,
-    SD = NULL,
-    VCOV = NULL,
     gof = NULL,
 
 
