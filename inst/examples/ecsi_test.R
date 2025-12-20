@@ -26,7 +26,7 @@ colnames(C) = rownames(C) = names(A)
 svd_fc <- SemFC$new(data=A,
                     relation_matrix = C,
                     mode=rep("reflective", 5),
-                    scale = T,
+                    scale = F,
                     estimator = "svd")
 
 svd_fc$fit(infer = T, B = 100)
@@ -45,7 +45,7 @@ colnames(C) = rownames(C) = names(A)
 
 mode = rep("reflective", 5)
 model_fc <- SemFC$new(data=A, relation_matrix = C, mode=mode, scale = F)
-model_fc$fit(infer = F)
+model_fc$fit(infer = T)
 model_fc$summary()
 
 
