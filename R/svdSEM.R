@@ -144,9 +144,9 @@ svdSEM <- function(A, C, scale = TRUE,
 
     for (i in seq_len(J)){
       if(mode[i] == "formative"){
-        BDIAG [[i]] <- cov2(A[[i]], bias = bias)-lambda[[i]]%*%t(lambda[[i]])
+        BDIAG[[i]] <- cov2(A[[i]], bias = bias)-lambda[[i]]%*%t(lambda[[i]])
       }else{
-        BDIAG [[i]] <- diag(drop(residual_variance[[i]]))
+        BDIAG[[i]] <- diag(drop(residual_variance[[i]]))
       }
     }
     
@@ -161,7 +161,11 @@ svdSEM <- function(A, C, scale = TRUE,
     T_LS <- d_LS(cov2(Reduce("cbind", A), bias = bias), SIGMA_LVM)
 
     lambda <- lapply(lambda, function(x) setNames(as.vector(x), rownames(x)))
-    residual_variance <- lapply(residual_variance, function(x) setNames(as.vector(x), paste0(".", rownames(x))))
+    
+    residual_variance <- lapply(residual_variance, 
+                                function(x) 
+                                  setNames(as.vector(x), 
+                                           paste0(".", rownames(x))))
 
 
     out <- list(a = a, 

@@ -34,8 +34,6 @@ svd_fc$summary()
 
 
 
-
-
 C = matrix(c(0, 0, 0, 0, 0,
              1, 0, 0, 0, 0,
              1, 1, 0, 0, 0,
@@ -46,7 +44,7 @@ C = matrix(c(0, 0, 0, 0, 0,
 colnames(C) = rownames(C) = names(A)
 
 mode = rep("reflective", 5)
-model_fc <- SemFC$new(data=A, relation_matrix = C, mode=mode, scale = T)
+model_fc <- SemFC$new(data=A, relation_matrix = C, mode=mode, scale = F)
 model_fc$fit(infer = F)
 model_fc$summary()
 

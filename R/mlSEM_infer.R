@@ -54,7 +54,6 @@ information_matrix <- function(x, model){
 }
 
 
-
 #' Compute Jacobian of Constraint Functions
 #'
 #' Computes the transpose of the Jacobian matrix for equality constraints
@@ -80,8 +79,8 @@ Jac_constraints <- function(x, S, model){
 
 }
 
-' Compute Projection Matrix for Constrained ML Estimation
-#'
+
+#' Compute Projection Matrix for Constrained ML Estimation
 #' Computes the projection matrix P for variance-covariance estimation under
 #' equality constraints in structural equation models with formative blocks.
 #'
