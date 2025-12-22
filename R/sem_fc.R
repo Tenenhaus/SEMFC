@@ -124,7 +124,7 @@ SemFC <- R6Class(
                                   B = svd_result$beta,
                                   P_ENDO = svd_result$P_ENDO,
                                   residual_variance = svd_result$residual_variance,
-                                  S_composites = self$model$S_composites,
+                                  S_composites = self$data$S_diag_composites,
                                   model = self$model)
 
       self$estimate$theta <- theta_svd
