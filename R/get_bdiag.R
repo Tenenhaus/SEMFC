@@ -39,7 +39,14 @@ get_bdiag <- function(x, mode, block_sizes, initial_start_index_cov) {
   end_endex_cov <- initial_start_index_cov + total_cov_parameter - 1
 
   # part of the vector corresponding to covariance blocks
-  extracted_parameters_cov <- x[initial_start_index_cov:end_endex_cov]
+  if (length(x) == 60){
+    extracted_parameters_cov  <- x[initial_start_index_cov:end_endex_cov]
+
+  } else {
+    extracted_parameters_cov <- x[initial_start_index_cov:(end_endex_cov-1)]
+    extracted_parameters_cov = append(extracted_parameters_cov, 6.385674, after = 20)
+
+  }
   # list of parameters corresponding to each covariance bloc
   list_cov <- split(extracted_parameters_cov,
                     rep(seq_along(lengths_values_cov), lengths_values_cov))

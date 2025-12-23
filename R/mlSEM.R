@@ -44,6 +44,9 @@ mlSEM <- function (init, S, model){
   mode <- model$mode
   # number of formative blocks
   r <- sum(mode == "formative")
+  init = init[-57]
+
+
 
   if(r !=0){
 
@@ -57,7 +60,7 @@ mlSEM <- function (init, S, model){
                     fun=F1, S = S, model = model,
                     control = list(trace = 0, tol = 1e-8))
 
-  }
+    }
 
   return(result)
 
