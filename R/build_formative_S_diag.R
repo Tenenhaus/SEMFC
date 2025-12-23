@@ -7,7 +7,7 @@
 #' @param upper_values_composite_i A numeric vector containing the values for the upper
 #'   triangle (including the diagonal) of the symmetric matrix.
 #'
-#' @return A symmetric formative covariance matrix of dimensions `dim_block x dim_block`.
+#' @return A symmetric formative covariance matrix.
 #'
 #' @examples
 #' \dontrun{

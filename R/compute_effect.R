@@ -39,7 +39,7 @@ compute_effect  <- function(BETA, GAMMA) {
   inv_I_B <- solve(diag(nrow(BETA)) - BETA)
   # total effect endo (endo → endo)
   total_endo <- inv_I_B - diag(nrow(BETA))
-  # indirect effects endogènes (endo → endo)
+  # indirect effects endogenous (endo → endo)
   indirect_endo <- total_endo - BETA
 
   # total effect exo (exo → endo)

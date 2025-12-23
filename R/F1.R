@@ -1,8 +1,3 @@
-########################################
-# Objective function for ML estimation #
-########################################
-
-
 
 #' Compute Log-Likelihood for ML Estimation of Structural Equation Model
 #'
@@ -14,14 +9,19 @@
 #' @param x Numeric vector containing all model parameters (loadings, correlations,
 #'   path coefficients, and variance/covariance parameters).
 #' @param S Sample covariance matrix of observed variables.
-#' @param block_sizes Integer vector specifying the number of indicators in each block.
-#' @param mode Character vector indicating the measurement mode for each block
-#'   ("formative" or "reflective").
-#' @param lengths_parameter Integer vector specifying the length of each parameter
-#'   group in `x` (loadings, exogenous correlations, gamma, beta, endogenous correlations,
-#'   covariance of composite blocks and residual variances).
-#' @param which_exo_endo List containing indices and structure information for
-#'   exogenous and endogenous latent variables (output from `ind_exo_endo()`).
+#' @param model A list containing model specifications with the following elements:
+#'   \describe{
+#'     \item{block_sizes}{Integer vector specifying the number of indicators in each block.}
+#'     \item{mode}{Character vector indicating the measurement mode for each block
+#'       ("formative" or "reflective").}
+#'     \item{lengths_parameter}{Integer vector specifying the length of each parameter
+#'       group in `x` (loadings, exogenous correlations, gamma, beta, endogenous correlations,
+#'       covariance of composite blocks and residual variances).}
+#'     \item{which_exo_endo}{List containing indices and structure information for
+#'       exogenous and endogenous latent variables (output from `ind_exo_endo()`).}
+#'    \item{dag}{Logical indicating whether the structural model is recursive (FALSE)
+#'       or non-recursive (TRUE).}
+#'   }
 #'
 #' @return Numeric scalar representing the log-likelihood value to be minimized.
 #'
@@ -69,6 +69,8 @@
 #'   ind_exo = c(LV1 = 1, LV2 = 2, LV3 = 3, LV4 = 4)
 #' )
 #'
+#' dag <- FALSE
+#'
 #'
 #' # Parameter vector structure:
 #' # - 18 loadings (3 per  block)
@@ -77,12 +79,23 @@
 #' # - 2 non zero beta coefficient
 #' # - 1 endogenous correlations
 #' # - 30 covariances and residual variances
-#' lengths_parameter <- c(18, 6, 4, 2, 1, 30)
+#' lengths_theta <- c(18, 6, 4, 2, 1, 30)
+#'
+#'
+#' model <- list(
+#'  block_sizes = block_sizes,
+#' mode = mode,
+#' lengths_theta = lengths_theta,
+#' which_exo_endo = which_exo_endo,
+#' dag = dag
+#' )
+#'
+#'
 #'
 #' # Initialize parameters
 #' x  <- rnorm(61)
 #' # Compute log-likelihood
-#' f <- F1(x, S, block_sizes, mode, lengths_parameter, which_exo_endo)
+#' f <- F1(x, S, model)
 #' print(f)
 #'
 #' @export

@@ -50,12 +50,12 @@ mlSEM <- function (init, S, model){
   result <- solnp(pars = init,
                   fun=F1, eqfun=heq1,
                   eqB = rep(0,r), S = S, model = model,
-                  control = list(trace = 0, tol = 1e-4))
+                  control = list(trace = 0, tol = 1e-8))
   }
   else{
     result <- solnp(pars = init,
                     fun=F1, S = S, model = model,
-                    control = list(trace = 0, tol = 1e-4))
+                    control = list(trace = 0, tol = 1e-8))
 
   }
 
