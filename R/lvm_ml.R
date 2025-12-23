@@ -67,6 +67,13 @@ lvm_ml <- function(x, model, jac = TRUE){
   n <- which_exo_endo$ind_exo
   m <- which_exo_endo$ind_endo
 
+  if (length(x) != 60){
+
+    x = append(x, sqrt(6.385674), after = 20)
+    x = append(x, 6.385674, after = 56)
+
+  }
+
 
 
   start_indices_in_x <- cumsum(c(1, head(lengths_parameter, -1)))

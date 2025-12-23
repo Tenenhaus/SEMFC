@@ -87,3 +87,56 @@ modelml <- SemFC$new(data=L, relation_matrix = C, mode=mode, estimator = "ml")
 modelml$fit(infer = F)
 modelml$fit(infer = T)
 modelml$summary()
+
+
+library(lavaan)
+
+lavaan_ecsi <- '
+# measurement model
+IMAG  =~ IMAG1 + IMAG2 + IMAG3 + IMAG4 + IMAG5
+CUEX  =~ CUEX1 + CUEX2 + CUEX3
+PERQ  =~ PERQ1 + PERQ2 + PERQ3 + PERQ4 + PERQ5 + PERQ6 + PERQ7
+PERV  =~ PERV1 + PERV2
+CUSA  =~ CUSA1 + CUSA2 + CUSA3
+COMP =~ CUSCO
+CUSL  =~ CUSL1 + CUSL2 + CUSL3
+
+# structural model
+CUEX ~ IMAG
+PERQ ~ CUEX
+PERV ~ CUEX + PERQ
+CUSA ~ IMAG + CUEX + PERQ + PERV
+COMP ~ CUSA
+CUSL ~ IMAG + CUSA + COMP
+'
+
+lavaan_ml <- sem(lavaan_ecsi,
+                  data=ECSI,
+                  estimator = "ML",
+                  likelihood="wishart")
+
+summary(lavaan_ml, standardized=TRUE, fit.measures=TRUE)
+estimate = parameterEstimates(lavaan_ml, standardized = TRUE)
+
+
+
+std_all_ml = unlist(modelml$estimate$std_lambda)
+std_all_lavaan = estimate[1:24,11]
+
+
+
+lambda_comparaison_ecsi = cbind(estimate[1:24,1:3], round(std_all_ml,3), round(std_all_lavaan,3))
+print('lambda')
+print(lambda_comparaison_ecsi)
+
+
+
+g =  unlist(modelml$estimate$gamma)
+b = unlist(modelml$estimate$beta)
+bg_ml = c(g[1], b[2,1], b[3,1],b[3,2], g[4],b[4,1],b[4,2],b[4,3], b[5,4], g[6], b[6,4], b[6,5])
+
+bg_lavaan = estimate[25:36,11]
+
+beta_gama_comparaison_ecsi = cbind(estimate[25:36,1:3], round(bg_ml,3), round(bg_lavaan,3))
+print('beta et gamma')
+print(beta_gama_comparaison_ecsi)
