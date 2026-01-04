@@ -256,7 +256,7 @@ SemFC <- R6Class(
       # reliability only for relflective block (Dillon)
       if (sum(self$model$mode == "reflective") > 0){
         res_reliability <- reliability('Dillon', self$estimate$lambda, self$estimate$residual_variance)
-        res_gof$reliability <- res_reliability[self$model$mode == 'reflective']
+        res_gof$reliability <- res_reliability
       }
 
 
