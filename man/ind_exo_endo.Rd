@@ -2,7 +2,7 @@
 % Please edit documentation in R/ind_exo_endo.R
 \name{ind_exo_endo}
 \alias{ind_exo_endo}
-\title{ind_exo_endo}
+\title{Structure information for exogenous and endogenous latent variables}
 \usage{
 ind_exo_endo(C)
 }
@@ -15,7 +15,7 @@ list of H, J, index of the endogenous variables and
 index of the exogenous variables of the C matrix
 }
 \description{
-ind_exo_endo
+Structure information for exogenous and endogenous latent variables
 }
 \examples{
 C = matrix(c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,

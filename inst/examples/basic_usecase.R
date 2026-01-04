@@ -19,7 +19,7 @@ model$fit(infer = F)
 model$summary()
 
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode)
-modelml$fit(infer=F)
+modelml$fit(infer=T)
 modelml$summary()
 
 

@@ -1,8 +1,3 @@
-#########################################
-#       return \Sigma(\theta) for       #
-#         hessian computation           #
-#########################################
-
 
 
 #' Compute Implied Covariance Matrix for Latent Variable Model
@@ -14,19 +9,23 @@
 #'
 #' @param x Numeric vector containing all model parameters (loadings, correlations,
 #'   path coefficients, and variance/covariance parameters).
-#' @param block_sizes Integer vector specifying the number of indicators in each block.
-#' @param mode Character vector indicating the measurement mode for each block
-#'   ("formative" or "reflective").
-#' @param lengths_parameter Integer vector specifying the length of each parameter
-#'   group in `x` (loadings, exogenous correlations, gamma, beta, endogenous correlations,
-#'   variance/covariance).
-#' @param which_exo_endo List containing indices and structure information for
-#'   exogenous and endogenous latent variables (output from `ind_exo_endo()`).
+#' @param model A list containing model specifications with the following elements:
+#'   \describe{
+#'     \item{block_sizes}{Integer vector specifying the number of indicators in each block.}
+#'     \item{mode}{Character vector indicating the measurement mode for each block
+#'       ("formative" or "reflective").}
+#'     \item{lengths_parameter}{Integer vector specifying the length of each parameter
+#'       group in `x` (loadings, exogenous correlations, gamma, beta, endogenous correlations,
+#'       covariance of composite blocks and residual variances).}
+#'     \item{which_exo_endo}{List containing indices and structure information for
+#'       exogenous and endogenous latent variables (output from `ind_exo_endo()`).}
+#'      \item{varnames}{list of character vectors containing variable names.}
+#'    \item{dag}{Logical indicating whether the structural model is recursive (FALSE)
+#'       or non-recursive (TRUE).}
+#'   }
 #' @param jac Logical value. If TRUE, returns only the upper triangular values of
 #'   the implied covariance matrix (for Jacobian computation). If FALSE, returns
 #'   the complete model structure (default: TRUE).
-#' @param varnames Optional list of character vectors containing variable names
-#'   for each block (default: NULL).
 #'
 #' @return If `jac = TRUE`, returns a numeric vector of upper triangular values
 #'   (including diagonal) of the implied covariance matrix.
@@ -38,7 +37,7 @@
 #'   \item{R2}{Vector of R-squared values for endogenous variables.}
 #'   \item{residual_variance}{List of residual variances for reflective indicators.}
 #'   \item{S_composites}{List of variance-covariance matrices for formative composites.}
-#'   \item{omega}{List of composite weights (omega) for formative blocks.}
+#'   \item{omega}{List of composite weights for formative blocks.}
 #'   \item{P_EXO}{Correlation matrix of exogenous latent variables.}
 #'   \item{P_ENDO}{Correlation matrix of endogenous latent variables.}
 #'   \item{R_LVM}{Full correlation matrix of all latent variables.}

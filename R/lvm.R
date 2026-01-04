@@ -1,5 +1,4 @@
 
-
 #' Latent Variable Model (LVM) Estimation
 #'
 #' Estimates the parameters of a latent variable model (LVM) using the provided

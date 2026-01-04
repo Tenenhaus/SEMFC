@@ -8,8 +8,8 @@
 #'
 #' @param fit A fitted model object containing the following components:
 #'   - `lambda`: A named vector of loadings.
-#'   - `gamma`: A matrix of path coefficients (non-zero values are used).
-#'   - `beta`: A matrix of regression coefficients (non-zero values are used).
+#'   - `gamma`: A matrix of path coefficients.
+#'   - `beta`: A matrix of regression coefficients.
 #'   - `residual_variance`: A vector of residual variances.
 #'   - `effect$total_effect`: A matrix of total effects (non-zero values are used).
 #'   - `effect$indirect_effect`: A matrix of indirect effects (non-zero values are used).
@@ -124,7 +124,5 @@ formatting_estimate <- function(fit){
               total_effects = table_total_effects,
               indirect_effects = table_indirect_effects,
               omega = table_omega))
-
-
 
 }

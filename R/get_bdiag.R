@@ -1,4 +1,3 @@
-
 #' Construct Block Diagonal Covariance Structures for Formative and Reflective Blocks
 #'
 #' This function creates a list of block diagonal covariance matrix for both formative and reflective blocks

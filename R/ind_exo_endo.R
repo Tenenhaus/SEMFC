@@ -1,4 +1,4 @@
-#' ind_exo_endo
+#' Structure information for exogenous and endogenous latent variables
 #'
 #' @param C matrix filled with 1 and 0 with the same 
 #' number of columns and rows and without any 1 on the diagonal

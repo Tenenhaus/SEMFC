@@ -49,51 +49,41 @@ model$fit(estimator = "ml", B = 500, initialisation_svd = TRUE)
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{data}}{Data frame or matrix containing observed variables}
-
 \item{\code{estimator}}{Character string specifying estimation method ("svd" or "ml")}
 
-\item{\code{relation_matrix}}{Square matrix defining structural relationships between latent variables}
+\item{\code{data}}{List containing data-related components:
+\itemize{
+\item \code{data}: The input data (list of blocks)
+\item \code{n_row}: Number of observations
+\item \code{cov_S}: Covariance matrix of observed variables
+\item \code{S_diag_composites}: List of covariance matrices for formative blocks
+}}
 
-\item{\code{which_exo_endo}}{List identifying exogenous/endogenous variables and their relationships}
+\item{\code{model}}{List containing model specification and parameters:
+\itemize{
+\item \code{relation_matrix}: Square matrix defining structural relationships
+\item \code{mode}: Character vector specifying measurement model types
+\item \code{n_blocks}: Number of measurement blocks
+\item \code{varnames}: List of variable names for each block
+\item \code{block_sizes}: Vector of sizes for each measurement block
+\item \code{dag}: Logical indicating if structural model is a DAG
+\item \code{which_exo_endo}: List identifying exogenous/endogenous variables
+\item \code{lengths_theta}: Vector of parameter counts
+\item \code{p}: Total number of observed variables
+\item \code{q}: Total number of free parameters
+\item \code{r}: Number of formative blocks
+\item \code{dof}: Degrees of freedom
+\item \code{scale}: Logical indicating whether to standardize data
+\item \code{bias}: Logical indicating bias correction in covariance estimation
+}}
 
-\item{\code{scale}}{Logical indicating whether to standardize input data}
-
-\item{\code{mode}}{Character vector specifying measurement model type for each block ("formative" or "reflective")}
-
-\item{\code{cov_S}}{Covariance matrix of observed variables}
-
-\item{\code{bias}}{Logical indicating whether to apply bias correction in covariance estimation}
-
-\item{\code{svd_result}}{List containing SVD estimation results}
-
-\item{\code{n_blocks}}{Integer number of measurement blocks}
-
-\item{\code{n_row}}{Integer number of observations}
-
-\item{\code{varnames}}{List of variable names for each block}
-
-\item{\code{block_sizes}}{Integer vector of sizes for each measurement block}
-
-\item{\code{lengths_theta}}{Integer vector of parameter counts for each model component}
-
-\item{\code{S_composites}}{Covariance matrix for composite scores}
+\item{\code{estimate}}{List containing all estimated model parameters}
 
 \item{\code{infer_estimate}}{Data frame containing inference results (estimates, SE, z-values, p-values)}
 
 \item{\code{boot_rep}}{Integer number of bootstrap replications}
 
-\item{\code{reliability_value}}{List of reliability coefficients for each block}
-
-\item{\code{SD}}{Numeric vector of standard errors for ML estimates}
-
-\item{\code{VCOV}}{Variance-covariance matrix of ML parameter estimates}
-
 \item{\code{gof}}{List containing goodness-of-fit statistics}
-
-\item{\code{dof}}{Integer degrees of freedom for the model}
-
-\item{\code{estimate}}{List containing all estimated model parameters}
 }
 \if{html}{\out{</div>}}
 }

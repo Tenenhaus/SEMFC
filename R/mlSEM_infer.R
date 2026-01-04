@@ -1,6 +1,5 @@
 
 
-# source('R/ml_sem/h_constraints.R')
 
 #' Compute Information Matrix for ML Estimation
 #'
@@ -8,11 +7,8 @@
 #' implied covariance matrix with respect to model parameters.
 #'
 #' @param x Numeric vector of model parameters.
-#' @param block_sizes Integer vector specifying the number of indicators in each block.
-#' @param mode Character vector indicating the measurement mode for each block
-#'   ("formative" or "reflective").
-#' @param lengths_parameter Integer vector specifying the length of each parameter group.
-#' @param which_exo_endo List containing indices for exogenous/endogenous variables.
+#' @param model List containing the model structure, including block sizes and
+#'   other relevant information for the computation.
 #'
 #' @return Symmetric information matrix of dimension length(x) × length(x).
 #'
@@ -62,10 +58,8 @@ information_matrix <- function(x, model){
 #'
 #' @param x Numeric vector of model parameters.
 #' @param S Sample covariance matrix.
-#' @param block_sizes Integer vector specifying the number of indicators in each block.
-#' @param mode Character vector indicating the measurement mode for each block.
-#' @param lengths_parameter Integer vector specifying the length of each parameter group.
-#' @param which_exo_endo List containing indices for exogenous/endogenous variables.
+#' @param model List containing the model structure, including block sizes,
+#'   measurement modes, and other relevant information.
 #'
 #' @return Matrix H of dimension length(x) × r, where r is the number of formative blocks.
 #'
@@ -87,10 +81,11 @@ Jac_constraints <- function(x, S, model){
 #'
 #' @param x Numeric vector of model parameters.
 #' @param S Sample covariance matrix.
-#' @param block_sizes Integer vector specifying the number of indicators in each block.
-#' @param mode Character vector indicating the measurement mode for each block.
-#' @param lengths_parameter Integer vector specifying the length of each parameter group.
-#' @param which_exo_endo List containing indices for exogenous/endogenous variables.
+#' @param model List containing the model structure, including:
+#'   \itemize{
+#'     \item \code{mode}: Character vector indicating the measurement mode for each block.
+#'     \item \code{block_sizes}: Integer vector specifying the number of indicators in each block.
+#'   }
 #'
 #' @return Projection matrix P of dimension length(x) × length(x).
 #'
@@ -142,14 +137,19 @@ P_ml <- function(x, S, model){
 #' Organizes parameter estimates, standard errors, z-scores and p-values into
 #' structured data frames for loadings, path coefficients and residual variances.
 #'
-#' @param fit List containing model fit results from `lvm_ml()`.
+#' @param fit List containing model fit results from `lvm_ml()`. Includes parameter estimates
+#'   such as loadings, standardized loadings, gamma coefficients, beta coefficients, and residual variances.
 #' @param SD Numeric vector of standard errors for all parameters.
-#' @param lengths_parameter Integer vector specifying the length of each parameter group.
-#' @param mode Character vector indicating the measurement mode for each block.
-#' @param block_sizes Integer vector specifying the number of indicators in each block.
+#' @param model List containing the model structure, including:
+#'   \itemize{
+#'     \item \code{mode}: Character vector indicating the measurement mode for each block.
+#'     \item \code{lengths_theta}: Integer vector specifying the length of each parameter group.
+#'     \item \code{block_sizes}: Integer vector specifying the number of indicators in each block.
+#'   }
 #'
 #' @return List containing:
 #'   \item{lambda}{Data frame with loadings estimates, std errors, z-scores and p-values.}
+#'   \item{std_lambda}{Data frame with standardized loadings estimates, std errors, z-scores and p-values.}
 #'   \item{gamma}{Data frame with gamma coefficients estimates, std errors, z-scores and p-values.}
 #'   \item{beta}{Data frame with beta coefficients estimates, std errors, z-scores and p-values.}
 #'   \item{residual_variance}{Data frame with residual variances estimates, std errors, z-scores and p-values.}
@@ -296,12 +296,15 @@ formatting_ml_infer <- function(fit, SD, model){
 #'
 #' @param x Numeric vector of optimal parameter values.
 #' @param S Sample covariance matrix.
-#' @param block_sizes Integer vector specifying the number of indicators in each block.
-#' @param mode Character vector indicating the measurement mode for each block.
-#' @param lengths_parameter Integer vector specifying the length of each parameter group.
+#' @param model List containing the model structure, including:
+#'   \itemize{
+#'     \item \code{mode}: Character vector indicating the measurement mode for each block.
+#'     \item \code{block_sizes}: Integer vector specifying the number of indicators in each block.
+#'     \item \code{lengths_theta}: Integer vector specifying the length of each parameter group.
+#'   }
 #' @param N Integer sample size.
-#' @param fit List containing model fit results from `lvm_ml()`.
-#' @param which_exo_endo List containing indices for exogenous/endogenous variables.
+#' @param fit List containing model fit results from `lvm_ml()`, including parameter estimates
+#'   such as loadings, path coefficients, and residual variances.
 #'
 #' @return List containing:
 #'   \item{estimate}{List of data frames with parameter estimates and inference statistics.}
@@ -341,8 +344,11 @@ mlSEM_infer <- function(x, S, model, N, fit){
 #' @param x Numeric vector of optimal parameter values.
 #' @param S Sample covariance matrix.
 #' @param X Data matrix (currently unused in function body).
-#' @param C Constraint-related parameter (currently unused in function body).
-#' @param mode Character vector indicating the measurement mode for each block.
+#' @param model List containing the model structure, including:
+#'   \itemize{
+#'     \item \code{mode}: Character vector indicating the measurement mode for each block.
+#'     \item \code{block_sizes}: Integer vector specifying the number of indicators in each block.
+#'   }
 #' @param L Contrast matrix defining the linear hypothesis.
 #'
 #' @return P-value for the two-tailed test.
@@ -353,9 +359,9 @@ mlSEM_infer <- function(x, S, model, N, fit){
 #' The p-value is two-tailed using the standard normal distribution.
 #'
 #' @keywords internal
-z_H0 <- function(x, S, X, C, mode, L){
+z_H0 <- function(x, S, X, model, L){
   N <- nrow(X)
-  P <- P_ml(x, S, X, C, mode)
+  P <- P_ml(x, S, model)
   z <- sqrt(N)*(L %*% x)/sqrt(L%*%P%*%t(L))
   pval <- 2*pnorm(z, lower.tail = F)
 

@@ -4,22 +4,25 @@
 \alias{formatting_ml_infer}
 \title{Format ML Inference Results}
 \usage{
-formatting_ml_infer(fit, SD, lengths_parameter, mode, block_sizes)
+formatting_ml_infer(fit, SD, model)
 }
 \arguments{
-\item{fit}{List containing model fit results from \code{lvm_ml()}.}
+\item{fit}{List containing model fit results from \code{lvm_ml()}. Includes parameter estimates
+such as loadings, standardized loadings, gamma coefficients, beta coefficients, and residual variances.}
 
 \item{SD}{Numeric vector of standard errors for all parameters.}
 
-\item{lengths_parameter}{Integer vector specifying the length of each parameter group.}
-
-\item{mode}{Character vector indicating the measurement mode for each block.}
-
-\item{block_sizes}{Integer vector specifying the number of indicators in each block.}
+\item{model}{List containing the model structure, including:
+\itemize{
+\item \code{mode}: Character vector indicating the measurement mode for each block.
+\item \code{lengths_theta}: Integer vector specifying the length of each parameter group.
+\item \code{block_sizes}: Integer vector specifying the number of indicators in each block.
+}}
 }
 \value{
 List containing:
 \item{lambda}{Data frame with loadings estimates, std errors, z-scores and p-values.}
+\item{std_lambda}{Data frame with standardized loadings estimates, std errors, z-scores and p-values.}
 \item{gamma}{Data frame with gamma coefficients estimates, std errors, z-scores and p-values.}
 \item{beta}{Data frame with beta coefficients estimates, std errors, z-scores and p-values.}
 \item{residual_variance}{Data frame with residual variances estimates, std errors, z-scores and p-values.}

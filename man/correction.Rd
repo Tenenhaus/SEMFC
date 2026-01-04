@@ -2,14 +2,14 @@
 % Please edit documentation in R/correction.R
 \name{correction}
 \alias{correction}
-\title{Correct Block Weight Estimates in Component-Based SEM}
+\title{Correct Loading Estimates in Component-Based SEM}
 \usage{
 correction(A, a, mode = "reflective", bias = FALSE)
 }
 \arguments{
 \item{A}{Numeric matrix of indicators for the block (n × p).}
 
-\item{a}{Numeric vector of block weights (length p).}
+\item{a}{Numeric vector of normalised loadings (length p).}
 
 \item{mode}{Character string indicating the measurement mode: "reflective" or "formative".
 Default is "reflective".}
@@ -19,11 +19,11 @@ or unbiased (division by n-1). Default is \code{FALSE} (unbiased).}
 }
 \value{
 List containing:
-\item{d}{Numeric correction factor to apply to the block weights.}
+\item{d}{Numeric correction factor to apply to the loadings.}
 \item{n}{Integer count of negative covariances (reflective) or zero eigenvalues (formative).}
 }
 \description{
-Computes a correction factor for block weights obtained from RGCCA-like algorithms.
+Computes the loading norm estimator giving the normalised loadings.
 The correction differs depending on whether the measurement model is reflective
 or formative.
 }
@@ -31,8 +31,11 @@ or formative.
 \subsection{Reflective mode}{
 
 For reflective blocks, the correction factor is computed as:
-\deqn{d = \sqrt{\frac{\sum_{i,j: (W \odot S)_{ij} > 0} (W \odot S)_{ij}}{\sum_{i,j: (W \odot S)_{ij} > 0} W_{ij}^2}}}
-where \eqn{W = aa'} (with diagonal set to 0) and \eqn{S} is the sample covariance matrix.
+\deqn{d = \sqrt{
+  \frac{\mathbf{a}_j^t (\mathbf{S}_{jj} - \text{diag}(\mathbf{S}_{jj})) \mathbf{a}_j}
+  {1 - \mathbf{a}_j^t \text{diag}(\mathbf{a}_j \mathbf{a}_j^t) \mathbf{a}_j}
+}}
+where \eqn{S} is the sample covariance matrix.
 If all elements are negative, \eqn{d = 1}.
 }
 

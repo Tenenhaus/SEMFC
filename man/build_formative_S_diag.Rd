@@ -11,7 +11,7 @@ build_formative_S_diag(upper_values_composite_i)
 triangle (including the diagonal) of the symmetric matrix.}
 }
 \value{
-A symmetric formative covariance matrix of dimensions \verb{dim_block x dim_block}.
+A symmetric formative covariance matrix.
 }
 \description{
 This function builds a symmetric covariance matrix (S_composite_i) for a formative block,

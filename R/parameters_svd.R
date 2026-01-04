@@ -34,10 +34,8 @@
 #' @details
 #' For formative blocks, the upper triangular part (including diagonal) of the
 #' empirical covariance matrix is included. For reflective blocks, only residual
-#' variances are included. This ordering must match the structure expected by
-#' `length_parameters_svd()` and reconstruction functions.
+#' variances are included.
 #'
-#' @seealso \code{\link{length_parameters_svd}} for computing the expected vector length.
 #'
 #' @keywords internal
 

@@ -10,9 +10,10 @@
 #'   their relationships (elements: ind_exo, ind_endo, Hi, Ji)
 #' @param block_sizes Numeric vector of block sizes
 #' @param mode Character vector specifying "formative" or "reflective" for each block
-#' @return A numeric vector of length 6 containing the number of parameters for:
+#' @param dag Logical indicating whether the structural model is recursive (FALSE) or non-recursive (TRUE)
+#' @return A numeric vector containing the number of parameters for:
 #'   \enumerate{
-#'     \item Factor loadings (sum of all block sizes)
+#'     \item Factor loadings
 #'     \item Upper triangular values for exogenous variable covariances
 #'     \item Non-zero elements in the gamma matrix
 #'     \item Non-zero elements in the beta matrix
@@ -27,15 +28,24 @@
 #' @examples
 #' \dontrun{
 #' which_exo_endo <- list(
-#'   ind_exo = 1:2,
-#'   ind_endo = 3:4,
-#'   Hi = list(c(1, 2), c(1)),
-#'   Ji = list(c(3), c())
+#'   Hi = list(
+#'     c(LV1 = 1, LV2 = 2),
+#'     c(LV3 = 3, LV4 = 4)
+#'   ),
+#'   Ji = list(
+#'     c(LV6 = 6),
+#'     c(LV5 = 5)
+#'   ),
+#'   ind_endo = c(LV5 = 5, LV6 = 6),
+#'   ind_exo = c(LV1 = 1, LV2 = 2, LV3 = 3, LV4 = 4)
 #' )
-#' block_sizes <- c(3, 4, 3, 2)
-#' lengths <- get_lengths_theta(which_exo_endo, block_sizes, mode = "reflective")
+#' block_sizes <- c(3, 3, 3, 3, 3, 3)
+#' mode <- c("formative", "formative", "formative", "formative",
+#'           "reflective", "reflective")
+#' dag <- FALSE
+#' lengths <- get_lengths_theta(which_exo_endo, block_sizes, mode, dag)
 #' }
-#'
+#' @keywords internal
 get_lengths_theta <- function(which_exo_endo, block_sizes, mode, dag){
 
   n <- which_exo_endo$ind_exo

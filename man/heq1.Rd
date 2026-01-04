@@ -4,24 +4,45 @@
 \alias{heq1}
 \title{Equality Constraints for Loglikelihood Minimization (H1)}
 \usage{
-heq1(x, S, block_sizes, mode, lengths_parameter, which_exo_endo)
+heq1(x, S, model)
 }
 \arguments{
 \item{x}{Numeric vector of parameters.}
 
 \item{S}{Sample covariance matrix.}
 
-\item{block_sizes}{Vector of block sizes.}
-
-\item{mode}{Character vector indicating mode for each block.}
-
-\item{lengths_parameter}{Lengths of parameters.}
-
-\item{which_exo_endo}{Indices of exogenous/endogenous variables.}
+\item{model}{A list containing model specifications with the following elements:
+\describe{
+\item{block_sizes}{Integer vector specifying the number of indicators in each block.}
+\item{mode}{Character vector indicating the measurement mode for each block
+("formative" or "reflective").}
+}}
 }
 \value{
 Vector of equality constraints.
 }
 \description{
 Generalized version for multiple blocks with formative/reflective modes.
+}
+\examples{
+set.seed(123)
+n <- 300
+# Generate sample data (6 blocks with 3 indicators each)
+X <- matrix(rnorm(n * 18), ncol = 18)
+S <- cov(X)
+# Model specification
+block_sizes <- c(3, 3, 3, 3, 3, 3)
+mode <- c("formative", "formative", "formative", "formative",
+          "reflective", "reflective")
+
+
+model <- list(
+ block_sizes = block_sizes,
+mode = mode
+)
+
+x  <- rnorm(61)
+
+heq1(x, S, model)
+
 }

@@ -13,7 +13,7 @@ chi2sem(p, q, r, F, N)
 
 \item{r}{Number of formative blocks}
 
-\item{F}{The fit function value (discrepancy between observed and implied covariance matrices)}
+\item{F}{The fit function value}
 
 \item{N}{Sample size}
 }

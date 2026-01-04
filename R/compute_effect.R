@@ -1,7 +1,3 @@
-
-
-
-
 #' Compute Total and Indirect Effects in a SEM Model
 #'
 #' This function calculates the total and indirect effects for both endogenous

@@ -1,23 +1,23 @@
 #' Extract Loadings from Parameter Vector
 #'
 #' This function retrieves the loadings for each block of observed variables
-#' (manifest variables) based on the parameter vector `x` and the input block sizes.
+#' based on the parameter vector `x` and the input block sizes.
 #'
-#' @param x A numeric vector of parameters. The first `y` values in `x` represent
-#'   the loadings to be extracted, where `y` is the total number of manifest
-#'   variables across all blocks.
+#' @param x Numeric vector containing all model parameters (loadings, correlations,
+#'   path coefficients, and variance/covariance parameters).
 #' @param block_sizes A numeric vector where each element represents the number
-#'   of observed variables (manifest variables) in the corresponding block of
-#'   latent variables.
+#'   of observed variables in the corresponding block of latent variables.
 #'
 #' @return A list of numeric vectors, where each vector contains the loadings
 #'   for the corresponding block of manifest variables.
 #'
 #' @examples
-#' block_sizes <- c(3, 2)
-#' x <- c(0.2, 0.4, 0.6, 0.1, 0.3)
-#' get_loadings(x, block_sizes)
-#' @export
+#' \dontrun{
+#' set.seed(123)
+#' block_sizes <- c(3, 3, 3, 3, 3, 3)
+#' x  <- rnorm(61)
+#' get_loadings(x, block_sizes)}
+#' @keywords internal
 get_loadings <- function(x, block_sizes) {
 
 

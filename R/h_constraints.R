@@ -10,7 +10,7 @@
 #'
 #' @return Vector of equality constraints.
 #'
-#' @export
+#' @keywords internal
 heq0 <- function(x, S) {
   
   #cov between MVs
@@ -69,12 +69,35 @@ heq0 <- function(x, S) {
 #'
 #' @param x Numeric vector of parameters.
 #' @param S Sample covariance matrix.
-#' @param block_sizes Vector of block sizes.
-#' @param mode Character vector indicating mode for each block.
-#' @param lengths_parameter Lengths of parameters.
-#' @param which_exo_endo Indices of exogenous/endogenous variables.
+#' @param model A list containing model specifications with the following elements:
+#'   \describe{
+#'     \item{block_sizes}{Integer vector specifying the number of indicators in each block.}
+#'     \item{mode}{Character vector indicating the measurement mode for each block
+#'       ("formative" or "reflective").}
+#'   }
 #'
 #' @return Vector of equality constraints.
+#'
+#' @examples
+#' set.seed(123)
+#' n <- 300
+#' # Generate sample data (6 blocks with 3 indicators each)
+#' X <- matrix(rnorm(n * 18), ncol = 18)
+#' S <- cov(X)
+#' # Model specification
+#' block_sizes <- c(3, 3, 3, 3, 3, 3)
+#' mode <- c("formative", "formative", "formative", "formative",
+#'           "reflective", "reflective")
+#'
+#'
+#' model <- list(
+#'  block_sizes = block_sizes,
+#' mode = mode
+#' )
+#'
+#' x  <- rnorm(61)
+#'
+#' heq1(x, S, model)
 #'
 #' @export
 heq1 <- function (x, S, model){

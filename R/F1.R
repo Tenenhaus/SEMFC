@@ -2,7 +2,7 @@
 #' Compute Log-Likelihood for ML Estimation of Structural Equation Model
 #'
 #' This function computes the log-likelihood objective function for maximum
-#' likelihood (ML) estimation of a structural equation model with latent variables.
+#' likelihood estimation of a structural equation model with latent variables.
 #' It evaluates the discrepancy between the sample covariance matrix and the
 #' model-implied covariance matrix.
 #'

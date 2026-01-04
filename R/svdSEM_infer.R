@@ -33,7 +33,7 @@
 #' print(inference_results$gamma)
 #' }
 #'
-#' @export
+#' @keywords internal
 
 svdSEM_infer <- function(fit, B = 100, verbose = TRUE){
   

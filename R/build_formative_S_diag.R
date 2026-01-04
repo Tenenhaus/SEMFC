@@ -1,4 +1,3 @@
-
 #' Construct Symmetric Formative S Matrix
 #'
 #' This function builds a symmetric covariance matrix (S_composite_i) for a formative block,

@@ -39,8 +39,6 @@ P-values for close and not-close fit hypotheses are derived from the non-central
 parameter of the chi-square distribution.
 }
 \examples{
-\dontrun{
 result <- rmseasem(chi2 = 20, df = 10, N = 200)
 print(result$estimate)
-}
 }

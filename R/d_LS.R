@@ -1,7 +1,7 @@
 #' Least Squares Discrepancy Function
 #'
 #' Computes the Euclidean distance between two covariance matrices using the
-#' least squares (LS) discrepancy function.
+#' least squares discrepancy function.
 #'
 #' @param A A matrix, typically the observed covariance matrix
 #' @param B A matrix, typically the model-implied covariance matrix

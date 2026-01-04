@@ -4,20 +4,15 @@
 \alias{Jac_constraints}
 \title{Compute Jacobian of Constraint Functions}
 \usage{
-Jac_constraints(x, S, block_sizes, mode, lengths_parameter, which_exo_endo)
+Jac_constraints(x, S, model)
 }
 \arguments{
 \item{x}{Numeric vector of model parameters.}
 
 \item{S}{Sample covariance matrix.}
 
-\item{block_sizes}{Integer vector specifying the number of indicators in each block.}
-
-\item{mode}{Character vector indicating the measurement mode for each block.}
-
-\item{lengths_parameter}{Integer vector specifying the length of each parameter group.}
-
-\item{which_exo_endo}{List containing indices for exogenous/endogenous variables.}
+\item{model}{List containing the model structure, including block sizes,
+measurement modes, and other relevant information.}
 }
 \value{
 Matrix H of dimension length(x) × r, where r is the number of formative blocks.

@@ -12,16 +12,16 @@ d_LS(A, B)
 \item{B}{A matrix, typically the model-implied covariance matrix}
 }
 \value{
-The least squares discrepancy value (scalar) representing the
+The least squares discrepancy value representing the
 Euclidean distance between matrices A and B
 }
 \description{
 Computes the Euclidean distance between two covariance matrices using the
-least squares (LS) discrepancy function.
+least squares discrepancy function.
 }
 \details{
 The LS discrepancy function is defined as:
-\deqn{d_{LS} = \sqrt{0.5 \times \text{tr}[(B-A)^2]}}
+\deqn{d_{LS} = \sqrt{frac{1}{2} \times \text{tr}[(B-A)^2]}}
 where tr denotes the trace operator. This measures the overall fit
 between the observed and model-implied covariance matrices.
 }

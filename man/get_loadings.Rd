@@ -7,13 +7,11 @@
 get_loadings(x, block_sizes)
 }
 \arguments{
-\item{x}{A numeric vector of parameters. The first \code{y} values in \code{x} represent
-the loadings to be extracted, where \code{y} is the total number of manifest
-variables across all blocks.}
+\item{x}{Numeric vector containing all model parameters (loadings, correlations,
+path coefficients, and variance/covariance parameters).}
 
 \item{block_sizes}{A numeric vector where each element represents the number
-of observed variables (manifest variables) in the corresponding block of
-latent variables.}
+of observed variables in the corresponding block of latent variables.}
 }
 \value{
 A list of numeric vectors, where each vector contains the loadings
@@ -21,10 +19,13 @@ for the corresponding block of manifest variables.
 }
 \description{
 This function retrieves the loadings for each block of observed variables
-(manifest variables) based on the parameter vector \code{x} and the input block sizes.
+based on the parameter vector \code{x} and the input block sizes.
 }
 \examples{
-block_sizes <- c(3, 2)
-x <- c(0.2, 0.4, 0.6, 0.1, 0.3)
-get_loadings(x, block_sizes)
+\dontrun{
+set.seed(123)
+block_sizes <- c(3, 3, 3, 3, 3, 3)
+x  <- rnorm(61)
+get_loadings(x, block_sizes)}
 }
+\keyword{internal}

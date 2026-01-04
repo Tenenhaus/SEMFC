@@ -17,9 +17,14 @@
 #' \dontrun{
 #' lambdas <- list(block1 = c(0.8, 0.7), block2 = c(0.9, 0.6, 0.5))
 #' residuals <- list(block1 = c(0.2, 0.3), block2 = c(0.1, 0.4, 0.5))
-#' reliability_values <- reliability(metric = "Dillon", lambdas = lambdas, residual_variances = residuals)
+#' reliability_values <- reliability(
+#'  metric = "Dillon",
+#'  lambdas = lambdas,
+#'  residual_variances = residuals
+#' )
 #' print(reliability_values)
 #' }
+#' @export
 
 # pour bloc formatif
 reliability <- function (metric, lambdas, residual_variances){

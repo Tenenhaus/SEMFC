@@ -1,5 +1,3 @@
-
-
 #' Correct Loading Estimates in Component-Based SEM
 #'
 #' Computes the loading norm estimator giving the normalised loadings.

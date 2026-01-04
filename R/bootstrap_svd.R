@@ -16,29 +16,38 @@
 #'
 #'
 #' @return A list containing:
-#'   \item{infer}{A list containing statistical inference results:
+#' \describe{
+#'   \item{infer}{A list containing statistical inference results with the following components:
 #'     \itemize{
-#'       \item \code{out}: List of bootstrap replications for lambda, standardized loadings, beta, gamma, residual variance, total effects, indirect effects, and omega
-#'       \item \code{std_lambda}: Data frame with standardized loadings, standard errors, z-statistics, and p-values
-#'       \item \code{beta}: Data frame with structural coefficients between latent variables, standard errors, z-statistics, and p-values
-#'       \item \code{gamma}: Data frame with regression coefficients from observed to latent variables, standard errors, z-statistics, and p-values
-#'       \item \code{residual_variance}: Data frame with residual variances, standard errors, z-statistics, and p-values
-#'       \item \code{total_effects}: Data frame with total effects, standard errors, z-statistics, and p-values
-#'       \item \code{indirect_effects}: Data frame with indirect effects, standard errors, z-statistics, and p-values
-#'       \item \code{omega}: Data frame with error variances for latent variables, standard errors, z-statistics, and p-values
-#'
-#'       \item \code{improper}: Number of improper bootstrap solutions (negative eigenvalues) encountered
+#'       \item \code{out}: List of bootstrap replications for lambda, standardized loadings,
+#'         beta, gamma, residual variance, total effects, indirect effects, and omega
+#'       \item \code{lambda}: Data frame with loadings, standard errors, z-statistics, and p-values
+#'       \item \code{std_lambda}: Data frame with standardized loadings, standard errors,
+#'         z-statistics, and p-values
+#'       \item \code{beta}: Data frame with structural coefficients between latent variables,
+#'         standard errors, z-statistics, and p-values
+#'       \item \code{gamma}: Data frame with regression coefficients from observed to latent
+#'         variables, standard errors, z-statistics, and p-values
+#'       \item \code{residual_variance}: Data frame with residual variances, standard errors,
+#'         z-statistics, and p-values
+#'       \item \code{total_effects}: Data frame with total effects, standard errors,
+#'         z-statistics, and p-values
+#'       \item \code{indirect_effects}: Data frame with indirect effects, standard errors,
+#'         z-statistics, and p-values
+#'       \item \code{omega}: Data frame with error variances for latent variables,
+#'         standard errors, z-statistics, and p-values
+#'       \item \code{improper}: Number of improper bootstrap solutions (negative eigenvalues)
 #'     }
 #'   }
-#'   \item{gof}{A list containing goodness-of-fit test results:
+#'   \item{gof}{A list containing goodness-of-fit test results with the following components:
 #'     \itemize{
 #'       \item \code{T_LS}: The observed test statistic
 #'       \item \code{Tb_LS}: Vector of bootstrap test statistics
 #'       \item \code{pval}: The p-value of the fit test
-#'       \item \code{improper}: Number of improper solutions (negative eigenvalues) encountered
+#'       \item \code{improper}: Number of improper solutions (negative eigenvalues)
 #'     }
 #'   }
-#'
+#' }
 #'
 #'
 #' @details The function uses bootstrap resampling to estimate the sampling distribution
@@ -56,7 +65,7 @@
 #' print(bootstrap_results$gof$pval)
 #' }
 #'
-#'
+#' @importFrom stats sd pnorm setNames
 #' @export
 
 
@@ -308,9 +317,11 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
 
   rownames(total_effects) <- sapply(seq_len(NROW(total_effects)),
                           function(b)
-                          paste(rownames(fit$effect$total_effect)[which(fit$effect$total_effect!=0, arr.ind = TRUE)[b, 1]],
-                                colnames(fit$effect$total_effect)[which(fit$effect$total_effect!=0, arr.ind = TRUE)[b, 2]],
-                                sep = "~")
+                          paste(
+                            rownames(fit$effect$total_effect)[which(fit$effect$total_effect!=0, arr.ind = TRUE)[b, 1]],
+                            colnames(fit$effect$total_effect)[which(fit$effect$total_effect!=0, arr.ind = TRUE)[b, 2]],
+                            sep = "~"
+                          )
   )
 
 
@@ -327,11 +338,14 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                                    pval = pval_indirect_effects)
 
 
-  rownames(indirect_effects) <- sapply(seq_len(NROW(indirect_effects)),
-                        function(b)
-                        paste(rownames(fit$effect$indirect_effect)[which(fit$effect$indirect_effect!=0, arr.ind = TRUE)[b, 1]],
-                              colnames(fit$effect$indirect_effect)[which(fit$effect$indirect_effect!=0, arr.ind = TRUE)[b, 2]],
-                              sep = "~")
+  rownames(indirect_effects) <- sapply(
+    seq_len(NROW(indirect_effects)),
+    function(b)
+      paste(
+        rownames(fit$effect$indirect_effect)[which(fit$effect$indirect_effect!=0, arr.ind = TRUE)[b, 1]],
+        colnames(fit$effect$indirect_effect)[which(fit$effect$indirect_effect!=0, arr.ind = TRUE)[b, 2]],
+        sep = "~"
+      )
   )
 
 

@@ -14,7 +14,8 @@ Imports:
     Matrix,
     MASS,
     Rsolnp,
-    numDeriv
+    numDeriv,
+    pbapply
 Depends:
     R (>= 3.5)
 LazyData: true
