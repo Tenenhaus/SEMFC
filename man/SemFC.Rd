@@ -66,7 +66,7 @@ model$fit(estimator = "ml", B = 500, initialisation_svd = TRUE)
 \item \code{n_blocks}: Number of measurement blocks
 \item \code{varnames}: List of variable names for each block
 \item \code{block_sizes}: Vector of sizes for each measurement block
-\item \code{dag}: Logical indicating if structural model is a DAG
+\item \code{dag}: Logical indicating if structural model is recursive
 \item \code{which_exo_endo}: List identifying exogenous/endogenous variables
 \item \code{lengths_theta}: Vector of parameter counts
 \item \code{p}: Total number of observed variables
