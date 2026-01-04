@@ -370,6 +370,8 @@ SemFC <- R6Class(
     #' @description
     #' Print comprehensive summary of model estimation results
     #'
+    #' @param standardized Logical indicating whether to display standardized estimates (default: FALSE)
+    #'
     #' @details
     #' Displays:
     #' \itemize{
@@ -386,7 +388,7 @@ SemFC <- R6Class(
     #'
     #' @return Invisible NULL
 
-    summary = function(){
+    summary = function(standardized = FALSE){
 
       estimator <- self$estimator
 
@@ -506,6 +508,9 @@ SemFC <- R6Class(
       # estimation
       estimate <- formatting_estimate(self$estimate)
       lambda <- estimate$lambda
+      if (standardized){
+        lambda <- estimate$std_lambda
+      }
       beta <- estimate$beta
       gamma <- estimate$gamma
       residualvariance <- estimate$residual_variance
@@ -521,6 +526,9 @@ SemFC <- R6Class(
         # inference estimation
         estimate <- self$infer_estimate
         lambda <- estimate$lambda
+        if (standardized){
+          lambda <- estimate$std_lambda
+        }
         beta<- estimate$beta
         gamma<- estimate$gamma
         residualvariance<- estimate$residual_variance
