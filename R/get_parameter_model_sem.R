@@ -33,7 +33,8 @@
 #'       \item \code{dag}: Logical indicating if the structural model is a DAG.
 #'       \item \code{which_exo_endo}: List containing indices and structure information for
 #'       exogenous and endogenous latent variables (output from `ind_exo_endo()`).
-#'       \item \code{lengths_theta}: Vector of parameter counts.
+#'       \item \code{lengths_theta}: Vector of estimation parameter counts.
+#'       \item \code{lengths_cov_parameter}: Vector of covariance estimation parameter counts for each block.
 #'       \item \code{p}: Number of observed variables in the model
 #'       \item \code{q}: Number of estimated parameters in the model
 #'       \item \code{r}: Number of formative blocks.
@@ -77,6 +78,8 @@ get_parameter_model_sem <- function(data, mode, relation_matrix, bias){
   dag <- igraph::is_dag(graph_from_adjacency_matrix(relation_matrix))
   which_exo_endo <- ind_exo_endo(relation_matrix)
   lengths_theta <- get_lengths_theta(which_exo_endo, block_sizes, mode, dag)
+  # lengths of covariance parameters for each block
+  lengths_cov_parameter <- ifelse(mode == "formative", (block_sizes^2 + block_sizes) / 2, block_sizes)
 
   p <- sum(block_sizes)
   q <- sum(lengths_theta)
@@ -102,6 +105,7 @@ get_parameter_model_sem <- function(data, mode, relation_matrix, bias){
       dag = dag,
       which_exo_endo = which_exo_endo,
       lengths_theta = lengths_theta,
+      lengths_cov_parameter = lengths_cov_parameter,
       p = p,
       q = q,
       r = r,

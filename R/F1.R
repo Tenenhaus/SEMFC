@@ -99,10 +99,10 @@
 #' print(f)
 #'
 #' @export
-F1 <- function(x, S, model){
+F1 <- function(x, S, model, data, estimation_cov = FALSE){
 
 
-  implied_S <- lvm_ml(x, model, jac = FALSE)$SIGMA_IMPLIED
+  implied_S <- lvm_ml(x, model, data, estimation_cov, jac = FALSE)$SIGMA_IMPLIED
 
   ########################################################################
   ###################### Compute log-likelihood  #########################

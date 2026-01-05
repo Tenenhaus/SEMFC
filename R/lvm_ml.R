@@ -54,7 +54,7 @@
 #'   SIGMA = L * R * L' + BDIAG
 #'
 #' @export
-lvm_ml <- function(x, model, jac = TRUE){
+lvm_ml <- function(x, model, data, estimation_cov, jac = TRUE){
 
   block_sizes <- model$block_sizes
   mode <- model$mode
@@ -62,6 +62,14 @@ lvm_ml <- function(x, model, jac = TRUE){
   which_exo_endo <- model$which_exo_endo
   varnames <- model$varnames
   dag <- model$dag
+
+  if (estimation_cov){
+    S_composites <- data$S_diag_composites
+    lengths_cov_parameter <- model$lengths_cov_parameter
+
+    x <- reconstruction_params(x, mode, S_composites, lengths_cov_parameter, lengths_parameter)
+  }
+
 
   n <- which_exo_endo$ind_exo
   m <- which_exo_endo$ind_endo
