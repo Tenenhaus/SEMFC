@@ -116,7 +116,6 @@ SemFC <- R6Class(
     #' @return Invisible self (for method chaining)
     # Méthode fit utilisant la technique SVD
     fit_svd = function() {
-      self$estimator <- 'svd'
       svd_result <- svdSEM(self$data$data,
                            self$model$relation_matrix,
                            self$model$scale,
@@ -135,7 +134,7 @@ SemFC <- R6Class(
 
       self$estimate$theta <- theta_svd
       self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
-      self$gof$F <- F1(theta_svd, self$data$cov_S, self$model)
+      self$gof$F <- F1(theta_svd, self$model, self$data, self$estimator )
     },
 
 
@@ -165,20 +164,18 @@ SemFC <- R6Class(
     #'
     #' @param initialisation_svd Logical indicating whether to use SVD estimates as
     #'   starting values (default: TRUE). If FALSE, random starting values are used.
-    #' @param estimation_cov Logical indicating whether to used empirical covariance for formative blocks
     #'
     #' @details
     #' Uses numerical optimization (via SOLNP) to minimize the ML fit function.
     #' SVD initialization is recommended for better convergence.
     #'
     #' @return Invisible self (for method chaining)
-    fit_ml = function(initialisation_svd = TRUE, estimation_cov = FALSE) {
+    fit_ml = function(initialisation_svd = TRUE) {
 
 
       lengths_parameter <- self$model$lengths_theta
       if (initialisation_svd) {
         self$fit_svd()
-        self$estimator <- 'ml'
         initial_params <- self$estimate$theta
       } else {
         len_theta <- sum(lengths_parameter)
@@ -186,7 +183,7 @@ SemFC <- R6Class(
       }
 
       # if mixed estimation with empirical covariance of composites
-      if (estimation_cov){
+      if (self$estimator == 'ml_cov'){
         lengths_cov_parameter <- self$model$lengths_cov_parameter
         len_cov_part <- lengths_parameter[length(lengths_parameter)]
         vect_cov <- tail(initial_params, len_cov_part)
@@ -199,9 +196,9 @@ SemFC <- R6Class(
 
       }
 
-      ml_sol <- mlSEM(initial_params, self$data$cov_S, self$model)
+      ml_sol <- mlSEM(initial_params, self$data, self$model, self$estimator)
       theta_ml <- ml_sol$pars
-      self$estimate <- lvm_ml(x = theta_ml, model = self$model, data = self$data, estimation_cov = estimation_cov,
+      self$estimate <- lvm_ml(x = theta_ml, model = self$model, data = self$data, estimator = self$estimator,
                               jac = F)
       self$estimate$T_LS <- d_LS(self$data$cov_S, self$estimate$SIGMA_IMPLIED)
 
@@ -211,7 +208,7 @@ SemFC <- R6Class(
 
       self$estimate$theta <- theta_ml
       self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
-      self$gof$F <- F1(theta_ml, self$data$cov_S, self$model)
+      self$gof$F <- F1(theta_ml, self$model, self$data, self$estimator )
 
 
     },
@@ -340,7 +337,6 @@ SemFC <- R6Class(
     #' @param B Integer number of bootstrap replications for svd (default: 1000)
     #' @param initialisation_svd Logical indicating whether to use SVD initialization
     #'   for ML estimation (default: TRUE). Ignored when estimator is "svd".
-    #' @param estimation_cov Logical indicating whether to use empirical covariance for formative blocks (default: FALSE)
     #'
     #' @details
     #' This is the main wrapper function that performs:
@@ -358,14 +354,14 @@ SemFC <- R6Class(
     #' model$fit(estimator = "ml", B = 500, initialisation_svd = TRUE)
     #' }
 
-    fit = function(infer = FALSE, B = 1000, initialisation_svd = TRUE, estimation_cov = FALSE){
+    fit = function(infer = FALSE, B = 1000, initialisation_svd = TRUE){
       estimator <- self$estimator
       self$boot_rep <- B
       if (estimator == 'svd'){
         self$fit_svd()
 
-      } else if(estimator == 'ml'){
-        self$fit_ml(initialisation_svd = initialisation_svd, estimation_cov = estimation_cov)
+      } else if(estimator == 'ml'|| estimator == 'ml_cov'){
+        self$fit_ml(initialisation_svd = initialisation_svd)
         self$get_gof()
       }
       if (infer){

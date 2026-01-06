@@ -100,7 +100,7 @@ heq0 <- function(x, S) {
 #' heq1(x, S, model)
 #'
 #' @export
-heq1 <- function (x, S, model){
+heq1 <- function (x, model, data, estimator){
 
   block_sizes <- model$block_sizes
   mode <- model$mode
@@ -111,16 +111,17 @@ heq1 <- function (x, S, model){
 
   # list of lengths of the upper values in the cov matrix for the composite block i or
   # of the diagonal values for formative for each block
-  lengths_values_cov <- block_sizes
-  lengths_values_cov[mode == "formative"] <- (block_sizes[mode == "formative"]^2 + block_sizes[mode == "formative"]) / 2
+  lengths_values_cov <- model$lengths_cov_parameter
   # number of parameters for covariance
   total_cov_parameter <- sum(lengths_values_cov)
-    # the coefficient are stocked at the end of x
-  initial_start_index_cov <- length(x) - total_cov_parameter +1
-  end_endex_cov <- initial_start_index_cov + total_cov_parameter - 1
 
-  # part of the vector corresponding to covariance blocks
-  extracted_parameters_cov <- x[initial_start_index_cov:end_endex_cov]
+  if (estimator == 'ml_cov'){
+    x <- reconstruction_params(x, mode, data$S_diag_composites, lengths_values_cov)
+  }
+
+  # the coefficient are stocked at the end of x
+  # part of the vector corresponding to covariance blocks or residual variances
+  extracted_parameters_cov <- tail(x, total_cov_parameter)
   # list of parameters corresponding to each covariance bloc
   list_cov <- split(extracted_parameters_cov,
                     rep(seq_along(lengths_values_cov), lengths_values_cov))

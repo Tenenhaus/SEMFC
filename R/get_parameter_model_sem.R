@@ -79,7 +79,10 @@ get_parameter_model_sem <- function(data, mode, relation_matrix, bias){
   which_exo_endo <- ind_exo_endo(relation_matrix)
   lengths_theta <- get_lengths_theta(which_exo_endo, block_sizes, mode, dag)
   # lengths of covariance parameters for each block
-  lengths_cov_parameter <- ifelse(mode == "formative", (block_sizes^2 + block_sizes) / 2, block_sizes)
+  # lengths_cov_parameter <- ifelse(mode == "formative", (block_sizes^2 + block_sizes) / 2, block_sizes)
+  lengths_cov_parameter <- block_sizes
+  lengths_cov_parameter[mode == "formative"]<-(block_sizes[mode == "formative"]^2 + block_sizes[mode == "formative"])/2
+
 
   p <- sum(block_sizes)
   q <- sum(lengths_theta)

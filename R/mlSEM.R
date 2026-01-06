@@ -29,7 +29,7 @@
 #' @importFrom Rsolnp solnp
 #'
 #' @export
-mlSEM <- function (init, S, model){
+mlSEM <- function (init, data, model, estimator = 'ml'){
 
   mode <- model$mode
   # number of formative blocks
@@ -39,12 +39,12 @@ mlSEM <- function (init, S, model){
 
   result <- solnp(pars = init,
                   fun=F1, eqfun=heq1,
-                  eqB = rep(0,r), S = S, model = model,
+                  eqB = rep(0,r), model = model, data = data, estimator = estimator,
                   control = list(trace = 0, tol = 1e-8))
   }
   else{
     result <- solnp(pars = init,
-                    fun=F1, S = S, model = model,
+                    fun=F1, model = model, data = data, estimator = estimator,
                     control = list(trace = 0, tol = 1e-8))
 
   }

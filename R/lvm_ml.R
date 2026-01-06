@@ -54,7 +54,7 @@
 #'   SIGMA = L * R * L' + BDIAG
 #'
 #' @export
-lvm_ml <- function(x, model, data, estimation_cov, jac = TRUE){
+lvm_ml <- function(x, model, data, estimator = 'ml', jac = FALSE){
 
   block_sizes <- model$block_sizes
   mode <- model$mode
@@ -63,11 +63,11 @@ lvm_ml <- function(x, model, data, estimation_cov, jac = TRUE){
   varnames <- model$varnames
   dag <- model$dag
 
-  if (estimation_cov){
+  if (estimator == "ml_cov"){
     S_composites <- data$S_diag_composites
     lengths_cov_parameter <- model$lengths_cov_parameter
 
-    x <- reconstruction_params(x, mode, S_composites, lengths_cov_parameter, lengths_parameter)
+    x <- reconstruction_params(x, mode, S_composites, lengths_cov_parameter)
   }
 
 

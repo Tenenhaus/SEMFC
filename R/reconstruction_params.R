@@ -3,6 +3,7 @@
 #'
 #' This function reconstructs a complete vector of parameters used for ML
 #' by combining residual variances and upper empirical covariance composite.
+#' Used for estimation with ml_cov
 #'
 #' @param params_ml A vector containing the parameters estimated by maximum likelihood.
 #' @param mode A vector indicating the mode of each block.
@@ -22,16 +23,16 @@
 #' @keywords internal
 
 
-reconstruction_params <- function(params_ml, mode, S_composites, lengths_cov_parameter, lengths_parameter){
+reconstruction_params <- function(params_ml, mode, S_composites, lengths_cov_parameter){
 
   J <- length(mode)
   S_composites_upper <- lapply(S_composites, function(matrix) matrix[upper.tri(matrix, diag = TRUE)])
   lengths_residual_variance <- lengths_cov_parameter[mode != "formative"]
 
-  len_cov_part <- lengths_parameter[length(lengths_parameter)] - length(unlist(S_composites_upper))
+  len_cov_part <- sum(lengths_cov_parameter) - length(unlist(S_composites_upper))
   vect_cov <- tail(params_ml, len_cov_part)
 
-  residual_variance <- split(vect_cov, rep(1:length(lengths_residual_variance), lengths_residual_variance))
+  residual_variance <- split(vect_cov, rep(seq_along(lengths_residual_variance), lengths_residual_variance))
 
 
   diag_jj <- vector("list", J)
@@ -40,7 +41,11 @@ reconstruction_params <- function(params_ml, mode, S_composites, lengths_cov_par
 
   full_vect_cov <- Reduce("c", diag_jj)
 
-  return(full_vect_cov)
+  full_params <- c(head(params_ml,  - len_cov_part), full_vect_cov)
+
+
+
+  return(full_params)
 
 
 }
