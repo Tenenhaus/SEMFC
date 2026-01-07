@@ -257,6 +257,8 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                           z = t_ratio,
                           pval = pval_std_loadings)
 
+  rownames(std_lambda) <- gsub("\\.", "~", rownames(lambda))
+
   std_beta <- apply(boot_beta, 2, sd)
   t_ratio <- beta[beta!=0]/apply(boot_beta, 2, sd)
   pval_beta <- sapply(seq_along(t_ratio),

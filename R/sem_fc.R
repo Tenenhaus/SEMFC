@@ -546,7 +546,11 @@ SemFC <- R6Class(
 
 
       cat("\nParameter Estimates:\n")
-      cat("lambda:\n")
+      if (standardized){
+        cat("standardized lambda:\n")
+      } else {
+        cat("lambda:\n")
+      }
       if (nrow(lambda) != 0){
         printCoefmat(lambda, P.values = TRUE, has.Pvalue = TRUE)
       }
