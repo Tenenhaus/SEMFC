@@ -214,7 +214,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
   )
 
 
-  lambda <- data.frame(lambda = lambda,
+  lambda <- data.frame(Estimate = lambda,
                       std = std_lambda,
                       z = t_ratio,
                       pval = pval_lambda)
@@ -230,7 +230,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                            2*pnorm(abs(t_ratio[x]),
                                    lower.tail = FALSE)
     )
-    omega <- data.frame(lambda = omega,
+    omega <- data.frame(Estimate = omega,
                         std = std_omega,
                         z = t_ratio,
                         pval = pval_omega)
@@ -252,7 +252,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
   )
 
 
-  std_lambda <- data.frame(std_loadings = std_loadings,
+  std_lambda <- data.frame(Estimate = std_loadings,
                           std = std_std_loadings,
                           z = t_ratio,
                           pval = pval_std_loadings)
@@ -269,7 +269,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
   # beta <- data.frame()
   if (length(beta) != 0){
 
-    beta <- data.frame(beta = beta,
+    beta <- data.frame(Estimate = beta,
                     std = std_beta,
                     z = t_ratio,
                     pval = pval_beta)
@@ -292,7 +292,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                             2*pnorm(abs(t_ratio[x]), lower.tail = FALSE)
   )
 
-  gamma <- data.frame(gamma = gamma,
+  gamma <- data.frame(Estimate = gamma,
                      std = std_gamma,
                      z = t_ratio,
                      pval = pval_gamma)
@@ -312,7 +312,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                                    2*pnorm(abs(t_ratio[x]), lower.tail = FALSE)
   )
 
-  total_effects <- data.frame(total_effects = total_effects,
+  total_effects <- data.frame(Estimate = total_effects,
                               std = std_total_effects,
                               z = t_ratio,
                               pval = pval_total_effects)
@@ -334,7 +334,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                                   function(x)
                                       2*pnorm(abs(t_ratio[x]), lower.tail = FALSE)
   )
-  indirect_effects <- data.frame(indirect_effects = indirect_effects,
+  indirect_effects <- data.frame(Estimate = indirect_effects,
                                    std = std_indirect_effects,
                                    z = t_ratio,
                                    pval = pval_indirect_effects)
