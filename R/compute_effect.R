@@ -57,8 +57,119 @@ compute_effect  <- function(BETA, GAMMA) {
 
 
 
+filtering_matrix_effect <- function(M, s, start_index) {
+  m <- nrow(M)
+  n <- ncol(M)
+  mat_index <- matrix(1:(m * n), m, n)
+  # Creation of V matrix
+  idx_row <- mat_index[M != 0]
+  idx_in_theta <- t(mat_index)[t(M) != 0]
+  # the ordering of idx_in_theta is by row, we need to match the ordering of idx_row
+  idx_col <- start_index + match(idx_row, idx_in_theta)
+  V <- matrix(0, m * n, s)
+  V[cbind(idx_row, idx_col)] <- 1
+  return(V)
+}
 
 
+
+
+
+#' Compute Partial Derivative of Endogenous Effects with Respect to Parameters
+#'
+#' This function calculates the partial derivative of endogenous effects (either total or indirect)
+#' with respect to the parameter vector theta. It implements the formula from Bollen (1989),
+#' Appendix 8A: Asymptotic Variances of Effects:
+#' \deqn{\frac{\partial \text{vec}(\mathbf{I}_{\eta\eta})}{\partial \boldsymbol{\theta}} =
+#' \mathbf{V}_B' \left( (\mathbf{I} - \mathbf{B})^{-1} \otimes [(\mathbf{I} - \mathbf{B})^{-1}]' - \mathbf{M} \right)}
+#' where \eqn{\mathbf{M} = \mathbf{I}_{m^2}} for indirect effects and \eqn{\mathbf{M} = \mathbf{0}_{m^2 \times m^2}} for total effects.
+#'
+#' @param BETA A square matrix representing the direct effects between endogenous variables.
+#' @param s An integer representing the total number of parameters in BETA and GAMMA combined.
+#' @param len_vect_gamma An integer representing the number of non-zero elements in GAMMA.
+#' @param effect_type A character string specifying the type of effect: "total" (default) or "indirect".
+#'
+#' @return A matrix \eqn{\mathbf{J}} containing the partial derivatives of the endogenous effects
+#' with respect to the parameters.
+#'
+#' @details
+#' The function uses the Kronecker product to compute the derivative matrix according to the
+#' matrix calculus formula. For total effects, the identity matrix term is removed (\eqn{\mathbf{M} = 0}).
+#' For indirect effects, the identity matrix is retained (\eqn{\mathbf{M} = \mathbf{I}_{m^2}}).
+#'
+#' @references
+#' Bollen, K. A. (1989). Structural Equations with Latent Variables. Wiley.
+#' Appendix 8A: Asymptotic Variances of Effects.
+#'
+#' @export
+partial_derivative_endo_effect <- function(BETA, s, len_vect_gamma, effect_type = "total") {
+  Vb <- filtering_matrix_effect(BETA, s, len_vect_gamma)
+  m <- nrow(BETA)
+  inv_I_B <- solve(diag(m) - BETA)
+  M_effect_type <- diag(m^2)
+  if (effect_type == "total") {
+    M_effect_type <- matrix(0,m^2, m^2)
+  }
+  K <- kronecker(inv_I_B, t(inv_I_B)) - M_effect_type
+  J <- t(Vb) %*% K
+
+  return(J)
+
+}
+
+
+#' Compute Partial Derivative of Exogenous Effects with Respect to Parameters
+#'
+#' This function calculates the partial derivative of exogenous effects (either total or indirect)
+#' with respect to the parameter vector theta. It implements the formula from Bollen (1989),
+#' Appendix 8A: Asymptotic Variances of Effects:
+#' \deqn{\frac{\partial \text{vec}(\mathbf{T}_{\xi\eta})}{\partial \boldsymbol{\theta}} =
+#' \mathbf{V}_B' \left[ (\mathbf{I} - \mathbf{B})^{-1}\mathbf{\Gamma} \otimes [(\mathbf{I} - \mathbf{B})^{-1}]' \right] +
+#' \mathbf{V}_\Gamma' \left[ \mathbf{I}_n \otimes [(\mathbf{I} - \mathbf{B})^{-1} - \mathbf{M}]' \right]}
+#' where \eqn{\mathbf{M} = \mathbf{I}_m} for indirect effects and \eqn{\mathbf{M} = \mathbf{0}_{m \times m}} for total effects.
+#'
+#' @param BETA A square matrix representing the direct effects between endogenous variables.
+#' @param GAMMA A matrix representing the direct effects of exogenous variables on endogenous variables.
+#' @param s An integer representing the total number of parameters in BETA and GAMMA combined.
+#' @param effect_type A character string specifying the type of effect: "total" (default) or "indirect".
+#'
+#' @return A matrix \eqn{\mathbf{J}} containing the partial derivatives of the exogenous effects
+#' with respect to the parameters.
+#'
+#' @details
+#' The function uses the Kronecker product to compute the derivative matrix according to the
+#' matrix calculus formula. For total effects, the identity matrix term is removed (\eqn{\mathbf{M} = 0}).
+#' For indirect effects, the identity matrix is retained (\eqn{\mathbf{M} = \mathbf{I}_m}).
+#'
+#' @references
+#' Bollen, K. A. (1989). Structural Equations with Latent Variables. Wiley.
+#' Appendix 8A: Asymptotic Variances of Effects.
+#'
+#' @keywords internal
+partial_derivative_exo_effect <- function(BETA, GAMMA, s, effect_type = "total") {
+  m <- nrow(GAMMA)  # number endo
+  n <- ncol(GAMMA) # number exo
+  len_vect_gamma <- length(GAMMA[ GAMMA != 0])
+
+
+  # Beta part
+  Vb <- filtering_matrix_effect(BETA, s, len_vect_gamma)
+  inv_I_B <- solve(diag(m) - BETA)
+  Kb <- kronecker(inv_I_B%*%GAMMA, t(inv_I_B))
+
+  # Gamma part
+  Vg <- filtering_matrix_effect(GAMMA, s, 0)
+  M_effect_type <- diag(m)
+  if (effect_type == "total") {
+    M_effect_type <- matrix(0,m, m)
+  }
+  Kg <- kronecker(diag(n), t(inv_I_B - M_effect_type))
+
+  J <- t(Vb) %*% Kb  + t(Vg) %*% Kg
+
+  return(J)
+
+}
 
 
 effect_infer <- function(BETA, GAMMA, lengths_parameter, VCOV){
@@ -67,50 +178,27 @@ effect_infer <- function(BETA, GAMMA, lengths_parameter, VCOV){
   end <- start + lengths_parameter[3] + lengths_parameter[4] -1
   vcov_beta_gamma <- VCOV[start:end, start:end]
 
-  V <- filtering_matrix_effect(BETA)
-  inv_I_B <- solve(diag(nrow(BETA)) - BETA)
-  K <- kronecker(inv_I_B, t(inv_I_B)) - diag(ncol(BETA)^2)
-  J <- t(V) %*% K
-  vcov_indirect <- t(J) %*% vcov_beta_gamma %*% J
-
-
-
-
-
-
-
-}
-
-
-
-filtering_matrix_effect <- function(M){
-
-  m <- nrow(M)
-  n <- ncol(M)
   s <- lengths_parameter[3] + lengths_parameter[4]
 
+  len_vect_gamma <- lengths_parameter[3]
 
-  mat_index <- matrix(1:(m * n), m, n)
+  J_endo_total <- partial_derivative_endo_effect(BETA, s, len_vect_gamma, effect_type = "total")
+  vcov_endo_total <- t(J_endo_total) %*% vcov_beta_gamma %*% J_endo_total
 
-  # Creation of Vb matrix
+  J_endo_indirect <- partial_derivative_endo_effect(BETA, s, len_vect_gamma, effect_type = "indirect")
+  vcov_endo_indirect <- t(J_endo_indirect) %*% vcov_beta_gamma %*% J_endo_indirect
 
-  idx_row <- mat_index[M != 0]
-  idx_in_theta <- t(mat_index)[t(M) != 0]
-  idx_col <- n_gamma + match(idx_row, idx_in_theta)
+  J_exo_total <- partial_derivative_exo_effect(BETA, GAMMA, s, effect_type = "total")
+  vcov_exo_total <- t(J_exo_total) %*% vcov_beta_gamma %*% J_exo_total
 
-  # 6. Remplissage de Vg (m*n lignes x s colonnes)
-  V <- matrix(0, m * n, s)
-  V[cbind(idx_row, idx_col)] <- 1
+  J_exo_indirect <- partial_derivative_exo_effect(BETA, GAMMA, s, effect_type = "indirect")
+  vcov_exo_indirect <- t(J_exo_indirect) %*% vcov_beta_gamma %*% J_exo_indirect
 
-  return(V)
-
+  return(list(vcov_endo_total = vcov_endo_total,
+              vcov_endo_indirect = vcov_endo_indirect,
+              vcov_exo_total = vcov_exo_total,
+              vcov_exo_indirect = vcov_exo_indirect))
 
 }
-
-
-
-
-
-
 
 
