@@ -54,3 +54,63 @@ compute_effect  <- function(BETA, GAMMA) {
               indirect_effect = round(indirect_effect, 6)))
 
 }
+
+
+
+
+
+
+
+effect_infer <- function(BETA, GAMMA, lengths_parameter, VCOV){
+
+  start <- lengths_parameter[1] + lengths_parameter[2] + 1
+  end <- start + lengths_parameter[3] + lengths_parameter[4] -1
+  vcov_beta_gamma <- VCOV[start:end, start:end]
+
+  V <- filtering_matrix_effect(BETA)
+  inv_I_B <- solve(diag(nrow(BETA)) - BETA)
+  K <- kronecker(inv_I_B, t(inv_I_B)) - diag(ncol(BETA)^2)
+  J <- t(V) %*% K
+  vcov_indirect <- t(J) %*% vcov_beta_gamma %*% J
+
+
+
+
+
+
+
+}
+
+
+
+filtering_matrix_effect <- function(M){
+
+  m <- nrow(M)
+  n <- ncol(M)
+  s <- lengths_parameter[3] + lengths_parameter[4]
+
+
+  mat_index <- matrix(1:(m * n), m, n)
+
+  # Creation of Vb matrix
+
+  idx_row <- mat_index[M != 0]
+  idx_in_theta <- t(mat_index)[t(M) != 0]
+  idx_col <- n_gamma + match(idx_row, idx_in_theta)
+
+  # 6. Remplissage de Vg (m*n lignes x s colonnes)
+  V <- matrix(0, m * n, s)
+  V[cbind(idx_row, idx_col)] <- 1
+
+  return(V)
+
+
+}
+
+
+
+
+
+
+
+
