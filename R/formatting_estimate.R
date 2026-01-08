@@ -31,11 +31,12 @@
 formatting_estimate <- function(fit){
 
   lambda <- unlist(fit$lambda)
+  std_lambda <- unlist(fit$std_lambda)
   gamma <- fit$gamma[fit$gamma!=0]
   beta <- fit$beta[fit$beta!=0]
   residual_variance <- unlist(unname(fit$residual_variance))
-  total_effects <- fit$effect$total_effect[fit$effect$total_effect!=0]
-  indirect_effects <- fit$effect$indirect_effect[fit$effect$indirect_effect!=0]
+  total_effects <- as.vector(fit$effect$total_effect)
+  indirect_effects <- as.vector(fit$effect$indirect_effect)
   omega <- unlist(lapply(names(fit$omega), function(lv) {
     setNames(as.vector(fit$omega[[lv]]), paste(lv, rownames(fit$omega[[lv]]), sep = "~"))
   }))
@@ -48,6 +49,12 @@ formatting_estimate <- function(fit){
                            pval = NA)
 
   rownames(table_lambda) <- gsub("\\.", "~", rownames(table_lambda))
+
+  table_std_lambda <- data.frame(Estimate = std_lambda,
+                               std = NA,
+                               z_score = NA,
+                               pval = NA)
+  rownames(table_std_lambda) <- gsub("\\.", "~", rownames(table_std_lambda))
 
   table_gamma <- data.frame(Estimate = gamma,
                             std = NA,
@@ -85,23 +92,19 @@ formatting_estimate <- function(fit){
                           std = NA,
                           z_score = NA,
                           pval = NA)
-  rownames(table_total_effects) <- sapply(seq_len(NROW(table_total_effects)),
-                                  function(b)
-                          paste(rownames(fit$effect$total_effect)[which(fit$effect$total_effect!=0, arr.ind = TRUE)[b, 1]],
-                                colnames(fit$effect$total_effect)[which(fit$effect$total_effect!=0, arr.ind = TRUE)[b, 2]],
-                                sep = "~")
+  grid_total_effects <- expand.grid(
+    LHS = rownames(fit$effect$total_effect), RHS = colnames(fit$effect$total_effect)
   )
+  rownames(table_total_effects) <- paste(grid_total_effects$LHS, grid_total_effects$RHS, sep = " ~ ")
 
   table_indirect_effects <- data.frame(Estimate = indirect_effects,
                         std = NA,
                         z_score = NA,
                         pval = NA)
-  rownames(table_indirect_effects) <- sapply(seq_len(NROW(table_indirect_effects)),
-                                  function(b)
-                          paste(rownames(fit$effect$indirect_effect)[which(fit$effect$indirect_effect!=0, arr.ind = TRUE)[b, 1]],
-                                colnames(fit$effect$indirect_effect)[which(fit$effect$indirect_effect!=0, arr.ind = TRUE)[b, 2]],
-                                sep = "~")
+  grid_indirect_effects <- expand.grid(
+    LHS = rownames(fit$effect$indirect_effect), RHS = colnames(fit$effect$indirect_effect)
   )
+  rownames(table_indirect_effects) <- paste(grid_indirect_effects$LHS, grid_indirect_effects$RHS, sep = " ~ ")
 
   table_omega <- data.frame()
 
@@ -118,6 +121,7 @@ formatting_estimate <- function(fit){
 
 
   return(list(lambda = table_lambda,
+              std_lambda = table_std_lambda,
               gamma = table_gamma,
               beta = table_beta,
               residual_variance = table_residual_variance,
