@@ -12,6 +12,7 @@
 #'   \describe{
 #'     \item{mode}{Character vector indicating the measurement mode for each block}
 #'   }
+#' @param tol Numeric value specifying the optimization tolerance (default: 1e-8).
 #'
 #' @return Object of class "solnp" containing optimization results:
 #'   \item{pars}{Optimal parameter values.}

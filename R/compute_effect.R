@@ -55,7 +55,32 @@ compute_effect  <- function(BETA, GAMMA) {
 
 }
 
-
+#' Create a Filtering Matrix for Effects inference
+#'
+#' This function generates a filtering matrix \( V \) used to map the indices of non-zero elements
+#' in a matrix \( M \) to a parameter vector. The filtering matrix is used in the computation
+#' of partial derivatives of effects in structural equation modeling.
+#'
+#' @param M A matrix whose non-zero elements are to be mapped.
+#' @param s An integer representing the number of beta and gamma parameters in the model.
+#' @param start_index An integer representing the starting index for mapping the parameters.
+#'
+#' @return A matrix \eqn{\mathbf{V}_{M}} of dimensions \eqn{(m \times n) \times s}, where \eqn{m} and \eqn{n}
+#' are the dimensions of \eqn{M}. This matrix represents:
+#' \deqn{\mathbf{V}_{M} = \left[ \mathrm{vec} \frac{\partial \mathbf{M}}{\partial \theta_1},
+#' \mathrm{vec} \frac{\partial \mathbf{M}}{\partial \theta_2}, \dots,
+#' \mathrm{vec} \frac{\partial \mathbf{M}}{\partial \theta_s} \right]}
+#' The matrix contains 1s at positions corresponding to the mapping of non-zero elements in \eqn{M}
+#' to the parameter vector, and 0s elsewhere.
+#'
+#' @details
+#' The function works as follows:
+#' - It creates an index matrix for \( M \) to identify the positions of non-zero elements.
+#' - It matches the row-wise ordering of indices to the parameter vector indices.
+#' - It constructs the filtering matrix \( V \) with 1s at the mapped positions.
+#'
+#'
+#' @keywords internal
 
 filtering_matrix_effect <- function(M, s, start_index) {
   m <- nrow(M)
@@ -101,7 +126,7 @@ filtering_matrix_effect <- function(M, s, start_index) {
 #' Bollen, K. A. (1989). Structural Equations with Latent Variables. Wiley.
 #' Appendix 8A: Asymptotic Variances of Effects.
 #'
-#' @export
+#' @keywords internal
 partial_derivative_endo_effect <- function(BETA, s, len_vect_gamma, effect_type = "total") {
   Vb <- filtering_matrix_effect(BETA, s, len_vect_gamma)
   m <- nrow(BETA)
@@ -171,7 +196,35 @@ partial_derivative_exo_effect <- function(BETA, GAMMA, s, effect_type = "total")
 
 }
 
-
+#' Compute Asymptotic Variance-Covariance Matrices for Effects Inference using delta Method
+#'
+#' This function calculates the variance-covariance matrices for total and indirect effects
+#' (both endogenous and exogenous) in a Structural Equation Model (SEM). It uses the partial
+#' derivatives of the effects with respect to the model parameters and the variance-covariance
+#' matrix of the parameters using delta Method
+#'
+#' @param BETA A square matrix representing the direct effects between endogenous variables.
+#' @param GAMMA A matrix representing the direct effects of exogenous variables on endogenous variables.
+#' @param lengths_parameter A numeric vector specifying the lengths of different parameter groups
+#' in the model. The third and fourth elements correspond to the number of parameters in GAMMA
+#' and BETA, respectively.
+#' @param VCOV A variance-covariance matrix of the model parameters.
+#'
+#' @return A list containing:
+#' \describe{
+#'   \item{vcov_endo_total}{Variance-covariance matrix for total effects between endogenous variables.}
+#'   \item{vcov_endo_indirect}{Variance-covariance matrix for indirect effects between endogenous variables.}
+#'   \item{vcov_exo_total}{Variance-covariance matrix for total effects of exogenous variables on endogenous variables.}
+#'   \item{vcov_exo_indirect}{Variance-covariance matrix for indirect effects of exogenous variables on endogenous variables.}
+#' }
+#'
+#' @details
+#' The function extracts the relevant portion of the variance-covariance matrix for the parameters
+#' associated with BETA and GAMMA. It then computes the variance-covariance matrices for the effects
+#' using the partial derivatives of the effects and the extracted variance-covariance matrix.
+#'
+#'
+#' @keywords internal
 effect_infer <- function(BETA, GAMMA, lengths_parameter, VCOV){
 
   start <- lengths_parameter[1] + lengths_parameter[2] + 1

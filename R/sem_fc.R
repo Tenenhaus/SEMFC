@@ -165,6 +165,7 @@ SemFC <- R6Class(
     #'
     #' @param initialisation_svd Logical indicating whether to use SVD estimates as
     #'   starting values (default: TRUE). If FALSE, random starting values are used.
+    #' @param tol Numeric tolerance for convergence in optimization (default: 1e-8)
     #'
     #' @details
     #' Uses numerical optimization (via SOLNP) to minimize the ML fit function.
@@ -325,6 +326,7 @@ SemFC <- R6Class(
     #' @param B Integer number of bootstrap replications for svd (default: 1000)
     #' @param initialisation_svd Logical indicating whether to use SVD initialization
     #'   for ML estimation (default: TRUE). Ignored when estimator is "svd".
+    #' @param tol Numeric tolerance for convergence in ML optimization (default: 1e-8)
     #'
     #' @details
     #' This is the main wrapper function that performs:
@@ -372,6 +374,8 @@ SemFC <- R6Class(
     #' Print comprehensive summary of model estimation results
     #'
     #' @param standardized Logical indicating whether to display standardized estimates (default: FALSE)
+    #' @param effect Logical indicating whether to display total and indirect effects (default: FALSE)
+    #' @param all_measures Logical indicating whether to display all goodness-of-fit measures (default: FALSE)
     #'
     #' @details
     #' Displays:

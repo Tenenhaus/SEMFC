@@ -4,13 +4,11 @@
 \alias{formatting_ml_infer}
 \title{Format ML Inference Results}
 \usage{
-formatting_ml_infer(fit, SD, model)
+formatting_ml_infer(fit, model, VCOV, vcov_effect)
 }
 \arguments{
 \item{fit}{List containing model fit results from \code{lvm_ml()}. Includes parameter estimates
 such as loadings, standardized loadings, gamma coefficients, beta coefficients, and residual variances.}
-
-\item{SD}{Numeric vector of standard errors for all parameters.}
 
 \item{model}{List containing the model structure, including:
 \itemize{
@@ -18,6 +16,8 @@ such as loadings, standardized loadings, gamma coefficients, beta coefficients, 
 \item \code{lengths_theta}: Integer vector specifying the length of each parameter group.
 \item \code{block_sizes}: Integer vector specifying the number of indicators in each block.
 }}
+
+\item{SD}{Numeric vector of standard errors for all parameters.}
 }
 \value{
 List containing:

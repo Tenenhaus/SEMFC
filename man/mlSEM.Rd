@@ -4,7 +4,7 @@
 \alias{mlSEM}
 \title{Maximum Likelihood Estimation of Structural Equation Model}
 \usage{
-mlSEM(init, S, model)
+mlSEM(init, S, model, tol = 1e-08)
 }
 \arguments{
 \item{init}{Numeric vector of initial parameter values for optimization.}
@@ -15,6 +15,8 @@ mlSEM(init, S, model)
 \describe{
 \item{mode}{Character vector indicating the measurement mode for each block}
 }}
+
+\item{tol}{Numeric value specifying the optimization tolerance (default: 1e-8).}
 }
 \value{
 Object of class "solnp" containing optimization results:
