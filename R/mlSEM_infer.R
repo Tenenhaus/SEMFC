@@ -159,12 +159,13 @@ P_ml <- function(x, S, model){
 #' the standard normal distribution.
 #'
 #' @keywords internal
-formatting_ml_infer <- function(fit, SD, model){
+formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
 
 
   mode <- model$mode
   lengths_parameter <- model$lengths_theta
   block_sizes <- model$block_sizes
+  SD <- sqrt(diag(VCOV))
 
 
   lambda <- unlist(fit$lambda)
@@ -172,6 +173,8 @@ formatting_ml_infer <- function(fit, SD, model){
   gamma <- fit$gamma[fit$gamma!=0]
   beta <- fit$beta[fit$beta!=0]
   residual_variance <- unlist(unname(fit$residual_variance))
+  total_effects <- as.vector(fit$effect$total_effect)
+  indirect_effects <- as.vector(fit$effect$indirect_effect)
 
 
 
@@ -187,6 +190,9 @@ formatting_ml_infer <- function(fit, SD, model){
   sd_std_lambda <- sd_lambda*std_lambda/lambda
   sd_gamma <- SD[gamma_start_index: gamma_end_index]
   sd_beta <- SD[beta_start_index: beta_end_index]
+  sd_total_effects <- sqrt(c(diag(vcov_effect$vcov_exo_total), diag(vcov_effect$vcov_endo_total)))
+  sd_indirect_effects <- sqrt(c(diag(vcov_effect$vcov_exo_indirect), diag(vcov_effect$vcov_endo_indirect)))
+
 
   BDIAG <- get_bdiag(SD,
                      mode = mode,
@@ -200,6 +206,8 @@ formatting_ml_infer <- function(fit, SD, model){
   z_gamma<- gamma/sd_gamma
   z_beta <- beta/sd_beta
   z_residual_variance <- residual_variance/sd_residual_variance
+  z_total_effects <- total_effects/sd_total_effects
+  z_indirect_effects <- indirect_effects/sd_indirect_effects
 
 
   table_lambda <- data.frame(Estimate = lambda,
@@ -271,6 +279,33 @@ formatting_ml_infer <- function(fit, SD, model){
                            pval = unlist(lapply(z_residual_variance, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
   )
 
+  table_total_effects <- data.frame(Estimate = total_effects,
+                           std = sd_total_effects,
+                           z_score = z_total_effects,
+                           ci_lower = total_effects - 1.96 * sd_total_effects,
+                           ci_upper = total_effects + 1.96 * sd_total_effects,
+                           pval = unlist(lapply(z_total_effects, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+  )
+  grid_total_effects <- expand.grid(
+    LHS = rownames(fit$effect$total_effect), RHS = colnames(fit$effect$total_effect)
+  )
+  rownames(table_total_effects) <- paste(grid_total_effects$LHS, grid_total_effects$RHS, sep = " ~ ")
+
+  table_indirect_effects <- data.frame(Estimate = indirect_effects,
+                         std = sd_indirect_effects,
+                         z_score = z_indirect_effects,
+                         ci_lower = indirect_effects - 1.96 * sd_indirect_effects,
+                         ci_upper = indirect_effects + 1.96 * sd_indirect_effects,
+                         pval = unlist(lapply(z_indirect_effects, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+  )
+
+
+  grid_indirect_effects <- expand.grid(
+    LHS = rownames(fit$effect$indirect_effect), RHS = colnames(fit$effect$indirect_effect)
+  )
+  rownames(table_indirect_effects) <- paste(grid_indirect_effects$LHS, grid_indirect_effects$RHS, sep = " ~ ")
+
+
 
 
   out <- list(
@@ -278,7 +313,9 @@ formatting_ml_infer <- function(fit, SD, model){
     std_lambda = table_std_lambda,
     gamma = table_gamma,
     beta = table_beta,
-    residual_variance = table_residual_variance
+    residual_variance = table_residual_variance,
+    total_effects = table_total_effects,
+    indirect_effects = table_indirect_effects
 
   )
 
@@ -320,14 +357,17 @@ mlSEM_infer <- function(x, S, model, N, fit){
 
   P_ml <- P_ml(x, S, model)
   VCOV <- P_ml/N
-  SD <- sqrt(diag(VCOV))
+  # SD <- sqrt(diag(VCOV))
 
-  table <- formatting_ml_infer(fit, SD, model)
+  vcov_effect <- effect_infer(fit$beta, fit$gamma, model$lengths_theta, VCOV)
+
+  table <- formatting_ml_infer(fit, model, VCOV, vcov_effect)
 
   out <- list(
     estimate = table,
     VCOV = VCOV,
-    SD = SD
+    vcov_effect = vcov_effect
+
   )
 
   return(out)
