@@ -40,7 +40,7 @@
 #'   \item{omega}{List of composite weights for formative blocks.}
 #'   \item{P_EXO}{Correlation matrix of exogenous latent variables.}
 #'   \item{P_ENDO}{Correlation matrix of endogenous latent variables.}
-#'   \item{R_LVM}{Full correlation matrix of all latent variables.}
+#'   \item{P_IMPLIED}{Full correlation matrix of all latent variables.}
 #'   \item{SIGMA_IMPLIED}{Implied covariance matrix of observed variables.}
 #'
 #' @details
@@ -214,7 +214,7 @@ lvm_ml <- function(x, model, jac = TRUE){
     omega = omega,
     P_EXO = P_EXO,
     P_ENDO = P_ENDO,
-    R_LVM = R,
+    P_IMPLIED = R,
     SIGMA_IMPLIED  = implied_S
   )
 
