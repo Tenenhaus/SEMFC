@@ -141,11 +141,7 @@ lvm <- function(R, C){
     
 
   }
-  
-  if(!igraph::is_dag(gr)){
-    PSI = (diag(NROW(BETA))- BETA)%*%R[J,J]%*%t(diag(NROW(BETA))- BETA) -
-      GAMMA%*%R[H,H]%*%t(GAMMA)
-  }
+
   PI = solve(diag(NROW(BETA))- BETA)
   if(!igraph::is_dag(gr)){
     PSI = (diag(NROW(BETA))- BETA)%*%R[J,J]%*%t(diag(NROW(BETA))- BETA) -
