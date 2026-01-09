@@ -560,40 +560,40 @@ SemFC <- R6Class(
         cat("lambda:\n")
       }
       if (nrow(lambda) != 0){
-        printCoefmat(lambda, P.values = TRUE, has.Pvalue = TRUE)
+        printCoefmat(lambda, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
       }
 
       cat("omega:\n")
       if (nrow(omega) != 0){
-        printCoefmat(omega, P.values = TRUE, has.Pvalue = TRUE)
+        printCoefmat(omega, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
       }
 
 
 
       if (nrow(beta) != 0){
         cat("beta:\n")
-        printCoefmat(beta, P.values = TRUE, has.Pvalue = TRUE)
+        printCoefmat(beta, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
       }
       cat("gamma:\n")
       if (nrow(gamma) != 0){
-        printCoefmat(gamma, P.values = TRUE, has.Pvalue = TRUE)
+        printCoefmat(gamma, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
       }
 
       cat("residual variance:\n")
       if (nrow(residualvariance) != 0){
-        printCoefmat(residualvariance, P.values = TRUE, has.Pvalue = TRUE)
+        printCoefmat(residualvariance, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
       }
 
       if (effect){
 
         if (!is.null(total_effects) ){
           cat("total effects:\n")
-          printCoefmat(total_effects, P.values = TRUE, has.Pvalue = TRUE)
+          printCoefmat(total_effects, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
         }
 
         if (!is.null(indirect_effects)){
           cat("indirect effects:\n")
-          printCoefmat(indirect_effects, P.values = TRUE, has.Pvalue = TRUE)
+          printCoefmat(indirect_effects, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
         }
       }
 
