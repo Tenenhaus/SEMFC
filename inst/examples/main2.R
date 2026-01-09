@@ -1,4 +1,4 @@
-source('R/SEMFC/sem_f_c.R')
+
 
 
 print('###### modele all reflective #############')
@@ -11,7 +11,7 @@ print('DATA empirical sigma = TRUE')
 
 model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, scale=F, bias=F)
 model$fit_svd()
-model$fit_ml(initialisation_svd = TRUE)
+model$fit_ml(initialisation_svd = TRUE ,tol = 1e-08)
 # model$ml_infer()
 
 
@@ -30,8 +30,8 @@ estimate = parameterEstimates(fit.sem.ml, standardized = TRUE)
 #### comparaison #######
 
 lambda_th = c(l1,l2,l3,l4,l5,l6)
-std_all_ml = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$ml_parameters$residual_variance),diag(model$cov_S))
-std_all_svd = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$svd_parameters$residual_variance),diag(model$cov_S))
+std_all_ml = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$estimate$residual_variance),diag(model$data$cov_S))
+std_all_svd = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$estimate$residual_variance),diag(model$data$cov_S))
 std_all_lavaan = estimate[1:18,11]
 
 lambda_comparaison = cbind(estimate[1:18,1:3],lambda_th, std_all_svd, std_all_ml, std_all_lavaan)
@@ -39,12 +39,12 @@ print('lambda')
 print(lambda_comparaison)
 
 
-g =  unlist(model$ml_parameters$gamma)
-b = unlist(model$ml_parameters$beta)
+g =  unlist(model$estimate$gamma)
+b = unlist(model$estimate$beta)
 bg_ml = c(g[1,1], g[1,2], b[1,2],g[2,3],g[2,4],b[2,1])
 
-g_svd =  unlist(model$svd_parameters$gamma)
-b_svd = unlist(model$svd_parameters$beta)
+g_svd =  unlist(model$estimate$gamma)
+b_svd = unlist(model$estimate$beta)
 bg_svd = c(g_svd[1,1], g_svd[1,2], b_svd[1,2],g_svd[2,3],g_svd[2,4],b_svd[2,1])
 
 bg_th = c(GAMMA[1,1], GAMMA[1,2], BETA[1,2],GAMMA[2,3],GAMMA[2,4],BETA[2,1])
@@ -89,9 +89,11 @@ print('DATA empirical sigma = FALSE')
 
 #### our code #######
 
-model <- SemFC$new(data=Y_2, relation_matrix = C, mode=mode, scale=F, bias=F)
-model$fit_svd()
-model$fit_ml(initialisation_svd = TRUE)
+model <- SemFC$new(data=Y_2, relation_matrix = C, mode=mode, scale=F, bias=F, estimator = 'svd')
+modelml <- SemFC$new(data=Y_2, relation_matrix = C, mode=mode, scale=F, bias=F)
+
+model$fit()
+modelml$fit(initialisation_svd = TRUE, tol = 1e-08)
 # model$ml_infer()
 # true_param_with_S
 # model$summary()
@@ -106,8 +108,8 @@ estimate = parameterEstimates(fit.sem.ml, standardized = TRUE)
 #### comparaison #######
 
 lambda_th = c(l1,l2,l3,l4,l5,l6)
-std_all_ml = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$ml_parameters$residual_variance),diag(model$cov_S))
-std_all_svd = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$svd_parameters$residual_variance),diag(model$cov_S))
+std_all_ml = mapply(function(x,y) sqrt(1-(x/y)), unlist(modelml$estimate$residual_variance),diag(modelml$data$cov_S))
+std_all_svd = mapply(function(x,y) sqrt(1-(x/y)), unlist(model$estimate$residual_variance),diag(model$data$cov_S))
 std_all_lavaan = estimate[1:18,11]
 
 lambda_comparaison_false = cbind(estimate[1:18,1:3],lambda_th, std_all_svd, std_all_ml, std_all_lavaan)
@@ -115,12 +117,12 @@ print('lambda')
 print(lambda_comparaison_false)
 
 
-g =  unlist(model$ml_parameters$gamma)
-b = unlist(model$ml_parameters$beta)
+g =  unlist(modelml$estimate$gamma)
+b = unlist(modelml$estimate$beta)
 bg_ml = c(g[1,1], g[1,2], b[1,2],g[2,3],g[2,4],b[2,1])
 
-g_svd =  unlist(model$svd_parameters$gamma)
-b_svd = unlist(model$svd_parameters$beta)
+g_svd =  unlist(model$estimate$gamma)
+b_svd = unlist(model$estimate$beta)
 bg_svd = c(g_svd[1,1], g_svd[1,2], b_svd[1,2],g_svd[2,3],g_svd[2,4],b_svd[2,1])
 
 bg_th = c(GAMMA[1,1], GAMMA[1,2], BETA[1,2],GAMMA[2,3],GAMMA[2,4],BETA[2,1])
