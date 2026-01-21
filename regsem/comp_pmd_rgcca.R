@@ -4,6 +4,7 @@ library(PMA)
 
 source('data/data_generated_reflective.R')
 source('R/SEMFC/sem_f_c.R')
+source('regsem/new_SPC.R')
 
 pen_vars <- paste0("X1", 2:180, collapse = " + ")
 pen_line <- paste0("pen() * eta1 =~ ", pen_vars)
@@ -105,9 +106,12 @@ sparse_svd.cv <- function(L, pen, len_seq, nfold, niter){
     if (pen[[x]] == 1){
       # data <- t(L[[x]])%*%Reduce("cbind", L[-x])%*%t(t(L[[x]])%*%Reduce("cbind", L[-x]))
       data <- t(t(L[[x]])%*%Reduce("cbind", L[-x]))
-      cv.out <- SPC.cv(data, sumabsvs=seq(1, sqrt(ncol(data)), len=len_seq), nfold = nfold, niter =niter)
+      data <- t(data)%*%data
+      cv.out <- new_SPC.cv(data, sumabsvs=seq(1, sqrt(ncol(data)), len=len_seq), nfold = nfold, niter =niter)
       print(cv.out$bestsumabsv)
-      out <- SPC(data, sumabsv=cv.out$bestsumabsv, K=1, v=cv.out$v.init)$v
+      print(cv.out$bestsumabsv1se)
+
+      out <- new_SPC(data, sumabsv=cv.out$bestsumabsv1se, K=1, v=cv.out$v.init)$v
 
       res[[x]] <- out
 
@@ -129,8 +133,9 @@ sparse_svd <- function(L, pen, values){
   for (x in 1:length(L)){
     if (pen[[x]] == 1){
       data <- t(t(L[[x]])%*%Reduce("cbind", L[-x]))
+      data <- t(data)%*%data
 
-      out <- SPC(data, sumabsv=values[[x]], K=1, center = FALSE)$v
+      out <- new_SPC(data, sumabsv=values[[x]], K=1, center = FALSE)$v
 
       res[[x]] <- out
 
@@ -148,7 +153,7 @@ sparse.svd = sparse_svd(Y_2, c(1,1,0,0,0,0), c(optsvd[[1]],sqrt(3),0,0,0,0))
 plot(-sparse.svd[[1]])
 
 sparse.svd.cv = sparse_svd.cv(Y_2, c(1,0,0,0,0,0), 50,20,30)
-plot(sparse.svd.cv[[1]])
+plot(-sparse.svd.cv[[1]])
 
 
 perm_out = rgcca_permutation(Y_2, scheme = "factorial", par_type = "sparsity",
@@ -366,7 +371,7 @@ print(time_rocsvd)
 sgcca_opt = rgcca(Y_2, sparsity = c(optrgcca[[1]],1 ,1,1,1,1))
 class_rgcca_opt = classification(sgcca_opt$a[[1]])
 
-ssvd_opt = sparse_svd(Y, c(1,0,0,0,0,0), c(optsvd[[1]],0,0,0,0,0))
+ssvd_opt = sparse_svd(Y_2, c(1,0,0,0,0,0), c(optsvd[[1]],0,0,0,0,0))
 res_svd = classification(ssvd_opt[[1]])
 
 

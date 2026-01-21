@@ -10,6 +10,7 @@ sparse_svd <- function(L, pen, values, trace=FALSE, v=NULL){
   for (x in 1:length(L)){
     if (pen[[x]] == 1){
       data <- t(t(L[[x]])%*%Reduce("cbind", L[-x]))
+      # data <- t(data)%*%data
 
       out <- SPC(data, sumabsv=values[[x]], K=1, center = FALSE, , niter = 1000, trace = trace, v=v)$v
 
