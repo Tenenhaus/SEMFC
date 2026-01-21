@@ -89,6 +89,10 @@ lvm_ml <- function(x, model, jac = TRUE){
                                  latent_variables = n,
                                  start_index = start_indices_in_x[2])
 
+  rownames(P_EXO) <- names(n)
+  colnames(P_EXO) <- names(n)
+
+
   ##################################################################
   ####### mapping of the path coefficients matrix G from x #########
   ##################################################################
@@ -140,6 +144,9 @@ lvm_ml <- function(x, model, jac = TRUE){
 
 
   }
+
+  rownames(P_ENDO) <- names(m)
+  colnames(P_ENDO) <- names(m)
 
 
 

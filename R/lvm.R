@@ -168,6 +168,8 @@ lvm <- function(R, C){
     R_LVM[J, H] = PI%*%GAMMA%*%R[H, H]
     R_LVM[J, J] = PI%*%(GAMMA%*%R[H, H]%*%t(GAMMA) + PSI)%*%t(PI)
   }
+
+  dimnames(R_LVM) <- list(rownames(C), rownames(C))
   
 
   return(list(gr = gr, 

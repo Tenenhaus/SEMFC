@@ -31,7 +31,7 @@ modelml$parameterEstimates()
 source('inst/model/model_ecsi.R')
 model_ecsi <- SemFC$new(data=A, relation_matrix = C_ecsi, mode=mode_ecsi, estimator = "ml")
 model_ecsi$fit(infer=T)
-model_ecsi$summary()
+model_ecsi$summary(effect = T)
 
 
 
