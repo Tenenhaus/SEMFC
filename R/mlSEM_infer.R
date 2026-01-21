@@ -187,7 +187,7 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
   beta_end_index <- beta_start_index + length(beta) - 1
 
   sd_lambda <- SD[lambda_start_index: lambda_end_index]
-  sd_std_lambda <- sd_lambda*std_lambda/lambda
+  # sd_std_lambda <- sd_lambda*std_lambda/lambda
   sd_gamma <- SD[gamma_start_index: gamma_end_index]
   sd_beta <- SD[beta_start_index: beta_end_index]
   sd_total_effects <- sqrt(c(diag(vcov_effect$vcov_exo_total), diag(vcov_effect$vcov_endo_total)))
@@ -209,100 +209,138 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
   z_total_effects <- total_effects/sd_total_effects
   z_indirect_effects <- indirect_effects/sd_indirect_effects
 
-
-  table_lambda <- data.frame(Estimate = lambda,
-                             std = sd_lambda,
-                             z_score = z_lambda,
-                             ci_lower = lambda - 1.96 * sd_lambda,
-                             ci_upper = lambda + 1.96 * sd_lambda,
-                             pval = unlist(lapply(z_lambda, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
-
-  )
-  rownames(table_lambda) <- gsub("\\.", "~", rownames(table_lambda))
-
-
-  table_std_lambda <- data.frame(Estimate = std_lambda,
-                           std = sd_std_lambda,
-                           z_score = z_lambda,
-                           ci_lower = std_lambda - 1.96 * sd_std_lambda,
-                           ci_upper = std_lambda + 1.96 * sd_std_lambda,
-                           pval = unlist(lapply(z_lambda, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+  parts <- strsplit(names(lambda), "\\.")
+  table_lambda <- data.frame(
+    lhs = sapply(parts, `[`, 1),
+    op = "=~",
+    rhs = sapply(parts, `[`, 2),
+    est =lambda,
+    se =sd_lambda,
+    z = z_lambda,
+    ci.lower = lambda - 1.96 * sd_lambda,
+    ci.upper = lambda + 1.96 * sd_lambda,
+    pvalue = unlist(lapply(z_lambda, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
 
   )
-  rownames(table_std_lambda) <- rownames(table_lambda)
+  # rownames(table_lambda) <- gsub("\\.", "~", rownames(table_lambda))
+
+
+  table_std_lambda <- data.frame(
+    lhs = sapply(parts, `[`, 1),
+    op = "=~",
+    rhs = sapply(parts, `[`, 2),
+    est =std_lambda,
+    se = NA,
+    z = NA,
+    ci.lower = NA,
+    ci.upper = NA,
+    pvalue = NA
+
+  )
+  # rownames(table_std_lambda) <- rownames(table_lambda)
 
 
 
+  table_gamma <- data.frame(
+    est =gamma,
+    se =sd_gamma,
+    z = z_gamma,
+    ci.lower = gamma - 1.96 * sd_gamma,
+    ci.upper = gamma + 1.96 * sd_gamma,
 
-
-
-
-  table_gamma <- data.frame(Estimate = gamma,
-                            std = sd_gamma,
-                            z_score = z_gamma,
-                            ci_lower = gamma - 1.96 * sd_gamma,
-                            ci_upper = gamma + 1.96 * sd_gamma,
-
-                            pval = unlist((lapply(z_gamma, function (z) 2*pnorm(abs(z), lower.tail = FALSE))))
+    pvalue = unlist((lapply(z_gamma, function (z) 2*pnorm(abs(z), lower.tail = FALSE))))
   )
 
   rownames(table_gamma) <- sapply(1:NROW(table_gamma),
                           function(b)
                             paste(rownames(fit$gamma)[which(fit$gamma!=0, arr.ind = TRUE)[b, 1]],
                                   colnames(fit$gamma)[which(fit$gamma!=0, arr.ind = TRUE)[b, 2]],
-                                  sep = "~")
+                                  sep = ".")
   )
+  parts <- strsplit(rownames(table_gamma), "\\.")
+  table_gamma <- cbind(
+    data.frame(
+      lhs = sapply(parts, `[`, 1),
+      op = "~",
+      rhs = sapply(parts, `[`, 2)
+    ),
+    table_gamma
+  )
+
 
   table_beta <- data.frame()
 
   if (length(beta) != 0){
 
-  table_beta <- data.frame(Estimate = beta,
-                           std = sd_beta,
-                           z_score = z_beta,
-                           ci_lower = beta - 1.96 * sd_beta,
-                           ci_upper = beta + 1.96 * sd_beta,
-                           pval = unlist(lapply(z_beta, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+  table_beta <- data.frame(est =beta,
+                           se =sd_beta,
+                           z = z_beta,
+                           ci.lower = beta - 1.96 * sd_beta,
+                           ci.upper = beta + 1.96 * sd_beta,
+                           pvalue = unlist(lapply(z_beta, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
   )
   rownames(table_beta) <- sapply(1:NROW(table_beta),
        function(b)
          paste(colnames(fit$beta)[which(fit$beta!=0, arr.ind = TRUE)[b, ]],
-               collapse = "~")
+               collapse = ".")
        )
+    parts <- strsplit(rownames(table_beta), "\\.")
+    table_beta <- cbind(
+      data.frame(
+        lhs = sapply(parts, `[`, 1),
+        op = "~",
+        rhs = sapply(parts, `[`, 2)
+      ),    table_beta
+    )
+
   }
 
-  table_residual_variance <- data.frame(Estimate = residual_variance,
-                           std = sd_residual_variance,
-                           z_score = z_residual_variance,
-                           ci_lower = residual_variance - 1.96 * sd_residual_variance,
-                           ci_upper = residual_variance + 1.96 * sd_residual_variance,
-                           pval = unlist(lapply(z_residual_variance, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+  parts <- strsplit(names(residual_variance), "\\.")
+  table_residual_variance <- data.frame(
+    lhs = sapply(parts, `[`, 2),
+    op = "~~",
+    rhs = sapply(parts, `[`, 2),
+    est =residual_variance,
+    se = sd_residual_variance,
+    z = z_residual_variance,
+    ci.lower = residual_variance - 1.96 * sd_residual_variance,
+    ci.upper = residual_variance + 1.96 * sd_residual_variance,
+    pvalue = unlist(lapply(z_residual_variance, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
   )
 
-  table_total_effects <- data.frame(Estimate = total_effects,
-                           std = sd_total_effects,
-                           z_score = z_total_effects,
-                           ci_lower = total_effects - 1.96 * sd_total_effects,
-                           ci_upper = total_effects + 1.96 * sd_total_effects,
-                           pval = unlist(lapply(z_total_effects, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
-  )
   grid_total_effects <- expand.grid(
     LHS = rownames(fit$effect$total_effect), RHS = colnames(fit$effect$total_effect)
   )
-  rownames(table_total_effects) <- paste(grid_total_effects$LHS, grid_total_effects$RHS, sep = " ~ ")
-
-  table_indirect_effects <- data.frame(Estimate = indirect_effects,
-                         std = sd_indirect_effects,
-                         z_score = z_indirect_effects,
-                         ci_lower = indirect_effects - 1.96 * sd_indirect_effects,
-                         ci_upper = indirect_effects + 1.96 * sd_indirect_effects,
-                         pval = unlist(lapply(z_indirect_effects, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+  table_total_effects <- data.frame(
+    lhs = grid_total_effects$LHS,
+    op = "~",
+    rhs = grid_total_effects$RHS,
+    est =total_effects,
+    se =sd_total_effects,
+    z = z_total_effects,
+    ci.lower = total_effects - 1.96 * sd_total_effects,
+    ci.upper = total_effects + 1.96 * sd_total_effects,
+    pvalue = unlist(lapply(z_total_effects, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
   )
+  rownames(table_total_effects) <- paste(grid_total_effects$LHS, grid_total_effects$RHS, sep = " ~ ")
 
 
   grid_indirect_effects <- expand.grid(
     LHS = rownames(fit$effect$indirect_effect), RHS = colnames(fit$effect$indirect_effect)
   )
+
+  table_indirect_effects <- data.frame(
+    lhs = grid_indirect_effects$LHS,
+    op = "~",
+    rhs = grid_indirect_effects$RHS,
+    est =indirect_effects,
+    se =sd_indirect_effects,
+    z = z_indirect_effects,
+    ci.lower = indirect_effects - 1.96 * sd_indirect_effects,
+    ci.upper = indirect_effects + 1.96 * sd_indirect_effects,
+    pvalue = unlist(lapply(z_indirect_effects, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+  )
+
   rownames(table_indirect_effects) <- paste(grid_indirect_effects$LHS, grid_indirect_effects$RHS, sep = " ~ ")
 
 

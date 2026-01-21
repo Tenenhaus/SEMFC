@@ -50,6 +50,8 @@ formatting_estimate <- function(fit){
     est = lambda,
     se = NA,
     z = NA,
+    ci.lower = NA,
+    ci.upper = NA,
     pvalue = NA)
 
   # rownames(table_lambda) <- gsub("\\.", "~", rownames(table_lambda))
@@ -61,12 +63,16 @@ formatting_estimate <- function(fit){
     est = std_lambda,
     se = NA,
     z = NA,
+    ci.lower = NA,
+    ci.upper = NA,
     pvalue = NA)
   # rownames(table_std_lambda) <- gsub("\\.", "~", rownames(table_std_lambda))
 
   table_gamma <- data.frame(est = gamma,
                             se = NA,
                             z = NA,
+                            ci.lower = NA,
+                            ci.upper = NA,
                             pvalue = NA)
   rownames(table_gamma) <- sapply(seq_len(NROW(table_gamma)),
                                   function(b)
@@ -91,6 +97,8 @@ formatting_estimate <- function(fit){
     table_beta <- data.frame(est = beta,
                              se = NA,
                              z = NA,
+                             ci.lower = NA,
+                             ci.upper = NA,
                              pvalue = NA
     )
     rownames(table_beta) <- sapply(seq_len(NROW(table_beta)),
@@ -116,10 +124,13 @@ formatting_estimate <- function(fit){
     est = residual_variance,
     se = NA,
     z = NA,
+    ci.lower = NA,
+    ci.upper = NA,
     pvalue = NA)
 
-
-
+  std_loadings_in_residuals <- table_std_lambda[table_std_lambda$rhs %in% table_residual_variance$rhs, "est"]
+  table_std_residual_variance <- table_residual_variance
+  table_std_residual_variance$est <- 1 - std_loadings_in_residuals^2
 
 
   grid_total_effects <- expand.grid(
@@ -132,6 +143,8 @@ formatting_estimate <- function(fit){
     est = total_effects,
     se = NA,
     z = NA,
+    ci.lower = NA,
+    ci.upper = NA,
     pvalue = NA)
 
 
@@ -149,6 +162,8 @@ formatting_estimate <- function(fit){
     est = indirect_effects,
     se = NA,
     z = NA,
+    ci.lower = NA,
+    ci.upper = NA,
     pvalue = NA)
   rownames(table_indirect_effects) <- paste(grid_indirect_effects$LHS, grid_indirect_effects$RHS, sep = " ~ ")
 
@@ -163,6 +178,8 @@ formatting_estimate <- function(fit){
       est = omega,
       se = NA,
       z = NA,
+      ci.lower = NA,
+      ci.upper = NA,
       pvalue = NA)
   }
 
@@ -171,6 +188,7 @@ formatting_estimate <- function(fit){
               gamma = table_gamma,
               beta = table_beta,
               residual_variance = table_residual_variance,
+              std_residual_variance = table_std_residual_variance,
               total_effects = table_total_effects,
               indirect_effects = table_indirect_effects,
               omega = table_omega))

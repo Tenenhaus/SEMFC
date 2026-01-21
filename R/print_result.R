@@ -1,9 +1,14 @@
 
 
 
-
-
-
+get_stars <- function(p) {
+  if (is.na(p)) return("")
+  if (p < 0.001) return("***")
+  if (p < 0.01)  return("**")
+  if (p < 0.05)  return("*")
+  if (p < 0.1)   return(".")
+  return("")
+}
 
 
 print_link <- function(df, type, op) {
@@ -24,7 +29,7 @@ print_link <- function(df, type, op) {
     # On prend les lignes correspondant à cette variable
     group <- df[df$lhs == lat, ]
 
-    for (i in 1:nrow(group)) {
+    for (i in seq_len(nrow(group))) {
       row <- group[i, ]
 
       # Nom de l'indicateur (rhs)
@@ -38,13 +43,15 @@ print_link <- function(df, type, op) {
         se <- ""
         z_val <- ""
         p_val <- ""
+        stars <- ""
       } else {
         se <- sprintf("%.3f", row$se)
         z_val <- sprintf("%.3f", row$z)
         p_val <- sprintf("%.3f", row$pvalue)
+        stars <- get_stars(row$pvalue)
       }
-      cat(sprintf("    %-10s %8s %8s %8s %8s\n",
-                  rhs, est, se, z_val, p_val))
+      cat(sprintf("    %-10s %8s %8s %8s %8s %-3s\n",
+                  row$rhs, est, se, z_val, p_val, stars))
     }
   }
 }
@@ -54,7 +61,7 @@ print_variance <- function(df, type) {
   cat(sprintf("%-14s %8s %8s %8s %8s\n",
               "", "Estimate", "Std.Err", "z-value", "P(>|z|)"))
 
-  for (i in 1:nrow(df)) {
+  for (i in seq_len(nrow(df))) {
     row <- df[i, ]
     var_name <- row$lhs
     display_name <- paste0("   .", var_name) # Ajout du point
@@ -66,13 +73,15 @@ print_variance <- function(df, type) {
       se <- ""
       z_val <- ""
       p_val <- ""
+      stars <- ""
     } else {
       se <- sprintf("%.3f", row$se)
       z_val <- sprintf("%.3f", row$z)
       p_val <- sprintf("%.3f", row$pvalue)
+      stars <- get_stars(row$pvalue)
     }
 
-    cat(sprintf("%-14s %8s %8s %8s %8s\n",
-                display_name, est, se, z_val, p_val))
+    cat(sprintf("%-14s %8s %8s %8s %8s %-3s\n",
+                display_name, est, se, z_val, p_val, stars))
   }
 }

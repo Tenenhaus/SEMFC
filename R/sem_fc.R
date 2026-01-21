@@ -516,12 +516,13 @@ SemFC <- R6Class(
       # estimation
       estimate <- formatting_estimate(self$estimate)
       lambda <- estimate$lambda
+      residualvariance <- estimate$residual_variance
       if (standardized){
         lambda <- estimate$std_lambda
+        residualvariance <- estimate$std_residual_variance
       }
       beta <- estimate$beta
       gamma <- estimate$gamma
-      residualvariance <- estimate$residual_variance
       total_effects <- estimate$total_effects
       indirect_effects <- estimate$indirect_effects
       omega <- estimate$omega
@@ -536,10 +537,11 @@ SemFC <- R6Class(
         lambda <- estimate$lambda
         if (standardized){
           lambda <- estimate$std_lambda
+        } else {
+          residualvariance<- estimate$residual_variance
         }
         beta<- estimate$beta
         gamma<- estimate$gamma
-        residualvariance<- estimate$residual_variance
         total_effects <- estimate$total_effects
         indirect_effects <- estimate$indirect_effects
         if (!is.null(estimate$omega)){
@@ -548,9 +550,6 @@ SemFC <- R6Class(
 
 
       }
-
-
-
 
 
       cat("\nParameter Estimates:\n")
@@ -570,10 +569,48 @@ SemFC <- R6Class(
 
       }
 
-      # cat("---\nSignif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n")
+      cat("---\nSignif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n")
 
+    },
+
+
+    parameterEstimates = function(standardized = FALSE){
+      estimate <- formatting_estimate(self$estimate)
+      lambda <- estimate$lambda
+      residualvariance <- estimate$residual_variance
+      if (standardized){
+        lambda <- estimate$std_lambda
+        residualvariance <- estimate$std_residual_variance
+      }
+      beta <- estimate$beta
+      gamma <- estimate$gamma
+      omega <- estimate$omega
+
+      if (!is.null(self$infer_estimate)){
+
+        # inference estimation
+        estimate <- self$infer_estimate
+        lambda <- estimate$lambda
+        residualvariance<- estimate$residual_variance
+        if (standardized){
+          lambda <- estimate$std_lambda
+          residualvariance <- estimate$std_residual_variance
+        }
+        beta<- estimate$beta
+        gamma<- estimate$gamma
+        if (!is.null(estimate$omega)){
+          omega <- estimate$omega
+        }
+
+      }
+
+      return(rbind(lambda, omega, beta, gamma, residualvariance))
 
     }
+
+
+
+
 
   )
 )
