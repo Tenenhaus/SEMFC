@@ -500,7 +500,7 @@ SemFC <- R6Class(
 
       if (!is.null(self$gof$reliability)){
         cat("Reliability Coefficients (Dillon):\n\n")
-        print(self$gof$reliability)
+        print(round(self$gof$reliability, 3))
         cat("\n")
       }
 
@@ -508,7 +508,7 @@ SemFC <- R6Class(
 
       if (!is.null(self$estimate$R2)){
           cat("R2:\n\n")
-          print(self$estimate$R2)
+          print(round(self$estimate$R2, 3))
           cat("\n")
       }
 
@@ -555,47 +555,59 @@ SemFC <- R6Class(
 
       cat("\nParameter Estimates:\n")
       if (standardized){
-        cat("standardized lambda:\n")
+        cat("standardized loadings:\n")
       } else {
-        cat("lambda:\n")
+        cat("loadings:\n")
       }
       if (nrow(lambda) != 0){
-        printCoefmat(lambda, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
+        printCoefmat(cbind(round(lambda[1],3), lambda[2:4]), P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE)
       }
 
-      cat("omega:\n")
+
       if (nrow(omega) != 0){
-        printCoefmat(omega, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
+        cat("Formative block weight:\n")
+        printCoefmat(cbind(round(omega[1],3), omega[2:4]), P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE)
       }
 
 
 
       if (nrow(beta) != 0){
         cat("beta:\n")
-        printCoefmat(beta, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
+        printCoefmat(cbind(round(beta[1],3), beta[2:4]), P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE)
       }
       cat("gamma:\n")
       if (nrow(gamma) != 0){
-        printCoefmat(gamma, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
+        printCoefmat(cbind(round(gamma[1],3), gamma[2:4]), P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE)
       }
 
       cat("residual variance:\n")
       if (nrow(residualvariance) != 0){
-        printCoefmat(residualvariance, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
+        printCoefmat(
+          cbind(round(residualvariance[1],3), residualvariance[2:4]),
+          P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE
+        )
       }
 
       if (effect){
 
         if (!is.null(total_effects) ){
           cat("total effects:\n")
-          printCoefmat(total_effects, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
+          printCoefmat(
+            cbind(round(total_effects[1],3), total_effects[2:4]),
+            P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE
+          )
         }
 
         if (!is.null(indirect_effects)){
           cat("indirect effects:\n")
-          printCoefmat(indirect_effects, P.values = TRUE, has.Pvalue = TRUE, digits = 2)
+          printCoefmat(
+            cbind(round(indirect_effects[1],3), indirect_effects[2:4]),
+            P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE
+          )
         }
       }
+
+      cat("---\nSignif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n")
 
 
     }
