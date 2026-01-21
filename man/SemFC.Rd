@@ -192,7 +192,7 @@ Invisible self (for method chaining)
 \subsection{Method \code{fit_ml()}}{
 Fit the model using Maximum Likelihood (ML) estimation
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit_ml(initialisation_svd = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit_ml(initialisation_svd = TRUE, tol)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -200,6 +200,8 @@ Fit the model using Maximum Likelihood (ML) estimation
 \describe{
 \item{\code{initialisation_svd}}{Logical indicating whether to use SVD estimates as
 starting values (default: TRUE). If FALSE, random starting values are used.}
+
+\item{\code{tol}}{Numeric tolerance for convergence in optimization (default: 1e-8)}
 }
 \if{html}{\out{</div>}}
 }
@@ -271,7 +273,7 @@ Invisible self (for method chaining)
 \subsection{Method \code{fit()}}{
 Fit the complete model with inference and goodness-of-fit
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit(infer = FALSE, B = 1000, initialisation_svd = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit(infer = FALSE, B = 1000, initialisation_svd = TRUE, tol = 1e-08)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -283,6 +285,8 @@ Fit the complete model with inference and goodness-of-fit
 
 \item{\code{initialisation_svd}}{Logical indicating whether to use SVD initialization
 for ML estimation (default: TRUE). Ignored when estimator is "svd".}
+
+\item{\code{tol}}{Numeric tolerance for convergence in ML optimization (default: 1e-8)}
 }
 \if{html}{\out{</div>}}
 }
@@ -316,13 +320,17 @@ model$fit(estimator = "ml", B = 500, initialisation_svd = TRUE)
 \subsection{Method \code{summary()}}{
 Print comprehensive summary of model estimation results
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$summary(standardized = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$summary(standardized = FALSE, effect = FALSE, all_measures = F)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{standardized}}{Logical indicating whether to display standardized estimates (default: FALSE)}
+
+\item{\code{effect}}{Logical indicating whether to display total and indirect effects (default: FALSE)}
+
+\item{\code{all_measures}}{Logical indicating whether to display all goodness-of-fit measures (default: FALSE)}
 }
 \if{html}{\out{</div>}}
 }

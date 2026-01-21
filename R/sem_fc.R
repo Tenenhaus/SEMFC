@@ -165,13 +165,14 @@ SemFC <- R6Class(
     #'
     #' @param initialisation_svd Logical indicating whether to use SVD estimates as
     #'   starting values (default: TRUE). If FALSE, random starting values are used.
+    #' @param tol Numeric tolerance for convergence in optimization (default: 1e-8)
     #'
     #' @details
     #' Uses numerical optimization (via SOLNP) to minimize the ML fit function.
     #' SVD initialization is recommended for better convergence.
     #'
     #' @return Invisible self (for method chaining)
-    fit_ml = function(initialisation_svd = TRUE) {
+    fit_ml = function(initialisation_svd = TRUE, tol) {
 
 
       # Initialisation par SVD si demandé
@@ -184,7 +185,7 @@ SemFC <- R6Class(
         initial_params <- runif(len_theta)
       }
 
-      ml_sol <- mlSEM(initial_params, self$data$cov_S, self$model)
+      ml_sol <- mlSEM(initial_params, self$data$cov_S, self$model, tol)
       theta_ml <- ml_sol$pars
       self$estimate <- lvm_ml(x = theta_ml, model = self$model, jac = F)
       self$estimate$T_LS <- d_LS(self$data$cov_S, self$estimate$SIGMA_IMPLIED)
@@ -216,9 +217,10 @@ SemFC <- R6Class(
 
       ml_infer_estimate <- mlSEM_infer(theta_ml, S, self$model, N, self$estimate)
 
+
       self$infer_estimate <- ml_infer_estimate$estimate
       self$infer_estimate$VCOV <- ml_infer_estimate$VCOV
-      self$infer_estimate$SD <- ml_infer_estimate$SD
+      self$infer_estimate$vcov_effect <- ml_infer_estimate$vcov_effect
     },
 
 
@@ -324,6 +326,7 @@ SemFC <- R6Class(
     #' @param B Integer number of bootstrap replications for svd (default: 1000)
     #' @param initialisation_svd Logical indicating whether to use SVD initialization
     #'   for ML estimation (default: TRUE). Ignored when estimator is "svd".
+    #' @param tol Numeric tolerance for convergence in ML optimization (default: 1e-8)
     #'
     #' @details
     #' This is the main wrapper function that performs:
@@ -341,14 +344,14 @@ SemFC <- R6Class(
     #' model$fit(estimator = "ml", B = 500, initialisation_svd = TRUE)
     #' }
 
-    fit = function(infer = FALSE, B = 1000, initialisation_svd = TRUE){
+    fit = function(infer = FALSE, B = 1000, initialisation_svd = TRUE, tol = 1e-8){
       estimator <- self$estimator
       self$boot_rep <- B
       if (estimator == 'svd'){
         self$fit_svd()
 
       } else if(estimator == 'ml'){
-        self$fit_ml(initialisation_svd)
+        self$fit_ml(initialisation_svd, tol)
         self$get_gof()
       }
       if (infer){
@@ -371,6 +374,8 @@ SemFC <- R6Class(
     #' Print comprehensive summary of model estimation results
     #'
     #' @param standardized Logical indicating whether to display standardized estimates (default: FALSE)
+    #' @param effect Logical indicating whether to display total and indirect effects (default: FALSE)
+    #' @param all_measures Logical indicating whether to display all goodness-of-fit measures (default: FALSE)
     #'
     #' @details
     #' Displays:
@@ -388,7 +393,7 @@ SemFC <- R6Class(
     #'
     #' @return Invisible NULL
 
-    summary = function(standardized = FALSE){
+    summary = function(standardized = FALSE, effect = FALSE, all_measures  = F){
 
       estimator <- self$estimator
 
@@ -403,88 +408,91 @@ SemFC <- R6Class(
       cat(sprintf("%-45s%15.3f\n", "d_LS", self$estimate$T_LS))
       cat("\n")
 
-      if (estimator == 'ml'){
+      if (all_measures){
 
-        # user test
-        testchi2 <- self$gof$chi2$test
-        dfchi2 <- self$gof$chi2$df
-        pvalchi2 <- self$gof$chi2$pval
+        if (estimator == 'ml'){
 
-        # baseline test
+          # user test
+          testchi2 <- self$gof$chi2$test
+          dfchi2 <- self$gof$chi2$df
+          pvalchi2 <- self$gof$chi2$pval
 
-        testbaseline <- self$gof$baseline$test
-        dfbaseline <- self$gof$baseline$df
-        pvalbaseline <- self$gof$baseline$pval
+          # baseline test
 
-        #  vs
-        cfi <- self$gof$cfi
-        tli <- self$gof$tli
+          testbaseline <- self$gof$baseline$test
+          dfbaseline <- self$gof$baseline$df
+          pvalbaseline <- self$gof$baseline$pval
 
-
-
-
-        # RMSEA and srmr
-        rmsea_val <- self$gof$RMSEA$estimate
-        rmsea_ci_lower <- self$gof$RMSEA$CI_lower
-        rmsea_ci_upper <- self$gof$RMSEA$CI_upper
-        p_rmsea_le_005 <- self$gof$RMSEA$p_close_fit
-        p_rmsea_ge_008 <- self$gof$RMSEA$p_notclose_fit
-        srmr_val <- self$gof$SRMR
-        cat("Model Test User Model :\n\n")
-        cat(sprintf("  %-40s%12.3f\n", "Test statistic", testchi2))
-        cat(sprintf("  %-40s%12d\n", "Degrees of freedom", dfchi2))
-        cat(sprintf("  %-40s%12.3f\n", "P-value (Chi-square)", pvalchi2))
-        cat("\n")
-
-        cat("Model Test Baseline Model :\n\n")
-        cat(sprintf("  %-40s%12.3f\n", "Test statistic", testbaseline))
-        cat(sprintf("  %-40s%12d\n", "Degrees of freedom", dfbaseline))
-        cat(sprintf("  %-40s%12.3f\n", "P-value", pvalbaseline))
-        cat("\n")
-
-        cat("User Model versus Baseline Model:\n\n")
-        cat(sprintf("  %-40s%12.3f\n", "Comparative Fit Index (CFI)", cfi))
-        cat(sprintf("  %-40s%12.3f\n", "Tucker-Lewis Index (TLI)", tli))
-        cat("\n")
-
-        cat("Root Mean Square Error of Approximation:\n\n")
-        cat(sprintf("  %-40s%12.3f\n", "RMSEA", rmsea_val))
-        cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - lower", rmsea_ci_lower))
-        cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - upper", rmsea_ci_upper))
-        cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA <= 0.050", p_rmsea_le_005))
-        cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA >= 0.080", p_rmsea_ge_008))
-        cat("\n")
-
-        cat("Standardized Root Mean Square Residual:\n\n")
-        cat(sprintf("  %-40s%12.3f\n", "SRMR", srmr_val))
-        cat("\n")
-
-        # Information criteria
-
-        loglik_H0 <-  self$gof$info_criteria$loglik_H0
-        loglik_H1 <-  self$gof$info_criteria$loglik_H1
-        AIC <-  self$gof$info_criteria$AIC
-        BIC <-  self$gof$info_criteria$BIC
-        SABIC <-  self$gof$info_criteria$SABIC
-
-        cat("Loglikelihood and Information Criteria:\n\n")
-        cat(sprintf("  %-40s%12.3f\n", "Loglikelihood user model (H0)", loglik_H0))
-        cat(sprintf("  %-40s%12.3f\n", "Loglikelihood unrestricted model (H1)", loglik_H1))
-        cat("\n")
-        cat(sprintf("  %-40s%12.3f\n", "Akaike (AIC)", AIC))
-        cat(sprintf("  %-40s%12.3f\n", "Bayesian (BIC)", BIC))
-        cat(sprintf("  %-40s%12.3f\n", "Sample-size adjusted BIC (SABIC)", SABIC))
-        cat("\n")
-      }
+          #  vs
+          cfi <- self$gof$cfi
+          tli <- self$gof$tli
 
 
-      if (estimator == 'svd' && !is.null(self$gof$bollen_stine)){
-        B <- self$boot_rep
-        pvalbs <- self$gof$bollen_stine$pval
-        cat("Bootstrap Test (Bollen Stine):\n\n")
-        cat(sprintf("  %-40s%12d\n", "Number of bootstrap replications", B))
-        cat(sprintf("  %-40s%12.3f\n", "Bollen Stine bootstrap p-value", pvalbs))
-        cat("\n")
+
+
+          # RMSEA and srmr
+          rmsea_val <- self$gof$RMSEA$estimate
+          rmsea_ci_lower <- self$gof$RMSEA$CI_lower
+          rmsea_ci_upper <- self$gof$RMSEA$CI_upper
+          p_rmsea_le_005 <- self$gof$RMSEA$p_close_fit
+          p_rmsea_ge_008 <- self$gof$RMSEA$p_notclose_fit
+          srmr_val <- self$gof$SRMR
+          cat("Model Test User Model :\n\n")
+          cat(sprintf("  %-40s%12.3f\n", "Test statistic", testchi2))
+          cat(sprintf("  %-40s%12d\n", "Degrees of freedom", dfchi2))
+          cat(sprintf("  %-40s%12.3f\n", "P-value (Chi-square)", pvalchi2))
+          cat("\n")
+
+          cat("Model Test Baseline Model :\n\n")
+          cat(sprintf("  %-40s%12.3f\n", "Test statistic", testbaseline))
+          cat(sprintf("  %-40s%12d\n", "Degrees of freedom", dfbaseline))
+          cat(sprintf("  %-40s%12.3f\n", "P-value", pvalbaseline))
+          cat("\n")
+
+          cat("User Model versus Baseline Model:\n\n")
+          cat(sprintf("  %-40s%12.3f\n", "Comparative Fit Index (CFI)", cfi))
+          cat(sprintf("  %-40s%12.3f\n", "Tucker-Lewis Index (TLI)", tli))
+          cat("\n")
+
+          cat("Root Mean Square Error of Approximation:\n\n")
+          cat(sprintf("  %-40s%12.3f\n", "RMSEA", rmsea_val))
+          cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - lower", rmsea_ci_lower))
+          cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - upper", rmsea_ci_upper))
+          cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA <= 0.050", p_rmsea_le_005))
+          cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA >= 0.080", p_rmsea_ge_008))
+          cat("\n")
+
+          cat("Standardized Root Mean Square Residual:\n\n")
+          cat(sprintf("  %-40s%12.3f\n", "SRMR", srmr_val))
+          cat("\n")
+
+          # Information criteria
+
+          loglik_H0 <-  self$gof$info_criteria$loglik_H0
+          loglik_H1 <-  self$gof$info_criteria$loglik_H1
+          AIC <-  self$gof$info_criteria$AIC
+          BIC <-  self$gof$info_criteria$BIC
+          SABIC <-  self$gof$info_criteria$SABIC
+
+          cat("Loglikelihood and Information Criteria:\n\n")
+          cat(sprintf("  %-40s%12.3f\n", "Loglikelihood user model (H0)", loglik_H0))
+          cat(sprintf("  %-40s%12.3f\n", "Loglikelihood unrestricted model (H1)", loglik_H1))
+          cat("\n")
+          cat(sprintf("  %-40s%12.3f\n", "Akaike (AIC)", AIC))
+          cat(sprintf("  %-40s%12.3f\n", "Bayesian (BIC)", BIC))
+          cat(sprintf("  %-40s%12.3f\n", "Sample-size adjusted BIC (SABIC)", SABIC))
+          cat("\n")
+        }
+
+
+        if (estimator == 'svd' && !is.null(self$gof$bollen_stine)){
+          B <- self$boot_rep
+          pvalbs <- self$gof$bollen_stine$pval
+          cat("Bootstrap Test (Bollen Stine):\n\n")
+          cat(sprintf("  %-40s%12d\n", "Number of bootstrap replications", B))
+          cat(sprintf("  %-40s%12.3f\n", "Bollen Stine bootstrap p-value", pvalbs))
+          cat("\n")
+        }
       }
 
 
@@ -492,7 +500,7 @@ SemFC <- R6Class(
 
       if (!is.null(self$gof$reliability)){
         cat("Reliability Coefficients (Dillon):\n\n")
-        print(self$gof$reliability)
+        print(round(self$gof$reliability, 3))
         cat("\n")
       }
 
@@ -500,7 +508,7 @@ SemFC <- R6Class(
 
       if (!is.null(self$estimate$R2)){
           cat("R2:\n\n")
-          print(self$estimate$R2)
+          print(round(self$estimate$R2, 3))
           cat("\n")
       }
 
@@ -532,10 +540,10 @@ SemFC <- R6Class(
         beta<- estimate$beta
         gamma<- estimate$gamma
         residualvariance<- estimate$residual_variance
+        total_effects <- estimate$total_effects
+        indirect_effects <- estimate$indirect_effects
         if (!is.null(estimate$omega)){
           omega <- estimate$omega
-          total_effects <- estimate$total_effects
-          indirect_effects <- estimate$indirect_effects
         }
 
 
@@ -547,44 +555,23 @@ SemFC <- R6Class(
 
       cat("\nParameter Estimates:\n")
       if (standardized){
-        cat("standardized lambda:\n")
+        print_link(lambda, 'Standardized Loadings', '=~')
       } else {
-        cat("lambda:\n")
+        print_link(lambda, 'Loadings', '=~')
       }
-      if (nrow(lambda) != 0){
-        printCoefmat(lambda, P.values = TRUE, has.Pvalue = TRUE)
+      print_link(omega, 'Formative block weight', '<~')
+      print_link(rbind(beta, gamma), 'Regression', '~')
+
+      print_variance(residualvariance, 'Residual Variances')
+
+      if (effect){
+        print_link(total_effects, 'Total Effects', '~')
+        print_link(indirect_effects, 'Indirect Effects', '~')
+
       }
 
-      cat("omega:\n")
-      if (nrow(omega) != 0){
-        printCoefmat(omega, P.values = TRUE, has.Pvalue = TRUE)
-      }
+      # cat("---\nSignif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n")
 
-
-
-      if (nrow(beta) != 0){
-        cat("beta:\n")
-        printCoefmat(beta, P.values = TRUE, has.Pvalue = TRUE)
-      }
-      cat("gamma:\n")
-      if (nrow(gamma) != 0){
-        printCoefmat(gamma, P.values = TRUE, has.Pvalue = TRUE)
-      }
-
-      cat("residual variance:\n")
-      if (nrow(residualvariance) != 0){
-        printCoefmat(residualvariance, P.values = TRUE, has.Pvalue = TRUE)
-      }
-
-      if (!is.null(total_effects) ){
-          cat("total effects:\n")
-          printCoefmat(total_effects, P.values = TRUE, has.Pvalue = TRUE)
-      }
-
-      if (!is.null(indirect_effects)){
-          cat("indirect effects:\n")
-          printCoefmat(indirect_effects, P.values = TRUE, has.Pvalue = TRUE)
-      }
 
     }
 

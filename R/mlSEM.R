@@ -12,6 +12,7 @@
 #'   \describe{
 #'     \item{mode}{Character vector indicating the measurement mode for each block}
 #'   }
+#' @param tol Numeric value specifying the optimization tolerance (default: 1e-8).
 #'
 #' @return Object of class "solnp" containing optimization results:
 #'   \item{pars}{Optimal parameter values.}
@@ -29,7 +30,7 @@
 #' @importFrom Rsolnp solnp
 #'
 #' @export
-mlSEM <- function (init, S, model){
+mlSEM <- function (init, S, model, tol = 1e-08){
 
   mode <- model$mode
   # number of formative blocks
@@ -40,12 +41,12 @@ mlSEM <- function (init, S, model){
   result <- solnp(pars = init,
                   fun=F1, eqfun=heq1,
                   eqB = rep(0,r), S = S, model = model,
-                  control = list(trace = 0, tol = 1e-8))
+                  control = list(trace = 0, tol = tol))
   }
   else{
     result <- solnp(pars = init,
                     fun=F1, S = S, model = model,
-                    control = list(trace = 0, tol = 1e-8))
+                    control = list(trace = 0, tol = tol))
 
   }
 

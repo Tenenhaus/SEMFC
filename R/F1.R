@@ -104,9 +104,12 @@ F1 <- function(x, S, model){
 
   implied_S <- lvm_ml(x, model, jac = FALSE)$SIGMA_IMPLIED
 
-  ########################################################################
-  ###################### Compute log-likelihood  #########################
-  ########################################################################
+  # check for positive definiteness
+
+  eigvals <- eigen(implied_S, symmetric = TRUE, only.values = TRUE)$values
+  if (any(eigvals <= 0.0001)){
+    return(1e+5)
+  }
 
   opt <- log(det(implied_S)) +
     sum(diag(S%*%solve(implied_S))) -

@@ -16,11 +16,12 @@ model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "svd")
 # model$get_gof()
 model$fit(infer = T, B = 100)
 model$fit(infer = F)
-model$summary(standardized = F)
+model$summary(standardized = T, effect = T, all_measures = T)
 
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode)
-modelml$fit(infer=T)
-modelml$summary(standardized = F)
+modelml$fit(infer=T, tol=1e-04)
+modelml$fit(infer=F, tol=1e-04)
+modelml$summary(standardized = T, effect = T, all_measures = T)
 
 
 
