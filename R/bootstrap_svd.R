@@ -90,7 +90,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
   total_effects <- fit$effect$total_effect[fit$effect$total_effect!=0]
   indirect_effects <- fit$effect$indirect_effect[fit$effect$indirect_effect!=0]
   omega <- unlist(lapply(names(fit$omega), function(lv) {
-    setNames(as.vector(fit$omega[[lv]]), paste(lv, rownames(fit$omega[[lv]]), sep = "~"))
+    setNames(as.vector(fit$omega[[lv]]), paste(lv, rownames(fit$omega[[lv]]), sep = "."))
   }))
 
   Z0 <- lapply(split(data.frame(t(df)),
@@ -197,10 +197,16 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                                2*pnorm(abs(t_ratio[x]),
                                        lower.tail = FALSE)
   )
-  residual_variance <- data.frame(lambda = residual_variance,
-                      std = std_residual_variance,
-                      z = t_ratio,
-                      pval = pval_residual_variance)
+
+  parts <- strsplit(names(residual_variance), "\\.")
+  residual_variance <- data.frame(
+    lhs = sapply(parts, `[`, 2),
+    op = "~~",
+    rhs = sapply(parts, `[`, 2),
+    est = residual_variance,
+    se = std_residual_variance,
+    z = t_ratio,
+    pvalue = pval_residual_variance)
 
 
 
@@ -213,12 +219,16 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                                        lower.tail = FALSE)
   )
 
-
-  lambda <- data.frame(Estimate = lambda,
-                      std = std_lambda,
-                      z = t_ratio,
-                      pval = pval_lambda)
-  rownames(lambda) <- gsub("\\.", "~", rownames(lambda))
+  parts <- strsplit(names(lambda), "\\.")
+  lambda <- data.frame(
+    lhs = sapply(parts, `[`, 1),
+    op = "=~",
+    rhs = sapply(parts, `[`, 2),
+    est = lambda,
+    se = std_lambda,
+    z = t_ratio,
+    pvalue = pval_lambda)
+  # rownames(lambda) <- gsub("\\.", "~", rownames(lambda))
 
 
 
@@ -230,10 +240,15 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                            2*pnorm(abs(t_ratio[x]),
                                    lower.tail = FALSE)
     )
-    omega <- data.frame(Estimate = omega,
-                        std = std_omega,
-                        z = t_ratio,
-                        pval = pval_omega)
+    parts <- strsplit(names(omega), "\\.")
+    omega <- data.frame(
+      lhs = sapply(parts, `[`, 1),
+      op = "<~",
+      rhs = sapply(parts, `[`, 2),
+      est = omega,
+      se = std_omega,
+      z = t_ratio,
+      pvalue = pval_omega)
 
   }
   omega <- data.frame(omega)
@@ -251,11 +266,15 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                                         lower.tail = FALSE)
   )
 
-
-  std_lambda <- data.frame(Estimate = std_loadings,
-                          std = std_std_loadings,
-                          z = t_ratio,
-                          pval = pval_std_loadings)
+  parts <- strsplit(names(std_loadings), "\\.")
+  std_lambda <- data.frame(
+    lhs = sapply(parts, `[`, 1),
+    op = "=~",
+    rhs = sapply(parts, `[`, 2),
+    est = std_loadings,
+    se = std_std_loadings,
+    z = t_ratio,
+    pvalue = pval_std_loadings)
 
   rownames(std_lambda) <- gsub("\\.", "~", rownames(lambda))
 
@@ -269,16 +288,24 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
   # beta <- data.frame()
   if (length(beta) != 0){
 
-    beta <- data.frame(Estimate = beta,
-                    std = std_beta,
+    beta <- data.frame(est = beta,
+                    se = std_beta,
                     z = t_ratio,
-                    pval = pval_beta)
+                    pvalue = pval_beta)
 
     rownames(beta) <- sapply(seq_len(NROW(beta)),
                              function(b)
              paste(colnames(fit$beta)[which(fit$beta!=0, arr.ind = TRUE)[b, ]],
-                   collapse = "~")
-           )
+                   collapse = ".")
+    )
+    parts <- strsplit(rownames(beta), "\\.")
+    beta <- cbind(
+      data.frame(
+        lhs = sapply(parts, `[`, 1),
+        op = "~",
+        rhs = sapply(parts, `[`, 2)
+      ),    beta
+    )
 
   }
   beta <- data.frame(beta)
@@ -292,17 +319,28 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                             2*pnorm(abs(t_ratio[x]), lower.tail = FALSE)
   )
 
-  gamma <- data.frame(Estimate = gamma,
-                     std = std_gamma,
+  gamma <- data.frame(est = gamma,
+                     se = std_gamma,
                      z = t_ratio,
-                     pval = pval_gamma)
+                     pvalue = pval_gamma)
 
   rownames(gamma) <- sapply(seq_len(NROW(gamma)),
                             function(b)
                             paste(rownames(fit$gamma)[which(fit$gamma!=0, arr.ind = TRUE)[b, 1]],
                                   colnames(fit$gamma)[which(fit$gamma!=0, arr.ind = TRUE)[b, 2]],
-                                  sep = "~")
+                                  sep = ".")
   )
+
+  parts <- strsplit(rownames(gamma), "\\.")
+  gamma <- cbind(
+    data.frame(
+      lhs = sapply(parts, `[`, 1),
+      op = "~",
+      rhs = sapply(parts, `[`, 2)
+    ),
+    gamma
+  )
+
 
 
   std_total_effects <- apply(boot_total_effects, 2, sd)
@@ -312,19 +350,31 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                                    2*pnorm(abs(t_ratio[x]), lower.tail = FALSE)
   )
 
-  total_effects <- data.frame(Estimate = total_effects,
-                              std = std_total_effects,
-                              z = t_ratio,
-                              pval = pval_total_effects)
 
-  rownames(total_effects) <- sapply(seq_len(NROW(total_effects)),
-                          function(b)
-                          paste(
-                            rownames(fit$effect$total_effect)[which(fit$effect$total_effect!=0, arr.ind = TRUE)[b, 1]],
-                            colnames(fit$effect$total_effect)[which(fit$effect$total_effect!=0, arr.ind = TRUE)[b, 2]],
-                            sep = "~"
-                          )
+
+  grid_total_effects <- expand.grid(
+    LHS = rownames(fit$effect$total_effect), RHS = colnames(fit$effect$total_effect)
   )
+
+  total_effects <- data.frame(
+    lhs = grid_total_effects$LHS,
+    op = "~",
+    rhs = grid_total_effects$RHS,
+    est = total_effects,
+    se = std_total_effects,
+    z = t_ratio,
+    pvalue = pval_total_effects)
+
+  rownames(total_effects) <- paste(grid_total_effects$LHS, grid_total_effects$RHS, sep = " ~ ")
+
+  # rownames(total_effects) <- sapply(seq_len(NROW(total_effects)),
+  #                         function(b)
+  #                         paste(
+  #                           rownames(fit$effect$total_effect)[which(fit$effect$total_effect!=0, arr.ind = TRUE)[b, 1]],
+  #                           colnames(fit$effect$total_effect)[which(fit$effect$total_effect!=0, arr.ind = TRUE)[b, 2]],
+  #                           sep = "~"
+  #                         )
+  # )
 
 
 
@@ -334,21 +384,35 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                                   function(x)
                                       2*pnorm(abs(t_ratio[x]), lower.tail = FALSE)
   )
-  indirect_effects <- data.frame(Estimate = indirect_effects,
-                                   std = std_indirect_effects,
-                                   z = t_ratio,
-                                   pval = pval_indirect_effects)
 
 
-  rownames(indirect_effects) <- sapply(
-    seq_len(NROW(indirect_effects)),
-    function(b)
-      paste(
-        rownames(fit$effect$indirect_effect)[which(fit$effect$indirect_effect!=0, arr.ind = TRUE)[b, 1]],
-        colnames(fit$effect$indirect_effect)[which(fit$effect$indirect_effect!=0, arr.ind = TRUE)[b, 2]],
-        sep = "~"
-      )
+
+  grid_indirect_effects <- expand.grid(
+    LHS = rownames(fit$effect$indirect_effect), RHS = colnames(fit$effect$indirect_effect)
   )
+
+
+  indirect_effects <- data.frame(
+    lhs = grid_indirect_effects$LHS,
+    op = "~",
+    rhs = grid_indirect_effects$RHS,
+    est = indirect_effects,
+    se = std_indirect_effects,
+    z = t_ratio,
+    pvalue = pval_indirect_effects)
+
+  rownames(indirect_effects) <- paste(grid_indirect_effects$LHS, grid_indirect_effects$RHS, sep = " ~ ")
+
+
+  # rownames(indirect_effects) <- sapply(
+  #   seq_len(NROW(indirect_effects)),
+  #   function(b)
+  #     paste(
+  #       rownames(fit$effect$indirect_effect)[which(fit$effect$indirect_effect!=0, arr.ind = TRUE)[b, 1]],
+  #       colnames(fit$effect$indirect_effect)[which(fit$effect$indirect_effect!=0, arr.ind = TRUE)[b, 2]],
+  #       sep = "~"
+  #     )
+  # )
 
 
 

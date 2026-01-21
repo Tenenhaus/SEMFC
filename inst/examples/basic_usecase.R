@@ -19,7 +19,8 @@ model$fit(infer = F)
 model$summary(standardized = T, effect = T, all_measures = T)
 
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode)
-modelml$fit(infer=T, tol=1e-08)
+modelml$fit(infer=T, tol=1e-04)
+modelml$fit(infer=F, tol=1e-04)
 modelml$summary(standardized = T, effect = T, all_measures = T)
 
 

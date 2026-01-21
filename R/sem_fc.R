@@ -555,59 +555,22 @@ SemFC <- R6Class(
 
       cat("\nParameter Estimates:\n")
       if (standardized){
-        cat("standardized loadings:\n")
+        print_link(lambda, 'Standardized Loadings', '=~')
       } else {
-        cat("loadings:\n")
+        print_link(lambda, 'Loadings', '=~')
       }
-      if (nrow(lambda) != 0){
-        printCoefmat(cbind(round(lambda[1],3), lambda[2:4]), P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE)
-      }
+      print_link(omega, 'Formative block weight', '<~')
+      print_link(rbind(beta, gamma), 'Regression', '~')
 
-
-      if (nrow(omega) != 0){
-        cat("Formative block weight:\n")
-        printCoefmat(cbind(round(omega[1],3), omega[2:4]), P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE)
-      }
-
-
-
-      if (nrow(beta) != 0){
-        cat("beta:\n")
-        printCoefmat(cbind(round(beta[1],3), beta[2:4]), P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE)
-      }
-      cat("gamma:\n")
-      if (nrow(gamma) != 0){
-        printCoefmat(cbind(round(gamma[1],3), gamma[2:4]), P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE)
-      }
-
-      cat("residual variance:\n")
-      if (nrow(residualvariance) != 0){
-        printCoefmat(
-          cbind(round(residualvariance[1],3), residualvariance[2:4]),
-          P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE
-        )
-      }
+      print_variance(residualvariance, 'Residual Variances')
 
       if (effect){
+        print_link(total_effects, 'Total Effects', '~')
+        print_link(indirect_effects, 'Indirect Effects', '~')
 
-        if (!is.null(total_effects) ){
-          cat("total effects:\n")
-          printCoefmat(
-            cbind(round(total_effects[1],3), total_effects[2:4]),
-            P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE
-          )
-        }
-
-        if (!is.null(indirect_effects)){
-          cat("indirect effects:\n")
-          printCoefmat(
-            cbind(round(indirect_effects[1],3), indirect_effects[2:4]),
-            P.values = TRUE, has.Pvalue = TRUE, digits = 2, signif.legend = FALSE
-          )
-        }
       }
 
-      cat("---\nSignif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n")
+      # cat("---\nSignif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n")
 
 
     }
