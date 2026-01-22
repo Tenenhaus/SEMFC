@@ -209,6 +209,11 @@ lvm_ml <- function(x, model, jac = TRUE){
 
   implied_S <- L%*%R%*%t(L) + BDIAG
 
+  dimnames(implied_S) <- list(
+    unlist(varnames),
+    unlist(varnames)
+  )
+
 
   out <- list(
     lambda = loadings,
