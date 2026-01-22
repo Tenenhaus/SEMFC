@@ -87,8 +87,8 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
   lambda <- unlist(fit$lambda)
   std_loadings <- lambda/sd_init
   residual_variance <- unlist(unname(fit$residual_variance))
-  total_effects <- fit$effect$total_effect[fit$effect$total_effect!=0]
-  indirect_effects <- fit$effect$indirect_effect[fit$effect$indirect_effect!=0]
+  total_effects <- as.vector(fit$effect$total_effect)
+  indirect_effects <- as.vector(fit$effect$indirect_effect)
   omega <- unlist(lapply(names(fit$omega), function(lv) {
     setNames(as.vector(fit$omega[[lv]]), paste(lv, rownames(fit$omega[[lv]]), sep = "."))
   }))
@@ -151,8 +151,8 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                               boot_beta = fit_b$beta[fit_b$beta!=0],
                               boot_gamma = fit_b$gamma[fit_b$gamma!=0],
                               boot_residual_variance = as.vector(Reduce("c", fit_b$residual_variance)),
-                              boot_total_effects = total_effects_b[total_effects_b!=0],
-                              boot_indirect_effects = indirect_effects_b[indirect_effects_b!=0],
+                              boot_total_effects = as.vector(total_effects_b),
+                              boot_indirect_effects = as.vector(indirect_effects_b),
                               boot_omega = as.vector(Reduce("c", fit_b$omega))
                             )
 

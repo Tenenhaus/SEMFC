@@ -591,10 +591,10 @@ SemFC <- R6Class(
         # inference estimation
         estimate <- self$infer_estimate
         lambda <- estimate$lambda
-        residualvariance<- estimate$residual_variance
         if (standardized){
           lambda <- estimate$std_lambda
-          residualvariance <- estimate$std_residual_variance
+        } else {
+          residualvariance<- estimate$residual_variance
         }
         beta<- estimate$beta
         gamma<- estimate$gamma
