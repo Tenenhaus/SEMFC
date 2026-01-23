@@ -106,12 +106,12 @@ sparse_svd.cv <- function(L, pen, len_seq, nfold, niter){
     if (pen[[x]] == 1){
       # data <- t(L[[x]])%*%Reduce("cbind", L[-x])%*%t(t(L[[x]])%*%Reduce("cbind", L[-x]))
       data <- t(t(L[[x]])%*%Reduce("cbind", L[-x]))
-      data <- t(data)%*%data
-      cv.out <- new_SPC.cv(data, sumabsvs=seq(1, sqrt(ncol(data)), len=len_seq), nfold = nfold, niter =niter)
+      # data <- t(data)%*%data
+      cv.out <- SPC.cv(data, sumabsvs=seq(1, sqrt(ncol(data)), len=len_seq), nfold = nfold, niter =niter)
       print(cv.out$bestsumabsv)
       print(cv.out$bestsumabsv1se)
 
-      out <- new_SPC(data, sumabsv=cv.out$bestsumabsv1se, K=1, v=cv.out$v.init)$v
+      out <- SPC(data, sumabsv=cv.out$bestsumabsv1se, K=1, v=cv.out$v.init)$v
 
       res[[x]] <- out
 
@@ -133,9 +133,9 @@ sparse_svd <- function(L, pen, values){
   for (x in 1:length(L)){
     if (pen[[x]] == 1){
       data <- t(t(L[[x]])%*%Reduce("cbind", L[-x]))
-      data <- t(data)%*%data
+      # data <- t(data)%*%data
 
-      out <- new_SPC(data, sumabsv=values[[x]], K=1, center = FALSE)$v
+      out <- SPC(data, sumabsv=values[[x]], K=1, center = FALSE)$v
 
       res[[x]] <- out
 

@@ -2,7 +2,7 @@ source('data/data_simulation_reflective.R')
 
 
 set.seed(20091979)
-N <- 300
+
 library(mvtnorm)
 X <- mvrnorm(N, rep(0, ncol(SIGMA)), SIGMA, empirical = TRUE)
 colnames(X) <- paste0("X",
@@ -28,7 +28,7 @@ colnames(C) <- rownames(C) <- names(Y)
 mode <- rep("reflective", 6)
 
 
-
+set.seed(20091979)
 X_2 <- mvrnorm(N,  rep(0, ncol(SIGMA)), SIGMA, empirical = FALSE)
 colnames(X_2) <- colnames(X)
 

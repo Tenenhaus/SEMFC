@@ -35,6 +35,26 @@ ssvd_opt <- sparse_svd(Y, c(1,0,0,0,0,0), c(optsvd[[1]],0,0,0,0,0))
 res_svd <- classification(ssvd_opt[[1]])
 
 
+sparse.svd.cv = sparse_svd.cv(Y_2, c(1,0,0,0,0,0), 90,30,40)
+plot(-sparse.svd.cv[[1]])
+
+
+
+
+perm_out = rgcca_permutation(Y_2, scheme = "factorial", par_type = "sparsity",
+                             par_value = cbind(seq(0.1, 1, length = 70), 1, 1, 1, 1, 1), n_perms = 30)
+rgcca_final = rgcca(perm_out)
+plot(rgcca_final$a[[1]])
+
+
+
+plot(-sparse.svd.cv[[1]])
+
+
+
+classification(sparse.svd.cv[[1]][131:160], l1[131:160])
+classification(rgcca_final$a[[1]][31:130], l1[31:130])
+
 # val_diff <- rocsggcca$tab$val[ which(abs(rocsggcca$tab$f1 - rocsvd$tab$f1) != 0)]
 #
 # class_diff_svd <- rocsvd$tab[ which(abs(rocsggcca$tab$f1 - rocsvd$tab$f1) != 0), ]
