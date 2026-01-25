@@ -23,6 +23,32 @@ sparse_svd <- function(L, pen, values, trace=FALSE, v=NULL){
 
 }
 
+sparse_svd.cv <- function(L, pen, len_seq, nfold, niter){
+
+  res <-  list()
+
+  for (x in 1:length(L)){
+    if (pen[[x]] == 1){
+      # data <- t(L[[x]])%*%Reduce("cbind", L[-x])%*%t(t(L[[x]])%*%Reduce("cbind", L[-x]))
+      data <- t(t(L[[x]])%*%Reduce("cbind", L[-x]))
+      # data <- t(data)%*%data
+      cv.out <- SPC.cv(data, sumabsvs=seq(1, sqrt(ncol(data)), len=len_seq), nfold = nfold, niter =niter)
+      # print(cv.out$bestsumabsv)
+      # print(cv.out$bestsumabsv1se)
+
+      out <- SPC(data, sumabsv=cv.out$bestsumabsv1se, K=1, v=cv.out$v.init)$v
+
+      res$a[[x]] <- out
+
+    }
+
+  }
+  res$param <- cv.out$bestsumabsv1se
+
+  return (res)
+
+}
+
 
 classification <- function(pred, true_lambda = l1){
   true_val <- as.integer(true_lambda !=0)
@@ -128,10 +154,10 @@ roc <- function(len, method){
 
   iter = 1
   for (val in seq(1/sqrt(ncol(Y[[1]])), 1, length = len)){
-    print("Iteration:")
-    print(iter)
+    # print("Iteration:")
+    # print(iter)
     iter = iter + 1
-    print(val)
+    # print(val)
 
 
     if (method=='sgcca'){
@@ -277,10 +303,10 @@ roc2 <- function(len, method){
 
   iter = 1
   for (val in seq(1/sqrt(ncol(Y[[2]])), 1, length = len)){
-    print("Iteration:")
-    print(iter)
+    # print("Iteration:")
+    # print(iter)
     iter = iter + 1
-    print(val)
+    # print(val)
 
 
     if (method=='sgcca'){
