@@ -207,7 +207,7 @@ lvm_ml <- function(x, model, jac = TRUE){
   L <- as.matrix(Matrix::bdiag(loadings))
   BDIAG <- as.matrix(Matrix::bdiag(BDIAG))
 
-  implied_S <- L%*%R%*%t(L) + BDIAG
+  implied_S <- L%*%R[names(varnames), names(varnames)]%*%t(L) + BDIAG
 
   dimnames(implied_S) <- list(
     unlist(varnames),
