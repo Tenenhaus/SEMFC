@@ -116,21 +116,27 @@ formatting_estimate <- function(fit){
     )
   }
 
-  parts <- strsplit(names(residual_variance), "\\.")
-  table_residual_variance <- data.frame(
-    lhs = sapply(parts, `[`, 2),
-    op = "~~",
-    rhs = sapply(parts, `[`, 2),
-    est = residual_variance,
-    se = NA,
-    z = NA,
-    ci.lower = NA,
-    ci.upper = NA,
-    pvalue = NA)
+  if (length(residual_variance) != 0){
+    parts <- strsplit(names(residual_variance), "\\.")
+    table_residual_variance <- data.frame(
+      lhs = sapply(parts, `[`, 2),
+      op = "~~",
+      rhs = sapply(parts, `[`, 2),
+      est = residual_variance,
+      se = NA,
+      z = NA,
+      ci.lower = NA,
+      ci.upper = NA,
+      pvalue = NA)
+    std_loadings_in_residuals <- table_std_lambda[table_std_lambda$rhs %in% table_residual_variance$rhs, "est"]
+    table_std_residual_variance <- table_residual_variance
+    table_std_residual_variance$est <- 1 - std_loadings_in_residuals^2
 
-  std_loadings_in_residuals <- table_std_lambda[table_std_lambda$rhs %in% table_residual_variance$rhs, "est"]
-  table_std_residual_variance <- table_residual_variance
-  table_std_residual_variance$est <- 1 - std_loadings_in_residuals^2
+  } else {
+    table_residual_variance <- data.frame()
+    table_std_residual_variance <- data.frame()
+  }
+
 
 
   grid_total_effects <- expand.grid(

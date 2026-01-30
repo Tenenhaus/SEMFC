@@ -189,24 +189,28 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
 
   boot_Tb_LS <- unlist(L[9, ])
 
+  if (length(residual_variance) != 0){
+    std_residual_variance <- apply(boot_residual_variance, 2, sd)
+    t_ratio <- residual_variance/std_residual_variance
+    pval_residual_variance <- sapply(seq_along(t_ratio),
+                                     function(x)
+                                 2*pnorm(abs(t_ratio[x]),
+                                         lower.tail = FALSE)
+    )
 
-  std_residual_variance <- apply(boot_residual_variance, 2, sd)
-  t_ratio <- residual_variance/std_residual_variance
-  pval_residual_variance <- sapply(seq_along(t_ratio),
-                                   function(x)
-                               2*pnorm(abs(t_ratio[x]),
-                                       lower.tail = FALSE)
-  )
+    parts <- strsplit(names(residual_variance), "\\.")
+    residual_variance <- data.frame(
+      lhs = sapply(parts, `[`, 2),
+      op = "~~",
+      rhs = sapply(parts, `[`, 2),
+      est = residual_variance,
+      se = std_residual_variance,
+      z = t_ratio,
+      pvalue = pval_residual_variance)
+  } else {
+    residual_variance <- data.frame()
+  }
 
-  parts <- strsplit(names(residual_variance), "\\.")
-  residual_variance <- data.frame(
-    lhs = sapply(parts, `[`, 2),
-    op = "~~",
-    rhs = sapply(parts, `[`, 2),
-    est = residual_variance,
-    se = std_residual_variance,
-    z = t_ratio,
-    pvalue = pval_residual_variance)
 
 
 

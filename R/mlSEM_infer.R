@@ -295,18 +295,21 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
 
   }
 
-  parts <- strsplit(names(residual_variance), "\\.")
-  table_residual_variance <- data.frame(
-    lhs = sapply(parts, `[`, 2),
-    op = "~~",
-    rhs = sapply(parts, `[`, 2),
-    est =residual_variance,
-    se = sd_residual_variance,
-    z = z_residual_variance,
-    ci.lower = residual_variance - 1.96 * sd_residual_variance,
-    ci.upper = residual_variance + 1.96 * sd_residual_variance,
-    pvalue = unlist(lapply(z_residual_variance, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
-  )
+  if (length(residual_variance) != 0){
+    parts <- strsplit(names(residual_variance), "\\.")
+    table_residual_variance <- data.frame(
+      lhs = sapply(parts, `[`, 2),
+      op = "~~",
+      rhs = sapply(parts, `[`, 2),
+      est =residual_variance,
+      se = sd_residual_variance,
+      z = z_residual_variance,
+      ci.lower = residual_variance - 1.96 * sd_residual_variance,
+      ci.upper = residual_variance + 1.96 * sd_residual_variance,
+      pvalue = unlist(lapply(z_residual_variance, function (z) 2*pnorm(abs(z), lower.tail = FALSE))))
+    } else {
+    table_residual_variance <- data.frame()
+    }
 
   grid_total_effects <- expand.grid(
     LHS = rownames(fit$effect$total_effect), RHS = colnames(fit$effect$total_effect)

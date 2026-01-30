@@ -168,18 +168,22 @@ lvm_ml <- function(x, model, jac = TRUE){
                      block_sizes = block_sizes,
                      initial_start_index_cov = start_indices_in_x[6])
 
+
   # Get the residual variance for reflective blocks
   residual_variance <- lapply(BDIAG[mode == 'reflective'], diag)
-  names_residual_variance <- names(residual_variance)
-  # name the value
-  residual_variance <- unname(split(
-    `names<-`(
-      unlist(residual_variance),
-      paste0(".", names(unlist(unname(loadings[mode == "reflective"]))))
-    ),
-    rep(seq_along(residual_variance), lengths(residual_variance))
-  ))
-  names(residual_variance) <- names_residual_variance
+  if (length(residual_variance) != 0){
+
+    names_residual_variance <- names(residual_variance)
+    # name the value
+    residual_variance <- unname(split(
+      `names<-`(
+        unlist(residual_variance),
+        paste0(".", names(unlist(unname(loadings[mode == "reflective"]))))
+      ),
+      rep(seq_along(residual_variance), lengths(residual_variance))
+    ))
+    names(residual_variance) <- names_residual_variance
+  }
 
 
   # Get the variance matrices for reflective blocks
