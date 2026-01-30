@@ -393,7 +393,7 @@ SemFC <- R6Class(
     #'
     #' @return Invisible NULL
 
-    summary = function(standardized = FALSE, effect = FALSE, all_measures  = F){
+    summary = function( effect = FALSE, all_measures  = F){
 
       estimator <- self$estimator
 
@@ -517,29 +517,18 @@ SemFC <- R6Class(
       estimate <- formatting_estimate(self$estimate)
       lambda <- estimate$lambda
       residualvariance <- estimate$residual_variance
-      if (standardized){
-        lambda <- estimate$std_lambda
-        residualvariance <- estimate$std_residual_variance
-      }
       beta <- estimate$beta
       gamma <- estimate$gamma
       total_effects <- estimate$total_effects
       indirect_effects <- estimate$indirect_effects
       omega <- estimate$omega
 
-
-
-
       if (!is.null(self$infer_estimate)){
 
         # inference estimation
         estimate <- self$infer_estimate
         lambda <- estimate$lambda
-        if (standardized){
-          lambda <- estimate$std_lambda
-        } else {
-          residualvariance<- estimate$residual_variance
-        }
+        residualvariance<- estimate$residual_variance
         beta<- estimate$beta
         gamma<- estimate$gamma
         total_effects <- estimate$total_effects
@@ -548,29 +537,19 @@ SemFC <- R6Class(
           omega <- estimate$omega
         }
 
-
       }
 
 
       cat("\nParameter Estimates:\n")
-      if (standardized){
-        print_link(lambda, 'Standardized Loadings', '=~')
-      } else {
-        print_link(lambda, 'Loadings', '=~')
-      }
+      print_link(lambda, 'Loadings', '=~')
       print_link(omega, 'Formative block weight', '<~')
       print_link(rbind(beta, gamma), 'Regression', '~')
-
       print_variance(residualvariance, 'Residual Variances')
-
       if (effect){
         print_link(total_effects, 'Total Effects', '~')
         print_link(indirect_effects, 'Indirect Effects', '~')
-
       }
-
       cat("---\nSignif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n")
-
     },
 
 
@@ -578,29 +557,36 @@ SemFC <- R6Class(
       estimate <- formatting_estimate(self$estimate)
       lambda <- estimate$lambda
       residualvariance <- estimate$residual_variance
-      if (standardized){
-        lambda <- estimate$std_lambda
-        residualvariance <- estimate$std_residual_variance
-      }
       beta <- estimate$beta
       gamma <- estimate$gamma
       omega <- estimate$omega
+      if (standardized){
+        lambda$std.all <- estimate$std_lambda$est
+        residualvariance$std.all <- 1- (lambda[lambda$rhs %in% residualvariance$rhs, "std.all"])^2
+        beta$std.all <- beta$est
+        gamma$std.all <- gamma$est
+        omega$std.all <- NA
+      }
 
       if (!is.null(self$infer_estimate)){
-
         # inference estimation
         estimate <- self$infer_estimate
         lambda <- estimate$lambda
-        if (standardized){
-          lambda <- estimate$std_lambda
-        } else {
-          residualvariance<- estimate$residual_variance
-        }
-        beta<- estimate$beta
+        residualvariance <- estimate$residual_variance
+        beta <- estimate$beta
         gamma<- estimate$gamma
         if (!is.null(estimate$omega)){
           omega <- estimate$omega
+
         }
+        if (standardized){
+          lambda$std.all <- estimate$std_lambda$est
+          residualvariance$std.all <- 1- (lambda[lambda$rhs %in% residualvariance$rhs, "std.all"])^2
+          beta$std.all <- beta$est
+          gamma$std.all <- gamma$est
+          omega$std.all <- NA
+        }
+
 
       }
 
