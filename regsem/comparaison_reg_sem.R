@@ -6,13 +6,13 @@ library(PMA)
 
 
 
-
+N = 300
 source('data/data_generated_reflective.R')
 source('R/SEMFC/sem_f_c.R')
 source('regsem/regsem_model.R')
+source('regsem/utils_function_sparse.R')
 
-
-len_block <- 180
+len_block <- 50
 models <- regssem_model(len_block)
 sem.model <- models$sem.model
 sem.model.lslx <- models$sem.model.lslx
@@ -46,6 +46,23 @@ end <- proc.time()
 elapsed <- end - start
 print('time lslx:')
 print(elapsed)
+
+
+
+lslx_lasso <- lslx$new(model = sem.model.lslx, data = X)
+
+start <- proc.time()
+
+lslx_lasso$fit_lasso(
+  lambda_grid = exp(seq(log(0.001), log(1), length.out = 50))
+)
+end <- proc.time()
+elapsed <- end - start
+print('time lslx lasso:')
+print(elapsed)
+
+raw_lambda_lslx_lasso = rowSums(lslx_lasso$extract_coefficient_matrix(selector = "bic", block = 'y<-f')$g)
+
 
 
 start <- proc.time()
