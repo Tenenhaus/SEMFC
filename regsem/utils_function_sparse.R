@@ -147,7 +147,7 @@ roc <- function(len, method){
   all_cols <- c(first_cols, other_metrics)
 
   tab <- matrix(nrow=0, ncol = length(all_cols))
-  lambda_tab <- matrix(nrow=0, ncol = 180)
+  lambda_tab <- matrix(nrow=0, ncol = 50)
   colnames(tab) <- all_cols
 
 
@@ -165,7 +165,7 @@ roc <- function(len, method){
       serie <- fit$a[[1]]
     }
     else if (method=='pmd'){
-      val_pmd <- val * sqrt(ncol(Y[[1]]))
+      val_pmd <- round(val * sqrt(ncol(Y[[1]])),3)
       fit <- sparse_svd(Y, c(1,0,0,0,0,0), c(val_pmd,0,0,0,0,0))
       serie <- fit[[1]]
 

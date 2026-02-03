@@ -40,7 +40,7 @@ start <- proc.time()
 lslx_fa$fit(
   penalty_method = "mcp",
   lambda_grid = exp(seq(log(0.001), log(1), length.out = 10)),
-  delta_grid = c(1, 1.5, 2, 3, 5, 10, Inf)
+  delta_grid = c(1, 2, 3, 5, 10, Inf)
 )
 end <- proc.time()
 elapsed <- end - start
@@ -66,7 +66,7 @@ raw_lambda_lslx_lasso = rowSums(lslx_lasso$extract_coefficient_matrix(selector =
 
 
 start <- proc.time()
-regsem.out <- cv_regsem(lav, type="lasso", pars_pen = 1:(len_block-1),n.lambda=23,jump=.05)
+regsem.out <- cv_regsem(lav, type="lasso", pars_pen = 1:(len_block-1),n.lambda=50,jump=.05)
 end <- proc.time()
 elapsed <- end - start
 print('time regsem:')

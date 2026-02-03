@@ -37,6 +37,16 @@ colnames(table_sparcity) <- c('pmd_optimal', 'sgcca_optimal', 'pmd_cv', 'sgcca_p
 rownames(table_sparcity) <- paste0('N=', Ns)
 
 
+# range_low <- 131:160
+# range_strong <- 1:30
+# range_null <- 31:130
+
+range_low <- 41:50
+range_strong <- 1:10
+range_null <- 11:40
+
+
+
 for (N in Ns){
   print(N)
   source('data/data_generated_reflective.R')
@@ -62,24 +72,24 @@ for (N in Ns){
 
 
   perm_out = rgcca_permutation(Y_2, scheme = "factorial", par_type = "sparsity",
-                             par_value = cbind(seq(0.1, 1, length = 70), 1, 1, 1, 1, 1), n_perms = 30)
+                             par_value = cbind(seq(1/sqrt(ncol(Y[[1]])) + 0.01, 1, length = 70), 1, 1, 1, 1, 1), n_perms = 30)
   rgcca_final = rgcca(perm_out)
 
-  fnr_faible_svd_opt = classification(ssvd_opt[[1]][131:160], l1[131:160])$FNR
-  fnr_fort_svd_opt = classification(ssvd_opt[[1]][1:30], l1[1:30])$FNR
-  fpr_nul_svd_opt = classification(ssvd_opt[[1]][31:130], l1[31:130])$FPR
+  fnr_faible_svd_opt = classification(ssvd_opt[[1]][range_low], l1[range_low])$FNR
+  fnr_fort_svd_opt = classification(ssvd_opt[[1]][range_strong], l1[range_strong])$FNR
+  fpr_nul_svd_opt = classification(ssvd_opt[[1]][range_null], l1[range_null])$FPR
 
-  fnr_faible_sgcca_opt = classification(sgcca_opt$a[[1]][131:160], l1[131:160])$FNR
-  fnr_fort_sgcca_opt = classification(sgcca_opt$a[[1]][1:30], l1[1:30])$FNR
-  fpr_nul_sgcca_opt = classification(sgcca_opt$a[[1]][31:130], l1[31:130])$FPR
+  fnr_faible_sgcca_opt = classification(sgcca_opt$a[[1]][range_low], l1[range_low])$FNR
+  fnr_fort_sgcca_opt = classification(sgcca_opt$a[[1]][range_strong], l1[range_strong])$FNR
+  fpr_nul_sgcca_opt = classification(sgcca_opt$a[[1]][range_null], l1[range_null])$FPR
 
-  fnr_faible_svd_cv = classification(sparse.svd.cv$a[[1]][131:160], l1[131:160])$FNR
-  fnr_fort_svd_cv = classification(sparse.svd.cv$a[[1]][1:30], l1[1:30])$FNR
-  fpr_nul_svd_cv = classification(sparse.svd.cv$a[[1]][31:130], l1[31:130])$FPR
+  fnr_faible_svd_cv = classification(sparse.svd.cv$a[[1]][range_low], l1[range_low])$FNR
+  fnr_fort_svd_cv = classification(sparse.svd.cv$a[[1]][range_strong], l1[range_strong])$FNR
+  fpr_nul_svd_cv = classification(sparse.svd.cv$a[[1]][range_null], l1[range_null])$FPR
 
-  fnr_faible_sgcca_perm = classification(rgcca_final$a[[1]][131:160], l1[131:160])$FNR
-  fnr_fort_sgcca_perm = classification(rgcca_final$a[[1]][1:30], l1[1:30])$FNR
-  fpr_nul_sgcca_perm = classification(rgcca_final$a[[1]][31:130], l1[31:130])$FPR
+  fnr_faible_sgcca_perm = classification(rgcca_final$a[[1]][range_low], l1[range_low])$FNR
+  fnr_fort_sgcca_perm = classification(rgcca_final$a[[1]][range_strong], l1[range_strong])$FNR
+  fpr_nul_sgcca_perm = classification(rgcca_final$a[[1]][range_null], l1[range_null])$FPR
 
 
   table_fort_FN[which(Ns == N), ] <- c(fnr_fort_svd_opt, fnr_fort_sgcca_opt,
