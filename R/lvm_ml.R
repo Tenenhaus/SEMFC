@@ -230,7 +230,7 @@ lvm_ml <- function(x, model, jac = TRUE){
     omega = omega,
     P_EXO = P_EXO,
     P_ENDO = P_ENDO,
-    P_IMPLIED = R,
+    P_IMPLIED = R[names(varnames), names(varnames)],
     SIGMA_IMPLIED  = implied_S
   )
 
