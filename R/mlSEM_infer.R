@@ -219,7 +219,8 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
     z = z_lambda,
     ci.lower = lambda - 1.96 * sd_lambda,
     ci.upper = lambda + 1.96 * sd_lambda,
-    pvalue = unlist(lapply(z_lambda, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+    pvalue = unlist(lapply(z_lambda, function (z) 2*pnorm(abs(z), lower.tail = FALSE))),
+    std.all = std_lambda
 
   )
   # rownames(table_lambda) <- gsub("\\.", "~", rownames(table_lambda))
@@ -248,7 +249,8 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
     ci.lower = gamma - 1.96 * sd_gamma,
     ci.upper = gamma + 1.96 * sd_gamma,
 
-    pvalue = unlist((lapply(z_gamma, function (z) 2*pnorm(abs(z), lower.tail = FALSE))))
+    pvalue = unlist((lapply(z_gamma, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))),
+    std.all = gamma
   )
 
   rownames(table_gamma) <- sapply(1:NROW(table_gamma),
@@ -277,7 +279,8 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
                            z = z_beta,
                            ci.lower = beta - 1.96 * sd_beta,
                            ci.upper = beta + 1.96 * sd_beta,
-                           pvalue = unlist(lapply(z_beta, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+                           pvalue = unlist(lapply(z_beta, function (z) 2*pnorm(abs(z), lower.tail = FALSE))),
+                          std.all = beta
   )
   rownames(table_beta) <- sapply(1:NROW(table_beta),
        function(b)
@@ -307,6 +310,8 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
       ci.lower = residual_variance - 1.96 * sd_residual_variance,
       ci.upper = residual_variance + 1.96 * sd_residual_variance,
       pvalue = unlist(lapply(z_residual_variance, function (z) 2*pnorm(abs(z), lower.tail = FALSE))))
+    table_residual_variance$std.all <- 1- (table_lambda[table_lambda$rhs %in% table_residual_variance$rhs, "std.all"])^2
+
     } else {
     table_residual_variance <- data.frame()
     }
@@ -323,7 +328,8 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
     z = z_total_effects,
     ci.lower = total_effects - 1.96 * sd_total_effects,
     ci.upper = total_effects + 1.96 * sd_total_effects,
-    pvalue = unlist(lapply(z_total_effects, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+    pvalue = unlist(lapply(z_total_effects, function (z) 2*pnorm(abs(z), lower.tail = FALSE))),
+    std.all = NA
   )
   rownames(table_total_effects) <- paste(grid_total_effects$LHS, grid_total_effects$RHS, sep = " ~ ")
 
@@ -341,7 +347,8 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
     z = z_indirect_effects,
     ci.lower = indirect_effects - 1.96 * sd_indirect_effects,
     ci.upper = indirect_effects + 1.96 * sd_indirect_effects,
-    pvalue = unlist(lapply(z_indirect_effects, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))
+    pvalue = unlist(lapply(z_indirect_effects, function (z) 2*pnorm(abs(z), lower.tail = FALSE))),
+    std.all = NA
   )
 
   rownames(table_indirect_effects) <- paste(grid_indirect_effects$LHS, grid_indirect_effects$RHS, sep = " ~ ")

@@ -11,8 +11,8 @@ sem_svd <- SemFC$new(data=A_bergami,
                      estimator = "svd")
 
 sem_svd$fit(infer = T, B = 100)
-sem_svd$summary(standardized = T)
-
+sem_svd$summary()
+est = sem_svd$parameterEstimates(standardized = T)
 
 
 #########
@@ -25,9 +25,9 @@ sem_ml <- SemFC$new(data=A_bergami,
                     scale = F, bias = T,
                     estimator = "ml")
 
-sem_ml$fit(infer = T)
+sem_ml$fit(infer = F)
 sem_ml$summary(standardized = T, all_measures = T)
-sem_ml$parameterEstimates(standardized = T)
+est = sem_ml$parameterEstimates(standardized = T)
 
 
 ##########

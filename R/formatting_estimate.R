@@ -52,7 +52,8 @@ formatting_estimate <- function(fit){
     z = NA,
     ci.lower = NA,
     ci.upper = NA,
-    pvalue = NA)
+    pvalue = NA,
+    std.all = std_lambda)
 
   # rownames(table_lambda) <- gsub("\\.", "~", rownames(table_lambda))
 
@@ -73,7 +74,8 @@ formatting_estimate <- function(fit){
                             z = NA,
                             ci.lower = NA,
                             ci.upper = NA,
-                            pvalue = NA)
+                            pvalue = NA,
+                            std.all = gamma)
   rownames(table_gamma) <- sapply(seq_len(NROW(table_gamma)),
                                   function(b)
                           paste(rownames(fit$gamma)[which(fit$gamma!=0, arr.ind = TRUE)[b, 1]],
@@ -99,7 +101,8 @@ formatting_estimate <- function(fit){
                              z = NA,
                              ci.lower = NA,
                              ci.upper = NA,
-                             pvalue = NA
+                             pvalue = NA,
+                             std.all = beta
     )
     rownames(table_beta) <- sapply(seq_len(NROW(table_beta)),
                                    function(b)
@@ -131,6 +134,7 @@ formatting_estimate <- function(fit){
     std_loadings_in_residuals <- table_std_lambda[table_std_lambda$rhs %in% table_residual_variance$rhs, "est"]
     table_std_residual_variance <- table_residual_variance
     table_std_residual_variance$est <- 1 - std_loadings_in_residuals^2
+    table_residual_variance$std.all <- table_std_residual_variance$est
 
   } else {
     table_residual_variance <- data.frame()
@@ -151,7 +155,8 @@ formatting_estimate <- function(fit){
     z = NA,
     ci.lower = NA,
     ci.upper = NA,
-    pvalue = NA)
+    pvalue = NA,
+    std.all = NA)
 
 
 
@@ -170,7 +175,8 @@ formatting_estimate <- function(fit){
     z = NA,
     ci.lower = NA,
     ci.upper = NA,
-    pvalue = NA)
+    pvalue = NA,
+    std.all = NA)
   rownames(table_indirect_effects) <- paste(grid_indirect_effects$LHS, grid_indirect_effects$RHS, sep = " ~ ")
 
   table_omega <- data.frame()
@@ -186,7 +192,8 @@ formatting_estimate <- function(fit){
       z = NA,
       ci.lower = NA,
       ci.upper = NA,
-      pvalue = NA)
+      pvalue = NA,
+      std.all = omega)
   }
 
   return(list(lambda = table_lambda,

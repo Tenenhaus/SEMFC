@@ -393,7 +393,7 @@ SemFC <- R6Class(
     #'
     #' @return Invisible NULL
 
-    summary = function( effect = FALSE, all_measures  = F){
+    summary = function(standardized = F, effect = FALSE, all_measures  = F){
 
       estimator <- self$estimator
 
@@ -499,7 +499,7 @@ SemFC <- R6Class(
       # reliability
 
       if (!is.null(self$gof$reliability)){
-        cat("Reliability Coefficients (Dillon):\n\n")
+        cat("Reliability Coefficients (Dillon):\n")
         print(round(self$gof$reliability, 3))
         cat("\n")
       }
@@ -507,7 +507,7 @@ SemFC <- R6Class(
       # R2
 
       if (!is.null(self$estimate$R2)){
-          cat("R2:\n\n")
+          cat("R2:\n")
           print(round(self$estimate$R2, 3))
           cat("\n")
       }
@@ -541,13 +541,13 @@ SemFC <- R6Class(
 
 
       cat("\nParameter Estimates:\n")
-      print_link(lambda, 'Loadings', '=~')
-      print_link(omega, 'Formative block weight', '<~')
-      print_link(rbind(beta, gamma), 'Regression', '~')
-      print_variance(residualvariance, 'Residual Variances')
+      print_link(lambda, 'Loadings', '=~', standardized)
+      print_link(omega, 'Formative block weight', '<~', standardized)
+      print_link(rbind(beta, gamma), 'Regression', '~', standardized)
+      print_variance(residualvariance, 'Residual Variances', standardized)
       if (effect){
-        print_link(total_effects, 'Total Effects', '~')
-        print_link(indirect_effects, 'Indirect Effects', '~')
+        print_link(total_effects, 'Total Effects', '~', standardized)
+        print_link(indirect_effects, 'Indirect Effects', '~', standardized)
       }
       cat("---\nSignif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n")
     },
