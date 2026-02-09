@@ -148,7 +148,12 @@ lvm <- function(R, C){
       GAMMA%*%R[H,H]%*%t(GAMMA)
   } else {
     D <- diag(diag(ncol(BETA)) - (PI%*%GAMMA%*%R[H, H]%*%t(GAMMA)%*%t(PI)))
-    PSI <- diag(drop(solve(PI*PI)%*%D))
+    diag_PSI <- drop(solve(PI*PI)%*%D)
+    PSI <- if(length(diag_PSI) == 1) {
+      matrix(diag_PSI, 1, 1)
+    } else {
+      diag(diag_PSI)
+    }
 
   }
   dimnames(PSI) <- list(rownames(BETA), rownames(BETA))

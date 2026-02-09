@@ -137,7 +137,11 @@ lvm_ml <- function(x, model, jac = TRUE){
     I_B_1 <- solve(diag(ncol(B)) - B)
     D <- diag(diag(ncol(B)) - (I_B_1%*%G%*%P_EXO%*%t(G)%*%t(I_B_1)))
     diag_PSI <- drop(solve(I_B_1*I_B_1)%*%D)
-    PSI <- diag(diag_PSI)
+    PSI <- if(length(diag_PSI) == 1) {
+      matrix(diag_PSI, 1, 1)
+    } else {
+      diag(diag_PSI)
+    }
     dimnames(PSI) <- list(rownames(B), rownames(B))
 
     P_ENDO <- I_B_1%*%(G%*%P_EXO%*%t(G) + PSI)%*%t(I_B_1)
