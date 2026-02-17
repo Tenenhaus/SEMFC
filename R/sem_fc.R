@@ -114,7 +114,7 @@ SemFC <- R6Class(
     #' efficient and provides good starting values for ML estimation.
     #'
     #' @return Invisible self (for method chaining)
-    # Méthode fit utilisant la technique SVD
+
     fit_svd = function() {
       self$estimator <- 'svd'
       svd_result <- svdSEM(self$data$data,
@@ -163,8 +163,13 @@ SemFC <- R6Class(
     #' @description
     #' Fit the model using Maximum Likelihood (ML) estimation
     #'
-    #' @param initialisation_svd Logical indicating whether to use SVD estimates as
-    #'   starting values (default: TRUE). If FALSE, random starting values are used.
+    #' @param initialization Character string or numeric vector specifying initialization method:
+    #'   \itemize{
+    #'     \item \code{"svd"} (default): Use SVD estimates as starting values
+    #'     \item \code{"random"}: Use random starting values
+    #'     \item \code{numeric vector}: Use provided values as starting parameters
+    #'       (must have length equal to total number of model parameters)
+    #'   }
     #' @param tol Numeric tolerance for convergence in optimization (default: 1e-8)
     #'
     #' @details
@@ -172,17 +177,27 @@ SemFC <- R6Class(
     #' SVD initialization is recommended for better convergence.
     #'
     #' @return Invisible self (for method chaining)
-    fit_ml = function(initialisation_svd = TRUE, tol) {
+    #' @keywords internal
+    fit_ml = function(initialization = 'svd', tol) {
 
+      len_theta <- sum(self$model$lengths_theta)
 
-      # Initialisation par SVD si demandé
-      if (initialisation_svd) {
-        self$fit_svd()
-        self$estimator <- 'ml'
-        initial_params <- self$estimate$theta
+      initial_params <- if (is.numeric(initialization)) {
+        if (length(initialization) != len_theta) {
+          stop("Length of provided initial parameters does not match the number of model parameters. ",
+               "Expected length: ", len_theta)
+        }
+        initialization
       } else {
-        len_theta <- sum(self$model$lengths_theta)
-        initial_params <- runif(len_theta)
+        initialization <- match.arg(initialization, c('svd', 'random'))
+        switch(initialization,
+          svd = {
+            self$fit_svd()
+            self$estimator <- 'ml'
+            self$estimate$theta
+          },
+          random = runif(len_theta)
+        )
       }
 
       ml_sol <- mlSEM(initial_params, self$data$cov_S, self$model, tol)
@@ -324,8 +339,14 @@ SemFC <- R6Class(
     #'
     #' @param infer Logical indicating whether to perform statistical inference (default: FALSE)
     #' @param B Integer number of bootstrap replications for svd (default: 1000)
-    #' @param initialisation_svd Logical indicating whether to use SVD initialization
-    #'   for ML estimation (default: TRUE). Ignored when estimator is "svd".
+    #' @param initialization Character string or numeric vector specifying initialization method
+    #'   for ML estimation. Ignored when estimator is "svd".
+    #'   \itemize{
+    #'     \item \code{"svd"} (default): Use SVD estimates as starting values
+    #'     \item \code{"random"}: Use random starting values
+    #'     \item \code{numeric vector}: Use provided values as starting parameters
+    #'       (must have length equal to total number of model parameters)
+    #'   }
     #' @param tol Numeric tolerance for convergence in ML optimization (default: 1e-8)
     #'
     #' @details
@@ -341,17 +362,17 @@ SemFC <- R6Class(
     #' @examples
     #' \dontrun{
     #' model$fit(estimator = "svd", B = 1000)
-    #' model$fit(estimator = "ml", B = 500, initialisation_svd = TRUE)
+    #' model$fit(estimator = "ml", B = 500, initialization = "svd")
     #' }
 
-    fit = function(infer = FALSE, B = 1000, initialisation_svd = TRUE, tol = 1e-8){
+    fit = function(infer = FALSE, B = 1000, initialization = 'svd', tol = 1e-8){
       estimator <- self$estimator
       self$boot_rep <- B
       if (estimator == 'svd'){
         self$fit_svd()
 
       } else if(estimator == 'ml'){
-        self$fit_ml(initialisation_svd, tol)
+        self$fit_ml(initialization, tol)
         self$get_gof()
       }
       if (infer){
@@ -396,170 +417,74 @@ SemFC <- R6Class(
     summary = function(standardized = F, effect = FALSE, all_measures  = F){
 
       estimator <- self$estimator
+      print_model(estimator, sum(self$model$lengths_theta), self$data$n_row,
+                  self$model$dof, self$gof$F, self$estimate$T_LS)
 
-
-
-      cat("\n")
-      cat(sprintf("%-45s%15s\n", "Estimator", toupper(estimator)))
-      cat(sprintf("%-45s%15d\n", "Number of model parameters", sum(self$model$lengths_theta)))
-      cat(sprintf("%-45s%15d\n", "Number of observations", self$data$n_row))
-      cat(sprintf("%-45s%15d\n", "Degrees of freedom", self$model$dof))
-      cat(sprintf("%-45s%15.3f\n", "F", self$gof$F))
-      cat(sprintf("%-45s%15.3f\n", "d_LS", self$estimate$T_LS))
-      cat("\n")
-
-      if (all_measures){
-
-        if (estimator == 'ml'){
-
-          # user test
-          testchi2 <- self$gof$chi2$test
-          dfchi2 <- self$gof$chi2$df
-          pvalchi2 <- self$gof$chi2$pval
-
-          # baseline test
-
-          testbaseline <- self$gof$baseline$test
-          dfbaseline <- self$gof$baseline$df
-          pvalbaseline <- self$gof$baseline$pval
-
-          #  vs
-          cfi <- self$gof$cfi
-          tli <- self$gof$tli
-
-
-
-
-          # RMSEA and srmr
-          rmsea_val <- self$gof$RMSEA$estimate
-          rmsea_ci_lower <- self$gof$RMSEA$CI_lower
-          rmsea_ci_upper <- self$gof$RMSEA$CI_upper
-          p_rmsea_le_005 <- self$gof$RMSEA$p_close_fit
-          p_rmsea_ge_008 <- self$gof$RMSEA$p_notclose_fit
-          srmr_val <- self$gof$SRMR
-          cat("Model Test User Model :\n\n")
-          cat(sprintf("  %-40s%12.3f\n", "Test statistic", testchi2))
-          cat(sprintf("  %-40s%12d\n", "Degrees of freedom", dfchi2))
-          cat(sprintf("  %-40s%12.3f\n", "P-value (Chi-square)", pvalchi2))
-          cat("\n")
-
-          cat("Model Test Baseline Model :\n\n")
-          cat(sprintf("  %-40s%12.3f\n", "Test statistic", testbaseline))
-          cat(sprintf("  %-40s%12d\n", "Degrees of freedom", dfbaseline))
-          cat(sprintf("  %-40s%12.3f\n", "P-value", pvalbaseline))
-          cat("\n")
-
-          cat("User Model versus Baseline Model:\n\n")
-          cat(sprintf("  %-40s%12.3f\n", "Comparative Fit Index (CFI)", cfi))
-          cat(sprintf("  %-40s%12.3f\n", "Tucker-Lewis Index (TLI)", tli))
-          cat("\n")
-
-          cat("Root Mean Square Error of Approximation:\n\n")
-          cat(sprintf("  %-40s%12.3f\n", "RMSEA", rmsea_val))
-          cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - lower", rmsea_ci_lower))
-          cat(sprintf("  %-40s%12.3f\n", "90 Percent confidence interval - upper", rmsea_ci_upper))
-          cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA <= 0.050", p_rmsea_le_005))
-          cat(sprintf("  %-40s%12.3f\n", "P-value H_0: RMSEA >= 0.080", p_rmsea_ge_008))
-          cat("\n")
-
-          cat("Standardized Root Mean Square Residual:\n\n")
-          cat(sprintf("  %-40s%12.3f\n", "SRMR", srmr_val))
-          cat("\n")
-
-          # Information criteria
-
-          loglik_H0 <-  self$gof$info_criteria$loglik_H0
-          loglik_H1 <-  self$gof$info_criteria$loglik_H1
-          AIC <-  self$gof$info_criteria$AIC
-          BIC <-  self$gof$info_criteria$BIC
-          SABIC <-  self$gof$info_criteria$SABIC
-
-          cat("Loglikelihood and Information Criteria:\n\n")
-          cat(sprintf("  %-40s%12.3f\n", "Loglikelihood user model (H0)", loglik_H0))
-          cat(sprintf("  %-40s%12.3f\n", "Loglikelihood unrestricted model (H1)", loglik_H1))
-          cat("\n")
-          cat(sprintf("  %-40s%12.3f\n", "Akaike (AIC)", AIC))
-          cat(sprintf("  %-40s%12.3f\n", "Bayesian (BIC)", BIC))
-          cat(sprintf("  %-40s%12.3f\n", "Sample-size adjusted BIC (SABIC)", SABIC))
-          cat("\n")
-        }
-
-
-        if (estimator == 'svd' && !is.null(self$gof$bollen_stine)){
-          B <- self$boot_rep
-          pvalbs <- self$gof$bollen_stine$pval
-          cat("Bootstrap Test (Bollen Stine):\n\n")
-          cat(sprintf("  %-40s%12d\n", "Number of bootstrap replications", B))
-          cat(sprintf("  %-40s%12.3f\n", "Bollen Stine bootstrap p-value", pvalbs))
-          cat("\n")
-        }
-      }
-
-
-      # reliability
-
-      if (!is.null(self$gof$reliability)){
-        cat("Reliability Coefficients (Dillon):\n")
-        print(round(self$gof$reliability, 3))
-        cat("\n")
-      }
-
-      # R2
-
-      if (!is.null(self$estimate$R2)){
-          cat("R2:\n")
-          print(round(self$estimate$R2, 3))
-          cat("\n")
-      }
-
+      print_gof(all_measures, estimator, self$gof, self$boot_rep, self$estimate$R2)
 
       # estimation
       estimate <- formatting_estimate(self$estimate)
-      lambda <- estimate$lambda
-      residualvariance <- estimate$residual_variance
-      beta <- estimate$beta
-      gamma <- estimate$gamma
-      total_effects <- estimate$total_effects
-      indirect_effects <- estimate$indirect_effects
-      omega <- estimate$omega
-
       if (!is.null(self$infer_estimate)){
-
-        # inference estimation
         estimate <- self$infer_estimate
-        lambda <- estimate$lambda
-        residualvariance<- estimate$residual_variance
-        beta<- estimate$beta
-        gamma<- estimate$gamma
-        total_effects <- estimate$total_effects
-        indirect_effects <- estimate$indirect_effects
-        if (!is.null(estimate$omega)){
-          omega <- estimate$omega
-        }
-
       }
+      print_estimates(estimate, standardized, effect)
 
-
-      cat("\nParameter Estimates:\n")
-      print_link(lambda, 'Loadings', '=~', standardized)
-      print_link(omega, 'Formative block weight', '<~', standardized)
-      print_link(rbind(beta, gamma), 'Regression', '~', standardized)
-      print_variance(residualvariance, 'Residual Variances', standardized)
-      if (effect){
-        print_link(total_effects, 'Total Effects', '~', standardized)
-        print_link(indirect_effects, 'Indirect Effects', '~', standardized)
-      }
-      cat("---\nSignif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n")
     },
 
 
+
+
+
+    #' @description
+    #' Extract parameter estimates from the fitted model
+    #'
+    #' @param standardized Logical indicating whether to include standardized
+    #'   estimates (default: FALSE). When TRUE, adds a `std.all` column with
+    #'   fully standardized coefficients.
+    #'
+    #' @details
+    #' Returns a data frame containing all estimated parameters including:
+    #' \itemize{
+    #'   \item \code{lambda}: Loadings (measurement model)
+    #'   \item \code{omega}: Composite weights (for formative blocks)
+    #'   \item \code{beta}: Structural paths between endogenous variables
+    #'   \item \code{gamma}: Structural paths from exogenous to endogenous variables
+    #'   \item \code{residualvariance}: Residual variances of observed variables
+    #' }
+    #'
+    #' If statistical inference has been performed, the returned estimates
+    #' include standard errors, z-values, p-values, and confidence intervals.
+    #'
+    #' @return A data frame with all parameter estimates. Columns include:
+    #' \itemize{
+    #'   \item \code{lhs}: Left-hand side variable
+    #'   \item \code{op}: Operator
+    #'   \item \code{rhs}: Right-hand side variable
+    #'   \item \code{est}: Point estimate
+    #'   \item \code{se}: Standard error (if inference was performed)
+    #'   \item \code{z}: Z-statistic (if inference was performed)
+    #'   \item \code{pvalue}: P-value (if inference was performed)
+    #'   \item \code{std.all}: Standardized estimate (if standardized = TRUE)
+    #' }
+    #'
+    #' @examples
+    #' \dontrun{
+    #' model$fit(infer = TRUE)
+    #' model$parameterEstimates()
+    #' model$parameterEstimates(standardized = TRUE)
+    #' }
+
     parameterEstimates = function(standardized = FALSE){
       estimate <- formatting_estimate(self$estimate)
+      if (!is.null(self$infer_estimate)){
+        estimate <- self$infer_estimate
+      }
       lambda <- estimate$lambda
       residualvariance <- estimate$residual_variance
       beta <- estimate$beta
       gamma <- estimate$gamma
       omega <- estimate$omega
+
       if (standardized){
         lambda$std.all <- estimate$std_lambda$est
         residualvariance$std.all <- 1- (lambda[lambda$rhs %in% residualvariance$rhs, "std.all"])^2
@@ -568,29 +493,10 @@ SemFC <- R6Class(
         omega$std.all <- NA
       }
 
-      if (!is.null(self$infer_estimate)){
-        # inference estimation
-        estimate <- self$infer_estimate
-        lambda <- estimate$lambda
-        residualvariance <- estimate$residual_variance
-        beta <- estimate$beta
-        gamma<- estimate$gamma
-        if (!is.null(estimate$omega)){
-          omega <- estimate$omega
+      table_estimate <- rbind(lambda, omega, beta, gamma, residualvariance)
+      rownames(table_estimate) <- NULL
 
-        }
-        if (standardized){
-          lambda$std.all <- estimate$std_lambda$est
-          residualvariance$std.all <- 1- (lambda[lambda$rhs %in% residualvariance$rhs, "std.all"])^2
-          beta$std.all <- beta$est
-          gamma$std.all <- gamma$est
-          omega$std.all <- NA
-        }
-
-
-      }
-
-      return(rbind(lambda, omega, beta, gamma, residualvariance))
+      return(table_estimate)
 
     },
 
@@ -598,42 +504,38 @@ SemFC <- R6Class(
     #' Check for improper solutions in the estimated model
     #'
     #' @details
-    #' Detects nine types of inadmissible or improper solutions including:
-    #'   \itemize{
-    #'     \item `reliability_coef`: Reliability coefficients for each block
-    #'     \item `P_IMPLIED`: Implied correlation matrix of latent variables
-    #'     \item `residual_variance`: List of residual variances
-    #'     \item `std_lambda`: Standardized loadings
-    #'     \item `SIGMA_IMPLIED`: Implied covariance matrix of observed variables
-    #'     \item `R2`: R-squared values for endogenous latent variables
-    #'     \item `psi`: Residual covariance matrix of latent variables
-    #'     \item `Ptilde`: First estimation of correlation matrix of latent variables (only for SVDSEM)
-    #'   }
+    #' Detects types of inadmissible or improper solutions including:
+    #' \itemize{
+    #'   \item \code{reliability_coef}: Reliability coefficients for each block
+    #'   \item \code{P_IMPLIED}: Implied correlation matrix of latent variables
+    #'   \item \code{residual_variance}: List of residual variances
+    #'   \item \code{std_lambda}: Standardized loadings
+    #'   \item \code{SIGMA_IMPLIED}: Implied covariance matrix of observed variables
+    #'   \item \code{R2}: R-squared values for endogenous latent variables
+    #'   \item \code{psi}: Residual covariance matrix of latent variables
+    #'   \item \code{Ptilde}: First estimation of correlation matrix of latent variables (only for SVDSEM)
+    #' }
     #'
-    #' @return Named logical vector of length 9 indicating presence of each type
+    #'
+    #' @return Named logical vector of length 8 (or 9 for SVDSEM) indicating presence of each type
     #'   of improper solution:
-    #'   \item{RELIABILITY_COEF}{`TRUE` if any reliability coefficient is outside (0, 1).}
-    #'   \item{RHO_JH}{`TRUE` if any correlation in P_IMPLIED is outside (-1, 1).}
-    #'   \item{P_TILDE}{`TRUE` if P_TILDE has negative eigenvalues (not positive definite).} (only for SVDSEM)
-    #'   \item{P_IMPLIED}{`TRUE` if P_IMPLIED has negative eigenvalues (not positive definite).}
-    #'   \item{THETA_JH}{`TRUE` if any residual variance is negative.}
-    #'   \item{STD_LAMBDA}{`TRUE` if any standardized loading is outside (-1, 1).}
-    #'   \item{SIGMA_IMPLIED}{`TRUE` if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
-    #'   \item{R2}{`TRUE` if any R-squared is outside (0, 1).}
-    #'   \item{PSI}{`TRUE` if PSI has negative eigenvalues (not positive definite).}
-    #'
-    #' @details
-    #' A value of `TRUE` indicates an improper solution for that criterion. An
-    #' admissible solution should have all values set to `FALSE`. Common causes
-    #' of improper solutions include poor model specification, insufficient sample
-    #' size, or convergence to a boundary solution.
-    #'
+    #' \describe{
+    #'   \item{RELIABILITY_COEF}{\code{TRUE} if any reliability coefficient is outside (0, 1).}
+    #'   \item{RHO_JH}{\code{TRUE} if any correlation in P_IMPLIED is outside (-1, 1).}
+    #'   \item{P_IMPLIED}{\code{TRUE} if P_IMPLIED has negative eigenvalues (not positive definite).}
+    #'   \item{THETA_JH}{\code{TRUE} if any residual variance is negative.}
+    #'   \item{STD_LAMBDA}{\code{TRUE} if any standardized loading is outside (-1, 1).}
+    #'   \item{SIGMA_IMPLIED}{\code{TRUE} if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
+    #'   \item{R2}{\code{TRUE} if any R-squared is outside (0, 1).}
+    #'   \item{PSI}{\code{TRUE} if PSI has negative eigenvalues (not positive definite).}
+    #'   \item{P_TILDE}{\code{TRUE} if P_TILDE has negative eigenvalues (only for SVDSEM).}
+    #' }
     #'
     check_improper = function(){
-      if (is.null(self)){
+      if (is.null(self$estimate)){
         stop("Model must be fitted before checking for improper solutions. Please run fit() first.")
       }
-      return(improper(self))
+      return(improper(self$estimate))
     }
 
 

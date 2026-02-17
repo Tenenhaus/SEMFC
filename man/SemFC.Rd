@@ -43,9 +43,20 @@ model$summary()
 
 \dontrun{
 model$fit(estimator = "svd", B = 1000)
-model$fit(estimator = "ml", B = 500, initialisation_svd = TRUE)
+model$fit(estimator = "ml", B = 500, initialization = "svd")
+}
+
+## ------------------------------------------------
+## Method `SemFC$parameterEstimates`
+## ------------------------------------------------
+
+\dontrun{
+model$fit(infer = TRUE)
+model$parameterEstimates()
+model$parameterEstimates(standardized = TRUE)
 }
 }
+\keyword{internal}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
@@ -98,6 +109,8 @@ model$fit(estimator = "ml", B = 500, initialisation_svd = TRUE)
 \item \href{#method-SemFC-get_gof}{\code{SemFC$get_gof()}}
 \item \href{#method-SemFC-fit}{\code{SemFC$fit()}}
 \item \href{#method-SemFC-summary}{\code{SemFC$summary()}}
+\item \href{#method-SemFC-parameterEstimates}{\code{SemFC$parameterEstimates()}}
+\item \href{#method-SemFC-check_improper}{\code{SemFC$check_improper()}}
 \item \href{#method-SemFC-clone}{\code{SemFC$clone()}}
 }
 }
@@ -192,14 +205,19 @@ Invisible self (for method chaining)
 \subsection{Method \code{fit_ml()}}{
 Fit the model using Maximum Likelihood (ML) estimation
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit_ml(initialisation_svd = TRUE, tol)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit_ml(initialization = "svd", tol)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{initialisation_svd}}{Logical indicating whether to use SVD estimates as
-starting values (default: TRUE). If FALSE, random starting values are used.}
+\item{\code{initialization}}{Character string or numeric vector specifying initialization method:
+\itemize{
+\item \code{"svd"} (default): Use SVD estimates as starting values
+\item \code{"random"}: Use random starting values
+\item \code{numeric vector}: Use provided values as starting parameters
+(must have length equal to total number of model parameters)
+}}
 
 \item{\code{tol}}{Numeric tolerance for convergence in optimization (default: 1e-8)}
 }
@@ -273,7 +291,7 @@ Invisible self (for method chaining)
 \subsection{Method \code{fit()}}{
 Fit the complete model with inference and goodness-of-fit
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit(infer = FALSE, B = 1000, initialisation_svd = TRUE, tol = 1e-08)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit(infer = FALSE, B = 1000, initialization = "svd", tol = 1e-08)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -283,8 +301,14 @@ Fit the complete model with inference and goodness-of-fit
 
 \item{\code{B}}{Integer number of bootstrap replications for svd (default: 1000)}
 
-\item{\code{initialisation_svd}}{Logical indicating whether to use SVD initialization
-for ML estimation (default: TRUE). Ignored when estimator is "svd".}
+\item{\code{initialization}}{Character string or numeric vector specifying initialization method
+for ML estimation. Ignored when estimator is "svd".
+\itemize{
+\item \code{"svd"} (default): Use SVD estimates as starting values
+\item \code{"random"}: Use random starting values
+\item \code{numeric vector}: Use provided values as starting parameters
+(must have length equal to total number of model parameters)
+}}
 
 \item{\code{tol}}{Numeric tolerance for convergence in ML optimization (default: 1e-8)}
 }
@@ -306,7 +330,7 @@ Invisible self (for method chaining)
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\dontrun{
 model$fit(estimator = "svd", B = 1000)
-model$fit(estimator = "ml", B = 500, initialisation_svd = TRUE)
+model$fit(estimator = "ml", B = 500, initialization = "svd")
 }
 }
 \if{html}{\out{</div>}}
@@ -320,7 +344,7 @@ model$fit(estimator = "ml", B = 500, initialisation_svd = TRUE)
 \subsection{Method \code{summary()}}{
 Print comprehensive summary of model estimation results
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$summary(standardized = FALSE, effect = FALSE, all_measures = F)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$summary(standardized = F, effect = FALSE, all_measures = F)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -351,6 +375,103 @@ Displays:
 
 \subsection{Returns}{
 Invisible NULL
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SemFC-parameterEstimates"></a>}}
+\if{latex}{\out{\hypertarget{method-SemFC-parameterEstimates}{}}}
+\subsection{Method \code{parameterEstimates()}}{
+Extract parameter estimates from the fitted model
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$parameterEstimates(standardized = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{standardized}}{Logical indicating whether to include standardized
+estimates (default: FALSE). When TRUE, adds a \code{std.all} column with
+fully standardized coefficients.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Details}{
+Returns a data frame containing all estimated parameters including:
+\itemize{
+\item \code{lambda}: Loadings (measurement model)
+\item \code{omega}: Composite weights (for formative blocks)
+\item \code{beta}: Structural paths between endogenous variables
+\item \code{gamma}: Structural paths from exogenous to endogenous variables
+\item \code{residualvariance}: Residual variances of observed variables
+}
+
+If statistical inference has been performed, the returned estimates
+include standard errors, z-values, p-values, and confidence intervals.
+}
+
+\subsection{Returns}{
+A data frame with all parameter estimates. Columns include:
+\itemize{
+\item \code{lhs}: Left-hand side variable
+\item \code{op}: Operator
+\item \code{rhs}: Right-hand side variable
+\item \code{est}: Point estimate
+\item \code{se}: Standard error (if inference was performed)
+\item \code{z}: Z-statistic (if inference was performed)
+\item \code{pvalue}: P-value (if inference was performed)
+\item \code{std.all}: Standardized estimate (if standardized = TRUE)
+}
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+model$fit(infer = TRUE)
+model$parameterEstimates()
+model$parameterEstimates(standardized = TRUE)
+}
+}
+\if{html}{\out{</div>}}
+
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SemFC-check_improper"></a>}}
+\if{latex}{\out{\hypertarget{method-SemFC-check_improper}{}}}
+\subsection{Method \code{check_improper()}}{
+Check for improper solutions in the estimated model
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$check_improper()}\if{html}{\out{</div>}}
+}
+
+\subsection{Details}{
+Detects types of inadmissible or improper solutions including:
+\itemize{
+\item \code{reliability_coef}: Reliability coefficients for each block
+\item \code{P_IMPLIED}: Implied correlation matrix of latent variables
+\item \code{residual_variance}: List of residual variances
+\item \code{std_lambda}: Standardized loadings
+\item \code{SIGMA_IMPLIED}: Implied covariance matrix of observed variables
+\item \code{R2}: R-squared values for endogenous latent variables
+\item \code{psi}: Residual covariance matrix of latent variables
+\item \code{Ptilde}: First estimation of correlation matrix of latent variables (only for SVDSEM)
+}
+}
+
+\subsection{Returns}{
+Named logical vector of length 8 (or 9 for SVDSEM) indicating presence of each type
+of improper solution:
+\describe{
+\item{RELIABILITY_COEF}{\code{TRUE} if any reliability coefficient is outside (0, 1).}
+\item{RHO_JH}{\code{TRUE} if any correlation in P_IMPLIED is outside (-1, 1).}
+\item{P_IMPLIED}{\code{TRUE} if P_IMPLIED has negative eigenvalues (not positive definite).}
+\item{THETA_JH}{\code{TRUE} if any residual variance is negative.}
+\item{STD_LAMBDA}{\code{TRUE} if any standardized loading is outside (-1, 1).}
+\item{SIGMA_IMPLIED}{\code{TRUE} if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
+\item{R2}{\code{TRUE} if any R-squared is outside (0, 1).}
+\item{PSI}{\code{TRUE} if PSI has negative eigenvalues (not positive definite).}
+\item{P_TILDE}{\code{TRUE} if P_TILDE has negative eigenvalues (only for SVDSEM).}
+}
 }
 }
 \if{html}{\out{<hr>}}

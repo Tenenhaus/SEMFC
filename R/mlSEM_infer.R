@@ -175,6 +175,9 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
   residual_variance <- unlist(unname(fit$residual_variance))
   total_effects <- as.vector(fit$effect$total_effect)
   indirect_effects <- as.vector(fit$effect$indirect_effect)
+  omega <- unlist(lapply(names(fit$omega), function(lv) {
+    setNames(as.vector(fit$omega[[lv]]), paste(lv, rownames(fit$omega[[lv]]), sep = "."))
+  }))
 
 
 
@@ -353,6 +356,23 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
 
   rownames(table_indirect_effects) <- paste(grid_indirect_effects$LHS, grid_indirect_effects$RHS, sep = " ~ ")
 
+  table_omega <- data.frame()
+
+  if (length(omega) != 0){
+    parts <- strsplit(names(omega), "\\.")
+    table_omega <- data.frame(
+      lhs = sapply(parts, `[`, 1),
+      op = "<~",
+      rhs = sapply(parts, `[`, 2),
+      est = omega,
+      se = NA,
+      z = NA,
+      ci.lower = NA,
+      ci.upper = NA,
+      pvalue = NA,
+      std.all = omega)
+  }
+
 
 
 
@@ -363,7 +383,8 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
     beta = table_beta,
     residual_variance = table_residual_variance,
     total_effects = table_total_effects,
-    indirect_effects = table_indirect_effects
+    indirect_effects = table_indirect_effects,
+    omega = table_omega
 
   )
 

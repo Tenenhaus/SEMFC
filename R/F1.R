@@ -71,6 +71,15 @@
 #'
 #' dag <- FALSE
 #'
+#' varnames <- list(
+#'  LV1 = c("X11", "X12", "X13"),
+#'  LV2 = c("X21", "X22", "X23"),
+#'  LV3 = c("X31", "X32", "X33"),
+#'  LV4 = c("X41", "X42", "X43"),
+#'  LV5 = c("X51", "X52", "X53"),
+#'  LV6 = c("X61", "X62", "X63")
+#')
+#'
 #'
 #' # Parameter vector structure:
 #' # - 18 loadings (3 per  block)
@@ -85,6 +94,7 @@
 #' model <- list(
 #'  block_sizes = block_sizes,
 #' mode = mode,
+#' varnames = varnames,
 #' lengths_theta = lengths_theta,
 #' which_exo_endo = which_exo_endo,
 #' dag = dag

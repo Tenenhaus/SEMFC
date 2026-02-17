@@ -43,7 +43,7 @@ If \code{jac = FALSE}, returns a list containing:
 \item{omega}{List of composite weights for formative blocks.}
 \item{P_EXO}{Correlation matrix of exogenous latent variables.}
 \item{P_ENDO}{Correlation matrix of endogenous latent variables.}
-\item{R_LVM}{Full correlation matrix of all latent variables.}
+\item{P_IMPLIED}{Full correlation matrix of all latent variables.}
 \item{SIGMA_IMPLIED}{Implied covariance matrix of observed variables.}
 }
 \description{

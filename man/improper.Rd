@@ -7,7 +7,7 @@
 improper(fit)
 }
 \arguments{
-\item{fit}{List containing model fit results from \verb{lvm_*()} functions, including:
+\item{semfc}{A list of estimates, including:
 \itemize{
 \item \code{reliability_coef}: Reliability coefficients for each block
 \item \code{P_IMPLIED}: Implied correlation matrix of latent variables
@@ -20,17 +20,19 @@ improper(fit)
 }}
 }
 \value{
-Named logical vector of length 9 indicating presence of each type
+Named logical vector of length 8 (or 9 for SVDSEM) indicating presence of each type
 of improper solution:
+\describe{
 \item{RELIABILITY_COEF}{\code{TRUE} if any reliability coefficient is outside (0, 1).}
 \item{RHO_JH}{\code{TRUE} if any correlation in P_IMPLIED is outside (-1, 1).}
-\item{P_TILDE}{\code{TRUE} if P_TILDE has negative eigenvalues (not positive definite).}
 \item{P_IMPLIED}{\code{TRUE} if P_IMPLIED has negative eigenvalues (not positive definite).}
 \item{THETA_JH}{\code{TRUE} if any residual variance is negative.}
 \item{STD_LAMBDA}{\code{TRUE} if any standardized loading is outside (-1, 1).}
 \item{SIGMA_IMPLIED}{\code{TRUE} if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
 \item{R2}{\code{TRUE} if any R-squared is outside (0, 1).}
 \item{PSI}{\code{TRUE} if PSI has negative eigenvalues (not positive definite).}
+\item{P_TILDE}{\code{TRUE} if P_TILDE has negative eigenvalues (only for SVDSEM).}
+}
 }
 \description{
 Checks for nine types of inadmissible or improper solutions in structural
@@ -43,3 +45,4 @@ admissible solution should have all values set to \code{FALSE}. Common causes
 of improper solutions include poor model specification, insufficient sample
 size, or convergence to a boundary solution.
 }
+\keyword{internal}
