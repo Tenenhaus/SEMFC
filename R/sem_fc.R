@@ -377,8 +377,8 @@ SemFC <- R6Class(
       }
       if (infer){
         if (estimator == 'svd'){
-          boot_out <- bootstrap_svd(self$estimate, B, verbose = TRUE)
-          self$infer_estimate <- boot_out$infer
+          boot_out <- svdsem_infer(self$estimate, B, verbose = TRUE)
+          self$infer_estimate <- boot_out$result$infer
           self$gof$bollen_stine <- boot_out$gof
           self$get_gof()
         }

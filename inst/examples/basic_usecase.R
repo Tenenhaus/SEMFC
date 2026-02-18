@@ -15,7 +15,7 @@ model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "svd")
 
 model$fit(infer = T, B = 100)
 model$fit(infer = F)
-model$summary(standardized = F, effect = T, all_measures = T)
+model$summary(standardized = T, effect = T, all_measures = T)
 est = model$parameterEstimates(standardized = T)
 
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode)
