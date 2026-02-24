@@ -7,7 +7,7 @@
 #' @return \item{C}{Estimation of the variance (resp. covariance) of x (resp. x and y).}
 #' @title Variance and Covariance (Matrices)
 #' @importFrom stats cov
-#' @export
+#' @keywords internal
 cov2 <- function (x, y = NULL, bias = TRUE)
 {
   n <- NROW(x)

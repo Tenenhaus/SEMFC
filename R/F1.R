@@ -41,6 +41,7 @@
 #'
 #'
 #' @examples
+#' \dontrun{
 #' # Example with 6 blocks: 4 formative exogenous, 2 reflective endogenous
 #' set.seed(123)
 #' n <- 300
@@ -107,8 +108,8 @@
 #' # Compute log-likelihood
 #' f <- F1(x, S, model)
 #' print(f)
-#'
-#' @export
+#'}
+#' @keywords internal
 F1 <- function(x, S, model){
 
 

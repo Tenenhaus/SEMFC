@@ -8,10 +8,10 @@
 #' @format A table object
 #'
 #' @examples
-#' \dontrun{
+#'
 #' data(ECSI)
 #' head(ECSI)
-#' }
+#'
 "ECSI"
 
 #' Russett Dataset
@@ -23,8 +23,8 @@
 #' @format A table object
 #'
 #' @examples
-#' \dontrun{
+#'
 #' data(Russett)
 #' head(Russett)
-#' }
+#'
 "Russett"

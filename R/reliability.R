@@ -24,7 +24,7 @@
 #' )
 #' print(reliability_values)
 #' }
-#' @export
+#' @keywords internal
 
 # pour bloc formatif
 reliability <- function (metric, lambdas, residual_variances){

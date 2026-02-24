@@ -25,10 +25,12 @@
 #'   parameter of the chi-square distribution.
 #'
 #' @examples
+#' \dontrun{
 #' result <- rmseasem(chi2 = 20, df = 10, N = 200)
 #' print(result$estimate)
+#' }
 #' @importFrom stats pchisq uniroot
-#' @export
+#' @keywords internal
 rmseasem <- function(chi2, df, N, conf.level = 0.90, close = 0.05, notclose = 0.08) {
   RMSEA <- sqrt(max(chi2/df - 1, 0) / (N-1))
 

@@ -53,7 +53,7 @@
 #' 6. Computes the implied covariance matrix using the LISREL equation:
 #'   SIGMA = L * R * L' + BDIAG
 #'
-#' @export
+#' @keywords internal
 lvm_ml <- function(x, model, jac = TRUE){
 
   block_sizes <- model$block_sizes

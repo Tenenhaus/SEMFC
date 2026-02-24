@@ -29,7 +29,7 @@
 #'
 #' @importFrom Rsolnp solnp
 #'
-#' @export
+#' @keywords internal
 mlSEM <- function (init, S, model, tol = 1e-08){
 
   mode <- model$mode

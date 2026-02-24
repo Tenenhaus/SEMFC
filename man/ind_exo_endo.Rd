@@ -18,7 +18,10 @@ index of the exogenous variables of the C matrix
 Structure information for exogenous and endogenous latent variables
 }
 \examples{
+\dontrun{
 C = matrix(c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,
 0,0,1,1,1,0),6,6)
 ind_exo_endo(C)
 }
+}
+\keyword{internal}

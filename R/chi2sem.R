@@ -19,11 +19,12 @@
 #' fit function value. The degrees of freedom are computed as p(p+1)/2 - q + r
 #'
 #' @examples
+#' \dontrun{
 #' chi2_results <- chi2sem(p = 18, q = 61, r = 4, F = 0.428, N = 300)
 #' print(chi2_results$pval)
-#'
+#'}
 #' @importFrom stats pchisq
-#' @export
+#' @keywords internal
 chi2sem <- function(p, q, r, F, N){
   chi2 <- (N-1) * F
   df <- (p * (p+1)/2) - q + r

@@ -49,6 +49,7 @@ The function first computes the implied covariance matrix using \code{lvm_ml()},
 then evaluates the fit between sample and implied covariances.
 }
 \examples{
+\dontrun{
 # Example with 6 blocks: 4 formative exogenous, 2 reflective endogenous
 set.seed(123)
 n <- 300
@@ -115,9 +116,10 @@ x  <- rnorm(61)
 # Compute log-likelihood
 f <- F1(x, S, model)
 print(f)
-
+}
 }
 \seealso{
 \code{\link{lvm_ml}} for implied covariance matrix computation,
 \code{\link{ind_exo_endo}} for structure information generation
 }
+\keyword{internal}

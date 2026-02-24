@@ -25,6 +25,7 @@ Vector of equality constraints.
 Generalized version for multiple blocks with formative/reflective modes.
 }
 \examples{
+\dontrun{
 set.seed(123)
 n <- 300
 # Generate sample data (6 blocks with 3 indicators each)
@@ -44,5 +45,6 @@ mode = mode
 x  <- rnorm(61)
 
 heq1(x, S, model)
-
 }
+}
+\keyword{internal}

@@ -37,3 +37,4 @@ reliability_values <- reliability(
 print(reliability_values)
 }
 }
+\keyword{internal}

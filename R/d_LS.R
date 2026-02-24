@@ -15,11 +15,13 @@
 #'   between the observed and model-implied covariance matrices.
 #'
 #' @examples
+#' \dontrun{
 #' S <- diag(2)
 #' SIGMA <- diag(2) * 0.5
 #' discrepancy <- d_LS(S, SIGMA)
+#'}
 #'
-#' @export
+#' @keywords internal
 d_LS <- function(A, B){
   A <- as.matrix(A)
   B <- as.matrix(B)
