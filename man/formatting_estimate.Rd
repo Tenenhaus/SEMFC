@@ -2,38 +2,43 @@
 % Please edit documentation in R/formatting_estimate.R
 \name{formatting_estimate}
 \alias{formatting_estimate}
-\title{Formatting Estimates for Model Fit}
+\title{Format Model Estimates}
 \usage{
-formatting_estimate(fit)
+formatting_estimate(fit, se_list = list())
 }
 \arguments{
 \item{fit}{A fitted model object containing the following components:
 \itemize{
-\item \code{lambda}: A named vector of loadings.
-\item \code{gamma}: A matrix of path coefficients.
+\item \code{lambda}: A named list of loadings for each latent variable.
+\item \code{std_lambda}: Standardized loadings (optional).
+\item \code{gamma}: A matrix of path coefficients between latent variables.
 \item \code{beta}: A matrix of regression coefficients.
-\item \code{residual_variance}: A vector of residual variances.
-\item \code{effect$total_effect}: A matrix of total effects (non-zero values are used).
-\item \code{effect$indirect_effect}: A matrix of indirect effects (non-zero values are used).
-\item \code{omega}: A list of matrices containing weigths of indicators for composites blocs.
+\item \code{residual_variance}: A named list of residual variances.
+\item \code{effect$total_effect}: A matrix of total effects.
+\item \code{effect$indirect_effect}: A matrix of indirect effects.
+\item \code{omega}: A list of matrices containing weights of indicators for composite blocks.
 }}
+
+\item{se_list}{A list containing standard errors for each component (optional, defaults to empty list).
+Expected elements: \code{sd_lambda}, \code{sd_gamma}, \code{sd_beta}, \code{sd_residual_variance},
+\code{sd_total_effects}, \code{sd_indirect_effects}, \code{sd_omega}.}
 }
 \value{
-A list of data frames:
+A list of data frames with columns: lhs, op, rhs, est, se, z, ci.lower, ci.upper, pvalue, std.all:
 \itemize{
-\item \code{lambda}: Data frame of loadings with columns for estimates, standard errors, z-scores, and p-values.
-\item \code{gamma}: Data frame of path coefficients with the same columns as \code{lambda}.
-\item \code{beta}: Data frame of regression coefficients with the same columns as \code{lambda}.
-\item \code{residual_variance}: Data frame of residual variances with the same columns as \code{lambda}.
-\item \code{total_effects}: Data frame of total effects with the same columns as \code{lambda}.
-\item \code{indirect_effects}: Data frame of indirect effects with the same columns as \code{lambda}.
-\item \code{omega}: Data frame of omega values with the same columns as \code{lambda}.
+\item \code{lambda}: Loadings (op = "=~").
+\item \code{gamma}: Path coefficients between latent variables (op = "~").
+\item \code{beta}: Regression coefficients (op = "~").
+\item \code{residual_variance}: Residual variances (op = "~~").
+\item \code{total_effects}: Total effects (op = "~").
+\item \code{indirect_effects}: Indirect effects (op = "~").
+\item \code{omega}: Composite weights (op = "<~").
 }
 }
 \description{
-This function processes a fitted model object to extract and format its estimates
-(lambda, gamma, beta, residual variance, total effects, and indirect effects)
-into data frames. Each data frame includes columns for estimates, standard errors,
-z-scores, and p-values, which are initialized as \code{NA}.
+Processes a fitted model object to extract and format parameter estimates
+into standardized data frames. Creates tables for loadings, path coefficients,
+regression coefficients, residual variances, total effects, indirect effects,
+and composite weights.
 }
 \keyword{internal}

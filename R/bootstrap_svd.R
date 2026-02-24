@@ -1,81 +1,47 @@
 
 
-
-#' Statistical Inference  and Global Fit Assessment for svdSEM Models
+#' Bootstrap Inference and Goodness-of-Fit Test for SVD-Estimated SEM Models
 #'
-#' This function performs bootstrap-based statistical inference for svdSEM models,
-#' computing standard errors, z-statistics, and p-values for all model parameters
-#' including factor loadings, structural coefficients, and residual variances.
-#' And in the same way, performs a bootstrap test to assess the significance of the fit.
-#' The method is based on the Yuan & Hayashi (2003) approach for data transformation.
+#' Performs bootstrap-based statistical inference for models estimated using the SVD method.
+#' Computes bootstrap distributions for all model parameters and conducts a Bollen-Stine
+#' bootstrap test for model fit assessment using the Yuan & Hayashi (2003) data transformation approach.
 #'
-#' @param fit A svdSEM fit object containing the fitted model information
-#' @param B Number of bootstrap replications (default: 100)
-#' @param verbose Logical indicating whether to display a progress bar (default: TRUE)
+#' @param fit A svdSEM fit object containing the fitted model information, including
+#'   parameter estimates, model-implied covariance matrix, and data blocks.
+#' @param B Integer specifying the number of bootstrap replications (default: 100).
+#' @param verbose Logical indicating whether to display a progress bar during
+#'   bootstrap resampling (default: `TRUE`).
 #'
+#' @return A list containing bootstrap replications for all parameters:
+#'   - `boot_lambda`: Matrix of bootstrap replications for factor loadings.
+#'   - `boot_std_loadings`: Matrix of bootstrap replications for standardized loadings.
+#'   - `boot_beta`: Matrix of bootstrap replications for structural coefficients (endogenous).
+#'   - `boot_gamma`: Matrix of bootstrap replications for regression coefficients (exogenous).
+#'   - `boot_residual_variance`: Matrix of bootstrap replications for residual variances.
+#'   - `boot_total_effects`: Matrix of bootstrap replications for total effects.
+#'   - `boot_indirect_effects`: Matrix of bootstrap replications for indirect effects.
+#'   - `boot_omega`: Matrix of bootstrap replications for formative block weights.
+#'   - `boot_Tb_LS`: Vector of bootstrap test statistics for goodness-of-fit.
+#'   - `improper`: Integer count of improper bootstrap solutions (negative eigenvalues).
 #'
+#' @details The function performs two parallel bootstrap procedures:
+#'   1. Standard bootstrap on original data for parameter inference
+#'   2. Bollen-Stine bootstrap on transformed data for goodness-of-fit testing
 #'
-#' @return A list containing:
-#' \describe{
-#'   \item{infer}{A list containing statistical inference results with the following components:
-#'     \itemize{
-#'       \item \code{out}: List of bootstrap replications for lambda, standardized loadings,
-#'         beta, gamma, residual variance, total effects, indirect effects, and omega
-#'       \item \code{lambda}: Data frame with loadings, standard errors, z-statistics, and p-values
-#'       \item \code{std_lambda}: Data frame with standardized loadings, standard errors,
-#'         z-statistics, and p-values
-#'       \item \code{beta}: Data frame with structural coefficients between latent variables,
-#'         standard errors, z-statistics, and p-values
-#'       \item \code{gamma}: Data frame with regression coefficients from observed to latent
-#'         variables, standard errors, z-statistics, and p-values
-#'       \item \code{residual_variance}: Data frame with residual variances, standard errors,
-#'         z-statistics, and p-values
-#'       \item \code{total_effects}: Data frame with total effects, standard errors,
-#'         z-statistics, and p-values
-#'       \item \code{indirect_effects}: Data frame with indirect effects, standard errors,
-#'         z-statistics, and p-values
-#'       \item \code{omega}: Data frame with error variances for latent variables,
-#'         standard errors, z-statistics, and p-values
-#'       \item \code{improper}: Number of improper bootstrap solutions (negative eigenvalues)
-#'     }
-#'   }
-#'   \item{gof}{A list containing goodness-of-fit test results with the following components:
-#'     \itemize{
-#'       \item \code{T_LS}: The observed test statistic
-#'       \item \code{Tb_LS}: Vector of bootstrap test statistics
-#'       \item \code{pval}: The p-value of the fit test
-#'       \item \code{improper}: Number of improper solutions (negative eigenvalues)
-#'     }
-#'   }
-#' }
-#'
-#'
-#' @details The function uses bootstrap resampling to estimate the sampling distribution
-#' of all model parameters. Z-statistics are computed as parameter estimates divided by
-#' bootstrap standard errors, and p-values are calculated using a two-tailed normal test.
-#' Bootstrap samples with negative eigenvalues are considered improper and excluded from
-#' the analysis. In the same time, the function  transforms the data according to Yuan & Hayashi (2003),
-#' then performs bootstrap to estimate the empirical distribution of the test statistic.
-#' Solutions with negative eigenvalues are considered improper and excluded.
+#'   The data transformation follows Yuan & Hayashi (2003). Bootstrap samples with
+#'   negative eigenvalues are flagged as improper and excluded from standard error calculations.
 #'
 #' @examples
 #' \dontrun{
-#' bootstrap_results <- bootstrap_svd(fit, B = 100, bias = FALSE)
-#' print(bootstrap_results$infer$out$boot_lambda)
-#' print(bootstrap_results$gof$pval)
+#' boot_results <- bootstrap_svd(fit, B = 500, verbose = TRUE)
+#' # Access bootstrap distributions
+#' head(boot_results$boot_lambda)
+#' # Check improper solutions
+#' boot_results$improper
 #' }
 #'
 #' @importFrom stats sd pnorm setNames
-#' @export
-
-
-
-
-
-
-
-
-
+#' @keywords internal
 
 bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
 
@@ -199,7 +165,33 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
 }
 
 
-
+#' Compute Bootstrap Standard Errors for Model Parameters
+#'
+#' Calculates standard errors for all model parameters based on bootstrap replications.
+#' The standard errors are computed as the standard deviation of the bootstrap distribution
+#' for each parameter.
+#'
+#' @param boot List containing bootstrap replications. Expected elements include:
+#'   - `boot_lambda`: Matrix of bootstrap replications for factor loadings.
+#'   - `boot_std_loadings`: Matrix of bootstrap replications for standardized loadings.
+#'   - `boot_beta`: Matrix of bootstrap replications for structural coefficients (endogenous).
+#'   - `boot_gamma`: Matrix of bootstrap replications for regression coefficients (exogenous).
+#'   - `boot_residual_variance`: Matrix of bootstrap replications for residual variances.
+#'   - `boot_total_effects`: Matrix of bootstrap replications for total effects.
+#'   - `boot_indirect_effects`: Matrix of bootstrap replications for indirect effects.
+#'   - `boot_omega`: Matrix of bootstrap replications for formative block weights.
+#'
+#' @return A list containing standard errors for all parameters:
+#'   - `sd_lambda`: Vector of standard errors for factor loadings.
+#'   - `sd_std_loadings`: Vector of standard errors for standardized loadings.
+#'   - `sd_beta`: Vector of standard errors for structural coefficients.
+#'   - `sd_gamma`: Vector of standard errors for regression coefficients.
+#'   - `sd_residual_variance`: Vector of standard errors for residual variances.
+#'   - `sd_total_effects`: Vector of standard errors for total effects.
+#'   - `sd_indirect_effects`: Vector of standard errors for indirect effects.
+#'   - `sd_omega`: Vector of standard errors for formative block weights.
+#'
+#' @keywords internal
 
 get_se_boot <- function(boot){
   sd_lambda <- apply(boot$boot_lambda, 2, sd)
@@ -224,7 +216,27 @@ get_se_boot <- function(boot){
 }
 
 
-
+#' Format Statistical Inference Results for SVD Estimation
+#'
+#' Formats parameter estimates with bootstrap-based standard errors, z-statistics,
+#' and p-values into structured tables for SVD-estimated models.
+#'
+#' @param fit A svdSEM fit object containing the fitted model information, including
+#'   parameter estimates for loadings, structural coefficients, and other model parameters.
+#' @param boot List containing bootstrap replications from `bootstrap_svd()`. Expected elements include:
+#'   - `boot_lambda`: Matrix of bootstrap replications for factor loadings.
+#'   - `boot_std_loadings`: Matrix of bootstrap replications for standardized loadings.
+#'   - `boot_beta`: Matrix of bootstrap replications for structural coefficients.
+#'   - `boot_gamma`: Matrix of bootstrap replications for regression coefficients.
+#'   - `boot_residual_variance`: Matrix of bootstrap replications for residual variances.
+#'   - `boot_total_effects`: Matrix of bootstrap replications for total effects.
+#'   - `boot_indirect_effects`: Matrix of bootstrap replications for indirect effects.
+#'   - `boot_omega`: Matrix of bootstrap replications for formative block weights.
+#'
+#' @return A structured table containing formatted parameter estimates with bootstrap
+#'   standard errors, z-statistics, and p-values.
+#'
+#' @keywords internal
 
 formatting_svd_infer <- function(fit, boot){
 
@@ -238,7 +250,30 @@ formatting_svd_infer <- function(fit, boot){
 
 
 
-
+#' Statistical Inference and Goodness-of-Fit for SVD-Estimated Models
+#'
+#' Performs bootstrap-based statistical inference and computes goodness-of-fit statistics
+#' for models estimated using the SVD method. Combines bootstrap replications with
+#' Bollen-Stine bootstrap test results.
+#'
+#' @param fit A svdSEM fit object containing the fitted model information, including
+#'   parameter estimates and model-implied covariance matrix.
+#' @param B Integer specifying the number of bootstrap replications to perform.
+#' @param verbose Logical indicating whether to display a progress bar during
+#'   bootstrap resampling (default: `TRUE`).
+#'
+#' @return A list containing two main components:
+#'   - `result`: List with bootstrap and inference results:
+#'     - `boot`: List of bootstrap replications for all parameters (see `bootstrap_svd()`).
+#'     - `infer`: Formatted tables with parameter estimates, standard errors, z-statistics,
+#'       and p-values (see `formatting_svd_infer()`).
+#'   - `gof`: List with goodness-of-fit test results:
+#'     - `T_LS`: Observed test statistic from the fitted model.
+#'     - `Tb_LS`: Vector of bootstrap test statistics.
+#'     - `pval`: Bootstrap p-value for the goodness-of-fit test.
+#'     - `improper`: Number of improper bootstrap solutions (negative eigenvalues).
+#'
+#' @keywords internal
 svdsem_infer <- function(fit, B, verbose = TRUE){
 
   boot <- bootstrap_svd(fit, B, verbose)

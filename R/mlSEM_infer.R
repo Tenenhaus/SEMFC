@@ -131,21 +131,42 @@ P_ml <- function(x, S, model){
 
 }
 
-
-
-
-
-
-
-
+#' Extract Standard Errors for Model Parameters
+#'
+#' Extracts and organizes standard errors for different parameter types from the
+#' full standard deviation vector, including loadings, path coefficients, regression
+#' coefficients, effects, and residual variances.
+#'
+#' @param SD Numeric vector of standard deviations for all model parameters.
+#' @param mode Character vector indicating the measurement mode for each block
+#'   ("reflective" or "formative").
+#' @param lengths_parameter Integer vector specifying the length of each parameter group.
+#' @param block_sizes Integer vector specifying the number of indicators in each block.
+#' @param vcov_effect List containing variance-covariance matrices for effects:
+#'   \itemize{
+#'     \item \code{vcov_exo_total}: Variance-covariance matrix for total effects on exogenous variables.
+#'     \item \code{vcov_endo_total}: Variance-covariance matrix for total effects on endogenous variables.
+#'     \item \code{vcov_exo_indirect}: Variance-covariance matrix for indirect effects on exogenous variables.
+#'     \item \code{vcov_endo_indirect}: Variance-covariance matrix for indirect effects on endogenous variables.
+#'   }
+#'
+#' @return List containing standard errors for each parameter type:
+#'   \item{sd_lambda}{Standard errors for loadings.}
+#'   \item{sd_gamma}{Standard errors for path coefficients between latent variables.}
+#'   \item{sd_beta}{Standard errors for regression coefficients.}
+#'   \item{sd_total_effects}{Standard errors for total effects.}
+#'   \item{sd_indirect_effects}{Standard errors for indirect effects.}
+#'   \item{sd_residual_variance}{Standard errors for residual variances (reflective blocks only).}
+#'
+#' @keywords internal
 get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect){
   start_indices_in_x <- cumsum(c(1, head(lengths_parameter, -1)))
   lambda_start_index <- start_indices_in_x[1]
-  lambda_end_index <- lambda_start_index + length(lambda) - 1
+  lambda_end_index <- lambda_start_index + lengths_parameter[1] - 1
   gamma_start_index <- start_indices_in_x[3]
-  gamma_end_index <- gamma_start_index + length(gamma) - 1
+  gamma_end_index <- gamma_start_index +  lengths_parameter[3] - 1
   beta_start_index <- start_indices_in_x[4]
-  beta_end_index <- beta_start_index + length(beta) - 1
+  beta_end_index <- beta_start_index + lengths_parameter[4] - 1
 
   sd_lambda <- SD[lambda_start_index: lambda_end_index]
   sd_gamma <- SD[gamma_start_index: gamma_end_index]
@@ -173,37 +194,37 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect)
 }
 
 
-
-
-
-
-
-
 #' Format ML Inference Results
 #'
 #' Organizes parameter estimates, standard errors, z-scores and p-values into
-#' structured data frames for loadings, path coefficients and residual variances.
+#' structured data frames for loadings, path coefficients, regression coefficients,
+#' effects, and residual variances.
 #'
 #' @param fit List containing model fit results from `lvm_ml()`. Includes parameter estimates
-#'   such as loadings, standardized loadings, gamma coefficients, beta coefficients, and residual variances.
-#' @param SD Numeric vector of standard errors for all parameters.
+#'   such as loadings, standardized loadings, gamma coefficients, beta coefficients,
+#'   residual variances, and effects.
 #' @param model List containing the model structure, including:
 #'   \itemize{
 #'     \item \code{mode}: Character vector indicating the measurement mode for each block.
 #'     \item \code{lengths_theta}: Integer vector specifying the length of each parameter group.
 #'     \item \code{block_sizes}: Integer vector specifying the number of indicators in each block.
 #'   }
+#' @param VCOV Variance-covariance matrix of parameter estimates.
+#' @param vcov_effect List containing variance-covariance matrices for effects:
+#'   \itemize{
+#'     \item \code{vcov_exo_total}: Variance-covariance matrix for total effects on exogenous variables.
+#'     \item \code{vcov_endo_total}: Variance-covariance matrix for total effects on endogenous variables.
+#'     \item \code{vcov_exo_indirect}: Variance-covariance matrix for indirect effects on exogenous variables.
+#'     \item \code{vcov_endo_indirect}: Variance-covariance matrix for indirect effects on endogenous variables.
+#'   }
 #'
-#' @return List containing:
-#'   \item{lambda}{Data frame with loadings estimates, std errors, z-scores and p-values.}
-#'   \item{std_lambda}{Data frame with standardized loadings estimates, std errors, z-scores and p-values.}
-#'   \item{gamma}{Data frame with gamma coefficients estimates, std errors, z-scores and p-values.}
-#'   \item{beta}{Data frame with beta coefficients estimates, std errors, z-scores and p-values.}
-#'   \item{residual_variance}{Data frame with residual variances estimates, std errors, z-scores and p-values.}
-#'
-#' @details
-#' Z-scores are computed as estimate/std error. P-values are two-tailed using
-#' the standard normal distribution.
+#' @return List of data frames with columns: lhs, op, rhs, est, se, z, ci.lower, ci.upper, pvalue, std.all:
+#'   \item{lambda}{Loadings estimates and inference statistics.}
+#'   \item{gamma}{Path coefficients between latent variables.}
+#'   \item{beta}{Regression coefficients.}
+#'   \item{total_effects}{Total effects.}
+#'   \item{indirect_effects}{Indirect effects.}
+#'   \item{residual_variance}{Residual variances (reflective blocks only).}
 #'
 #' @keywords internal
 formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
@@ -222,7 +243,6 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
 
 
 }
-
 
 
 #' Statistical Inference for ML-SEM

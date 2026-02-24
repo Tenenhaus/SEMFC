@@ -74,19 +74,17 @@ create_grid <- function(type, fit_component) {
 #' Format Parameter Estimates Table
 #'
 #' Creates a standardized data frame with parameter estimates, standard errors,
-#' z-scores, confidence intervals and p-values.
+#' z-scores, confidence intervals and p-values based on the estimation type.
 #'
-#' @param lhs Character vector of left-hand side variable names.
-#' @param op Character vector of operators (e.g., "~", "=~", "~~").
-#' @param rhs Character vector of right-hand side variable names.
-#' @param est Numeric vector of parameter estimates.
+#' @param type Character string indicating the type: "lambda", "regression", "residual", "effect", or "omega".
+#' @param fit_component The relevant component from the fit object (e.g., fit$lambda, fit$gamma, fit$beta).
+#' @param fit_std_component Standardized estimates component (optional, defaults to NULL).
 #' @param se Numeric vector of standard errors (optional, defaults to NA).
-#' @param std.all Numeric vector of standardized estimates (optional, defaults to NA).
 #' @param alpha Significance level for confidence intervals (default: 0.05).
 #'
 #' @return Data frame with columns: lhs, op, rhs, est, se, z, ci.lower, ci.upper, pvalue, std.all.
 #'   Returns an empty data frame with the same structure if length(est) = 0.
-#'
+#' @importFrom stats qnorm
 #' @keywords internal
 format_estimates_table <- function(type, fit_component, fit_std_component = NULL, se = NA, alpha = 0.05){
 
@@ -147,32 +145,34 @@ format_estimates_table <- function(type, fit_component, fit_std_component = NULL
   )
 }
 
-#' Formatting Estimates for Model Fit
+#' Format Model Estimates
 #'
-#' This function processes a fitted model object to extract and format its estimates
-#' (lambda, gamma, beta, residual variance, total effects, and indirect effects)
-#' into data frames. Each data frame includes columns for estimates, standard errors,
-#' z-scores, and p-values, which are initialized as `NA`.
+#' Processes a fitted model object to extract and format parameter estimates
+#' into standardized data frames. Creates tables for loadings, path coefficients,
+#' regression coefficients, residual variances, total effects, indirect effects,
+#' and composite weights.
 #'
 #' @param fit A fitted model object containing the following components:
-#'   - `lambda`: A named vector of loadings.
-#'   - `gamma`: A matrix of path coefficients.
+#'   - `lambda`: A named list of loadings for each latent variable.
+#'   - `std_lambda`: Standardized loadings (optional).
+#'   - `gamma`: A matrix of path coefficients between latent variables.
 #'   - `beta`: A matrix of regression coefficients.
-#'   - `residual_variance`: A vector of residual variances.
-#'   - `effect$total_effect`: A matrix of total effects (non-zero values are used).
-#'   - `effect$indirect_effect`: A matrix of indirect effects (non-zero values are used).
-#'   - `omega`: A list of matrices containing weigths of indicators for composites blocs.
+#'   - `residual_variance`: A named list of residual variances.
+#'   - `effect$total_effect`: A matrix of total effects.
+#'   - `effect$indirect_effect`: A matrix of indirect effects.
+#'   - `omega`: A list of matrices containing weights of indicators for composite blocks.
+#' @param se_list A list containing standard errors for each component (optional, defaults to empty list).
+#'   Expected elements: `sd_lambda`, `sd_gamma`, `sd_beta`, `sd_residual_variance`,
+#'   `sd_total_effects`, `sd_indirect_effects`, `sd_omega`.
 #'
-#'
-#' @return A list of data frames:
-#'   - `lambda`: Data frame of loadings with columns for estimates, standard errors, z-scores, and p-values.
-#'   - `gamma`: Data frame of path coefficients with the same columns as `lambda`.
-#'   - `beta`: Data frame of regression coefficients with the same columns as `lambda`.
-#'   - `residual_variance`: Data frame of residual variances with the same columns as `lambda`.
-#'   - `total_effects`: Data frame of total effects with the same columns as `lambda`.
-#'   - `indirect_effects`: Data frame of indirect effects with the same columns as `lambda`.
-#'   - `omega`: Data frame of omega values with the same columns as `lambda`.
-#'
+#' @return A list of data frames with columns: lhs, op, rhs, est, se, z, ci.lower, ci.upper, pvalue, std.all:
+#'   - `lambda`: Loadings (op = "=~").
+#'   - `gamma`: Path coefficients between latent variables (op = "~").
+#'   - `beta`: Regression coefficients (op = "~").
+#'   - `residual_variance`: Residual variances (op = "~~").
+#'   - `total_effects`: Total effects (op = "~").
+#'   - `indirect_effects`: Indirect effects (op = "~").
+#'   - `omega`: Composite weights (op = "<~").
 #'
 #' @keywords internal
 

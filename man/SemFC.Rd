@@ -56,7 +56,6 @@ model$parameterEstimates()
 model$parameterEstimates(standardized = TRUE)
 }
 }
-\keyword{internal}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
@@ -102,11 +101,6 @@ model$parameterEstimates(standardized = TRUE)
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-SemFC-new}{\code{SemFC$new()}}
-\item \href{#method-SemFC-fit_svd}{\code{SemFC$fit_svd()}}
-\item \href{#method-SemFC-svd_infer}{\code{SemFC$svd_infer()}}
-\item \href{#method-SemFC-fit_ml}{\code{SemFC$fit_ml()}}
-\item \href{#method-SemFC-ml_infer}{\code{SemFC$ml_infer()}}
-\item \href{#method-SemFC-get_gof}{\code{SemFC$get_gof()}}
 \item \href{#method-SemFC-fit}{\code{SemFC$fit()}}
 \item \href{#method-SemFC-summary}{\code{SemFC$summary()}}
 \item \href{#method-SemFC-parameterEstimates}{\code{SemFC$parameterEstimates()}}
@@ -152,137 +146,6 @@ estimation (default: FALSE)}
 }
 \subsection{Returns}{
 A new \code{SemFC} object
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-fit_svd"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-fit_svd}{}}}
-\subsection{Method \code{fit_svd()}}{
-Fit the model using Singular Value Decomposition (SVD) method
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit_svd()}\if{html}{\out{</div>}}
-}
-
-\subsection{Details}{
-Estimates model parameters using SVD-based approach which is computationally
-efficient and provides good starting values for ML estimation.
-}
-
-\subsection{Returns}{
-Invisible self (for method chaining)
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-svd_infer"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-svd_infer}{}}}
-\subsection{Method \code{svd_infer()}}{
-Perform statistical inference for SVD estimates using bootstrap
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$svd_infer(B = 1000, verbose = TRUE)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{B}}{Integer number of bootstrap replications (default: 1000)}
-
-\item{\code{verbose}}{Logical indicating whether to print progress messages (default: TRUE)}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-Uses non-parametric bootstrap to estimate standard errors, confidence intervals,
-and p-values for all model parameters.
-}
-
-\subsection{Returns}{
-Invisible self (for method chaining)
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-fit_ml"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-fit_ml}{}}}
-\subsection{Method \code{fit_ml()}}{
-Fit the model using Maximum Likelihood (ML) estimation
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit_ml(initialization = "svd", tol)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{initialization}}{Character string or numeric vector specifying initialization method:
-\itemize{
-\item \code{"svd"} (default): Use SVD estimates as starting values
-\item \code{"random"}: Use random starting values
-\item \code{numeric vector}: Use provided values as starting parameters
-(must have length equal to total number of model parameters)
-}}
-
-\item{\code{tol}}{Numeric tolerance for convergence in optimization (default: 1e-8)}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-Uses numerical optimization (via SOLNP) to minimize the ML fit function.
-SVD initialization is recommended for better convergence.
-}
-
-\subsection{Returns}{
-Invisible self (for method chaining)
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-ml_infer"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-ml_infer}{}}}
-\subsection{Method \code{ml_infer()}}{
-Perform asymptotic statistical inference for ML estimates
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$ml_infer()}\if{html}{\out{</div>}}
-}
-
-\subsection{Details}{
-Computes standard errors using the inverse of the information matrix.
-Provides z-statistics and p-values based on asymptotic normality.
-}
-
-\subsection{Returns}{
-Invisible self (for method chaining)
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-get_gof"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-get_gof}{}}}
-\subsection{Method \code{get_gof()}}{
-Calculate goodness-of-fit statistics
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$get_gof(B = 1000)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{B}}{Integer number of bootstrap replications for Bollen-Stine test (default: 1000).
-Only used when estimator is "svd".}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-Computes multiple fit indices including:
-\itemize{
-\item Reliability coefficients for reflective blocks (Dillon)
-\item Chi-square test statistic
-\item CFI (Comparative Fit Index)
-\item TLI (Tucker-Lewis Index)
-\item RMSEA (Root Mean Square Error of Approximation)
-\item SRMR (Standardized Root Mean Square Residual)
-\item Information criteria (AIC, BIC, SABIC)
-\item Bollen-Stine bootstrap p-value (for SVD only)
-}
-}
-
-\subsection{Returns}{
-Invisible self (for method chaining)
 }
 }
 \if{html}{\out{<hr>}}

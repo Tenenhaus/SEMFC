@@ -1,5 +1,6 @@
 
 #' @import R6
+#' @name SemFC
 #' @title SemFC Class
 #'
 #' @description
@@ -106,231 +107,6 @@ SemFC <- R6Class(
     },
 
 
-    #' @description
-    #' Fit the model using Singular Value Decomposition (SVD) method
-    #'
-    #' @details
-    #' Estimates model parameters using SVD-based approach which is computationally
-    #' efficient and provides good starting values for ML estimation.
-    #'
-    #' @return Invisible self (for method chaining)
-
-    fit_svd = function() {
-      self$estimator <- 'svd'
-      svd_result <- svdSEM(self$data$data,
-                           self$model$relation_matrix,
-                           self$model$scale,
-                           self$model$mode,
-                           self$model$bias)
-
-      self$estimate <- svd_result
-      theta_svd <- parameters_svd(lambda = svd_result$lambda,
-                                  P_EXO = svd_result$P_EXO,
-                                  G = svd_result$gamma,
-                                  B = svd_result$beta,
-                                  P_ENDO = svd_result$P_ENDO,
-                                  residual_variance = svd_result$residual_variance,
-                                  S_composites = self$data$S_diag_composites,
-                                  model = self$model)
-
-      self$estimate$theta <- theta_svd
-      self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
-      self$gof$F <- F1(theta_svd, self$data$cov_S, self$model)
-    },
-
-
-     #' @description
-    #' Perform statistical inference for SVD estimates using bootstrap
-    #'
-    #' @param B Integer number of bootstrap replications (default: 1000)
-    #' @param verbose Logical indicating whether to print progress messages (default: TRUE)
-    #'
-    #' @details
-    #' Uses non-parametric bootstrap to estimate standard errors, confidence intervals,
-    #' and p-values for all model parameters.
-    #'
-    #' @return Invisible self (for method chaining)
-    svd_infer = function(B = 1000, verbose = TRUE){
-      if (is.null(self$estimate)) {
-        self$fit_svd()
-      }
-      boot_out <- svdSEM_infer(self$estimate, B, verbose = TRUE)
-      self$infer_estimate <- boot_out
-
-
-    },
-
-    #' @description
-    #' Fit the model using Maximum Likelihood (ML) estimation
-    #'
-    #' @param initialization Character string or numeric vector specifying initialization method:
-    #'   \itemize{
-    #'     \item \code{"svd"} (default): Use SVD estimates as starting values
-    #'     \item \code{"random"}: Use random starting values
-    #'     \item \code{numeric vector}: Use provided values as starting parameters
-    #'       (must have length equal to total number of model parameters)
-    #'   }
-    #' @param tol Numeric tolerance for convergence in optimization (default: 1e-8)
-    #'
-    #' @details
-    #' Uses numerical optimization (via SOLNP) to minimize the ML fit function.
-    #' SVD initialization is recommended for better convergence.
-    #'
-    #' @return Invisible self (for method chaining)
-    #' @keywords internal
-    fit_ml = function(initialization = 'svd', tol) {
-
-      len_theta <- sum(self$model$lengths_theta)
-
-      initial_params <- if (is.numeric(initialization)) {
-        if (length(initialization) != len_theta) {
-          stop("Length of provided initial parameters does not match the number of model parameters. ",
-               "Expected length: ", len_theta)
-        }
-        initialization
-      } else {
-        initialization <- match.arg(initialization, c('svd', 'random'))
-        switch(initialization,
-          svd = {
-            self$fit_svd()
-            self$estimator <- 'ml'
-            self$estimate$theta
-          },
-          random = runif(len_theta)
-        )
-      }
-
-      ml_sol <- mlSEM(initial_params, self$data$cov_S, self$model, tol)
-      theta_ml <- ml_sol$pars
-      self$estimate <- lvm_ml(x = theta_ml, model = self$model, jac = F)
-      self$estimate$T_LS <- d_LS(self$data$cov_S, self$estimate$SIGMA_IMPLIED)
-
-      var_MVs <- lapply(self$data$data, function(x) diag(cov2(x, bias = self$model$bias)))
-      std_lambda <- mapply("/", self$estimate$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
-      self$estimate$std_lambda <- std_lambda
-
-      self$estimate$theta <- theta_ml
-      self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
-      self$gof$F <- F1(theta_ml, self$data$cov_S, self$model)
-
-
-    },
-
-
-    #' @description
-    #' Perform asymptotic statistical inference for ML estimates
-    #'
-    #' @details
-    #' Computes standard errors using the inverse of the information matrix.
-    #' Provides z-statistics and p-values based on asymptotic normality.
-    #'
-    #' @return Invisible self (for method chaining)
-    ml_infer = function(){
-      theta_ml <- self$estimate$theta
-      S <- self$data$cov_S
-      N <- self$data$n_row
-
-      ml_infer_estimate <- mlSEM_infer(theta_ml, S, self$model, N, self$estimate)
-
-
-      self$infer_estimate <- ml_infer_estimate$estimate
-      self$infer_estimate$VCOV <- ml_infer_estimate$VCOV
-      self$infer_estimate$vcov_effect <- ml_infer_estimate$vcov_effect
-    },
-
-
-
-
-
-
-    #' @description
-    #' Calculate goodness-of-fit statistics
-    #'
-    #' @param B Integer number of bootstrap replications for Bollen-Stine test (default: 1000).
-    #'   Only used when estimator is "svd".
-    #'
-    #' @details
-    #' Computes multiple fit indices including:
-    #' \itemize{
-    #'   \item Reliability coefficients for reflective blocks (Dillon)
-    #'   \item Chi-square test statistic
-    #'   \item CFI (Comparative Fit Index)
-    #'   \item TLI (Tucker-Lewis Index)
-    #'   \item RMSEA (Root Mean Square Error of Approximation)
-    #'   \item SRMR (Standardized Root Mean Square Residual)
-    #'   \item Information criteria (AIC, BIC, SABIC)
-    #'   \item Bollen-Stine bootstrap p-value (for SVD only)
-    #' }
-    #'
-    #' @return Invisible self (for method chaining)
-
-    get_gof = function(B = 1000){
-
-      estimator <- self$estimator
-
-      res_gof <- list()
-
-      # reliability only for relflective block (Dillon)
-      if (sum(self$model$mode == "reflective") > 0){
-        res_reliability <- reliability('Dillon', self$estimate$lambda, self$estimate$residual_variance)
-        res_gof$reliability <- res_reliability
-      }
-
-
-      if (estimator == 'svd' && is.null(self$gof$bollen_stine)){
-        bollen_stine <- svdSEM_gof(self$estimate, B)
-        res_gof$bollen_stine <- bollen_stine
-      } else if (estimator == 'ml'){
-        p <- self$model$p
-        q <- self$model$q
-        r <- self$model$r
-        F <- self$gof$F
-        N <- self$data$n_row
-        S <- self$data$cov_S
-        Sigma <- self$estimate$SIGMA_IMPLIED
-
-        chi2 <- chi2sem(p, q, r, F, N)
-        res_gof$chi2 <- chi2
-
-        # basline test
-        S_baseline <- diag(diag(S))
-        F_baseline <- log(det(S_baseline)) + sum(diag(S%*%solve(S_baseline))) - log(det(S)) - NCOL(S)
-        baseline <- chi2sem(p, p, 0, F_baseline, N)
-        res_gof$baseline <- baseline
-
-
-        cfi <- 1 - (max(chi2$test - chi2$df, 0)) /
-             (max(baseline$test - baseline$df, chi2$test - chi2$df, 0))
-
-        tli <- ( (baseline$test /  baseline$df) - (chi2$test / chi2$df) ) /
-               ( (baseline$test /  baseline$df) - 1 )
-
-        res_gof$cfi <- cfi
-        res_gof$tli <- tli
-
-
-        # rmsea
-        RMSEA <- rmseasem(chi2$test, chi2$df, N)
-        res_gof$RMSEA <- RMSEA
-        SRMR <- srmrsem(S, Sigma)
-        res_gof$SRMR <- SRMR
-
-        # loglik
-        loglik_H0 <- -(N/2)*(p*log(2*pi) + log(det(Sigma)) + sum(diag(solve(Sigma) %*% S)))
-        res_gof$info_criteria$loglik_H0 <- loglik_H0
-        loglik_H1 <- -(N/2)*(p*log(2*pi) + log(det(S)) + sum(diag(solve(S) %*% S)))
-        res_gof$info_criteria$loglik_H1 <- loglik_H1
-        AIC <- -2 * loglik_H0 + 2 * q
-        res_gof$info_criteria$AIC <- AIC
-        BIC <- -2 * loglik_H0 + q * log(N)
-        res_gof$info_criteria$BIC <- BIC
-        SABIC <- -2 * loglik_H0 + q * log((N + 2) / 24)
-        res_gof$info_criteria$SABIC <- SABIC
-
-      }
-      self$gof <- c(self$gof, res_gof)
-
-    },
 
 
 
@@ -369,21 +145,19 @@ SemFC <- R6Class(
       estimator <- self$estimator
       self$boot_rep <- B
       if (estimator == 'svd'){
-        self$fit_svd()
+        private$fit_svd()
 
       } else if(estimator == 'ml'){
-        self$fit_ml(initialization, tol)
-        self$get_gof()
+        private$fit_ml(initialization, tol)
+        private$get_gof()
       }
       if (infer){
         if (estimator == 'svd'){
-          boot_out <- svdsem_infer(self$estimate, B, verbose = TRUE)
-          self$infer_estimate <- boot_out$result$infer
-          self$gof$bollen_stine <- boot_out$gof
-          self$get_gof()
+          private$svd_infer(B, verbose = TRUE)
+          private$get_gof()
         }
       else if(estimator == 'ml'){
-          self$ml_infer()
+          private$ml_infer()
         }
       }
 
@@ -485,16 +259,12 @@ SemFC <- R6Class(
       gamma <- estimate$gamma
       omega <- estimate$omega
 
-      if (standardized){
-        lambda$std.all <- estimate$std_lambda$est
-        residualvariance$std.all <- 1- (lambda[lambda$rhs %in% residualvariance$rhs, "std.all"])^2
-        beta$std.all <- beta$est
-        gamma$std.all <- gamma$est
-        omega$std.all <- NA
-      }
 
       table_estimate <- rbind(lambda, omega, beta, gamma, residualvariance)
       rownames(table_estimate) <- NULL
+      if (!standardized){
+        table_estimate$std.all <- NULL
+      }
 
       return(table_estimate)
 
@@ -532,11 +302,199 @@ SemFC <- R6Class(
     #' }
     #'
     check_improper = function(){
-      if (is.null(self$estimate)){
-        stop("Model must be fitted before checking for improper solutions. Please run fit() first.")
-      }
       return(improper(self$estimate))
     }
+  ),
+
+  private = list(
+
+    # ' @description
+    # ' Fit the model using Singular Value Decomposition (SVD) method
+    # '
+    # ' @details
+    # ' Estimates model parameters using SVD-based approach which is computationally
+    # ' efficient and provides good starting values for ML estimation.
+    # '
+    # ' @return Invisible self (for method chaining)
+    # ' @keywords internal
+    fit_svd = function() {
+      self$estimator <- 'svd'
+      svd_result <- svdSEM(self$data$data,
+                           self$model$relation_matrix,
+                           self$model$scale,
+                           self$model$mode,
+                           self$model$bias)
+
+      self$estimate <- svd_result
+      theta_svd <- parameters_svd(lambda = svd_result$lambda,
+                                  P_EXO = svd_result$P_EXO,
+                                  G = svd_result$gamma,
+                                  B = svd_result$beta,
+                                  P_ENDO = svd_result$P_ENDO,
+                                  residual_variance = svd_result$residual_variance,
+                                  S_composites = self$data$S_diag_composites,
+                                  model = self$model)
+
+      self$estimate$theta <- theta_svd
+      self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
+      self$gof$F <- F1(theta_svd, self$data$cov_S, self$model)
+    },
+    #
+    # ' @description
+    # ' Perform statistical inference for SVD estimates using bootstrap
+    # '
+    # ' @param B Integer number of bootstrap replications (default: 1000)
+    # ' @param verbose Logical indicating whether to print progress messages (default: TRUE)
+    # '
+    # ' @details
+    # ' Uses non-parametric bootstrap to estimate standard errors, confidence intervals,
+    # ' and p-values for all model parameters.
+    # '
+    # ' @return Invisible self (for method chaining)
+    # ' @keywords internal
+    svd_infer = function(B = 1000, verbose = TRUE){
+
+      boot_out <- svdsem_infer(self$estimate, B, verbose = TRUE)
+      self$infer_estimate <- boot_out$result$infer
+      self$gof$bollen_stine <- boot_out$gof
+
+
+    },
+
+    # ' @description
+    # ' Fit the model using Maximum Likelihood (ML) estimation
+    # '
+    # ' @param initialization Character string or numeric vector specifying initialization method:
+    # '   \itemize{
+    # '     \item \code{"svd"} (default): Use SVD estimates as starting values
+    # '     \item \code{"random"}: Use random starting values
+    # '     \item \code{numeric vector}: Use provided values as starting parameters
+    # '       (must have length equal to total number of model parameters)
+    # '   }
+    # ' @param tol Numeric tolerance for convergence in optimization (default: 1e-8)
+    # '
+    # ' @details
+    # ' Uses numerical optimization (via SOLNP) to minimize the ML fit function.
+    # ' SVD initialization is recommended for better convergence.
+    # '
+    # ' @return Invisible self (for method chaining)
+    # ' @keywords internal
+    fit_ml = function(initialization = 'svd', tol) {
+
+      len_theta <- sum(self$model$lengths_theta)
+
+      initial_params <- if (is.numeric(initialization)) {
+        if (length(initialization) != len_theta) {
+          stop("Length of provided initial parameters does not match the number of model parameters. ",
+               "Expected length: ", len_theta)
+        }
+        initialization
+      } else {
+        initialization <- match.arg(initialization, c('svd', 'random'))
+        switch(initialization,
+          svd = {
+            private$fit_svd()
+            self$estimator <- 'ml'
+            self$estimate$theta
+          },
+          random = runif(len_theta)
+        )
+      }
+
+      ml_sol <- mlSEM(initial_params, self$data$cov_S, self$model, tol)
+      theta_ml <- ml_sol$pars
+      self$estimate <- lvm_ml(x = theta_ml, model = self$model, jac = F)
+      self$estimate$T_LS <- d_LS(self$data$cov_S, self$estimate$SIGMA_IMPLIED)
+
+      var_MVs <- lapply(self$data$data, function(x) diag(cov2(x, bias = self$model$bias)))
+      std_lambda <- mapply("/", self$estimate$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
+      self$estimate$std_lambda <- std_lambda
+
+      self$estimate$theta <- theta_ml
+      self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
+      self$gof$F <- F1(theta_ml, self$data$cov_S, self$model)
+
+
+    },
+
+
+    # ' @description
+    # ' Perform asymptotic statistical inference for ML estimates
+    # '
+    # ' @details
+    # ' Computes standard errors using the inverse of the information matrix.
+    # ' Provides z-statistics and p-values based on asymptotic normality.
+    # '
+    # ' @return Invisible self (for method chaining)
+    # ' @keywords internal
+    ml_infer = function(){
+      theta_ml <- self$estimate$theta
+      S <- self$data$cov_S
+      N <- self$data$n_row
+
+      ml_infer_estimate <- mlSEM_infer(theta_ml, S, self$model, N, self$estimate)
+
+
+      self$infer_estimate <- ml_infer_estimate$estimate
+      self$infer_estimate$VCOV <- ml_infer_estimate$VCOV
+      self$infer_estimate$vcov_effect <- ml_infer_estimate$vcov_effect
+    },
+
+
+    # ' @description
+    # ' Calculate goodness-of-fit statistics
+    # '
+    # ' @param B Integer number of bootstrap replications for Bollen-Stine test (default: 1000).
+    # '   Only used when estimator is "svd".
+    # '
+    # ' @details
+    # ' Computes multiple fit indices including:
+    # ' \itemize{
+    # '   \item Reliability coefficients for reflective blocks (Dillon)
+    # '   \item Chi-square test statistic
+    # '   \item CFI (Comparative Fit Index)
+    # '   \item TLI (Tucker-Lewis Index)
+    # '   \item RMSEA (Root Mean Square Error of Approximation)
+    # '   \item SRMR (Standardized Root Mean Square Residual)
+    # '   \item Information criteria (AIC, BIC, SABIC)
+    # '   \item Bollen-Stine bootstrap p-value (for SVD only)
+    # ' }
+    # '
+    # ' @return Invisible self (for method chaining)
+    # ' @keywords internal
+
+    get_gof = function(B = 1000){
+
+      estimator <- self$estimator
+
+      res_gof <- list()
+
+      # reliability only for relflective block (Dillon)
+      if (sum(self$model$mode == "reflective") > 0){
+        res_reliability <- reliability('Dillon', self$estimate$lambda, self$estimate$residual_variance)
+        res_gof$reliability <- res_reliability
+      }
+
+
+      if (estimator == 'svd' && is.null(self$gof$bollen_stine)){
+        bollen_stine <- svdSEM_gof(self$estimate, B)
+        res_gof$bollen_stine <- bollen_stine
+      } else if (estimator == 'ml'){
+        p <- self$model$p
+        q <- self$model$q
+        r <- self$model$r
+        F <- self$gof$F
+        N <- self$data$n_row
+        S <- self$data$cov_S
+        Sigma <- self$estimate$SIGMA_IMPLIED
+
+        res_gof <- c(res_gof, semML_gof(p, q, r, F, N, S, Sigma))
+
+      }
+      self$gof <- c(self$gof, res_gof)
+
+    }
+
 
 
 

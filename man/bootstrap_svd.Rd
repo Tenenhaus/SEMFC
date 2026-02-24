@@ -2,73 +2,57 @@
 % Please edit documentation in R/bootstrap_svd.R
 \name{bootstrap_svd}
 \alias{bootstrap_svd}
-\title{Statistical Inference  and Global Fit Assessment for svdSEM Models}
+\title{Bootstrap Inference and Goodness-of-Fit Test for SVD-Estimated SEM Models}
 \usage{
 bootstrap_svd(fit, B = 100, verbose = TRUE)
 }
 \arguments{
-\item{fit}{A svdSEM fit object containing the fitted model information}
+\item{fit}{A svdSEM fit object containing the fitted model information, including
+parameter estimates, model-implied covariance matrix, and data blocks.}
 
-\item{B}{Number of bootstrap replications (default: 100)}
+\item{B}{Integer specifying the number of bootstrap replications (default: 100).}
 
-\item{verbose}{Logical indicating whether to display a progress bar (default: TRUE)}
+\item{verbose}{Logical indicating whether to display a progress bar during
+bootstrap resampling (default: \code{TRUE}).}
 }
 \value{
-A list containing:
-\describe{
-\item{infer}{A list containing statistical inference results with the following components:
+A list containing bootstrap replications for all parameters:
 \itemize{
-\item \code{out}: List of bootstrap replications for lambda, standardized loadings,
-beta, gamma, residual variance, total effects, indirect effects, and omega
-\item \code{lambda}: Data frame with loadings, standard errors, z-statistics, and p-values
-\item \code{std_lambda}: Data frame with standardized loadings, standard errors,
-z-statistics, and p-values
-\item \code{beta}: Data frame with structural coefficients between latent variables,
-standard errors, z-statistics, and p-values
-\item \code{gamma}: Data frame with regression coefficients from observed to latent
-variables, standard errors, z-statistics, and p-values
-\item \code{residual_variance}: Data frame with residual variances, standard errors,
-z-statistics, and p-values
-\item \code{total_effects}: Data frame with total effects, standard errors,
-z-statistics, and p-values
-\item \code{indirect_effects}: Data frame with indirect effects, standard errors,
-z-statistics, and p-values
-\item \code{omega}: Data frame with error variances for latent variables,
-standard errors, z-statistics, and p-values
-\item \code{improper}: Number of improper bootstrap solutions (negative eigenvalues)
-}
-}
-\item{gof}{A list containing goodness-of-fit test results with the following components:
-\itemize{
-\item \code{T_LS}: The observed test statistic
-\item \code{Tb_LS}: Vector of bootstrap test statistics
-\item \code{pval}: The p-value of the fit test
-\item \code{improper}: Number of improper solutions (negative eigenvalues)
-}
-}
+\item \code{boot_lambda}: Matrix of bootstrap replications for factor loadings.
+\item \code{boot_std_loadings}: Matrix of bootstrap replications for standardized loadings.
+\item \code{boot_beta}: Matrix of bootstrap replications for structural coefficients (endogenous).
+\item \code{boot_gamma}: Matrix of bootstrap replications for regression coefficients (exogenous).
+\item \code{boot_residual_variance}: Matrix of bootstrap replications for residual variances.
+\item \code{boot_total_effects}: Matrix of bootstrap replications for total effects.
+\item \code{boot_indirect_effects}: Matrix of bootstrap replications for indirect effects.
+\item \code{boot_omega}: Matrix of bootstrap replications for formative block weights.
+\item \code{boot_Tb_LS}: Vector of bootstrap test statistics for goodness-of-fit.
+\item \code{improper}: Integer count of improper bootstrap solutions (negative eigenvalues).
 }
 }
 \description{
-This function performs bootstrap-based statistical inference for svdSEM models,
-computing standard errors, z-statistics, and p-values for all model parameters
-including factor loadings, structural coefficients, and residual variances.
-And in the same way, performs a bootstrap test to assess the significance of the fit.
-The method is based on the Yuan & Hayashi (2003) approach for data transformation.
+Performs bootstrap-based statistical inference for models estimated using the SVD method.
+Computes bootstrap distributions for all model parameters and conducts a Bollen-Stine
+bootstrap test for model fit assessment using the Yuan & Hayashi (2003) data transformation approach.
 }
 \details{
-The function uses bootstrap resampling to estimate the sampling distribution
-of all model parameters. Z-statistics are computed as parameter estimates divided by
-bootstrap standard errors, and p-values are calculated using a two-tailed normal test.
-Bootstrap samples with negative eigenvalues are considered improper and excluded from
-the analysis. In the same time, the function  transforms the data according to Yuan & Hayashi (2003),
-then performs bootstrap to estimate the empirical distribution of the test statistic.
-Solutions with negative eigenvalues are considered improper and excluded.
+The function performs two parallel bootstrap procedures:
+\enumerate{
+\item Standard bootstrap on original data for parameter inference
+\item Bollen-Stine bootstrap on transformed data for goodness-of-fit testing
+}
+
+The data transformation follows Yuan & Hayashi (2003). Bootstrap samples with
+negative eigenvalues are flagged as improper and excluded from standard error calculations.
 }
 \examples{
 \dontrun{
-bootstrap_results <- bootstrap_svd(fit, B = 100, bias = FALSE)
-print(bootstrap_results$infer$out$boot_lambda)
-print(bootstrap_results$gof$pval)
+boot_results <- bootstrap_svd(fit, B = 500, verbose = TRUE)
+# Access bootstrap distributions
+head(boot_results$boot_lambda)
+# Check improper solutions
+boot_results$improper
 }
 
 }
+\keyword{internal}
