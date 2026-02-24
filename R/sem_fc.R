@@ -409,7 +409,11 @@ SemFC <- R6Class(
       var_MVs <- lapply(self$data$data, function(x) diag(cov2(x, bias = self$model$bias)))
       std_lambda <- mapply("/", self$estimate$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
       self$estimate$std_lambda <- std_lambda
-
+      std_omega <- mapply(function(Sjj, lambda_j) solve(Sjj) %*% lambda_j,
+                         self$data$S_diag_composites, std_lambda[self$model$mode == "formative"],
+                         SIMPLIFY = FALSE)
+      names(std_omega) <- names(std_lambda[self$model$mode == "formative"])
+      self$estimate$std_omega <- std_omega
       self$estimate$theta <- theta_ml
       self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
       self$gof$F <- F1(theta_ml, self$data$cov_S, self$model)

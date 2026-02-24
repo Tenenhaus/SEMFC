@@ -111,6 +111,7 @@ format_estimates_table <- function(type, fit_component, fit_std_component = NULL
     switch(type,
       "lambda" = unlist(fit_std_component),
       "regression" = fit_std_component,
+      "omega" = unlist(fit_std_component),
       NA
     )
   } else {
@@ -229,6 +230,7 @@ formatting_estimate <- function(fit, se_list = list()){
   table_omega <- format_estimates_table(
     type = "omega",
     fit_component = fit$omega,
+    fit_std_component = fit$std_omega,
     se = se_list$sd_omega
   )
 

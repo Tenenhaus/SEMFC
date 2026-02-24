@@ -11,6 +11,7 @@
 #'   \item{a}{A list of J elements. Each element contains the first singular vector for each block.}
 #'   \item{lambda}{A list of loadings for each block.}
 #'   \item{std_lambda}{A list of standardized loadings for each block.}
+#'   \item{std_omega}{A list of standardized weights for formative blocks only.}
 #'   \item{omega}{A list of weights for formative blocks only.}
 #'   \item{gr}{A directed graph representing the structural model.}
 #'   \item{beta}{A matrix of structural coefficients among endogenous latent variables.}
@@ -73,6 +74,7 @@ svdSEM <- function(A, C, scale = TRUE,
 
     lambda <- list()
     omega <- list()
+    std_omega <- list()
     nb_ind <- NROW(A[[1]])
     J <- length(A)
 
@@ -146,6 +148,13 @@ svdSEM <- function(A, C, scale = TRUE,
     #standardized loadings     
     # Expected value : -1 <= cor(y_jh, eta_j) <=1
     std_lambda <- mapply("/", lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
+
+
+    for (j in which(mode == "formative")){
+        std_omega[[j]] <- solve(cov2(A[[j]], bias = bias))%*%std_lambda[[j]]
+    }
+    std_omega <- std_omega[!sapply(std_omega, is.null)]
+
     
     #residual variance    
     residual_variance <- mapply("-", var_MVs, lapply(lambda, function(x) x^2),
@@ -180,6 +189,7 @@ svdSEM <- function(A, C, scale = TRUE,
                 lambda = lambda,
                 std_lambda = std_lambda,
                 omega = omega,
+                std_omega = std_omega,
                 gr = lv$gr,
                 beta = lv$BETA,
                 gamma = lv$GAMMA,
