@@ -194,14 +194,17 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
 #' @keywords internal
 
 get_se_boot <- function(boot){
-  sd_lambda <- apply(boot$boot_lambda, 2, sd)
-  sd_std_loadings <- apply(boot$boot_std_loadings, 2, sd)
-  sd_beta <- apply(boot$boot_beta, 2, sd)
-  sd_gamma <- apply(boot$boot_gamma, 2, sd)
-  sd_residual_variance <- apply(boot$boot_residual_variance, 2, sd)
-  sd_total_effects <- apply(boot$boot_total_effects, 2, sd)
-  sd_indirect_effects <- apply(boot$boot_indirect_effects, 2, sd)
-  sd_omega <- apply(boot$boot_omega, 2, sd)
+
+  safe_sd <- function(x) if (is.null(x)) NA else apply(x, 2, sd)
+
+  sd_lambda <- safe_sd(boot$boot_lambda)
+  sd_std_loadings <- safe_sd(boot$boot_std_loadings)
+  sd_beta <- safe_sd(boot$boot_beta)
+  sd_gamma <- safe_sd(boot$boot_gamma)
+  sd_residual_variance <- safe_sd(boot$boot_residual_variance)
+  sd_total_effects <- safe_sd(boot$boot_total_effects)
+  sd_indirect_effects <- safe_sd(boot$boot_indirect_effects)
+  sd_omega <- safe_sd(boot$boot_omega)
 
   return(list(
     sd_lambda = sd_lambda,
