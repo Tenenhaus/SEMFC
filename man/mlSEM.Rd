@@ -4,24 +4,19 @@
 \alias{mlSEM}
 \title{Maximum Likelihood Estimation of Structural Equation Model}
 \usage{
-mlSEM(init, block_sizes, mode, S, lengths_parameter, which_exo_endo)
+mlSEM(init, S, model, tol = 1e-08)
 }
 \arguments{
 \item{init}{Numeric vector of initial parameter values for optimization.}
 
-\item{block_sizes}{Integer vector specifying the number of indicators in each block.}
-
-\item{mode}{Character vector indicating the measurement mode for each block
-("formative" or "reflective").}
-
 \item{S}{Sample covariance matrix of observed variables.}
 
-\item{lengths_parameter}{Integer vector specifying the length of each parameter
-group (loadings, exogenous correlations, gamma, beta, endogenous correlations,
-variance/covariance).}
+\item{model}{A list containing model specifications with the following elements:
+\describe{
+\item{mode}{Character vector indicating the measurement mode for each block}
+}}
 
-\item{which_exo_endo}{List containing indices and structure information for
-exogenous and endogenous latent variables (output from \code{ind_exo_endo()}).}
+\item{tol}{Numeric value specifying the optimization tolerance (default: 1e-8).}
 }
 \value{
 Object of class "solnp" containing optimization results:
@@ -39,6 +34,6 @@ measurement models with automatic constraint application for formative blocks.
 The function uses \code{solnp()} from the Rsolnp package to minimize the
 log-likelihood function \code{F1()}. When formative blocks are present (r > 0),
 equality constraints (\code{heq1()}) are automatically applied to ensure proper
-identification of the model. The optimization uses a tolerance of 1e-4
+identification of the model. The optimization uses a tolerance of 1e-8
 with trace output disabled.
 }

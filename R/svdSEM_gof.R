@@ -1,8 +1,3 @@
-# source("R/utils/scaleDataSet.R")
-
-#global fit & test of fit
-
-
 
 
 #' Global Fit Assessment for svdSEM Models

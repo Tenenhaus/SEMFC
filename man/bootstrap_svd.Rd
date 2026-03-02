@@ -15,28 +15,36 @@ bootstrap_svd(fit, B = 100, verbose = TRUE)
 }
 \value{
 A list containing:
-\item{infer}{A list containing statistical inference results:
+\describe{
+\item{infer}{A list containing statistical inference results with the following components:
 \itemize{
-\item \code{out}: List of bootstrap replications for lambda, standardized loadings, beta, gamma, residual variance, total effects, indirect effects, and omega
-\item \code{std_lambda}: Data frame with standardized loadings, standard errors, z-statistics, and p-values
-\item \code{beta}: Data frame with structural coefficients between latent variables, standard errors, z-statistics, and p-values
-\item \code{gamma}: Data frame with regression coefficients from observed to latent variables, standard errors, z-statistics, and p-values
-\item \code{residual_variance}: Data frame with residual variances, standard errors, z-statistics, and p-values
-\item \code{total_effects}: Data frame with total effects, standard errors, z-statistics, and p-values
-\item \code{indirect_effects}: Data frame with indirect effects, standard errors, z-statistics, and p-values
-\item \code{omega}: Data frame with error variances for latent variables, standard errors, z-statistics, and p-values
-
-\if{html}{\out{<div class="sourceCode">}}\preformatted{  \\item \code{improper}: Number of improper bootstrap solutions (negative eigenvalues) encountered
-\}
-}\if{html}{\out{</div>}}
-
+\item \code{out}: List of bootstrap replications for lambda, standardized loadings,
+beta, gamma, residual variance, total effects, indirect effects, and omega
+\item \code{lambda}: Data frame with loadings, standard errors, z-statistics, and p-values
+\item \code{std_lambda}: Data frame with standardized loadings, standard errors,
+z-statistics, and p-values
+\item \code{beta}: Data frame with structural coefficients between latent variables,
+standard errors, z-statistics, and p-values
+\item \code{gamma}: Data frame with regression coefficients from observed to latent
+variables, standard errors, z-statistics, and p-values
+\item \code{residual_variance}: Data frame with residual variances, standard errors,
+z-statistics, and p-values
+\item \code{total_effects}: Data frame with total effects, standard errors,
+z-statistics, and p-values
+\item \code{indirect_effects}: Data frame with indirect effects, standard errors,
+z-statistics, and p-values
+\item \code{omega}: Data frame with error variances for latent variables,
+standard errors, z-statistics, and p-values
+\item \code{improper}: Number of improper bootstrap solutions (negative eigenvalues)
 }
-\item{gof}{A list containing goodness-of-fit test results:
+}
+\item{gof}{A list containing goodness-of-fit test results with the following components:
 \itemize{
 \item \code{T_LS}: The observed test statistic
 \item \code{Tb_LS}: Vector of bootstrap test statistics
 \item \code{pval}: The p-value of the fit test
-\item \code{improper}: Number of improper solutions (negative eigenvalues) encountered
+\item \code{improper}: Number of improper solutions (negative eigenvalues)
+}
 }
 }
 }
@@ -62,6 +70,5 @@ bootstrap_results <- bootstrap_svd(fit, B = 100, bias = FALSE)
 print(bootstrap_results$infer$out$boot_lambda)
 print(bootstrap_results$gof$pval)
 }
-
 
 }

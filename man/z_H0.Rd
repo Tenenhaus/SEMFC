@@ -4,7 +4,7 @@
 \alias{z_H0}
 \title{Compute Z-Score and P-Value for Hypothesis Test}
 \usage{
-z_H0(x, S, X, C, mode, L)
+z_H0(x, S, X, model, L)
 }
 \arguments{
 \item{x}{Numeric vector of optimal parameter values.}
@@ -13,9 +13,11 @@ z_H0(x, S, X, C, mode, L)
 
 \item{X}{Data matrix (currently unused in function body).}
 
-\item{C}{Constraint-related parameter (currently unused in function body).}
-
-\item{mode}{Character vector indicating the measurement mode for each block.}
+\item{model}{List containing the model structure, including:
+\itemize{
+\item \code{mode}: Character vector indicating the measurement mode for each block.
+\item \code{block_sizes}: Integer vector specifying the number of indicators in each block.
+}}
 
 \item{L}{Contrast matrix defining the linear hypothesis.}
 }

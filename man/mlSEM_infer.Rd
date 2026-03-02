@@ -4,24 +4,24 @@
 \alias{mlSEM_infer}
 \title{Statistical Inference for ML-SEM}
 \usage{
-mlSEM_infer(x, S, block_sizes, mode, lengths_parameter, N, fit, which_exo_endo)
+mlSEM_infer(x, S, model, N, fit)
 }
 \arguments{
 \item{x}{Numeric vector of optimal parameter values.}
 
 \item{S}{Sample covariance matrix.}
 
-\item{block_sizes}{Integer vector specifying the number of indicators in each block.}
-
-\item{mode}{Character vector indicating the measurement mode for each block.}
-
-\item{lengths_parameter}{Integer vector specifying the length of each parameter group.}
+\item{model}{List containing the model structure, including:
+\itemize{
+\item \code{mode}: Character vector indicating the measurement mode for each block.
+\item \code{block_sizes}: Integer vector specifying the number of indicators in each block.
+\item \code{lengths_theta}: Integer vector specifying the length of each parameter group.
+}}
 
 \item{N}{Integer sample size.}
 
-\item{fit}{List containing model fit results from \code{lvm_ml()}.}
-
-\item{which_exo_endo}{List containing indices for exogenous/endogenous variables.}
+\item{fit}{List containing model fit results from \code{lvm_ml()}, including parameter estimates
+such as loadings, path coefficients, and residual variances.}
 }
 \value{
 List containing:

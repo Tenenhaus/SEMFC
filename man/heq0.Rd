@@ -17,3 +17,4 @@ Vector of equality constraints.
 \description{
 Restrictions for the minimization of the Loglikelihood function.
 }
+\keyword{internal}

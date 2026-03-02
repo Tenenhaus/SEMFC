@@ -1,6 +1,3 @@
-# Function that tranforms the data sets in the way proposed
-# by Yuan & Hayashi (2003)
-
 
 
 #' Scale Data Set Based on Covariance Matrices

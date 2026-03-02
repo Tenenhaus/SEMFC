@@ -12,7 +12,7 @@ parameters_svd(
   P_ENDO,
   residual_variance,
   S_composites,
-  mode
+  model
 )
 }
 \arguments{
@@ -58,10 +58,6 @@ handles both reflective and formative measurement models.
 \details{
 For formative blocks, the upper triangular part (including diagonal) of the
 empirical covariance matrix is included. For reflective blocks, only residual
-variances are included. This ordering must match the structure expected by
-\code{length_parameters_svd()} and reconstruction functions.
-}
-\seealso{
-\code{\link{length_parameters_svd}} for computing the expected vector length.
+variances are included.
 }
 \keyword{internal}

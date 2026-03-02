@@ -1,11 +1,5 @@
 
 
-# library(Rsolnp)
-#
-# source('R/ml_sem/F1.R')
-# source('R/ml_sem/h_constraints.R')
-
-
 #' Maximum Likelihood Estimation of Structural Equation Model
 #'
 #' Performs ML estimation of a structural equation model using constrained
@@ -13,15 +7,12 @@
 #' measurement models with automatic constraint application for formative blocks.
 #'
 #' @param init Numeric vector of initial parameter values for optimization.
-#' @param block_sizes Integer vector specifying the number of indicators in each block.
-#' @param mode Character vector indicating the measurement mode for each block
-#'   ("formative" or "reflective").
 #' @param S Sample covariance matrix of observed variables.
-#' @param lengths_parameter Integer vector specifying the length of each parameter
-#'   group (loadings, exogenous correlations, gamma, beta, endogenous correlations,
-#'   variance/covariance).
-#' @param which_exo_endo List containing indices and structure information for
-#'   exogenous and endogenous latent variables (output from `ind_exo_endo()`).
+#' @param model A list containing model specifications with the following elements:
+#'   \describe{
+#'     \item{mode}{Character vector indicating the measurement mode for each block}
+#'   }
+#' @param tol Numeric value specifying the optimization tolerance (default: 1e-8).
 #'
 #' @return Object of class "solnp" containing optimization results:
 #'   \item{pars}{Optimal parameter values.}
@@ -33,14 +24,15 @@
 #' The function uses `solnp()` from the Rsolnp package to minimize the
 #' log-likelihood function `F1()`. When formative blocks are present (r > 0),
 #' equality constraints (`heq1()`) are automatically applied to ensure proper
-#' identification of the model. The optimization uses a tolerance of 1e-4
+#' identification of the model. The optimization uses a tolerance of 1e-8
 #' with trace output disabled.
 #'
 #' @importFrom Rsolnp solnp
 #'
 #' @export
-mlSEM <- function (init, block_sizes, mode, S, lengths_parameter,which_exo_endo){
+mlSEM <- function (init, S, model, tol = 1e-08){
 
+  mode <- model$mode
   # number of formative blocks
   r <- sum(mode == "formative")
 
@@ -48,15 +40,13 @@ mlSEM <- function (init, block_sizes, mode, S, lengths_parameter,which_exo_endo)
 
   result <- solnp(pars = init,
                   fun=F1, eqfun=heq1,
-                  eqB = rep(0,r), S = S, block_sizes=block_sizes, mode=mode, lengths_parameter = lengths_parameter,
-                  which_exo_endo = which_exo_endo,
-                  control = list(trace = 0, tol = 1e-4))
+                  eqB = rep(0,r), S = S, model = model,
+                  control = list(trace = 0, tol = tol))
   }
   else{
     result <- solnp(pars = init,
-                    fun=F1, S = S, block_sizes=block_sizes, mode=mode, lengths_parameter = lengths_parameter,
-                    which_exo_endo = which_exo_endo,
-                    control = list(trace = 0, tol = 1e-4))
+                    fun=F1, S = S, model = model,
+                    control = list(trace = 0, tol = tol))
 
   }
 

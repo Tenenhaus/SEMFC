@@ -4,19 +4,13 @@
 \alias{information_matrix}
 \title{Compute Information Matrix for ML Estimation}
 \usage{
-information_matrix(x, block_sizes, mode, lengths_parameter, which_exo_endo)
+information_matrix(x, model)
 }
 \arguments{
 \item{x}{Numeric vector of model parameters.}
 
-\item{block_sizes}{Integer vector specifying the number of indicators in each block.}
-
-\item{mode}{Character vector indicating the measurement mode for each block
-("formative" or "reflective").}
-
-\item{lengths_parameter}{Integer vector specifying the length of each parameter group.}
-
-\item{which_exo_endo}{List containing indices for exogenous/endogenous variables.}
+\item{model}{List containing the model structure, including block sizes and
+other relevant information for the computation.}
 }
 \value{
 Symmetric information matrix of dimension length(x) × length(x).

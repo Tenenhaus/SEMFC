@@ -24,8 +24,10 @@ This function constructs a symmetric correlation matrix for a set of latent vari
 based on the parameter vector \code{x} and the starting index for correlation-related parameters.
 }
 \examples{
+\dontrun{
 latent_variables <- c("LV1", "LV2", "LV3")
 x <- c(0.5, 0.3, 0.2, 0.5, 0.4) # upper triangle values for a 3x3 matrix
 start_index <- 1
-get_correlation_coeff(x, latent_variables, start_index)
+get_correlation_coeff(x, latent_variables, start_index)}
 }
+\keyword{internal}

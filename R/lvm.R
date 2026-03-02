@@ -1,5 +1,4 @@
 
-
 #' Latent Variable Model (LVM) Estimation
 #'
 #' Estimates the parameters of a latent variable model (LVM) using the provided
@@ -140,19 +139,26 @@ lvm <- function(R, C){
     BETA[i, ] = replace(BETA[i, ], BETA[i, ] == 1, b[[i]][[1]])
     GAMMA[i, ] = replace(GAMMA[i, ], GAMMA[i , ] == 1, g[[i]][[1]])
     
-    if(igraph::is_dag(gr)){
-      PSI[i, i] = 1-t(bg[[i]])%*%R[c(Ji, Hi), c(Ji, Hi)]%*%bg[[i]]
-    }
+
   }
-  
+
+  PI = solve(diag(NROW(BETA))- BETA)
   if(!igraph::is_dag(gr)){
     PSI = (diag(NROW(BETA))- BETA)%*%R[J,J]%*%t(diag(NROW(BETA))- BETA) -
       GAMMA%*%R[H,H]%*%t(GAMMA)
-  }
-  
-  R2 = 1-diag(PSI)
+  } else {
+    D <- diag(diag(ncol(BETA)) - (PI%*%GAMMA%*%R[H, H]%*%t(GAMMA)%*%t(PI)))
+    diag_PSI <- drop(solve(PI*PI)%*%D)
+    PSI <- if(length(diag_PSI) == 1) {
+      matrix(diag_PSI, 1, 1)
+    } else {
+      diag(diag_PSI)
+    }
 
-  PI = solve(diag(NROW(BETA))- BETA)
+  }
+  dimnames(PSI) <- list(rownames(BETA), rownames(BETA))
+
+  R2 = 1-diag(PSI)
 
   R_LVM = matrix(0, NCOL(C), NCOL(C))
   
@@ -167,6 +173,8 @@ lvm <- function(R, C){
     R_LVM[J, H] = PI%*%GAMMA%*%R[H, H]
     R_LVM[J, J] = PI%*%(GAMMA%*%R[H, H]%*%t(GAMMA) + PSI)%*%t(PI)
   }
+
+  dimnames(R_LVM) <- list(rownames(C), rownames(C))
   
 
   return(list(gr = gr, 

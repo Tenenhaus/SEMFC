@@ -9,6 +9,8 @@ svdSEM(A, C, scale = TRUE, mode = rep("formative", length(A)), bias = FALSE)
 \arguments{
 \item{A}{A list that contains the \eqn{J} blocks of variables \eqn{X_1, X_2, ..., X_J}.}
 
+\item{C}{An adjacency matrix representing the structural model among latent variables.}
+
 \item{scale}{If scale = TRUE, each block is standardized to zero means and unit variances.}
 
 \item{mode}{a vector of lenght J indication the mode for each block formative or reflective.}
@@ -16,7 +18,32 @@ svdSEM(A, C, scale = TRUE, mode = rep("formative", length(A)), bias = FALSE)
 \item{bias}{A logical value for biaised or unbiaised estimator of the var/cov (default: bias = TRUE).}
 }
 \value{
-\item{a}{A list of \eqn{J} elements. Each element of \eqn{a} is a matrix that contains the first singular vector for each block.}
+A list containing the following elements:
+\describe{
+\item{a}{A list of J elements. Each element contains the first singular vector for each block.}
+\item{lambda}{A list of loadings for each block.}
+\item{std_lambda}{A list of standardized loadings for each block.}
+\item{omega}{A list of weights for formative blocks only.}
+\item{gr}{A directed graph representing the structural model.}
+\item{beta}{A matrix of structural coefficients among endogenous latent variables.}
+\item{gamma}{A matrix of structural coefficients from exogenous to endogenous latent variables.}
+\item{R2}{A vector of R-squared coefficients for endogenous latent variables.}
+\item{psi}{A variance-covariance matrix of structural errors.}
+\item{d}{A vector of disattenuation factors for each block.}
+\item{Ptilde}{An estimated correlation matrix among latent variables.}
+\item{P_EXO}{A correlation matrix of exogenous latent variables.}
+\item{P_ENDO}{A correlation matrix of endogenous latent variables.}
+\item{P_IMPLIED}{A model-implied correlation matrix for latent variables.}
+\item{SIGMA_IMPLIED}{A model-implied covariance matrix for observed variables.}
+\item{T_LS}{A model fit measure (least squares discrepancy).}
+\item{reliability_coef}{A vector of reliability coefficients for each block.}
+\item{residual_variance}{A list of residual variances for reflective blocks.}
+\item{blocks}{The input data (list of blocks).}
+\item{mode}{A vector of measurement modes for each block.}
+\item{bias}{A logical value indicating whether biased estimation was used.}
+\item{scale}{A logical value indicating whether data were standardized.}
+\item{C}{An adjacency matrix of the structural model.}
+}
 }
 \description{
 Structural Equation Modeling with Factors and Composites (svdSEM)

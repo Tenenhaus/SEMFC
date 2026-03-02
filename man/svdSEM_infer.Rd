@@ -43,3 +43,4 @@ print(inference_results$gamma)
 }
 
 }
+\keyword{internal}

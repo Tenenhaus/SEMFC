@@ -10,8 +10,8 @@ formatting_estimate(fit)
 \item{fit}{A fitted model object containing the following components:
 \itemize{
 \item \code{lambda}: A named vector of loadings.
-\item \code{gamma}: A matrix of path coefficients (non-zero values are used).
-\item \code{beta}: A matrix of regression coefficients (non-zero values are used).
+\item \code{gamma}: A matrix of path coefficients.
+\item \code{beta}: A matrix of regression coefficients.
 \item \code{residual_variance}: A vector of residual variances.
 \item \code{effect$total_effect}: A matrix of total effects (non-zero values are used).
 \item \code{effect$indirect_effect}: A matrix of indirect effects (non-zero values are used).

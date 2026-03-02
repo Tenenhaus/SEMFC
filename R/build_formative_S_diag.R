@@ -1,4 +1,3 @@
-
 #' Construct Symmetric Formative S Matrix
 #'
 #' This function builds a symmetric covariance matrix (S_composite_i) for a formative block,
@@ -7,16 +6,16 @@
 #' @param upper_values_composite_i A numeric vector containing the values for the upper
 #'   triangle (including the diagonal) of the symmetric matrix.
 #'
-#' @return A symmetric formative covariance matrix of dimensions `dim_block x dim_block`.
+#' @return A symmetric formative covariance matrix.
 #'
 #' @examples
+#' \dontrun{
 #' upper_values <- c(1, 0.3, 0.5, 1, 0.2, 1)
-#' dim_block <- 3
-#' build_formative_S_diag(upper_values, dim_block)
-#' @export
+#' build_formative_S_diag(upper_values)}
+#' @keywords internal
 
 
-build_formative_S_diag <- function(upper_values_composite_i, dim_block) {
+build_formative_S_diag <- function(upper_values_composite_i) {
 
 
   # dim of the matrix extracted from the length of the upper values

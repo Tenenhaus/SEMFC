@@ -32,9 +32,11 @@ This function generates a path coefficient matrix for endogenous and exogenous v
 based on the parameter vector \code{x} and the provided relationships between variables.
 }
 \examples{
+\dontrun{
 x <- c(0.8, 0.5, 0.3, 0.7, 0.8, 0.4)
 list_linked_exo_endo <- list(c(X1 = 1, X2 = 2), c(X3 = 3, X4 = 4))
 exo_or_endo_variable <- c(X1 = 1, X2 = 2, X3 = 3, X4 = 4)
 initial_start_index <- 1
-get_path_coeff(x, list_linked_exo_endo, exo_or_endo_variable, initial_start_index)
+get_path_coeff(x, list_linked_exo_endo, exo_or_endo_variable, initial_start_index)}
 }
+\keyword{internal}

@@ -12,15 +12,17 @@ X <- X_2
 
 set.seed(27)
 model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "svd")
-# model$fit_svd()
-# model$get_gof()
+
 model$fit(infer = T, B = 100)
 model$fit(infer = F)
-model$summary()
+model$summary(standardized = F, effect = T, all_measures = T)
+est = model$parameterEstimates(standardized = T)
 
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode)
-modelml$fit(infer=F)
-modelml$summary()
+modelml$fit(infer=T, tol=1e-04)
+modelml$fit(infer=F, tol=1e-04)
+modelml$summary(standardized = T, effect = T, all_measures = F)
+est = modelml$parameterEstimates()
 
 
 
@@ -28,7 +30,7 @@ modelml$summary()
 source('inst/model/model_ecsi.R')
 model_ecsi <- SemFC$new(data=A, relation_matrix = C_ecsi, mode=mode_ecsi, estimator = "ml")
 model_ecsi$fit(infer=T)
-model_ecsi$summary()
+model_ecsi$summary(effect = T)
 
 
 

@@ -1,25 +1,37 @@
-# #' Source Required R Files
-# #'
-# #' This function sources required R files for the svd-SEM implementation.
-# #'
-# #' @details
-# #' Sources two R files:
-# #' - lvm.R: Contains latent variable model functionality
-# #' - d_LS.R: Contains least squares calculation utilities
-# #'
 
-#
-# source("R/svd_sem/correction.R")
-# source("R/svd_sem/lvm.R")
-# source("R/utils/d_LS.R")
-# source("R/utils/scale2.R")
 
 #' @import Matrix
 #' @param A  A list that contains the \eqn{J} blocks of variables \eqn{X_1, X_2, ..., X_J}.
+#' @param C  An adjacency matrix representing the structural model among latent variables.
 #' @param scale  If scale = TRUE, each block is standardized to zero means and unit variances.
 #' @param bias A logical value for biaised or unbiaised estimator of the var/cov (default: bias = TRUE).
 #' @param mode a vector of lenght J indication the mode for each block formative or reflective.
-#' @return \item{a}{A list of \eqn{J} elements. Each element of \eqn{a} is a matrix that contains the first singular vector for each block.}
+#' @return A list containing the following elements:
+#' \describe{
+#'   \item{a}{A list of J elements. Each element contains the first singular vector for each block.}
+#'   \item{lambda}{A list of loadings for each block.}
+#'   \item{std_lambda}{A list of standardized loadings for each block.}
+#'   \item{omega}{A list of weights for formative blocks only.}
+#'   \item{gr}{A directed graph representing the structural model.}
+#'   \item{beta}{A matrix of structural coefficients among endogenous latent variables.}
+#'   \item{gamma}{A matrix of structural coefficients from exogenous to endogenous latent variables.}
+#'   \item{R2}{A vector of R-squared coefficients for endogenous latent variables.}
+#'   \item{psi}{A variance-covariance matrix of structural errors.}
+#'   \item{d}{A vector of disattenuation factors for each block.}
+#'   \item{Ptilde}{An estimated correlation matrix among latent variables.}
+#'   \item{P_EXO}{A correlation matrix of exogenous latent variables.}
+#'   \item{P_ENDO}{A correlation matrix of endogenous latent variables.}
+#'   \item{P_IMPLIED}{A model-implied correlation matrix for latent variables.}
+#'   \item{SIGMA_IMPLIED}{A model-implied covariance matrix for observed variables.}
+#'   \item{T_LS}{A model fit measure (least squares discrepancy).}
+#'   \item{reliability_coef}{A vector of reliability coefficients for each block.}
+#'   \item{residual_variance}{A list of residual variances for reflective blocks.}
+#'   \item{blocks}{The input data (list of blocks).}
+#'   \item{mode}{A vector of measurement modes for each block.}
+#'   \item{bias}{A logical value indicating whether biased estimation was used.}
+#'   \item{scale}{A logical value indicating whether data were standardized.}
+#'   \item{C}{An adjacency matrix of the structural model.}
+#' }
 #' @references Tenenhaus M., Tenenhaus A. and Groenen PJF (2017), Regularized generalized canonical correlation analysis: A framework for sequential multiblock component methods, Psychometrika, in press
 #' @title Structural Equation Modeling with Factors and Composites (svdSEM) 
 #' @examples
