@@ -5,7 +5,7 @@
 #' equation models, including out-of-range estimates and non-positive definite
 #' matrices.
 #'
-#' @param semfc A list of estimates, including:
+#' @param fit A list of estimates, including:
 #' \itemize{
 #'   \item \code{reliability_coef}: Reliability coefficients for each block
 #'   \item \code{P_IMPLIED}: Implied correlation matrix of latent variables
