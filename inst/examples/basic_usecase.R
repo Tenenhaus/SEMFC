@@ -18,6 +18,14 @@ model$fit(infer = F)
 model$summary(standardized = T, effect = T, all_measures = T)
 est = model$parameterEstimates(standardized = T)
 
+
+
+V = vcov_svd(model$model$block_sizes, 5, as.vector(model$estimate$lambda[[5]]), model$estimate$SIGMA_IMPLIED, model$estimate$SIGMA_IMPLIED)
+
+
+
+
+
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode)
 modelml$fit(infer=T, tol=1e-04)
 modelml$fit(infer=F, tol=1e-04)
