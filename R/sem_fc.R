@@ -499,6 +499,9 @@ SemFC <- R6Class(
     #'
     #'
     check_improper = function(){
+      if (is.null(self$estimate) || length(self$estimate) == 0L) {
+        stop("Model has not been fitted yet. Call `fit()` before `check_improper()`.", call. = FALSE)
+      }
       return(improper(self$estimate))
     }
   ),
@@ -551,7 +554,7 @@ SemFC <- R6Class(
     # ' @keywords internal
     svd_infer = function(B = 1000, verbose = TRUE){
 
-      boot_out <- svdsem_infer(self$estimate, B, verbose = TRUE)
+      boot_out <- svdsem_infer(self$estimate, B, verbose = verbose)
       self$infer_estimate <- boot_out$result$infer
       self$gof$bollen_stine <- boot_out$gof
 

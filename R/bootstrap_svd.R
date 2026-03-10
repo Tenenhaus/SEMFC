@@ -125,9 +125,9 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                             )
                           }
                           if (!any(eigen(fit_bs_b$Ptilde)$values<=0)){
-                            res$Tb_LS <- NA
-                          }else{
                             res$Tb_LS <- d_LS(S_bs, fit_bs_b$SIGMA_IMPLIED)
+                          }else{
+                            res$Tb_LS <- NA
                           }
 
                           return(res)
@@ -144,6 +144,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
 
   boot_Tb_LS <- unlist(L[9, ])
   improper <- sum(is.na(L[1, ]))
+  improper_gof <- sum(is.na(L[9, ]))
 
 
 
@@ -157,7 +158,8 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
     boot_indirect_effects = boot_indirect_effects,
     boot_omega = boot_omega,
     boot_Tb_LS = boot_Tb_LS,
-    improper = improper
+    improper = improper,
+    improper_gof = improper_gof
   )
 
 
