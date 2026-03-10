@@ -19,44 +19,206 @@ This class provides a complete framework for SEM analysis including:
 }
 }
 \examples{
-\dontrun{
-# Create relation matrix
-rel_matrix <- matrix(0, 3, 3)
-rel_matrix[1, 3] <- 1
-rel_matrix[2, 3] <- 1
+data("ECSI")
+ECSI = ECSI/10
+A = list(IMAG = ECSI[, 1:5],
+        CUEX = ECSI[, 6:8],
+        PERQ = ECSI[, 9:15],
+        PERV = ECSI[, 16:17],
+        CUSA = ECSI[, 18:20],
+        CUSCO = ECSI[, 21, drop = FALSE],
+        CUSL = ECSI[, 22:24])
 
-# Fit model
-model <- SemFC$new(
-  data = my_data,
-  relation_matrix = rel_matrix,
-  mode = c("reflective", "reflective", "reflective"),
-  scale = TRUE,
-  bias = FALSE
-)
-model$fit(estimator = "svd", B = 1000)
-model$summary()
-}
+
+C <- matrix(c(0, 1, 0, 0, 1, 0, 1,
+             0, 0, 1, 1, 1, 0, 0,
+             0, 0, 0, 1, 1, 0, 0,
+             0, 0, 0, 0, 1, 0, 0,
+             0, 0, 0, 0, 0, 1, 1,
+             0, 0, 0, 0, 0, 0, 1,
+             0, 0, 0, 0, 0, 0, 0), 7, 7, byrow = TRUE)
+
+colnames(C) = rownames(C) = names(A)
+
+mode = rep("reflective", 7) ; mode[6] = "formative"
+
+sem_model <- SemFC$new(data = A,
+relation_matrix = C,
+mode = mode,
+scale = FALSE,
+estimator = "svd")
+
+sem_model$fit(infer = TRUE, B = 100)
+
+sem_model$summary(standardized = TRUE, effect = TRUE, all_measures = TRUE)
+
+
+estimates <- sem_model$parameterEstimates(standardized = TRUE)
+
+
+
+
+## ------------------------------------------------
+## Method `SemFC$new`
+## ------------------------------------------------
+
+
+data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
+
+sem_model <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
+
 
 ## ------------------------------------------------
 ## Method `SemFC$fit`
 ## ------------------------------------------------
 
-\dontrun{
-model$fit(estimator = "svd", B = 1000)
-model$fit(estimator = "ml", B = 500, initialization = "svd")
-}
+data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
+
+sem_model_svd <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
+
+sem_model_svd$fit(infer = TRUE, B = 100)
+
+sem_model_ml <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "ml")
+
+sem_model_ml$fit(infer = TRUE, initialization = "svd", tol = 1e-04)
+
+
+
+## ------------------------------------------------
+## Method `SemFC$summary`
+## ------------------------------------------------
+
+data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
+
+sem_model <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
+
+sem_model$fit(infer = TRUE, B = 100)
+
+sem_model$summary(standardized = TRUE, effect = TRUE, all_measures = TRUE)
 
 ## ------------------------------------------------
 ## Method `SemFC$parameterEstimates`
 ## ------------------------------------------------
 
-\dontrun{
-model$fit(infer = TRUE)
-model$parameterEstimates()
-model$parameterEstimates(standardized = TRUE)
+data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
+
+sem_model <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
+
+sem_model$fit(infer = TRUE, B = 100)
+
+
+
+estimates <- sem_model$parameterEstimates(standardized = TRUE)
+
+
+## ------------------------------------------------
+## Method `SemFC$check_improper`
+## ------------------------------------------------
+
+data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
+
+sem_model <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
+
+sem_model$fit(infer = TRUE, B = 100)
+
+improper_results <- sem_model$check_improper()
+
+
 }
-}
-\keyword{internal}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
@@ -88,13 +250,59 @@ model$parameterEstimates(standardized = TRUE)
 \item \code{bias}: Logical indicating bias correction in covariance estimation
 }}
 
-\item{\code{estimate}}{List containing all estimated model parameters}
+\item{\code{estimate}}{List containing all estimated model parameters:
+\itemize{
+\item \code{lambda}: List of loading vectors for each block
+\item \code{omega}: List of composite weight vectors for formative blocks
+\item \code{beta}: Matrix of structural paths between endogenous variables
+\item \code{gamma}: Matrix of structural paths from exogenous to endogenous variables
+\item \code{residual_variance}: List of residual variances for each observed variable
+\item \code{P_EXO}: Correlation matrix of exogenous latent variables
+\item \code{P_ENDO}: Correlation matrix of endogenous latent variables
+\item \code{P_IMPLIED}: Implied correlation matrix of all latent variables
+\item \code{SIGMA_IMPLIED}: Implied covariance matrix of observed variables
+\item \code{std_lambda}: List of standardized loadings for each block
+\item \code{std_omega}: List of standardized composite weights for formative blocks
+\item \code{psi}: Residual covariance matrix of latent variables
+\item \code{R2}: Named vector of R-squared values for endogenous latent variables
+\item \code{T_LS}: Least squares fit function value
+\item \code{theta}: Numeric vector of all free parameters
+\item \code{effect}: List of total and indirect effects between latent variables
+\item \code{Ptilde}: First-step correlation matrix estimate (SVD only)
+}}
 
-\item{\code{infer_estimate}}{Data frame containing inference results (estimates, SE, z-values, p-values)}
+\item{\code{infer_estimate}}{List containing inference results for all parameters:
+\itemize{
+\item \code{lambda}: Data frame of loadings with SE, z-values, p-values and CI
+\item \code{omega}: Data frame of composite weights with SE, z-values, p-values and CI
+\item \code{beta}: Data frame of structural paths (endo) with SE, z-values, p-values and CI
+\item \code{gamma}: Data frame of structural paths (exo) with SE, z-values, p-values and CI
+\item \code{residual_variance}: Data frame of residual variances with SE, z-values, p-values and CI
+\item \code{total_effects}: Data frame of total effects with SE, z-values, p-values and CI
+\item \code{indirect_effects}: Data frame of indirect effects with SE, z-values, p-values and CI
+\item \code{VCOV}: Variance-covariance matrix of parameter estimates (ML only)
+\item \code{vcov_effect}: Variance-covariance matrix of effect estimates (ML only)
+}}
 
 \item{\code{boot_rep}}{Integer number of bootstrap replications}
 
-\item{\code{gof}}{List containing goodness-of-fit statistics}
+\item{\code{gof}}{List containing goodness-of-fit statistics:
+\itemize{
+\item \code{F}: Value of the fit function at the optimal solution
+\item \code{reliability}: Named vector of reliability coefficients (Dillon-Goldstein rho) for reflective blocks
+\item \code{chi2}: Chi-square test statistic
+\item \code{df}: Degrees of freedom for chi-square test
+\item \code{pvalue}: P-value of the chi-square test
+\item \code{CFI}: Comparative Fit Index
+\item \code{TLI}: Tucker-Lewis Index
+\item \code{RMSEA}: Root Mean Square Error of Approximation
+\item \code{RMSEA_CI}: 90\\% confidence interval for RMSEA
+\item \code{SRMR}: Standardized Root Mean Square Residual
+\item \code{AIC}: Akaike Information Criterion
+\item \code{BIC}: Bayesian Information Criterion
+\item \code{SABIC}: Sample-size Adjusted BIC
+\item \code{bollen_stine}: Bollen-Stine bootstrap p-value (SVD only)
+}}
 }
 \if{html}{\out{</div>}}
 }
@@ -102,11 +310,6 @@ model$parameterEstimates(standardized = TRUE)
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-SemFC-new}{\code{SemFC$new()}}
-\item \href{#method-SemFC-fit_svd}{\code{SemFC$fit_svd()}}
-\item \href{#method-SemFC-svd_infer}{\code{SemFC$svd_infer()}}
-\item \href{#method-SemFC-fit_ml}{\code{SemFC$fit_ml()}}
-\item \href{#method-SemFC-ml_infer}{\code{SemFC$ml_infer()}}
-\item \href{#method-SemFC-get_gof}{\code{SemFC$get_gof()}}
 \item \href{#method-SemFC-fit}{\code{SemFC$fit()}}
 \item \href{#method-SemFC-summary}{\code{SemFC$summary()}}
 \item \href{#method-SemFC-parameterEstimates}{\code{SemFC$parameterEstimates()}}
@@ -118,7 +321,7 @@ model$parameterEstimates(standardized = TRUE)
 \if{html}{\out{<a id="method-SemFC-new"></a>}}
 \if{latex}{\out{\hypertarget{method-SemFC-new}{}}}
 \subsection{Method \code{new()}}{
-Create a new SemFC object and initialize model parameters
+Initialize SemFC object with data and model specification
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SemFC$new(
   data,
@@ -153,137 +356,36 @@ estimation (default: FALSE)}
 \subsection{Returns}{
 A new \code{SemFC} object
 }
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-fit_svd"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-fit_svd}{}}}
-\subsection{Method \code{fit_svd()}}{
-Fit the model using Singular Value Decomposition (SVD) method
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit_svd()}\if{html}{\out{</div>}}
-}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{
+data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
 
-\subsection{Details}{
-Estimates model parameters using SVD-based approach which is computationally
-efficient and provides good starting values for ML estimation.
-}
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
 
-\subsection{Returns}{
-Invisible self (for method chaining)
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-svd_infer"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-svd_infer}{}}}
-\subsection{Method \code{svd_infer()}}{
-Perform statistical inference for SVD estimates using bootstrap
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$svd_infer(B = 1000, verbose = TRUE)}\if{html}{\out{</div>}}
-}
+sem_model <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{B}}{Integer number of bootstrap replications (default: 1000)}
-
-\item{\code{verbose}}{Logical indicating whether to print progress messages (default: TRUE)}
 }
 \if{html}{\out{</div>}}
-}
-\subsection{Details}{
-Uses non-parametric bootstrap to estimate standard errors, confidence intervals,
-and p-values for all model parameters.
+
 }
 
-\subsection{Returns}{
-Invisible self (for method chaining)
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-fit_ml"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-fit_ml}{}}}
-\subsection{Method \code{fit_ml()}}{
-Fit the model using Maximum Likelihood (ML) estimation
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit_ml(initialization = "svd", tol)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{initialization}}{Character string or numeric vector specifying initialization method:
-\itemize{
-\item \code{"svd"} (default): Use SVD estimates as starting values
-\item \code{"random"}: Use random starting values
-\item \code{numeric vector}: Use provided values as starting parameters
-(must have length equal to total number of model parameters)
-}}
-
-\item{\code{tol}}{Numeric tolerance for convergence in optimization (default: 1e-8)}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-Uses numerical optimization (via SOLNP) to minimize the ML fit function.
-SVD initialization is recommended for better convergence.
-}
-
-\subsection{Returns}{
-Invisible self (for method chaining)
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-ml_infer"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-ml_infer}{}}}
-\subsection{Method \code{ml_infer()}}{
-Perform asymptotic statistical inference for ML estimates
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$ml_infer()}\if{html}{\out{</div>}}
-}
-
-\subsection{Details}{
-Computes standard errors using the inverse of the information matrix.
-Provides z-statistics and p-values based on asymptotic normality.
-}
-
-\subsection{Returns}{
-Invisible self (for method chaining)
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-get_gof"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-get_gof}{}}}
-\subsection{Method \code{get_gof()}}{
-Calculate goodness-of-fit statistics
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$get_gof(B = 1000)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{B}}{Integer number of bootstrap replications for Bollen-Stine test (default: 1000).
-Only used when estimator is "svd".}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-Computes multiple fit indices including:
-\itemize{
-\item Reliability coefficients for reflective blocks (Dillon)
-\item Chi-square test statistic
-\item CFI (Comparative Fit Index)
-\item TLI (Tucker-Lewis Index)
-\item RMSEA (Root Mean Square Error of Approximation)
-\item SRMR (Standardized Root Mean Square Residual)
-\item Information criteria (AIC, BIC, SABIC)
-\item Bollen-Stine bootstrap p-value (for SVD only)
-}
-}
-
-\subsection{Returns}{
-Invisible self (for method chaining)
-}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SemFC-fit"></a>}}
@@ -323,15 +425,41 @@ This is the main wrapper function that performs:
 }
 }
 
-\subsection{Returns}{
-Invisible self (for method chaining)
-}
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-model$fit(estimator = "svd", B = 1000)
-model$fit(estimator = "ml", B = 500, initialization = "svd")
-}
+\preformatted{data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
+
+sem_model_svd <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
+
+sem_model_svd$fit(infer = TRUE, B = 100)
+
+sem_model_ml <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "ml")
+
+sem_model_ml$fit(infer = TRUE, initialization = "svd", tol = 1e-04)
+
+
 }
 \if{html}{\out{</div>}}
 
@@ -373,9 +501,38 @@ Displays:
 }
 }
 
-\subsection{Returns}{
-Invisible NULL
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
+
+sem_model <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
+
+sem_model$fit(infer = TRUE, B = 100)
+
+sem_model$summary(standardized = TRUE, effect = TRUE, all_measures = TRUE)
 }
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SemFC-parameterEstimates"></a>}}
@@ -424,11 +581,34 @@ A data frame with all parameter estimates. Columns include:
 }
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-model$fit(infer = TRUE)
-model$parameterEstimates()
-model$parameterEstimates(standardized = TRUE)
-}
+\preformatted{data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
+
+sem_model <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
+
+sem_model$fit(infer = TRUE, B = 100)
+
+
+
+estimates <- sem_model$parameterEstimates(standardized = TRUE)
+
 }
 \if{html}{\out{</div>}}
 
@@ -473,6 +653,40 @@ of improper solution:
 \item{P_TILDE}{\code{TRUE} if P_TILDE has negative eigenvalues (only for SVDSEM).}
 }
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
+
+sem_model <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
+
+sem_model$fit(infer = TRUE, B = 100)
+
+improper_results <- sem_model$check_improper()
+
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SemFC-clone"></a>}}

@@ -37,3 +37,4 @@ equality constraints (\code{heq1()}) are automatically applied to ensure proper
 identification of the model. The optimization uses a tolerance of 1e-8
 with trace output disabled.
 }
+\keyword{internal}

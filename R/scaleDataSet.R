@@ -25,7 +25,7 @@
 #' scaled_data <- scaleDataSet(data, Sigma)
 #' }
 #'
-#' @export
+#' @keywords internal
 
 scaleDataSet <- function(data, Sigma, bias = FALSE){
   S <- cov2(data, bias = bias)

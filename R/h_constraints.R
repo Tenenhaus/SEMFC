@@ -79,6 +79,7 @@ heq0 <- function(x, S) {
 #' @return Vector of equality constraints.
 #'
 #' @examples
+#' \dontrun{
 #' set.seed(123)
 #' n <- 300
 #' # Generate sample data (6 blocks with 3 indicators each)
@@ -98,8 +99,8 @@ heq0 <- function(x, S) {
 #' x  <- rnorm(61)
 #'
 #' heq1(x, S, model)
-#'
-#' @export
+#'}
+#' @keywords internal
 heq1 <- function (x, S, model){
 
   block_sizes <- model$block_sizes

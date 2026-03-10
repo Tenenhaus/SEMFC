@@ -32,7 +32,9 @@ The chi-square statistic is calculated as (N-1) * F, where F is the
 fit function value. The degrees of freedom are computed as p(p+1)/2 - q + r
 }
 \examples{
+\dontrun{
 chi2_results <- chi2sem(p = 18, q = 61, r = 4, F = 0.428, N = 300)
 print(chi2_results$pval)
-
 }
+}
+\keyword{internal}

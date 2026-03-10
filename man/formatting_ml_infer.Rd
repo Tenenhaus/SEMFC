@@ -8,7 +8,8 @@ formatting_ml_infer(fit, model, VCOV, vcov_effect)
 }
 \arguments{
 \item{fit}{List containing model fit results from \code{lvm_ml()}. Includes parameter estimates
-such as loadings, standardized loadings, gamma coefficients, beta coefficients, and residual variances.}
+such as loadings, standardized loadings, gamma coefficients, beta coefficients,
+residual variances, and effects.}
 
 \item{model}{List containing the model structure, including:
 \itemize{
@@ -17,22 +18,28 @@ such as loadings, standardized loadings, gamma coefficients, beta coefficients, 
 \item \code{block_sizes}: Integer vector specifying the number of indicators in each block.
 }}
 
-\item{SD}{Numeric vector of standard errors for all parameters.}
+\item{VCOV}{Variance-covariance matrix of parameter estimates.}
+
+\item{vcov_effect}{List containing variance-covariance matrices for effects:
+\itemize{
+\item \code{vcov_exo_total}: Variance-covariance matrix for total effects on exogenous variables.
+\item \code{vcov_endo_total}: Variance-covariance matrix for total effects on endogenous variables.
+\item \code{vcov_exo_indirect}: Variance-covariance matrix for indirect effects on exogenous variables.
+\item \code{vcov_endo_indirect}: Variance-covariance matrix for indirect effects on endogenous variables.
+}}
 }
 \value{
-List containing:
-\item{lambda}{Data frame with loadings estimates, std errors, z-scores and p-values.}
-\item{std_lambda}{Data frame with standardized loadings estimates, std errors, z-scores and p-values.}
-\item{gamma}{Data frame with gamma coefficients estimates, std errors, z-scores and p-values.}
-\item{beta}{Data frame with beta coefficients estimates, std errors, z-scores and p-values.}
-\item{residual_variance}{Data frame with residual variances estimates, std errors, z-scores and p-values.}
+List of data frames with columns: lhs, op, rhs, est, se, z, ci.lower, ci.upper, pvalue, std.all:
+\item{lambda}{Loadings estimates and inference statistics.}
+\item{gamma}{Path coefficients between latent variables.}
+\item{beta}{Regression coefficients.}
+\item{total_effects}{Total effects.}
+\item{indirect_effects}{Indirect effects.}
+\item{residual_variance}{Residual variances (reflective blocks only).}
 }
 \description{
 Organizes parameter estimates, standard errors, z-scores and p-values into
-structured data frames for loadings, path coefficients and residual variances.
-}
-\details{
-Z-scores are computed as estimate/std error. P-values are two-tailed using
-the standard normal distribution.
+structured data frames for loadings, path coefficients, regression coefficients,
+effects, and residual variances.
 }
 \keyword{internal}

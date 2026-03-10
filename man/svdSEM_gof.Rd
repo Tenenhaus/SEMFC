@@ -38,3 +38,4 @@ print(gof_results$pval)
 
 
 }
+\keyword{internal}

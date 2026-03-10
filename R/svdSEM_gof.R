@@ -27,7 +27,7 @@
 #' }
 #'
 #'
-#' @export
+#' @keywords internal
 
 svdSEM_gof <- function(fit, B = 100, bias = FALSE){
   

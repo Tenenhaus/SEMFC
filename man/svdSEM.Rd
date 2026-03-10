@@ -23,6 +23,7 @@ A list containing the following elements:
 \item{a}{A list of J elements. Each element contains the first singular vector for each block.}
 \item{lambda}{A list of loadings for each block.}
 \item{std_lambda}{A list of standardized loadings for each block.}
+\item{std_omega}{A list of standardized weights for formative blocks only.}
 \item{omega}{A list of weights for formative blocks only.}
 \item{gr}{A directed graph representing the structural model.}
 \item{beta}{A matrix of structural coefficients among endogenous latent variables.}

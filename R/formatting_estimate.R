@@ -1,207 +1,254 @@
 
-#' Formatting Estimates for Model Fit
+
+
+
+
+#' Extract Non-Zero Matrix Elements with Row and Column Names
 #'
-#' This function processes a fitted model object to extract and format its estimates
-#' (lambda, gamma, beta, residual variance, total effects, and indirect effects)
-#' into data frames. Each data frame includes columns for estimates, standard errors,
-#' z-scores, and p-values, which are initialized as `NA`.
+#' Creates a grid of row-column pairs for non-zero elements in a matrix.
+#'
+#' @param matrix A matrix with named rows and columns.
+#'
+#' @return Data frame with columns: lhs (row names), rhs (column names).
+#'
+#' @keywords internal
+extract_matrix_pairs <- function(matrix) {
+  indices <- which(matrix != 0, arr.ind = TRUE)
+  data.frame(
+    lhs = rownames(matrix)[indices[, 1]],
+    rhs = colnames(matrix)[indices[, 2]]
+  )
+}
+
+
+
+#' Create Grid Based on Type
+#'
+#' Creates a grid of lhs-rhs pairs based on the estimation type.
+#'
+#' @param type Character string indicating the type: "lambda", "gamma", "beta", "residual", "total", "indirect", or "omega".
+#' @param fit_component The relevant component from the fit object.
+#'
+#' @return Data frame with columns: lhs, rhs, op.
+#'
+#' @keywords internal
+create_grid <- function(type, fit_component) {
+  switch(type,
+    "lambda" = {
+      grid <- do.call(rbind, lapply(names(fit_component), function(lv_name) {
+        expand.grid(lhs = lv_name, rhs = names(fit_component[[lv_name]]))
+      }))
+      grid$op <- "=~"
+      grid
+    },
+    "regression" = {
+      grid <- extract_matrix_pairs(fit_component)
+      grid$op <- "~"
+      grid
+    },
+    "residual" = {
+      grid_temp <- do.call(rbind, lapply(names(fit_component), function(lv_name) {
+        expand.grid(lhs = lv_name, rhs = gsub("^\\.", "", names(fit_component[[lv_name]])))
+      }))
+      grid <- data.frame(lhs = grid_temp$rhs, rhs = grid_temp$rhs, op = "~~")
+      grid
+    },
+    "effect" = {
+      grid <- expand.grid(lhs = rownames(fit_component), rhs = colnames(fit_component))
+      grid$op <- "~"
+      grid
+    },
+    "omega" = {
+      grid <- do.call(rbind, lapply(names(fit_component), function(lv_name) {
+        expand.grid(lhs = lv_name, rhs = rownames(fit_component[[lv_name]]))
+      }))
+      grid$op <- "<~"
+      grid
+    }
+  )
+}
+
+
+
+
+#' Format Parameter Estimates Table
+#'
+#' Creates a standardized data frame with parameter estimates, standard errors,
+#' z-scores, confidence intervals and p-values based on the estimation type.
+#'
+#' @param type Character string indicating the type: "lambda", "regression", "residual", "effect", or "omega".
+#' @param fit_component The relevant component from the fit object (e.g., fit$lambda, fit$gamma, fit$beta).
+#' @param fit_std_component Standardized estimates component (optional, defaults to NULL).
+#' @param se Numeric vector of standard errors (optional, defaults to NA).
+#' @param alpha Significance level for confidence intervals (default: 0.05).
+#'
+#' @return Data frame with columns: lhs, op, rhs, est, se, z, ci.lower, ci.upper, pvalue, std.all.
+#'   Returns an empty data frame with the same structure if length(est) = 0.
+#' @importFrom stats qnorm
+#' @keywords internal
+format_estimates_table <- function(type, fit_component, fit_std_component = NULL, se = NA, alpha = 0.05){
+
+  est <- switch(type,
+    "lambda" = unlist(fit_component),
+    "regression" = fit_component[fit_component != 0],
+    "residual" = unlist(unname(fit_component)),
+    "effect" = as.vector(fit_component),
+    "omega" = unlist(lapply(names(fit_component), function(lv) {
+      as.vector(fit_component[[lv]])
+    }))
+  )
+
+
+  # Return empty data frame if no estimates
+  if (length(est) == 0) {
+      return(data.frame(
+        lhs      = character(0),
+        op       = character(0),
+        rhs      = character(0),
+        est      = numeric(0),
+        se       = numeric(0),
+        z        = numeric(0),
+        ci.lower = numeric(0),
+        ci.upper = numeric(0),
+        pvalue   = numeric(0),
+        std.all  = numeric(0)
+      ))
+  }
+
+  grid <- create_grid(type, fit_component)
+
+
+  std.all <- if (!is.null(fit_std_component)) {
+    switch(type,
+      "lambda" = unlist(fit_std_component),
+      "regression" = fit_std_component,
+      "omega" = unlist(fit_std_component),
+      NA
+    )
+  } else {
+    NA
+  }
+
+  z_critical <- qnorm(1 - alpha / 2)
+  if (all(is.na(se))) {
+    se <- rep(NA, length(est))
+    z_scores <- rep(NA, length(est))
+    ci_lower <- rep(NA, length(est))
+    ci_upper <- rep(NA, length(est))
+    pvalue <- rep(NA, length(est))
+  } else {
+    z_scores <- est / se
+    ci_lower <- est - z_critical * se
+    ci_upper <- est + z_critical * se
+    pvalue <- 2 * pnorm(abs(z_scores), lower.tail = FALSE)
+  }
+
+  data.frame(
+    lhs = grid$lhs,
+    op = grid$op,
+    rhs = grid$rhs,
+    est = est,
+    se = se,
+    z = z_scores,
+    ci.lower = ci_lower,
+    ci.upper = ci_upper,
+    pvalue = pvalue,
+    std.all = if (all(is.na(std.all))) NA else std.all
+  )
+}
+
+#' Format Model Estimates
+#'
+#' Processes a fitted model object to extract and format parameter estimates
+#' into standardized data frames. Creates tables for loadings, path coefficients,
+#' regression coefficients, residual variances, total effects, indirect effects,
+#' and composite weights.
 #'
 #' @param fit A fitted model object containing the following components:
-#'   - `lambda`: A named vector of loadings.
-#'   - `gamma`: A matrix of path coefficients.
+#'   - `lambda`: A named list of loadings for each latent variable.
+#'   - `std_lambda`: Standardized loadings (optional).
+#'   - `gamma`: A matrix of path coefficients between latent variables.
 #'   - `beta`: A matrix of regression coefficients.
-#'   - `residual_variance`: A vector of residual variances.
-#'   - `effect$total_effect`: A matrix of total effects (non-zero values are used).
-#'   - `effect$indirect_effect`: A matrix of indirect effects (non-zero values are used).
-#'   - `omega`: A list of matrices containing weigths of indicators for composites blocs.
+#'   - `residual_variance`: A named list of residual variances.
+#'   - `effect$total_effect`: A matrix of total effects.
+#'   - `effect$indirect_effect`: A matrix of indirect effects.
+#'   - `omega`: A list of matrices containing weights of indicators for composite blocks.
+#' @param se_list A list containing standard errors for each component (optional, defaults to empty list).
+#'   Expected elements: `sd_lambda`, `sd_gamma`, `sd_beta`, `sd_residual_variance`,
+#'   `sd_total_effects`, `sd_indirect_effects`, `sd_omega`.
 #'
-#'
-#' @return A list of data frames:
-#'   - `lambda`: Data frame of loadings with columns for estimates, standard errors, z-scores, and p-values.
-#'   - `gamma`: Data frame of path coefficients with the same columns as `lambda`.
-#'   - `beta`: Data frame of regression coefficients with the same columns as `lambda`.
-#'   - `residual_variance`: Data frame of residual variances with the same columns as `lambda`.
-#'   - `total_effects`: Data frame of total effects with the same columns as `lambda`.
-#'   - `indirect_effects`: Data frame of indirect effects with the same columns as `lambda`.
-#'   - `omega`: Data frame of omega values with the same columns as `lambda`.
-#'
+#' @return A list of data frames with columns: lhs, op, rhs, est, se, z, ci.lower, ci.upper, pvalue, std.all:
+#'   - `lambda`: Loadings (op = "=~").
+#'   - `gamma`: Path coefficients between latent variables (op = "~").
+#'   - `beta`: Regression coefficients (op = "~").
+#'   - `residual_variance`: Residual variances (op = "~~").
+#'   - `total_effects`: Total effects (op = "~").
+#'   - `indirect_effects`: Indirect effects (op = "~").
+#'   - `omega`: Composite weights (op = "<~").
 #'
 #' @keywords internal
 
-formatting_estimate <- function(fit){
-
-  lambda <- unlist(fit$lambda)
-  std_lambda <- unlist(fit$std_lambda)
-  gamma <- fit$gamma[fit$gamma!=0]
-  beta <- fit$beta[fit$beta!=0]
-  residual_variance <- unlist(unname(fit$residual_variance))
-  total_effects <- as.vector(fit$effect$total_effect)
-  indirect_effects <- as.vector(fit$effect$indirect_effect)
-  omega <- unlist(lapply(names(fit$omega), function(lv) {
-    setNames(as.vector(fit$omega[[lv]]), paste(lv, rownames(fit$omega[[lv]]), sep = "."))
-  }))
-
-
-  parts <- strsplit(names(lambda), "\\.")
-  table_lambda <- data.frame(
-    lhs = sapply(parts, `[`, 1),
-    op = "=~",
-    rhs = sapply(parts, `[`, 2),
-    est = lambda,
-    se = NA,
-    z = NA,
-    ci.lower = NA,
-    ci.upper = NA,
-    pvalue = NA,
-    std.all = std_lambda)
-
-  # rownames(table_lambda) <- gsub("\\.", "~", rownames(table_lambda))
-
-  table_std_lambda <- data.frame(
-    lhs = sapply(parts, `[`, 1),
-    op = "=~",
-    rhs = sapply(parts, `[`, 2),
-    est = std_lambda,
-    se = NA,
-    z = NA,
-    ci.lower = NA,
-    ci.upper = NA,
-    pvalue = NA)
-  # rownames(table_std_lambda) <- gsub("\\.", "~", rownames(table_std_lambda))
-
-  table_gamma <- data.frame(est = gamma,
-                            se = NA,
-                            z = NA,
-                            ci.lower = NA,
-                            ci.upper = NA,
-                            pvalue = NA,
-                            std.all = gamma)
-  rownames(table_gamma) <- sapply(seq_len(NROW(table_gamma)),
-                                  function(b)
-                          paste(rownames(fit$gamma)[which(fit$gamma!=0, arr.ind = TRUE)[b, 1]],
-                                colnames(fit$gamma)[which(fit$gamma!=0, arr.ind = TRUE)[b, 2]],
-                                sep = ".")
-  )
-  parts <- strsplit(rownames(table_gamma), "\\.")
-  table_gamma <- cbind(
-    data.frame(
-      lhs = sapply(parts, `[`, 1),
-      op = "~",
-      rhs = sapply(parts, `[`, 2)
-    ),
-    table_gamma
+formatting_estimate <- function(fit, se_list = list()){
+  # Lambda
+  table_lambda <- format_estimates_table(
+    type = "lambda",
+    fit_component = fit$lambda,
+    fit_std_component = fit$std_lambda,
+    se = se_list$sd_lambda
   )
 
-  table_beta <- data.frame()
-
-  if (length(beta) != 0){
-
-    table_beta <- data.frame(est = beta,
-                             se = NA,
-                             z = NA,
-                             ci.lower = NA,
-                             ci.upper = NA,
-                             pvalue = NA,
-                             std.all = beta
-    )
-    rownames(table_beta) <- sapply(seq_len(NROW(table_beta)),
-                                   function(b)
-           paste(colnames(fit$beta)[which(fit$beta!=0, arr.ind = TRUE)[b, ]],
-                 collapse = ".")
-         )
-    parts <- strsplit(rownames(table_beta), "\\.")
-    table_beta <- cbind(
-      data.frame(
-        lhs = sapply(parts, `[`, 1),
-        op = "~",
-        rhs = sapply(parts, `[`, 2)
-      ),    table_beta
-    )
-  }
-
-  if (length(residual_variance) != 0){
-    parts <- strsplit(names(residual_variance), "\\.")
-    table_residual_variance <- data.frame(
-      lhs = sapply(parts, `[`, 2),
-      op = "~~",
-      rhs = sapply(parts, `[`, 2),
-      est = residual_variance,
-      se = NA,
-      z = NA,
-      ci.lower = NA,
-      ci.upper = NA,
-      pvalue = NA)
-    std_loadings_in_residuals <- table_std_lambda[table_std_lambda$rhs %in% table_residual_variance$rhs, "est"]
-    table_std_residual_variance <- table_residual_variance
-    table_std_residual_variance$est <- 1 - std_loadings_in_residuals^2
-    table_residual_variance$std.all <- table_std_residual_variance$est
-
-  } else {
-    table_residual_variance <- data.frame()
-    table_std_residual_variance <- data.frame()
-  }
-
-
-
-  grid_total_effects <- expand.grid(
-    LHS = rownames(fit$effect$total_effect), RHS = colnames(fit$effect$total_effect)
+  # Gamma
+  table_gamma <- format_estimates_table(
+    type = "regression",
+    fit_component = fit$gamma,
+    fit_std_component = fit$gamma[fit$gamma != 0],
+    se = se_list$sd_gamma
   )
-  table_total_effects <- data.frame(
-    lhs = grid_total_effects$LHS,
-    op = "~",
-    rhs = grid_total_effects$RHS,
-    est = total_effects,
-    se = NA,
-    z = NA,
-    ci.lower = NA,
-    ci.upper = NA,
-    pvalue = NA,
-    std.all = NA)
 
-
-
-  rownames(table_total_effects) <- paste(grid_total_effects$LHS, grid_total_effects$RHS, sep = " ~ ")
-
-
-  grid_indirect_effects <- expand.grid(
-    LHS = rownames(fit$effect$indirect_effect), RHS = colnames(fit$effect$indirect_effect)
+  # Beta
+  table_beta <- format_estimates_table(
+    type = "regression",
+    fit_component = fit$beta,
+    fit_std_component = fit$beta[fit$beta != 0],
+    se = se_list$sd_beta
   )
-  table_indirect_effects <- data.frame(
-    lhs = grid_indirect_effects$LHS,
-    op = "~",
-    rhs = grid_indirect_effects$RHS,
-    est = indirect_effects,
-    se = NA,
-    z = NA,
-    ci.lower = NA,
-    ci.upper = NA,
-    pvalue = NA,
-    std.all = NA)
-  rownames(table_indirect_effects) <- paste(grid_indirect_effects$LHS, grid_indirect_effects$RHS, sep = " ~ ")
 
-  table_omega <- data.frame()
+  # Residual variance
+  table_residual_variance <- format_estimates_table(
+    type = "residual",
+    fit_component = fit$residual_variance,
+    se = se_list$sd_residual_variance
+  )
+  table_residual_variance$std.all <- 1 - (table_lambda[table_lambda$rhs %in% table_residual_variance$rhs, "std.all"])^2
 
-  if (length(omega) != 0){
-    parts <- strsplit(names(omega), "\\.")
-    table_omega <- data.frame(
-      lhs = sapply(parts, `[`, 1),
-      op = "<~",
-      rhs = sapply(parts, `[`, 2),
-      est = omega,
-      se = NA,
-      z = NA,
-      ci.lower = NA,
-      ci.upper = NA,
-      pvalue = NA,
-      std.all = omega)
-  }
+  # Total effects
+  table_total_effects <- format_estimates_table(
+    type = "effect",
+    fit_component = fit$effect$total_effect,
+    se = se_list$sd_total_effects
+  )
+  rownames(table_total_effects) <- paste(table_total_effects$lhs, table_total_effects$rhs, sep = " ~ ")
+
+  # Indirect effects
+  table_indirect_effects <- format_estimates_table(
+    type = "effect",
+    fit_component = fit$effect$indirect_effect,
+    se = se_list$sd_indirect_effects
+  )
+  rownames(table_indirect_effects) <- paste(table_indirect_effects$lhs, table_indirect_effects$rhs, sep = " ~ ")
+
+  # Omega
+  table_omega <- format_estimates_table(
+    type = "omega",
+    fit_component = fit$omega,
+    fit_std_component = fit$std_omega,
+    se = se_list$sd_omega
+  )
 
   return(list(lambda = table_lambda,
-              std_lambda = table_std_lambda,
               gamma = table_gamma,
               beta = table_beta,
               residual_variance = table_residual_variance,
-              std_residual_variance = table_std_residual_variance,
               total_effects = table_total_effects,
               indirect_effects = table_indirect_effects,
               omega = table_omega))

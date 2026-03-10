@@ -79,11 +79,11 @@ mode = rep("reflective", 7) ; mode[6] = "formative"
 model <- SemFC$new(data=L, relation_matrix = C, mode=mode, estimator = "svd")
 model$fit(infer = F)
 model$fit(infer = T, B = 100)
-model$summary()
+model$summary(standardized = T, effect = T, all_measures = T)
 
 
 
 modelml <- SemFC$new(data=L, relation_matrix = C, mode=mode, estimator = "ml")
 modelml$fit(infer = F)
 modelml$fit(infer = T)
-modelml$summary()
+modelml$summary(standardized = T, effect = T, all_measures = T)

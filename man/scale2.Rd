@@ -21,3 +21,4 @@ scale2(A, center = TRUE, scale = TRUE, bias = TRUE)
 \description{
 Standardization (to zero means and unit variances) of matrix-like objects.
 }
+\keyword{internal}

@@ -16,9 +16,9 @@ This dataset is commonly used for structural equation modeling examples
 involving customer satisfaction indices.
 }
 \examples{
-\dontrun{
+
 data(ECSI)
 head(ECSI)
-}
+
 }
 \keyword{datasets}

@@ -131,66 +131,44 @@ P_ml <- function(x, S, model){
 
 }
 
-
-#' Format ML Inference Results
+#' Extract Standard Errors for Model Parameters
 #'
-#' Organizes parameter estimates, standard errors, z-scores and p-values into
-#' structured data frames for loadings, path coefficients and residual variances.
+#' Extracts and organizes standard errors for different parameter types from the
+#' full standard deviation vector, including loadings, path coefficients, regression
+#' coefficients, effects, and residual variances.
 #'
-#' @param fit List containing model fit results from `lvm_ml()`. Includes parameter estimates
-#'   such as loadings, standardized loadings, gamma coefficients, beta coefficients, and residual variances.
-#' @param SD Numeric vector of standard errors for all parameters.
-#' @param model List containing the model structure, including:
+#' @param SD Numeric vector of standard deviations for all model parameters.
+#' @param mode Character vector indicating the measurement mode for each block
+#'   ("reflective" or "formative").
+#' @param lengths_parameter Integer vector specifying the length of each parameter group.
+#' @param block_sizes Integer vector specifying the number of indicators in each block.
+#' @param vcov_effect List containing variance-covariance matrices for effects:
 #'   \itemize{
-#'     \item \code{mode}: Character vector indicating the measurement mode for each block.
-#'     \item \code{lengths_theta}: Integer vector specifying the length of each parameter group.
-#'     \item \code{block_sizes}: Integer vector specifying the number of indicators in each block.
+#'     \item \code{vcov_exo_total}: Variance-covariance matrix for total effects on exogenous variables.
+#'     \item \code{vcov_endo_total}: Variance-covariance matrix for total effects on endogenous variables.
+#'     \item \code{vcov_exo_indirect}: Variance-covariance matrix for indirect effects on exogenous variables.
+#'     \item \code{vcov_endo_indirect}: Variance-covariance matrix for indirect effects on endogenous variables.
 #'   }
 #'
-#' @return List containing:
-#'   \item{lambda}{Data frame with loadings estimates, std errors, z-scores and p-values.}
-#'   \item{std_lambda}{Data frame with standardized loadings estimates, std errors, z-scores and p-values.}
-#'   \item{gamma}{Data frame with gamma coefficients estimates, std errors, z-scores and p-values.}
-#'   \item{beta}{Data frame with beta coefficients estimates, std errors, z-scores and p-values.}
-#'   \item{residual_variance}{Data frame with residual variances estimates, std errors, z-scores and p-values.}
-#'
-#' @details
-#' Z-scores are computed as estimate/std error. P-values are two-tailed using
-#' the standard normal distribution.
+#' @return List containing standard errors for each parameter type:
+#'   \item{sd_lambda}{Standard errors for loadings.}
+#'   \item{sd_gamma}{Standard errors for path coefficients between latent variables.}
+#'   \item{sd_beta}{Standard errors for regression coefficients.}
+#'   \item{sd_total_effects}{Standard errors for total effects.}
+#'   \item{sd_indirect_effects}{Standard errors for indirect effects.}
+#'   \item{sd_residual_variance}{Standard errors for residual variances (reflective blocks only).}
 #'
 #' @keywords internal
-formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
-
-
-  mode <- model$mode
-  lengths_parameter <- model$lengths_theta
-  block_sizes <- model$block_sizes
-  SD <- sqrt(diag(VCOV))
-
-
-  lambda <- unlist(fit$lambda)
-  std_lambda <- unlist(fit$std_lambda)
-  gamma <- fit$gamma[fit$gamma!=0]
-  beta <- fit$beta[fit$beta!=0]
-  residual_variance <- unlist(unname(fit$residual_variance))
-  total_effects <- as.vector(fit$effect$total_effect)
-  indirect_effects <- as.vector(fit$effect$indirect_effect)
-  omega <- unlist(lapply(names(fit$omega), function(lv) {
-    setNames(as.vector(fit$omega[[lv]]), paste(lv, rownames(fit$omega[[lv]]), sep = "."))
-  }))
-
-
-
+get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect){
   start_indices_in_x <- cumsum(c(1, head(lengths_parameter, -1)))
   lambda_start_index <- start_indices_in_x[1]
-  lambda_end_index <- lambda_start_index + length(lambda) - 1
+  lambda_end_index <- lambda_start_index + lengths_parameter[1] - 1
   gamma_start_index <- start_indices_in_x[3]
-  gamma_end_index <- gamma_start_index + length(gamma) - 1
+  gamma_end_index <- gamma_start_index +  lengths_parameter[3] - 1
   beta_start_index <- start_indices_in_x[4]
-  beta_end_index <- beta_start_index + length(beta) - 1
+  beta_end_index <- beta_start_index + lengths_parameter[4] - 1
 
   sd_lambda <- SD[lambda_start_index: lambda_end_index]
-  # sd_std_lambda <- sd_lambda*std_lambda/lambda
   sd_gamma <- SD[gamma_start_index: gamma_end_index]
   sd_beta <- SD[beta_start_index: beta_end_index]
   sd_total_effects <- sqrt(c(diag(vcov_effect$vcov_exo_total), diag(vcov_effect$vcov_endo_total)))
@@ -203,196 +181,68 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
                      initial_start_index_cov = start_indices_in_x[6])
   sd_residual_variance <- unlist(lapply(BDIAG[mode == 'reflective'], diag))
 
-
-
-  z_lambda <- lambda/sd_lambda
-  z_gamma<- gamma/sd_gamma
-  z_beta <- beta/sd_beta
-  z_residual_variance <- residual_variance/sd_residual_variance
-  z_total_effects <- total_effects/sd_total_effects
-  z_indirect_effects <- indirect_effects/sd_indirect_effects
-
-  parts <- strsplit(names(lambda), "\\.")
-  table_lambda <- data.frame(
-    lhs = sapply(parts, `[`, 1),
-    op = "=~",
-    rhs = sapply(parts, `[`, 2),
-    est =lambda,
-    se =sd_lambda,
-    z = z_lambda,
-    ci.lower = lambda - 1.96 * sd_lambda,
-    ci.upper = lambda + 1.96 * sd_lambda,
-    pvalue = unlist(lapply(z_lambda, function (z) 2*pnorm(abs(z), lower.tail = FALSE))),
-    std.all = std_lambda
-
-  )
-  # rownames(table_lambda) <- gsub("\\.", "~", rownames(table_lambda))
-
-
-  table_std_lambda <- data.frame(
-    lhs = sapply(parts, `[`, 1),
-    op = "=~",
-    rhs = sapply(parts, `[`, 2),
-    est =std_lambda,
-    se = NA,
-    z = NA,
-    ci.lower = NA,
-    ci.upper = NA,
-    pvalue = NA
-
-  )
-  # rownames(table_std_lambda) <- rownames(table_lambda)
-
-
-
-  table_gamma <- data.frame(
-    est =gamma,
-    se =sd_gamma,
-    z = z_gamma,
-    ci.lower = gamma - 1.96 * sd_gamma,
-    ci.upper = gamma + 1.96 * sd_gamma,
-
-    pvalue = unlist((lapply(z_gamma, function (z) 2*pnorm(abs(z), lower.tail = FALSE)))),
-    std.all = gamma
-  )
-
-  rownames(table_gamma) <- sapply(1:NROW(table_gamma),
-                          function(b)
-                            paste(rownames(fit$gamma)[which(fit$gamma!=0, arr.ind = TRUE)[b, 1]],
-                                  colnames(fit$gamma)[which(fit$gamma!=0, arr.ind = TRUE)[b, 2]],
-                                  sep = ".")
-  )
-  parts <- strsplit(rownames(table_gamma), "\\.")
-  table_gamma <- cbind(
-    data.frame(
-      lhs = sapply(parts, `[`, 1),
-      op = "~",
-      rhs = sapply(parts, `[`, 2)
-    ),
-    table_gamma
-  )
-
-
-  table_beta <- data.frame()
-
-  if (length(beta) != 0){
-
-  table_beta <- data.frame(est =beta,
-                           se =sd_beta,
-                           z = z_beta,
-                           ci.lower = beta - 1.96 * sd_beta,
-                           ci.upper = beta + 1.96 * sd_beta,
-                           pvalue = unlist(lapply(z_beta, function (z) 2*pnorm(abs(z), lower.tail = FALSE))),
-                          std.all = beta
-  )
-  rownames(table_beta) <- sapply(1:NROW(table_beta),
-       function(b)
-         paste(colnames(fit$beta)[which(fit$beta!=0, arr.ind = TRUE)[b, ]],
-               collapse = ".")
-       )
-    parts <- strsplit(rownames(table_beta), "\\.")
-    table_beta <- cbind(
-      data.frame(
-        lhs = sapply(parts, `[`, 1),
-        op = "~",
-        rhs = sapply(parts, `[`, 2)
-      ),    table_beta
-    )
-
-  }
-
-  if (length(residual_variance) != 0){
-    parts <- strsplit(names(residual_variance), "\\.")
-    table_residual_variance <- data.frame(
-      lhs = sapply(parts, `[`, 2),
-      op = "~~",
-      rhs = sapply(parts, `[`, 2),
-      est =residual_variance,
-      se = sd_residual_variance,
-      z = z_residual_variance,
-      ci.lower = residual_variance - 1.96 * sd_residual_variance,
-      ci.upper = residual_variance + 1.96 * sd_residual_variance,
-      pvalue = unlist(lapply(z_residual_variance, function (z) 2*pnorm(abs(z), lower.tail = FALSE))))
-    table_residual_variance$std.all <- 1- (table_lambda[table_lambda$rhs %in% table_residual_variance$rhs, "std.all"])^2
-
-    } else {
-    table_residual_variance <- data.frame()
-    }
-
-  grid_total_effects <- expand.grid(
-    LHS = rownames(fit$effect$total_effect), RHS = colnames(fit$effect$total_effect)
-  )
-  table_total_effects <- data.frame(
-    lhs = grid_total_effects$LHS,
-    op = "~",
-    rhs = grid_total_effects$RHS,
-    est =total_effects,
-    se =sd_total_effects,
-    z = z_total_effects,
-    ci.lower = total_effects - 1.96 * sd_total_effects,
-    ci.upper = total_effects + 1.96 * sd_total_effects,
-    pvalue = unlist(lapply(z_total_effects, function (z) 2*pnorm(abs(z), lower.tail = FALSE))),
-    std.all = NA
-  )
-  rownames(table_total_effects) <- paste(grid_total_effects$LHS, grid_total_effects$RHS, sep = " ~ ")
-
-
-  grid_indirect_effects <- expand.grid(
-    LHS = rownames(fit$effect$indirect_effect), RHS = colnames(fit$effect$indirect_effect)
-  )
-
-  table_indirect_effects <- data.frame(
-    lhs = grid_indirect_effects$LHS,
-    op = "~",
-    rhs = grid_indirect_effects$RHS,
-    est =indirect_effects,
-    se =sd_indirect_effects,
-    z = z_indirect_effects,
-    ci.lower = indirect_effects - 1.96 * sd_indirect_effects,
-    ci.upper = indirect_effects + 1.96 * sd_indirect_effects,
-    pvalue = unlist(lapply(z_indirect_effects, function (z) 2*pnorm(abs(z), lower.tail = FALSE))),
-    std.all = NA
-  )
-
-  rownames(table_indirect_effects) <- paste(grid_indirect_effects$LHS, grid_indirect_effects$RHS, sep = " ~ ")
-
-  table_omega <- data.frame()
-
-  if (length(omega) != 0){
-    parts <- strsplit(names(omega), "\\.")
-    table_omega <- data.frame(
-      lhs = sapply(parts, `[`, 1),
-      op = "<~",
-      rhs = sapply(parts, `[`, 2),
-      est = omega,
-      se = NA,
-      z = NA,
-      ci.lower = NA,
-      ci.upper = NA,
-      pvalue = NA,
-      std.all = omega)
-  }
-
-
-
-
-  out <- list(
-    lambda = table_lambda,
-    std_lambda = table_std_lambda,
-    gamma = table_gamma,
-    beta = table_beta,
-    residual_variance = table_residual_variance,
-    total_effects = table_total_effects,
-    indirect_effects = table_indirect_effects,
-    omega = table_omega
-
-  )
-
-  return(out)
+  return(list(
+    sd_lambda = sd_lambda,
+    sd_gamma = sd_gamma,
+    sd_beta = sd_beta,
+    sd_total_effects = sd_total_effects,
+    sd_indirect_effects = sd_indirect_effects,
+    sd_residual_variance = sd_residual_variance
+  ))
 
 
 }
 
+
+#' Format ML Inference Results
+#'
+#' Organizes parameter estimates, standard errors, z-scores and p-values into
+#' structured data frames for loadings, path coefficients, regression coefficients,
+#' effects, and residual variances.
+#'
+#' @param fit List containing model fit results from `lvm_ml()`. Includes parameter estimates
+#'   such as loadings, standardized loadings, gamma coefficients, beta coefficients,
+#'   residual variances, and effects.
+#' @param model List containing the model structure, including:
+#'   \itemize{
+#'     \item \code{mode}: Character vector indicating the measurement mode for each block.
+#'     \item \code{lengths_theta}: Integer vector specifying the length of each parameter group.
+#'     \item \code{block_sizes}: Integer vector specifying the number of indicators in each block.
+#'   }
+#' @param VCOV Variance-covariance matrix of parameter estimates.
+#' @param vcov_effect List containing variance-covariance matrices for effects:
+#'   \itemize{
+#'     \item \code{vcov_exo_total}: Variance-covariance matrix for total effects on exogenous variables.
+#'     \item \code{vcov_endo_total}: Variance-covariance matrix for total effects on endogenous variables.
+#'     \item \code{vcov_exo_indirect}: Variance-covariance matrix for indirect effects on exogenous variables.
+#'     \item \code{vcov_endo_indirect}: Variance-covariance matrix for indirect effects on endogenous variables.
+#'   }
+#'
+#' @return List of data frames with columns: lhs, op, rhs, est, se, z, ci.lower, ci.upper, pvalue, std.all:
+#'   \item{lambda}{Loadings estimates and inference statistics.}
+#'   \item{gamma}{Path coefficients between latent variables.}
+#'   \item{beta}{Regression coefficients.}
+#'   \item{total_effects}{Total effects.}
+#'   \item{indirect_effects}{Indirect effects.}
+#'   \item{residual_variance}{Residual variances (reflective blocks only).}
+#'
+#' @keywords internal
+formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
+
+
+  mode <- model$mode
+  lengths_parameter <- model$lengths_theta
+  block_sizes <- model$block_sizes
+  SD <- sqrt(diag(VCOV))
+
+
+  se <- get_se_series(SD, mode, lengths_parameter, block_sizes, vcov_effect)
+  table <- formatting_estimate(fit, se)
+
+  return(table)
+
+
+}
 
 
 #' Statistical Inference for ML-SEM

@@ -36,3 +36,4 @@ scaled_data <- scaleDataSet(data, Sigma)
 }
 
 }
+\keyword{internal}

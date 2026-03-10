@@ -15,9 +15,9 @@ Dataset containing socio-economic and political variables for various countries.
 Often used for demonstrating path analysis and structural equation modeling techniques.
 }
 \examples{
-\dontrun{
+
 data(Russett)
 head(Russett)
-}
+
 }
 \keyword{datasets}

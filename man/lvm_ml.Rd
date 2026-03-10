@@ -64,3 +64,4 @@ The function follows these steps:
 SIGMA = L * R * L' + BDIAG
 }
 }
+\keyword{internal}

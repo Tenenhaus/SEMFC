@@ -7,7 +7,7 @@
 improper(fit)
 }
 \arguments{
-\item{semfc}{A list of estimates, including:
+\item{fit}{A list of estimates, including:
 \itemize{
 \item \code{reliability_coef}: Reliability coefficients for each block
 \item \code{P_IMPLIED}: Implied correlation matrix of latent variables

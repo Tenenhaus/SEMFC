@@ -1,5 +1,5 @@
 
-#' Convert SVD-SEM Parameter  to Vector Form
+#' Convert SVD-SEM Parameters to Vector Form
 #'
 #' Transforms structural equation model parameters from matrix/list format into
 #' a single concatenated parameter vector for optimization or inference. The function
@@ -17,8 +17,14 @@
 #'   contains the residual variances for the indicators in that block.
 #' @param S_composites List of empirical covariance matrices for formative composite blocks.
 #'   Each element is a covariance matrix for a formative block.
-#' @param mode Character vector indicating the measurement mode for each block:
-#'   "reflective" or "formative".
+#' @param model A list containing the model structure, including:
+#'   \describe{
+#'     \item{n_blocks}{Number of blocks in the model.}
+#'     \item{mode}{Character vector indicating the measurement mode for each block:
+#'       \code{"reflective"} or \code{"formative"}.}
+#'     \item{dag}{Logical; if \code{TRUE}, endogenous correlations are excluded
+#'       (directed acyclic graph assumption).}
+#'   }
 #'
 #' @return Unnamed numeric vector containing all free parameters in the following order:
 #'   \enumerate{
@@ -28,7 +34,7 @@
 #'     \item Beta coefficients (non-zero elements, row by row)
 #'     \item Endogenous correlations (upper triangle of P_ENDO, excluding diagonal)
 #'     \item Residual variances (reflective blocks) or composite covariances
-#'         (upper triangle with diagonal, formative blocks)
+#'       (upper triangle with diagonal, formative blocks)
 #'   }
 #'
 #' @details
@@ -52,7 +58,7 @@ parameters_svd <- function(lambda,
   mode <- model$mode
   dag <- model$dag
 
-  S_composites_upper <- lapply(S_composites, function(matrix) matrix[upper.tri(matrix, diag = TRUE)])
+  S_composites_upper <- lapply(S_composites, function(mat) mat[upper.tri(mat, diag = TRUE)])
 
   # empirical covariance for composite blocks or residual_variance for reflective
   diag_jj <- vector("list", J)
