@@ -417,6 +417,61 @@ SemFC <- R6Class(
         stop("Model has not been fitted yet. Call `fit()` before `check_improper()`.", call. = FALSE)
       }
       return(improper(private$.estimate))
+    },
+
+    #' @description
+    #' Get a specific estimate component from the fitted model
+    #'
+    #' @param estimate Character string specifying which estimate component to retrieve.
+    #'   Possible values include: "lambda", "omega", "beta", "gamma", "residual_variance",
+    #'   "P_EXO", "P_ENDO", "P_IMPLIED", "SIGMA_IMPLIED", "std_lambda", "std_omega",
+    #'   "psi", "R2", "T_LS", "theta", "effect", "Ptilde".
+    #'
+    #' @return The requested estimate component, or NULL if not available or if the model
+    #'   has not been fitted yet.
+    #'
+    #' @examples
+    #' data(ECSI)
+    #' ECSI = ECSI/10
+    #' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    #'     PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    #'     PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    #'     CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    #'     CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+    #'
+    #' C = matrix(c(0, 0, 0, 0, 0,
+    #'         1, 0, 0, 0, 0,
+    #'         1, 1, 0, 0, 0,
+    #'         1, 1, 1, 0, 0,
+    #'         0, 0, 0, 1, 0),
+    #'       5, 5, byrow = FALSE)
+    #' colnames(C) = rownames(C) = names(A)
+    #'
+    #' sem_model <- SemFC$new(data = A,
+    #' relation_matrix = C,
+    #' mode = rep("reflective", 5),
+    #' scale = FALSE,
+    #' estimator = "svd")
+    #'
+    #' sem_model$fit()
+    #'
+    #' # Get specific estimates
+    #' lambda <- sem_model$get_estimate("lambda")
+    #' beta <- sem_model$get_estimate("beta")
+    #' R2 <- sem_model$get_estimate("R2")
+    #'
+    get_estimate = function(estimate){
+      if (is.null(private$.estimate) || length(private$.estimate) == 0L) {
+        warning("Model has not been fitted yet. Returning NULL.", call. = FALSE)
+        return(NULL)
+      }
+
+      if (!estimate %in% names(private$.estimate)) {
+        warning("Estimate '", estimate, "' not found in fitted model. Returning NULL.", call. = FALSE)
+        return(NULL)
+      }
+
+      return(private$.estimate[[estimate]])
     }
   ),
 

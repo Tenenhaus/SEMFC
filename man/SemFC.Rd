@@ -218,6 +218,40 @@ sem_model$fit(infer = TRUE, B = 100)
 improper_results <- sem_model$check_improper()
 
 
+
+## ------------------------------------------------
+## Method `SemFC$get_estimate`
+## ------------------------------------------------
+
+data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
+
+sem_model <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
+
+sem_model$fit()
+
+# Get specific estimates
+lambda <- sem_model$get_estimate("lambda")
+beta <- sem_model$get_estimate("beta")
+R2 <- sem_model$get_estimate("R2")
+
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -227,6 +261,7 @@ improper_results <- sem_model$check_improper()
 \item \href{#method-SemFC-summary}{\code{SemFC$summary()}}
 \item \href{#method-SemFC-parameterEstimates}{\code{SemFC$parameterEstimates()}}
 \item \href{#method-SemFC-check_improper}{\code{SemFC$check_improper()}}
+\item \href{#method-SemFC-get_estimate}{\code{SemFC$get_estimate()}}
 \item \href{#method-SemFC-clone}{\code{SemFC$clone()}}
 }
 }
@@ -541,13 +576,13 @@ Check for improper solutions in the estimated model
 Detects types of inadmissible or improper solutions including:
 \itemize{
 \item \code{reliability_coef}: Reliability coefficients for each block
-\item \code{P_IMPLIED}: Implied correlation matrix of latent variables
+\item \code{p_implied}: Implied correlation matrix of latent variables
 \item \code{residual_variance}: List of residual variances
 \item \code{std_lambda}: Standardized loadings
-\item \code{SIGMA_IMPLIED}: Implied covariance matrix of observed variables
-\item \code{R2}: R-squared values for endogenous latent variables
+\item \code{sigma_implied}: Implied covariance matrix of observed variables
+\item \code{r2}: R-squared values for endogenous latent variables
 \item \code{psi}: Residual covariance matrix of latent variables
-\item \code{Ptilde}: First estimation of correlation matrix of latent variables (only for SVDSEM)
+\item \code{p_tilde}: First estimation of correlation matrix of latent variables (only for SVDSEM)
 }
 }
 
@@ -555,15 +590,15 @@ Detects types of inadmissible or improper solutions including:
 Named logical vector of length 8 (or 9 for SVDSEM) indicating presence of each type
 of improper solution:
 \describe{
-\item{RELIABILITY_COEF}{\code{TRUE} if any reliability coefficient is outside (0, 1).}
-\item{RHO_JH}{\code{TRUE} if any correlation in P_IMPLIED is outside (-1, 1).}
-\item{P_IMPLIED}{\code{TRUE} if P_IMPLIED has negative eigenvalues (not positive definite).}
-\item{THETA_JH}{\code{TRUE} if any residual variance is negative.}
-\item{STD_LAMBDA}{\code{TRUE} if any standardized loading is outside (-1, 1).}
-\item{SIGMA_IMPLIED}{\code{TRUE} if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
-\item{R2}{\code{TRUE} if any R-squared is outside (0, 1).}
-\item{PSI}{\code{TRUE} if PSI has negative eigenvalues (not positive definite).}
-\item{P_TILDE}{\code{TRUE} if P_TILDE has negative eigenvalues (only for SVDSEM).}
+\item{reliability_coef}{\code{TRUE} if any reliability coefficient is outside (0, 1).}
+\item{rho_jh}{\code{TRUE} if any correlation in P_IMPLIED is outside (-1, 1).}
+\item{p_implied}{\code{TRUE} if P_IMPLIED has negative eigenvalues (not positive definite).}
+\item{theta_jh}{\code{TRUE} if any residual variance is negative.}
+\item{std_lambda}{\code{TRUE} if any standardized loading is outside (-1, 1).}
+\item{sigma_implied}{\code{TRUE} if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
+\item{r2}{\code{TRUE} if any R-squared is outside (0, 1).}
+\item{psi}{\code{TRUE} if PSI has negative eigenvalues (not positive definite).}
+\item{p_tilde}{\code{TRUE} if P_TILDE has negative eigenvalues (only for SVDSEM).}
 }
 }
 \subsection{Examples}{
@@ -594,6 +629,66 @@ sem_model$fit(infer = TRUE, B = 100)
 
 improper_results <- sem_model$check_improper()
 
+
+}
+\if{html}{\out{</div>}}
+
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SemFC-get_estimate"></a>}}
+\if{latex}{\out{\hypertarget{method-SemFC-get_estimate}{}}}
+\subsection{Method \code{get_estimate()}}{
+Get a specific estimate component from the fitted model
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$get_estimate(estimate)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{estimate}}{Character string specifying which estimate component to retrieve.
+Possible values include: "lambda", "omega", "beta", "gamma", "residual_variance",
+"P_EXO", "P_ENDO", "P_IMPLIED", "SIGMA_IMPLIED", "std_lambda", "std_omega",
+"psi", "R2", "T_LS", "theta", "effect", "Ptilde".}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The requested estimate component, or NULL if not available or if the model
+has not been fitted yet.
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
+
+sem_model <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
+
+sem_model$fit()
+
+# Get specific estimates
+lambda <- sem_model$get_estimate("lambda")
+beta <- sem_model$get_estimate("beta")
+R2 <- sem_model$get_estimate("R2")
 
 }
 \if{html}{\out{</div>}}

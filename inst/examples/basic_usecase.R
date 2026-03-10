@@ -17,6 +17,7 @@ model$fit(infer = T, B = 100)
 model$fit(infer = F)
 model$summary(standardized = T, effect = T, all_measures = T)
 est = model$parameterEstimates(standardized = T)
+model$get_estimate('SIGMA_IMPLIED')
 
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode)
 modelml$fit(infer=T, tol=1e-04)

@@ -10,12 +10,12 @@ improper(fit)
 \item{fit}{A list of estimates, including:
 \itemize{
 \item \code{reliability_coef}: Reliability coefficients for each block
-\item \code{P_IMPLIED}: Implied correlation matrix of latent variables
-\item \code{Ptilde}: Corrected correlation matrix of latent variables
+\item \code{p_implied}: Implied correlation matrix of latent variables
+\item \code{p_tilde}: Corrected correlation matrix of latent variables
 \item \code{residual_variance}: List of residual variances
 \item \code{std_lambda}: Standardized loadings
-\item \code{SIGMA_IMPLIED}: Implied covariance matrix of observed variables
-\item \code{R2}: R-squared values for endogenous latent variables
+\item \code{sigma_implied}: Implied covariance matrix of observed variables
+\item \code{r2}: R-squared values for endogenous latent variables
 \item \code{psi}: Residual covariance matrix of latent variables
 }}
 }
@@ -23,15 +23,15 @@ improper(fit)
 Named logical vector of length 8 (or 9 for SVDSEM) indicating presence of each type
 of improper solution:
 \describe{
-\item{RELIABILITY_COEF}{\code{TRUE} if any reliability coefficient is outside (0, 1).}
-\item{RHO_JH}{\code{TRUE} if any correlation in P_IMPLIED is outside (-1, 1).}
-\item{P_IMPLIED}{\code{TRUE} if P_IMPLIED has negative eigenvalues (not positive definite).}
-\item{THETA_JH}{\code{TRUE} if any residual variance is negative.}
-\item{STD_LAMBDA}{\code{TRUE} if any standardized loading is outside (-1, 1).}
-\item{SIGMA_IMPLIED}{\code{TRUE} if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
-\item{R2}{\code{TRUE} if any R-squared is outside (0, 1).}
-\item{PSI}{\code{TRUE} if PSI has negative eigenvalues (not positive definite).}
-\item{P_TILDE}{\code{TRUE} if P_TILDE has negative eigenvalues (only for SVDSEM).}
+\item{reliability_coef}{\code{TRUE} if any reliability coefficient is outside (0, 1).}
+\item{rho_jh}{\code{TRUE} if any correlation in P_IMPLIED is outside (-1, 1).}
+\item{p_implied}{\code{TRUE} if P_IMPLIED has negative eigenvalues (not positive definite).}
+\item{theta_jh}{\code{TRUE} if any residual variance is negative.}
+\item{std_lambda}{\code{TRUE} if any standardized loading is outside (-1, 1).}
+\item{sigma_implied}{\code{TRUE} if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
+\item{r2}{\code{TRUE} if any R-squared is outside (0, 1).}
+\item{psi}{\code{TRUE} if PSI has negative eigenvalues (not positive definite).}
+\item{p_tilde}{\code{TRUE} if P_TILDE has negative eigenvalues (only for SVDSEM).}
 }
 }
 \description{
