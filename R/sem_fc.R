@@ -103,13 +103,13 @@ SemFC <- R6Class(
 
     initialize = function(data, relation_matrix, mode, estimator = 'ml', scale = FALSE, bias = FALSE) {
 
-      self$estimator <- estimator
+      private$.estimator <- estimator
       init <- get_parameter_model_sem(data, mode, relation_matrix, bias)
-      self$model <- init$model
-      self$data <- init$data
+      private$.model <- init$model
+      private$.data <- init$data
 
-      self$model$scale <- scale
-      self$model$bias <- bias
+      private$.model$scale <- scale
+      private$.model$bias <- bias
 
     },
 
@@ -173,8 +173,8 @@ SemFC <- R6Class(
     #'
 
     fit = function(infer = FALSE, B = 1000, initialization = 'svd', tol = 1e-8){
-      estimator <- self$estimator
-      self$boot_rep <- B
+      estimator <- private$.estimator
+      private$.boot_rep <- B
       if (estimator == 'svd'){
         private$fit_svd()
 
@@ -249,16 +249,16 @@ SemFC <- R6Class(
 
     summary = function(standardized = F, effect = FALSE, all_measures  = F){
 
-      estimator <- self$estimator
-      print_model(estimator, sum(self$model$lengths_theta), self$data$n_row,
-                  self$model$dof, self$gof$F, self$estimate$T_LS)
+      estimator <- private$.estimator
+      print_model(estimator, sum(private$.model$lengths_theta), private$.data$n_row,
+                  private$.model$dof, private$.gof$F, private$.estimate$T_LS)
 
-      print_gof(all_measures, estimator, self$gof, self$boot_rep, self$estimate$R2)
+      print_gof(all_measures, estimator, private$.gof, private$.boot_rep, private$.estimate$R2)
 
       # estimation
-      estimate <- formatting_estimate(self$estimate)
-      if (!is.null(self$infer_estimate)){
-        estimate <- self$infer_estimate
+      estimate <- formatting_estimate(private$.estimate)
+      if (!is.null(private$.infer_estimate)){
+        estimate <- private$.infer_estimate
       }
       print_estimates(estimate, standardized, effect)
 
@@ -331,9 +331,9 @@ SemFC <- R6Class(
     #'
 
     parameterEstimates = function(standardized = FALSE){
-      estimate <- formatting_estimate(self$estimate)
-      if (!is.null(self$infer_estimate)){
-        estimate <- self$infer_estimate
+      estimate <- formatting_estimate(private$.estimate)
+      if (!is.null(private$.infer_estimate)){
+        estimate <- private$.infer_estimate
       }
       lambda <- estimate$lambda
       residualvariance <- estimate$residual_variance
@@ -413,51 +413,14 @@ SemFC <- R6Class(
     #'
     #'
     check_improper = function(){
-      if (is.null(self$estimate) || length(self$estimate) == 0L) {
+      if (is.null(private$.estimate) || length(private$.estimate) == 0L) {
         stop("Model has not been fitted yet. Call `fit()` before `check_improper()`.", call. = FALSE)
       }
-      return(improper(self$estimate))
+      return(improper(private$.estimate))
     }
   ),
 
-  active = list(
-    #' @field estimator (internal)
-    estimator = function(value) {
-      if (missing(value)) return(private$.estimator)
-      private$.estimator <- value
-    },
-    #' @field data (internal)
-    data = function(value) {
-      if (missing(value)) return(private$.data)
-      private$.data <- value
-    },
-    #' @field model (internal)
-    model = function(value) {
-      if (missing(value)) return(private$.model)
-      private$.model <- value
-    },
-    #' @field estimate (internal)
-    estimate = function(value) {
 
-      if (missing(value)) return(private$.estimate)
-      private$.estimate <- value
-    },
-    #' @field infer_estimate (internal)
-    infer_estimate = function(value) {
-      if (missing(value)) return(private$.infer_estimate)
-      private$.infer_estimate <- value
-    },
-    #' @field boot_rep (internal)
-    boot_rep = function(value) {
-      if (missing(value)) return(private$.boot_rep)
-      private$.boot_rep <- value
-    },
-    #' @field gof (internal)
-    gof = function(value) {
-      if (missing(value)) return(private$.gof)
-      private$.gof <- value
-    }
-  ),
 
   private = list(
 #
@@ -558,26 +521,26 @@ SemFC <- R6Class(
     # ' @return Invisible self (for method chaining)
     # ' @keywords internal
     fit_svd = function() {
-      self$estimator <- 'svd'
-      svd_result <- svdSEM(self$data$data,
-                           self$model$relation_matrix,
-                           self$model$scale,
-                           self$model$mode,
-                           self$model$bias)
+      private$.estimator <- 'svd'
+      svd_result <- svdSEM(private$.data$data,
+                           private$.model$relation_matrix,
+                           private$.model$scale,
+                           private$.model$mode,
+                           private$.model$bias)
 
-      self$estimate <- svd_result
+      private$.estimate <- svd_result
       theta_svd <- parameters_svd(lambda = svd_result$lambda,
                                   P_EXO = svd_result$P_EXO,
                                   G = svd_result$gamma,
                                   B = svd_result$beta,
                                   P_ENDO = svd_result$P_ENDO,
                                   residual_variance = svd_result$residual_variance,
-                                  S_composites = self$data$S_diag_composites,
-                                  model = self$model)
+                                  S_composites = private$.data$S_diag_composites,
+                                  model = private$.model)
 
-      self$estimate$theta <- theta_svd
-      self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
-      self$gof$F <- F1(theta_svd, self$data$cov_S, self$model)
+      private$.estimate$theta <- theta_svd
+      private$.estimate$effect <- compute_effect(private$.estimate$beta, private$.estimate$gamma)
+      private$.gof$F <- F1(theta_svd, private$.data$cov_S, private$.model)
     },
     #
     # ' @description
@@ -594,9 +557,9 @@ SemFC <- R6Class(
     # ' @keywords internal
     svd_infer = function(B = 1000, verbose = TRUE){
 
-      boot_out <- svdsem_infer(self$estimate, B, verbose = verbose)
-      self$infer_estimate <- boot_out$result$infer
-      self$gof$bollen_stine <- boot_out$gof
+      boot_out <- svdsem_infer(private$.estimate, B, verbose = verbose)
+      private$.infer_estimate <- boot_out$result$infer
+      private$.gof$bollen_stine <- boot_out$gof
 
 
     },
@@ -621,7 +584,7 @@ SemFC <- R6Class(
     # ' @keywords internal
     fit_ml = function(initialization = 'svd', tol) {
 
-      len_theta <- sum(self$model$lengths_theta)
+      len_theta <- sum(private$.model$lengths_theta)
 
       initial_params <- if (is.numeric(initialization)) {
         if (length(initialization) != len_theta) {
@@ -634,29 +597,29 @@ SemFC <- R6Class(
         switch(initialization,
           svd = {
             private$fit_svd()
-            self$estimator <- 'ml'
-            self$estimate$theta
+            private$.estimator <- 'ml'
+            private$.estimate$theta
           },
           random = runif(len_theta)
         )
       }
 
-      ml_sol <- mlSEM(initial_params, self$data$cov_S, self$model, tol)
+      ml_sol <- mlSEM(initial_params, private$.data$cov_S, private$.model, tol)
       theta_ml <- ml_sol$pars
-      self$estimate <- lvm_ml(x = theta_ml, model = self$model, jac = F)
-      self$estimate$T_LS <- d_LS(self$data$cov_S, self$estimate$SIGMA_IMPLIED)
+      private$.estimate <- lvm_ml(x = theta_ml, model = private$.model, jac = F)
+      private$.estimate$T_LS <- d_LS(private$.data$cov_S, private$.estimate$SIGMA_IMPLIED)
 
-      var_MVs <- lapply(self$data$data, function(x) diag(cov2(x, bias = self$model$bias)))
-      std_lambda <- mapply("/", self$estimate$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
-      self$estimate$std_lambda <- std_lambda
+      var_MVs <- lapply(private$.data$data, function(x) diag(cov2(x, bias = private$.model$bias)))
+      std_lambda <- mapply("/", private$.estimate$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
+      private$.estimate$std_lambda <- std_lambda
       std_omega <- mapply(function(Sjj, lambda_j) solve(Sjj) %*% lambda_j,
-                         self$data$S_diag_composites, std_lambda[self$model$mode == "formative"],
+                         private$.data$S_diag_composites, std_lambda[private$.model$mode == "formative"],
                          SIMPLIFY = FALSE)
-      names(std_omega) <- names(std_lambda[self$model$mode == "formative"])
-      self$estimate$std_omega <- std_omega
-      self$estimate$theta <- theta_ml
-      self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
-      self$gof$F <- F1(theta_ml, self$data$cov_S, self$model)
+      names(std_omega) <- names(std_lambda[private$.model$mode == "formative"])
+      private$.estimate$std_omega <- std_omega
+      private$.estimate$theta <- theta_ml
+      private$.estimate$effect <- compute_effect(private$.estimate$beta, private$.estimate$gamma)
+      private$.gof$F <- F1(theta_ml, private$.data$cov_S, private$.model)
 
 
     },
@@ -672,16 +635,16 @@ SemFC <- R6Class(
     # ' @return Invisible self (for method chaining)
     # ' @keywords internal
     ml_infer = function(){
-      theta_ml <- self$estimate$theta
-      S <- self$data$cov_S
-      N <- self$data$n_row
+      theta_ml <- private$.estimate$theta
+      S <- private$.data$cov_S
+      N <- private$.data$n_row
 
-      ml_infer_estimate <- mlSEM_infer(theta_ml, S, self$model, N, self$estimate)
+      ml_infer_estimate <- mlSEM_infer(theta_ml, S, private$.model, N, private$.estimate)
 
 
-      self$infer_estimate <- ml_infer_estimate$estimate
-      self$infer_estimate$VCOV <- ml_infer_estimate$VCOV
-      self$infer_estimate$vcov_effect <- ml_infer_estimate$vcov_effect
+      private$.infer_estimate <- ml_infer_estimate$estimate
+      private$.infer_estimate$VCOV <- ml_infer_estimate$VCOV
+      private$.infer_estimate$vcov_effect <- ml_infer_estimate$vcov_effect
     },
 
 
@@ -709,33 +672,33 @@ SemFC <- R6Class(
 
     get_gof = function(B = 1000){
 
-      estimator <- self$estimator
+      estimator <- private$.estimator
 
       res_gof <- list()
 
       # reliability only for relflective block (Dillon)
-      if (sum(self$model$mode == "reflective") > 0){
-        res_reliability <- reliability('Dillon', self$estimate$lambda, self$estimate$residual_variance)
+      if (sum(private$.model$mode == "reflective") > 0){
+        res_reliability <- reliability('Dillon', private$.estimate$lambda, private$.estimate$residual_variance)
         res_gof$reliability <- res_reliability
       }
 
 
-      if (estimator == 'svd' && is.null(self$gof$bollen_stine)){
-        bollen_stine <- svdSEM_gof(self$estimate, B)
+      if (estimator == 'svd' && is.null(private$.gof$bollen_stine)){
+        bollen_stine <- svdSEM_gof(private$.estimate, B)
         res_gof$bollen_stine <- bollen_stine
       } else if (estimator == 'ml'){
-        p <- self$model$p
-        q <- self$model$q
-        r <- self$model$r
-        F <- self$gof$F
-        N <- self$data$n_row
-        S <- self$data$cov_S
-        Sigma <- self$estimate$SIGMA_IMPLIED
+        p <- private$.model$p
+        q <- private$.model$q
+        r <- private$.model$r
+        F <- private$.gof$F
+        N <- private$.data$n_row
+        S <- private$.data$cov_S
+        Sigma <- private$.estimate$SIGMA_IMPLIED
 
         res_gof <- c(res_gof, semML_gof(p, q, r, F, N, S, Sigma))
 
       }
-      self$gof <- c(self$gof, res_gof)
+      private$.gof <- c(private$.gof, res_gof)
 
     }
 

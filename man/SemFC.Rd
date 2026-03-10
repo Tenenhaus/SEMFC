@@ -219,25 +219,6 @@ improper_results <- sem_model$check_improper()
 
 
 }
-\section{Active bindings}{
-\if{html}{\out{<div class="r6-active-bindings">}}
-\describe{
-\item{\code{estimator}}{(internal)}
-
-\item{\code{data}}{(internal)}
-
-\item{\code{model}}{(internal)}
-
-\item{\code{estimate}}{(internal)}
-
-\item{\code{infer_estimate}}{(internal)}
-
-\item{\code{boot_rep}}{(internal)}
-
-\item{\code{gof}}{(internal)}
-}
-\if{html}{\out{</div>}}
-}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
