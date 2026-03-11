@@ -24,14 +24,14 @@ Named logical vector of length 8 (or 9 for SVDSEM) indicating presence of each t
 of improper solution:
 \describe{
 \item{reliability_coef}{\code{TRUE} if any reliability coefficient is outside (0, 1).}
-\item{rho_jh}{\code{TRUE} if any correlation in P_IMPLIED is outside (-1, 1).}
-\item{p_implied}{\code{TRUE} if P_IMPLIED has negative eigenvalues (not positive definite).}
+\item{rho_jh}{\code{TRUE} if any correlation in p_implied is outside (-1, 1).}
+\item{p_implied}{\code{TRUE} if p_implied has negative eigenvalues (not positive definite).}
 \item{theta_jh}{\code{TRUE} if any residual variance is negative.}
 \item{std_lambda}{\code{TRUE} if any standardized loading is outside (-1, 1).}
-\item{sigma_implied}{\code{TRUE} if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
+\item{sigma_implied}{\code{TRUE} if sigma_implied has negative eigenvalues (not positive definite).}
 \item{r2}{\code{TRUE} if any R-squared is outside (0, 1).}
 \item{psi}{\code{TRUE} if PSI has negative eigenvalues (not positive definite).}
-\item{p_tilde}{\code{TRUE} if P_TILDE has negative eigenvalues (only for SVDSEM).}
+\item{p_tilde}{\code{TRUE} if p_tilde has negative eigenvalues (only for SVDSEM).}
 }
 }
 \description{

@@ -253,7 +253,7 @@ SemFC <- R6Class(
       print_model(estimator, sum(private$.model$lengths_theta), private$.data$n_row,
                   private$.model$dof, private$.gof$F, private$.estimate$T_LS)
 
-      print_gof(all_measures, estimator, private$.gof, private$.boot_rep, private$.estimate$R2)
+      print_gof(all_measures, estimator, private$.gof, private$.boot_rep, private$.estimate$r2)
 
       # estimation
       estimate <- formatting_estimate(private$.estimate)
@@ -423,12 +423,18 @@ SemFC <- R6Class(
     #' Get a specific estimate component from the fitted model
     #'
     #' @param estimate Character string specifying which estimate component to retrieve.
-    #'   Possible values include: "lambda", "omega", "beta", "gamma", "residual_variance",
-    #'   "P_EXO", "P_ENDO", "P_IMPLIED", "SIGMA_IMPLIED", "std_lambda", "std_omega",
-    #'   "psi", "R2", "T_LS", "theta", "effect", "Ptilde".
+    #'   Use \code{"all"} to retrieve all estimates. Other possible values include:
+    #'   \code{"lambda"}, \code{"omega"}, \code{"beta"}, \code{"gamma"},
+    #'   \code{"residual_variance"}, \code{"p_exo"}, \code{"p_endo"}, \code{"p_implied"},
+    #'   \code{"sigma_implied"}, \code{"std_lambda"}, \code{"std_omega"}, \code{"psi"},
+    #'   \code{"r2"}, \code{"T_LS"}, \code{"theta"}, \code{"effect"}, \code{"p_tilde"}.
     #'
-    #' @return The requested estimate component, or NULL if not available or if the model
-    #'   has not been fitted yet.
+    #' @return The requested estimate component. Returns \code{NULL} with a warning if:
+    #'   \itemize{
+    #'     \item The model has not been fitted yet
+    #'     \item The requested estimate is not available in the fitted model
+    #'   }
+    #'   When \code{estimate = "all"}, returns a list containing all available estimates.
     #'
     #' @examples
     #' data(ECSI)
@@ -458,7 +464,10 @@ SemFC <- R6Class(
     #' # Get specific estimates
     #' lambda <- sem_model$get_estimate("lambda")
     #' beta <- sem_model$get_estimate("beta")
-    #' R2 <- sem_model$get_estimate("R2")
+    #' R2 <- sem_model$get_estimate("r2")
+    #'
+    #' # Get all estimates
+    #' all_estimates <- sem_model$get_estimate("all")
     #'
     get_estimate = function(estimate){
       if (is.null(private$.estimate) || length(private$.estimate) == 0L) {
@@ -466,7 +475,9 @@ SemFC <- R6Class(
         return(NULL)
       }
 
-      if (!estimate %in% names(private$.estimate)) {
+      if (estimate == "all") {
+        return(private$.estimate)
+      } else if (!estimate %in% names(private$.estimate)) {
         warning("Estimate '", estimate, "' not found in fitted model. Returning NULL.", call. = FALSE)
         return(NULL)
       }
@@ -585,10 +596,10 @@ SemFC <- R6Class(
 
       private$.estimate <- svd_result
       theta_svd <- parameters_svd(lambda = svd_result$lambda,
-                                  P_EXO = svd_result$P_EXO,
+                                  P_EXO = svd_result$p_exo,
                                   G = svd_result$gamma,
                                   B = svd_result$beta,
-                                  P_ENDO = svd_result$P_ENDO,
+                                  P_ENDO = svd_result$p_endo,
                                   residual_variance = svd_result$residual_variance,
                                   S_composites = private$.data$S_diag_composites,
                                   model = private$.model)
@@ -662,7 +673,7 @@ SemFC <- R6Class(
       ml_sol <- mlSEM(initial_params, private$.data$cov_S, private$.model, tol)
       theta_ml <- ml_sol$pars
       private$.estimate <- lvm_ml(x = theta_ml, model = private$.model, jac = F)
-      private$.estimate$T_LS <- d_LS(private$.data$cov_S, private$.estimate$SIGMA_IMPLIED)
+      private$.estimate$T_LS <- d_LS(private$.data$cov_S, private$.estimate$sigma_implied)
 
       var_MVs <- lapply(private$.data$data, function(x) diag(cov2(x, bias = private$.model$bias)))
       std_lambda <- mapply("/", private$.estimate$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
@@ -748,7 +759,7 @@ SemFC <- R6Class(
         F <- private$.gof$F
         N <- private$.data$n_row
         S <- private$.data$cov_S
-        Sigma <- private$.estimate$SIGMA_IMPLIED
+        Sigma <- private$.estimate$sigma_implied
 
         res_gof <- c(res_gof, semML_gof(p, q, r, F, N, S, Sigma))
 

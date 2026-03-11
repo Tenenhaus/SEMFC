@@ -250,7 +250,10 @@ sem_model$fit()
 # Get specific estimates
 lambda <- sem_model$get_estimate("lambda")
 beta <- sem_model$get_estimate("beta")
-R2 <- sem_model$get_estimate("R2")
+R2 <- sem_model$get_estimate("r2")
+
+# Get all estimates
+all_estimates <- sem_model$get_estimate("all")
 
 }
 \section{Methods}{
@@ -649,15 +652,21 @@ Get a specific estimate component from the fitted model
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{estimate}}{Character string specifying which estimate component to retrieve.
-Possible values include: "lambda", "omega", "beta", "gamma", "residual_variance",
-"P_EXO", "P_ENDO", "P_IMPLIED", "SIGMA_IMPLIED", "std_lambda", "std_omega",
-"psi", "R2", "T_LS", "theta", "effect", "Ptilde".}
+Use \code{"all"} to retrieve all estimates. Other possible values include:
+\code{"lambda"}, \code{"omega"}, \code{"beta"}, \code{"gamma"},
+\code{"residual_variance"}, \code{"p_exo"}, \code{"p_endo"}, \code{"p_implied"},
+\code{"sigma_implied"}, \code{"std_lambda"}, \code{"std_omega"}, \code{"psi"},
+\code{"r2"}, \code{"T_LS"}, \code{"theta"}, \code{"effect"}, \code{"p_tilde"}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-The requested estimate component, or NULL if not available or if the model
-has not been fitted yet.
+The requested estimate component. Returns \code{NULL} with a warning if:
+\itemize{
+\item The model has not been fitted yet
+\item The requested estimate is not available in the fitted model
+}
+When \code{estimate = "all"}, returns a list containing all available estimates.
 }
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
@@ -688,7 +697,10 @@ sem_model$fit()
 # Get specific estimates
 lambda <- sem_model$get_estimate("lambda")
 beta <- sem_model$get_estimate("beta")
-R2 <- sem_model$get_estimate("R2")
+R2 <- sem_model$get_estimate("r2")
+
+# Get all estimates
+all_estimates <- sem_model$get_estimate("all")
 
 }
 \if{html}{\out{</div>}}

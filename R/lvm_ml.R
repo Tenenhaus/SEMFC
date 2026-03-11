@@ -34,14 +34,14 @@
 #'   \item{beta}{Matrix of path coefficients between endogenous latent variables.}
 #'   \item{gamma}{Matrix of path coefficients from exogenous to endogenous variables.}
 #'   \item{psi}{Covariance matrix of structural disturbances.}
-#'   \item{R2}{Vector of R-squared values for endogenous variables.}
+#'   \item{r2}{Vector of R-squared values for endogenous variables.}
 #'   \item{residual_variance}{List of residual variances for reflective indicators.}
 #'   \item{S_composites}{List of variance-covariance matrices for formative composites.}
 #'   \item{omega}{List of composite weights for formative blocks.}
-#'   \item{P_EXO}{Correlation matrix of exogenous latent variables.}
-#'   \item{P_ENDO}{Correlation matrix of endogenous latent variables.}
-#'   \item{P_IMPLIED}{Full correlation matrix of all latent variables.}
-#'   \item{SIGMA_IMPLIED}{Implied covariance matrix of observed variables.}
+#'   \item{p_exo}{Correlation matrix of exogenous latent variables.}
+#'   \item{p_endo}{Correlation matrix of endogenous latent variables.}
+#'   \item{p_implied}{Full correlation matrix of all latent variables.}
+#'   \item{sigma_implied}{Implied covariance matrix of observed variables.}
 #'
 #' @details
 #' The function follows these steps:
@@ -228,14 +228,14 @@ lvm_ml <- function(x, model, jac = TRUE){
     beta = B,
     gamma = G,
     psi = PSI,
-    R2 = R2,
+    r2 = R2,
     residual_variance = residual_variance,
     S_composites = S_composites,
     omega = omega,
-    P_EXO = P_EXO,
-    P_ENDO = P_ENDO,
-    P_IMPLIED = R[names(varnames), names(varnames)],
-    SIGMA_IMPLIED  = implied_S
+    p_exo = P_EXO,
+    p_endo = P_ENDO,
+    p_implied = R[names(varnames), names(varnames)],
+    sigma_implied  = implied_S
   )
 
   if(jac){

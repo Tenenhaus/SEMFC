@@ -53,7 +53,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                                   sapply(fit$blocks, NCOL)))),
               t)
 
-  Z0_bs <- scaleDataSet(df, fit$SIGMA_IMPLIED)
+  Z0_bs <- scaleDataSet(df, fit$sigma_implied)
   Z0_bs <- lapply(split(data.frame(t(Z0_bs)),
                   as.factor(rep(seq_along(fit$blocks),
                                 sapply(fit$blocks, NCOL)))),
@@ -95,7 +95,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                                          bias = fit$bias)
 
 
-                          if (!any(eigen(fit_b$Ptilde)$values<=0)){
+                          if (!any(eigen(fit_b$p_tilde)$values<=0)){
                             effect_b <- compute_effect(fit_b$beta, fit_b$gamma)
                             total_effects_b <- effect_b$total_effect
                             indirect_effects_b <- effect_b$indirect_effect
@@ -124,8 +124,8 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                               boot_omega = NA
                             )
                           }
-                          if (!any(eigen(fit_bs_b$Ptilde)$values<=0)){
-                            res$Tb_LS <- d_LS(S_bs, fit_bs_b$SIGMA_IMPLIED)
+                          if (!any(eigen(fit_bs_b$p_tilde)$values<=0)){
+                            res$Tb_LS <- d_LS(S_bs, fit_bs_b$sigma_implied)
                           }else{
                             res$Tb_LS <- NA
                           }

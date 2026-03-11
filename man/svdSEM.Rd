@@ -28,14 +28,14 @@ A list containing the following elements:
 \item{gr}{A directed graph representing the structural model.}
 \item{beta}{A matrix of structural coefficients among endogenous latent variables.}
 \item{gamma}{A matrix of structural coefficients from exogenous to endogenous latent variables.}
-\item{R2}{A vector of R-squared coefficients for endogenous latent variables.}
+\item{r2}{A vector of R-squared coefficients for endogenous latent variables.}
 \item{psi}{A variance-covariance matrix of structural errors.}
-\item{d}{A vector of disattenuation factors for each block.}
-\item{Ptilde}{An estimated correlation matrix among latent variables.}
-\item{P_EXO}{A correlation matrix of exogenous latent variables.}
-\item{P_ENDO}{A correlation matrix of endogenous latent variables.}
-\item{P_IMPLIED}{A model-implied correlation matrix for latent variables.}
-\item{SIGMA_IMPLIED}{A model-implied covariance matrix for observed variables.}
+\item{d}{A vector of disattenuation (correction) factors for each block.}
+\item{p_tilde}{An estimated correlation matrix among latent variables.}
+\item{p_exo}{A correlation matrix of exogenous latent variables.}
+\item{p_endo}{A correlation matrix of endogenous latent variables.}
+\item{p_implied}{A model-implied correlation matrix for latent variables.}
+\item{sigma_implied}{A model-implied covariance matrix for observed variables.}
 \item{T_LS}{A model fit measure (least squares discrepancy).}
 \item{reliability_coef}{A vector of reliability coefficients for each block.}
 \item{residual_variance}{A list of residual variances for reflective blocks.}

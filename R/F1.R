@@ -113,7 +113,7 @@
 F1 <- function(x, S, model){
 
 
-  implied_S <- lvm_ml(x, model, jac = FALSE)$SIGMA_IMPLIED
+  implied_S <- lvm_ml(x, model, jac = FALSE)$sigma_implied
 
   # check for positive definiteness
 
