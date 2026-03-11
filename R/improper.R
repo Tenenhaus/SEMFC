@@ -8,27 +8,27 @@
 #' @param fit A list of estimates, including:
 #' \itemize{
 #'   \item \code{reliability_coef}: Reliability coefficients for each block
-#'   \item \code{P_IMPLIED}: Implied correlation matrix of latent variables
-#'   \item \code{Ptilde}: Corrected correlation matrix of latent variables
+#'   \item \code{p_implied}: Implied correlation matrix of latent variables
+#'   \item \code{p_tilde}: Corrected correlation matrix of latent variables
 #'   \item \code{residual_variance}: List of residual variances
 #'   \item \code{std_lambda}: Standardized loadings
-#'   \item \code{SIGMA_IMPLIED}: Implied covariance matrix of observed variables
-#'   \item \code{R2}: R-squared values for endogenous latent variables
+#'   \item \code{sigma_implied}: Implied covariance matrix of observed variables
+#'   \item \code{r2}: R-squared values for endogenous latent variables
 #'   \item \code{psi}: Residual covariance matrix of latent variables
 #' }
 #'
 #' @return Named logical vector of length 8 (or 9 for SVDSEM) indicating presence of each type
 #'   of improper solution:
 #' \describe{
-#'   \item{RELIABILITY_COEF}{\code{TRUE} if any reliability coefficient is outside (0, 1).}
-#'   \item{RHO_JH}{\code{TRUE} if any correlation in P_IMPLIED is outside (-1, 1).}
-#'   \item{P_IMPLIED}{\code{TRUE} if P_IMPLIED has negative eigenvalues (not positive definite).}
-#'   \item{THETA_JH}{\code{TRUE} if any residual variance is negative.}
-#'   \item{STD_LAMBDA}{\code{TRUE} if any standardized loading is outside (-1, 1).}
-#'   \item{SIGMA_IMPLIED}{\code{TRUE} if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
-#'   \item{R2}{\code{TRUE} if any R-squared is outside (0, 1).}
-#'   \item{PSI}{\code{TRUE} if PSI has negative eigenvalues (not positive definite).}
-#'   \item{P_TILDE}{\code{TRUE} if P_TILDE has negative eigenvalues (only for SVDSEM).}
+#'   \item{reliability_coef}{\code{TRUE} if any reliability coefficient is outside (0, 1).}
+#'   \item{rho_jh}{\code{TRUE} if any correlation in p_implied is outside (-1, 1).}
+#'   \item{p_implied}{\code{TRUE} if p_implied has negative eigenvalues (not positive definite).}
+#'   \item{theta_jh}{\code{TRUE} if any residual variance is negative.}
+#'   \item{std_lambda}{\code{TRUE} if any standardized loading is outside (-1, 1).}
+#'   \item{sigma_implied}{\code{TRUE} if sigma_implied has negative eigenvalues (not positive definite).}
+#'   \item{r2}{\code{TRUE} if any R-squared is outside (0, 1).}
+#'   \item{psi}{\code{TRUE} if psi has negative eigenvalues (not positive definite).}
+#'   \item{p_tilde}{\code{TRUE} if p_tilde has negative eigenvalues (only for SVDSEM).}
 #' }
 #'
 #' @details
@@ -53,14 +53,14 @@ improper <- function(fit){
   # Improper solution 2 : number of out of range rho_jk 
   # Expected value : -1 <=rho_jk <=1
   
-  improper_sol[2] <- any(abs(fit$P_IMPLIED[upper.tri(fit$P_IMPLIED)])>1)
+  improper_sol[2] <- any(abs(fit$p_implied[upper.tri(fit$p_implied)])>1)
   
 
   
-  # Improper solution 3 : is P_IMPLIED positive definite
+  # Improper solution 3 : is p_implied positive definite
   # Expected value = TRUE
   
-  improper_sol[3] <- any(eigen(fit$P_IMPLIED)$values<0)
+  improper_sol[3] <- any(eigen(fit$p_implied)$values<0)
   
   # Improper solution 4 : is variance of the residual positive
   # Expected value = TRUE
@@ -72,17 +72,17 @@ improper <- function(fit){
   
   improper_sol[5] <- any(abs(unlist(fit$std_lambda))>1)
   
-  # Improper solution 6 : is SIGMA_IMPLIED positive definite
+  # Improper solution 6 : is sigma_implied positive definite
   # Expected value = TRUE
   
-  improper_sol[6] <- any(eigen(fit$SIGMA_IMPLIED)$values<0)
+  improper_sol[6] <- any(eigen(fit$sigma_implied)$values<0)
   
   # Improper solution 7 : number of out of range R^2_i
   # Expected value : 0 <= R^2_i <=1
   
-  improper_sol[7] <- any(fit$R2< 0 | fit$R2>1)
+  improper_sol[7] <- any(fit$r2< 0 | fit$r2>1)
   
-  # Improper solution 8 : is PSI positive definite
+  # Improper solution 8 : is psi positive definite
   # Expected value = TRUE
   
   improper_sol[8] <- any(eigen(fit$psi)$values<0)
@@ -91,21 +91,21 @@ improper <- function(fit){
 
 
   
-  names(improper_sol) <- c("RELIABILITY_COEF",
-                          "RHO_JH",
-                          "P_IMPLIED", 
-                          "THETA_JH", 
-                          "STD_LAMBDA", 
-                          "SIGMA_IMPLIED",
-                          "R2",
-                          "PSI")
+  names(improper_sol) <- c("reliability_coef",
+                          "rho_jh",
+                          "p_implied",
+                          "theta_jh",
+                          "std_lambda",
+                          "sigma_implied",
+                          "r2",
+                          "psi")
 
-  # Improper solution 9 : is P_TILDE positive definite
+  # Improper solution 9 : is p_tilde positive definite
   # Expected value = TRUE
 
-  if (!is.null(fit$Ptilde)){
-    improper_sol[9] <- any(eigen(fit$Ptilde)$values<0)
-    names(improper_sol)[9] <- "P_TILDE"
+  if (!is.null(fit$p_tilde)){
+    improper_sol[9] <- any(eigen(fit$p_tilde)$values<0)
+    names(improper_sol)[9] <- "p_tilde"
   }
 
 

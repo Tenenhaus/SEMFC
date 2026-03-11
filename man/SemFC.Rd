@@ -218,93 +218,43 @@ sem_model$fit(infer = TRUE, B = 100)
 improper_results <- sem_model$check_improper()
 
 
-}
-\section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
-\describe{
-\item{\code{estimator}}{Character string specifying estimation method ("svd" or "ml")}
 
-\item{\code{data}}{List containing data-related components:
-\itemize{
-\item \code{data}: The input data (list of blocks)
-\item \code{n_row}: Number of observations
-\item \code{cov_S}: Covariance matrix of observed variables
-\item \code{S_diag_composites}: List of covariance matrices for formative blocks
-}}
+## ------------------------------------------------
+## Method `SemFC$get_estimate`
+## ------------------------------------------------
 
-\item{\code{model}}{List containing model specification and parameters:
-\itemize{
-\item \code{relation_matrix}: Square matrix defining structural relationships
-\item \code{mode}: Character vector specifying measurement model types
-\item \code{n_blocks}: Number of measurement blocks
-\item \code{varnames}: List of variable names for each block
-\item \code{block_sizes}: Vector of sizes for each measurement block
-\item \code{dag}: Logical indicating if structural model is recursive
-\item \code{which_exo_endo}: List identifying exogenous/endogenous variables
-\item \code{lengths_theta}: Vector of parameter counts
-\item \code{p}: Total number of observed variables
-\item \code{q}: Total number of free parameters
-\item \code{r}: Number of formative blocks
-\item \code{dof}: Degrees of freedom
-\item \code{scale}: Logical indicating whether to standardize data
-\item \code{bias}: Logical indicating bias correction in covariance estimation
-}}
+data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
 
-\item{\code{estimate}}{List containing all estimated model parameters:
-\itemize{
-\item \code{lambda}: List of loading vectors for each block
-\item \code{omega}: List of composite weight vectors for formative blocks
-\item \code{beta}: Matrix of structural paths between endogenous variables
-\item \code{gamma}: Matrix of structural paths from exogenous to endogenous variables
-\item \code{residual_variance}: List of residual variances for each observed variable
-\item \code{P_EXO}: Correlation matrix of exogenous latent variables
-\item \code{P_ENDO}: Correlation matrix of endogenous latent variables
-\item \code{P_IMPLIED}: Implied correlation matrix of all latent variables
-\item \code{SIGMA_IMPLIED}: Implied covariance matrix of observed variables
-\item \code{std_lambda}: List of standardized loadings for each block
-\item \code{std_omega}: List of standardized composite weights for formative blocks
-\item \code{psi}: Residual covariance matrix of latent variables
-\item \code{R2}: Named vector of R-squared values for endogenous latent variables
-\item \code{T_LS}: Least squares fit function value
-\item \code{theta}: Numeric vector of all free parameters
-\item \code{effect}: List of total and indirect effects between latent variables
-\item \code{Ptilde}: First-step correlation matrix estimate (SVD only)
-}}
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
 
-\item{\code{infer_estimate}}{List containing inference results for all parameters:
-\itemize{
-\item \code{lambda}: Data frame of loadings with SE, z-values, p-values and CI
-\item \code{omega}: Data frame of composite weights with SE, z-values, p-values and CI
-\item \code{beta}: Data frame of structural paths (endo) with SE, z-values, p-values and CI
-\item \code{gamma}: Data frame of structural paths (exo) with SE, z-values, p-values and CI
-\item \code{residual_variance}: Data frame of residual variances with SE, z-values, p-values and CI
-\item \code{total_effects}: Data frame of total effects with SE, z-values, p-values and CI
-\item \code{indirect_effects}: Data frame of indirect effects with SE, z-values, p-values and CI
-\item \code{VCOV}: Variance-covariance matrix of parameter estimates (ML only)
-\item \code{vcov_effect}: Variance-covariance matrix of effect estimates (ML only)
-}}
+sem_model <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
 
-\item{\code{boot_rep}}{Integer number of bootstrap replications}
+sem_model$fit()
 
-\item{\code{gof}}{List containing goodness-of-fit statistics:
-\itemize{
-\item \code{F}: Value of the fit function at the optimal solution
-\item \code{reliability}: Named vector of reliability coefficients (Dillon-Goldstein rho) for reflective blocks
-\item \code{chi2}: Chi-square test statistic
-\item \code{df}: Degrees of freedom for chi-square test
-\item \code{pvalue}: P-value of the chi-square test
-\item \code{CFI}: Comparative Fit Index
-\item \code{TLI}: Tucker-Lewis Index
-\item \code{RMSEA}: Root Mean Square Error of Approximation
-\item \code{RMSEA_CI}: 90\\% confidence interval for RMSEA
-\item \code{SRMR}: Standardized Root Mean Square Residual
-\item \code{AIC}: Akaike Information Criterion
-\item \code{BIC}: Bayesian Information Criterion
-\item \code{SABIC}: Sample-size Adjusted BIC
-\item \code{bollen_stine}: Bollen-Stine bootstrap p-value (SVD only)
-}}
-}
-\if{html}{\out{</div>}}
+# Get specific estimates
+lambda <- sem_model$get_estimate("lambda")
+beta <- sem_model$get_estimate("beta")
+R2 <- sem_model$get_estimate("r2")
+
+# Get all estimates
+all_estimates <- sem_model$get_estimate("all")
+
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -314,6 +264,7 @@ improper_results <- sem_model$check_improper()
 \item \href{#method-SemFC-summary}{\code{SemFC$summary()}}
 \item \href{#method-SemFC-parameterEstimates}{\code{SemFC$parameterEstimates()}}
 \item \href{#method-SemFC-check_improper}{\code{SemFC$check_improper()}}
+\item \href{#method-SemFC-get_estimate}{\code{SemFC$get_estimate()}}
 \item \href{#method-SemFC-clone}{\code{SemFC$clone()}}
 }
 }
@@ -628,13 +579,13 @@ Check for improper solutions in the estimated model
 Detects types of inadmissible or improper solutions including:
 \itemize{
 \item \code{reliability_coef}: Reliability coefficients for each block
-\item \code{P_IMPLIED}: Implied correlation matrix of latent variables
+\item \code{p_implied}: Implied correlation matrix of latent variables
 \item \code{residual_variance}: List of residual variances
 \item \code{std_lambda}: Standardized loadings
-\item \code{SIGMA_IMPLIED}: Implied covariance matrix of observed variables
-\item \code{R2}: R-squared values for endogenous latent variables
+\item \code{sigma_implied}: Implied covariance matrix of observed variables
+\item \code{r2}: R-squared values for endogenous latent variables
 \item \code{psi}: Residual covariance matrix of latent variables
-\item \code{Ptilde}: First estimation of correlation matrix of latent variables (only for SVDSEM)
+\item \code{p_tilde}: First estimation of correlation matrix of latent variables (only for SVDSEM)
 }
 }
 
@@ -642,15 +593,15 @@ Detects types of inadmissible or improper solutions including:
 Named logical vector of length 8 (or 9 for SVDSEM) indicating presence of each type
 of improper solution:
 \describe{
-\item{RELIABILITY_COEF}{\code{TRUE} if any reliability coefficient is outside (0, 1).}
-\item{RHO_JH}{\code{TRUE} if any correlation in P_IMPLIED is outside (-1, 1).}
-\item{P_IMPLIED}{\code{TRUE} if P_IMPLIED has negative eigenvalues (not positive definite).}
-\item{THETA_JH}{\code{TRUE} if any residual variance is negative.}
-\item{STD_LAMBDA}{\code{TRUE} if any standardized loading is outside (-1, 1).}
-\item{SIGMA_IMPLIED}{\code{TRUE} if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
-\item{R2}{\code{TRUE} if any R-squared is outside (0, 1).}
-\item{PSI}{\code{TRUE} if PSI has negative eigenvalues (not positive definite).}
-\item{P_TILDE}{\code{TRUE} if P_TILDE has negative eigenvalues (only for SVDSEM).}
+\item{reliability_coef}{\code{TRUE} if any reliability coefficient is outside (0, 1).}
+\item{rho_jh}{\code{TRUE} if any correlation in p_implied is outside (-1, 1).}
+\item{p_implied}{\code{TRUE} if p_implied has negative eigenvalues (not positive definite).}
+\item{theta_jh}{\code{TRUE} if any residual variance is negative.}
+\item{std_lambda}{\code{TRUE} if any standardized loading is outside (-1, 1).}
+\item{sigma_implied}{\code{TRUE} if sigma_implied has negative eigenvalues (not positive definite).}
+\item{r2}{\code{TRUE} if any R-squared is outside (0, 1).}
+\item{psi}{\code{TRUE} if psi has negative eigenvalues (not positive definite).}
+\item{p_tilde}{\code{TRUE} if p_tilde has negative eigenvalues (only for SVDSEM).}
 }
 }
 \subsection{Examples}{
@@ -681,6 +632,75 @@ sem_model$fit(infer = TRUE, B = 100)
 
 improper_results <- sem_model$check_improper()
 
+
+}
+\if{html}{\out{</div>}}
+
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SemFC-get_estimate"></a>}}
+\if{latex}{\out{\hypertarget{method-SemFC-get_estimate}{}}}
+\subsection{Method \code{get_estimate()}}{
+Get a specific estimate component from the fitted model
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$get_estimate(estimate)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{estimate}}{Character string specifying which estimate component to retrieve.
+Use \code{"all"} to retrieve all estimates. Other possible values include:
+\code{"lambda"}, \code{"omega"}, \code{"beta"}, \code{"gamma"},
+\code{"residual_variance"}, \code{"p_exo"}, \code{"p_endo"}, \code{"p_implied"},
+\code{"sigma_implied"}, \code{"std_lambda"}, \code{"std_omega"}, \code{"psi"},
+\code{"r2"}, \code{"T_LS"}, \code{"theta"}, \code{"effect"}, \code{"p_tilde"}.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The requested estimate component. Returns \code{NULL} with a warning if:
+\itemize{
+\item The model has not been fitted yet
+\item The requested estimate is not available in the fitted model
+}
+When \code{estimate = "all"}, returns a list containing all available estimates.
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0,
+        0, 0, 0, 1, 0),
+      5, 5, byrow = FALSE)
+colnames(C) = rownames(C) = names(A)
+
+sem_model <- SemFC$new(data = A,
+relation_matrix = C,
+mode = rep("reflective", 5),
+scale = FALSE,
+estimator = "svd")
+
+sem_model$fit()
+
+# Get specific estimates
+lambda <- sem_model$get_estimate("lambda")
+beta <- sem_model$get_estimate("beta")
+R2 <- sem_model$get_estimate("r2")
+
+# Get all estimates
+all_estimates <- sem_model$get_estimate("all")
 
 }
 \if{html}{\out{</div>}}

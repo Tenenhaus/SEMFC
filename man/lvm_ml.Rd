@@ -37,14 +37,14 @@ If \code{jac = FALSE}, returns a list containing:
 \item{beta}{Matrix of path coefficients between endogenous latent variables.}
 \item{gamma}{Matrix of path coefficients from exogenous to endogenous variables.}
 \item{psi}{Covariance matrix of structural disturbances.}
-\item{R2}{Vector of R-squared values for endogenous variables.}
+\item{r2}{Vector of R-squared values for endogenous variables.}
 \item{residual_variance}{List of residual variances for reflective indicators.}
 \item{S_composites}{List of variance-covariance matrices for formative composites.}
 \item{omega}{List of composite weights for formative blocks.}
-\item{P_EXO}{Correlation matrix of exogenous latent variables.}
-\item{P_ENDO}{Correlation matrix of endogenous latent variables.}
-\item{P_IMPLIED}{Full correlation matrix of all latent variables.}
-\item{SIGMA_IMPLIED}{Implied covariance matrix of observed variables.}
+\item{p_exo}{Correlation matrix of exogenous latent variables.}
+\item{p_endo}{Correlation matrix of endogenous latent variables.}
+\item{p_implied}{Full correlation matrix of all latent variables.}
+\item{sigma_implied}{Implied covariance matrix of observed variables.}
 }
 \description{
 This function computes the implied covariance matrix (SIGMA) for a structural
