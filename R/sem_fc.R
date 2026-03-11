@@ -4,18 +4,42 @@
 #' @title SemFC Class
 #'
 #' @description
-#' R6 class for estimating and analyzing Structural Equation Models (SEM) that
-#' incorporate both latent factors and composite variables. Supports SVD-based
-#' and maximum likelihood estimation methods.
+#' The SEMFC package implements Structural Equation Modeling (SEM) with factors 
+#' and composites within the framework of the basic design (Tenenhaus et al, 2025). 
+#' 
 #' @details
-#' This class provides a complete framework for SEM analysis including:
-#' \itemize{
-#'   \item Model estimation using SVD or ML
-#'   \item Statistical inference via bootstrap or asymptotic methods
-#'   \item Goodness-of-fit assessment
-#'   \item Reliability coefficients calculation
-#'   \item Support for formative and reflective measurement models
+#' The SEMFC package supports the svdSEM and the (restricted) maximum likelihood 
+#' estimation methods. svdSEM relies on a non-iterative SVD-based algorithm for 
+#' parameter estimation and produces consistent and asymptotically normal 
+#' estimators, offering a statistically and computationally sound approach. 
+#' 
+#' In addtion SEMFC implements the restricted maximum-likelihood (RML-SEM) 
+#' approach for the basic design with factors and composites. svdSEM estimates 
+#' serve as an initial solution for RML-SEM. The RML-SEM estimator is 
+#' implemented using the solnp algorithm (Ye, 1987), available in the Rsolnp package (Ghalanos and Theussl, 2015), 
+#' which enables efficient nonlinear optimization with constraints. 
+#' 
+#' The SEMFC package also provides comprehensive tools for statistical inference, 
+#' including bootstrap methods for SVD-based estimation and asymptotic inference 
+#' for ML, as well as a wide range of goodness-of-fit measures to evaluate model 
+#' fit (chi-square, CFI, TLI, RMSEA, SRMR, AIC, BIC).
+#'   
+#' \strong{References}
+#' 
+#' \enumerate{
+#' \item Tenenhaus, A., Tenenhaus, M., Dijkstra, T.K. Structural equation modeling 
+#' with factors and composites within the framework of the basic design. 
+#' Advances in Data Analysis Classification (2025). 
+#' \url{https://doi.org/10.1007/s11634-025-00647-4}
+#' \item Ye Y (1987) Interior algorithms for linear, quadratic, and 
+#' linearly constrained non-linear programming. \href{https://web.stanford.edu/~yyye/YinyuYePhD.pdf}{PhD thesis}, Department of 
+#' ESS, Stanford University
+#' \item Ghalanos A, Theussl S (2015) Rsolnp: general non-linear 
+#' optimization using augmented Lagrange multiplier method. 
+#' R package version 1.16. \cr
+#' \url{https://CRAN.R-project.org/package=Rsolnp}
 #' }
+#' 
 #' @field estimator Character string specifying estimation method ("svd" or "ml")
 #' @field data List containing data-related components:
 #'   \itemize{
@@ -73,7 +97,7 @@
 #'     \item \code{VCOV}: Variance-covariance matrix of parameter estimates (ML only)
 #'     \item \code{vcov_effect}: Variance-covariance matrix of effect estimates (ML only)
 #'   }
-#' @field boot_rep Integer number of bootstrap replications
+#' @field boot_rep Integer number of bootstrap samples
 #' @field gof List containing goodness-of-fit statistics:
 #'   \itemize{
 #'     \item \code{F}: Value of the fit function at the optimal solution
@@ -95,7 +119,6 @@
 #' @examples
 #' data("ECSI")
 #' ECSI = ECSI/10
-
 #' A = list(IMAG = ECSI[, 1:5],
 #'         CUEX = ECSI[, 6:8],
 #'         PERQ = ECSI[, 9:15],
@@ -104,14 +127,13 @@
 #'         CUSCO = ECSI[, 21, drop = FALSE],
 #'         CUSL = ECSI[, 22:24])
 #'
-#'
 #' C <- matrix(c(0, 1, 0, 0, 1, 0, 1,
-#'              0, 0, 1, 1, 1, 0, 0,
-#'              0, 0, 0, 1, 1, 0, 0,
-#'              0, 0, 0, 0, 1, 0, 0,
-#'              0, 0, 0, 0, 0, 1, 1,
-#'              0, 0, 0, 0, 0, 0, 1,
-#'              0, 0, 0, 0, 0, 0, 0), 7, 7, byrow = TRUE)
+#'               0, 0, 1, 1, 1, 0, 0,
+#'               0, 0, 0, 1, 1, 0, 0,
+#'               0, 0, 0, 0, 1, 0, 0,
+#'               0, 0, 0, 0, 0, 1, 1,
+#'               0, 0, 0, 0, 0, 0, 1,
+#'               0, 0, 0, 0, 0, 0, 0), 7, 7, byrow = TRUE)
 #'
 #' colnames(C) = rownames(C) = names(A)
 #'
@@ -127,10 +149,7 @@
 #'
 #' sem_model$summary(standardized = TRUE, effect = TRUE, all_measures = TRUE)
 #'
-#'
 #' estimates <- sem_model$parameterEstimates(standardized = TRUE)
-#'
-#'
 #'
 #' @export
 SemFC <- R6Class(
@@ -145,49 +164,54 @@ SemFC <- R6Class(
     boot_rep = NULL,
     gof = NULL,
 
+#' @description
+#' Initialize SemFC object with data and model specification
+#'
+#' @param data A list that contains J blocks of indicator variables. 
+#'   Blocks are either reflective or formative. Each block should be a data 
+#'   frame or matrix with rows as observations and columns as indicators.
+#' @param relation_matrix Square connection matrix (J x J) defining 
+#'   structural connection between latent variables (1 = connection exists, 
+#'   0 = no connection).
+#' @param mode Character vector of length J specifying the type of 
+#'   measurement model ("reflective" or "formative") for each block. 
+#'   (default: rep("reflective", J))
+#' @param estimator Character string specifying the estimation method: 
+#'   "svd" or "ml" (default: "ml").
+#' @param scale Logical indicating whether to standardize the input data or 
+#'   not (default: FALSE)
+#' @param bias Logical indicating whether to apply bias correction in 
+#'   covariance estimation (default: FALSE)
+#'
+#' @examples
+#' data(ECSI)
+#' ECSI = ECSI/10
+#' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+#'          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
+#'                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+#'          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+#'          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+#'          CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+#'
+#' C = matrix(c(0, 0, 0, 0, 0,
+#'              1, 0, 0, 0, 0,
+#'              1, 1, 0, 0, 0,
+#'              1, 1, 1, 0, 0,
+#'              0, 0, 0, 1, 0), 5, 5, 
+#'              byrow = FALSE)
+#'              
+#' colnames(C) = rownames(C) = names(A)
+#'
+#' sem_model <- SemFC$new(data = A,
+#' relation_matrix = C,
+#' mode = rep("reflective", 5),
+#' scale = FALSE,
+#' estimator = "svd")
+#'
+#' @return A new `SemFC` object
 
-
-    #' @description
-    #' Initialize SemFC object with data and model specification
-    #'
-    #' @param data Data frame or matrix where each column represents an observed variable
-    #' @param relation_matrix Square adjacency matrix (n_blocks x n_blocks) defining structural
-    #'   paths between latent variables (1 = path exists, 0 = no path)
-    #' @param mode Character vector of length n_blocks specifying measurement model type
-    #'   ("formative" or "reflective") for each block
-    #' @param estimator Character string specifying estimation method: "svd" or "ml"
-    #' @param scale Logical indicating whether to standardize input data (default: FALSE)
-    #' @param bias Logical indicating whether to apply bias correction in covariance
-    #'   estimation (default: FALSE)
-    #'
-    #'
-    #' @examples
-    #'
-    #' data(ECSI)
-    #' ECSI = ECSI/10
-    #' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-    #'     PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
-    #'     PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-    #'     CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-    #'     CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
-    #'
-    #' C = matrix(c(0, 0, 0, 0, 0,
-    #'         1, 0, 0, 0, 0,
-    #'         1, 1, 0, 0, 0,
-    #'         1, 1, 1, 0, 0,
-    #'         0, 0, 0, 1, 0),
-    #'       5, 5, byrow = FALSE)
-    #' colnames(C) = rownames(C) = names(A)
-    #'
-    #' sem_model <- SemFC$new(data = A,
-    #' relation_matrix = C,
-    #' mode = rep("reflective", 5),
-    #' scale = FALSE,
-    #' estimator = "svd")
-    #'
-    #' @return A new `SemFC` object
-
-    initialize = function(data, relation_matrix, mode, estimator = 'ml', scale = FALSE, bias = FALSE) {
+initialize = function(data, relation_matrix, mode, estimator = 'ml', 
+                      scale = FALSE, bias = FALSE) {
 
       self$estimator <- estimator
       init <- get_parameter_model_sem(data, mode, relation_matrix, bias)
@@ -199,66 +223,73 @@ SemFC <- R6Class(
 
     },
 
-    #' @description
-    #' Fit the complete model with inference and goodness-of-fit
-    #'
-    #' @param infer Logical indicating whether to perform statistical inference (default: FALSE)
-    #' @param B Integer number of bootstrap replications for svd (default: 1000)
-    #' @param initialization Character string or numeric vector specifying initialization method
-    #'   for ML estimation. Ignored when estimator is "svd".
-    #'   \itemize{
-    #'     \item \code{"svd"} (default): Use SVD estimates as starting values
-    #'     \item \code{"random"}: Use random starting values
-    #'     \item \code{numeric vector}: Use provided values as starting parameters
-    #'       (must have length equal to total number of model parameters)
-    #'   }
-    #' @param tol Numeric tolerance for convergence in ML optimization (default: 1e-8)
-    #'
-    #' @details
-    #' This is the main wrapper function that performs:
-    #' \enumerate{
-    #'   \item Parameter estimation
-    #'   \item Statistical inference
-    #'   \item Goodness-of-fit assessment
-    #' }
-    #'
-    #'
-    #' @examples
-    #' data(ECSI)
-    #' ECSI = ECSI/10
-    #' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-    #'     PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
-    #'     PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-    #'     CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-    #'     CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
-    #'
-    #' C = matrix(c(0, 0, 0, 0, 0,
-    #'         1, 0, 0, 0, 0,
-    #'         1, 1, 0, 0, 0,
-    #'         1, 1, 1, 0, 0,
-    #'         0, 0, 0, 1, 0),
-    #'       5, 5, byrow = FALSE)
-    #' colnames(C) = rownames(C) = names(A)
-    #'
-    #' sem_model_svd <- SemFC$new(data = A,
-    #' relation_matrix = C,
-    #' mode = rep("reflective", 5),
-    #' scale = FALSE,
-    #' estimator = "svd")
-    #'
-    #' sem_model_svd$fit(infer = TRUE, B = 100)
-    #'
-    #' sem_model_ml <- SemFC$new(data = A,
-    #' relation_matrix = C,
-    #' mode = rep("reflective", 5),
-    #' scale = FALSE,
-    #' estimator = "ml")
-    #'
-    #' sem_model_ml$fit(infer = TRUE, initialization = "svd", tol = 1e-04)
-    #'
-    #'
+#' @description
+#' Fit the full model with inference and goodness-of-fit.
+#'
+#' @param infer Logical indicating whether to perform statistical inference 
+#'   or not (default: FALSE)
+#' @param B Integer number of bootstrap samples for svd (default: 1000)
+#' @param initialization Character string or numeric vector specifying the 
+#'   initialization method for ML. This argument is ignored when estimator 
+#'   is "svd".
+#'   \itemize{
+#'     \item \code{"svd"} (default): use svdSEM estimate as starting values
+#'     \item \code{"random"}: use random starting values
+#'     \item \code{numeric vector}: use the provided vector as starting 
+#'        values. The length of this vector equals the total number of model 
+#'        parameters.
+#'   }
+#' @param tol Numeric tolerance for convergence in ML optimization 
+#'   (default: 1e-8)
+#'
+#' @details
+#' This is the main wrapper function that performs:
+#' \enumerate{
+#'   \item Parameter estimation for svdSEM ("svd") or ML ("ml").
+#'   \item Statistical inference (bootstrap for svdSEM, asymptotic for ML)
+#'   \item Goodness-of-fit assessment (chi-square, CFI, TLI, RMSEA, SRMR, 
+#'     AIC, BIC)
+#' }
+#' 
+#' @examples
+#' data(ECSI)
+#' ECSI = ECSI/10
+#' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+#'          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
+#'                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+#'          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+#'          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+#'          CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+#'
+#' C = matrix(c(0, 0, 0, 0, 0,
+#'              1, 0, 0, 0, 0,
+#'              1, 1, 0, 0, 0,
+#'              1, 1, 1, 0, 0,
+#'              0, 0, 0, 1, 0), 5, 5, 
+#'              byrow = FALSE)
+#'              
+#' colnames(C) = rownames(C) = names(A)
+#'
+#' sem_model_svd <- SemFC$new(data = A,
+#'                            relation_matrix = C,
+#'                            mode = rep("reflective", 5), 
+#'                            scale = FALSE, 
+#'                            estimator = "svd")
+#'
+#' sem_model_svd$fit(infer = TRUE, B = 100)
+#'
+#' sem_model_ml <- SemFC$new(data = A, 
+#'                           relation_matrix = C, 
+#'                           mode = rep("reflective", 5), 
+#'                           scale = FALSE, 
+#'                           estimator = "ml")
+#'
+#' sem_model_ml$fit(infer = TRUE, 
+#'                  initialization = "svd", 
+#'                  tol = 1e-04)
+#'
 
-    fit = function(infer = FALSE, B = 1000, initialization = 'svd', tol = 1e-8){
+fit = function(infer = FALSE, B = 1000, initialization = 'svd', tol = 1e-8){
       estimator <- self$estimator
       self$boot_rep <- B
       if (estimator == 'svd'){
@@ -277,61 +308,64 @@ SemFC <- R6Class(
           private$ml_infer()
         }
       }
-
-
-
     },
 
-    #' @description
-    #' Print comprehensive summary of model estimation results
-    #'
-    #' @param standardized Logical indicating whether to display standardized estimates (default: FALSE)
-    #' @param effect Logical indicating whether to display total and indirect effects (default: FALSE)
-    #' @param all_measures Logical indicating whether to display all goodness-of-fit measures (default: FALSE)
-    #'
-    #' @details
-    #' Displays:
-    #' \itemize{
-    #'   \item Model information (estimator, sample size, number of parameters)
-    #'   \item Chi-square test results
-    #'   \item Baseline model comparison
-    #'   \item Fit indices (CFI, TLI)
-    #'   \item Information criteria (AIC, BIC, SABIC)
-    #'   \item RMSEA with confidence intervals
-    #'   \item SRMR
-    #'   \item Bollen-Stine bootstrap results (SVD only)
-    #'   \item Parameter estimates with standard errors and p-values
-    #' }
-    #'
-    #'
-    #'
-    #' @examples
-    #' data(ECSI)
-    #' ECSI = ECSI/10
-    #' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-    #'     PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
-    #'     PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-    #'     CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-    #'     CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
-    #'
-    #' C = matrix(c(0, 0, 0, 0, 0,
-    #'         1, 0, 0, 0, 0,
-    #'         1, 1, 0, 0, 0,
-    #'         1, 1, 1, 0, 0,
-    #'         0, 0, 0, 1, 0),
-    #'       5, 5, byrow = FALSE)
-    #' colnames(C) = rownames(C) = names(A)
-    #'
-    #' sem_model <- SemFC$new(data = A,
-    #' relation_matrix = C,
-    #' mode = rep("reflective", 5),
-    #' scale = FALSE,
-    #' estimator = "svd")
-    #'
-    #' sem_model$fit(infer = TRUE, B = 100)
-    #'
-    #' sem_model$summary(standardized = TRUE, effect = TRUE, all_measures = TRUE)
-
+#' @description
+#' Print comprehensive summary of model estimation results.
+#'
+#' @param standardized Logical indicating whether to report standardized 
+#'   estimates (default: FALSE)
+#' @param effect Logical indicating whether to report total and indirect 
+#'   effects (default: FALSE)
+#' @param all_measures Logical indicating whether to report all 
+#'   goodness-of-fit measures (default: FALSE)
+#'
+#' @details
+#' Elements that are reported in the summary include:
+#' \itemize{
+#'   \item Model information (estimator, sample size, number of parameters)
+#'   \item Chi-square test results
+#'   \item Baseline model comparison
+#'   \item Fit indices (CFI, TLI)
+#'   \item Information criteria (AIC, BIC, SABIC)
+#'   \item RMSEA with confidence intervals
+#'   \item SRMR
+#'   \item Bollen-Stine bootstrap results (for SVD only)
+#'   \item Parameter estimates with standard errors and p-values
+#' }
+#'
+#' @examples
+#' data(ECSI)
+#' data(ECSI)
+#' ECSI = ECSI/10
+#' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+#'          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
+#'                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+#'          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+#'          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+#'          CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+#'
+#' C = matrix(c(0, 0, 0, 0, 0,
+#'              1, 0, 0, 0, 0,
+#'              1, 1, 0, 0, 0,
+#'              1, 1, 1, 0, 0,
+#'              0, 0, 0, 1, 0), 5, 5, 
+#'              byrow = FALSE)
+#'              
+#' colnames(C) = rownames(C) = names(A)
+#'
+#' sem_model <- SemFC$new(data = A, 
+#'                        relation_matrix = C, 
+#'                        mode = rep("reflective", 5), 
+#'                        scale = FALSE, 
+#'                        estimator = "svd")
+#'
+#' sem_model$fit(infer = TRUE, B = 100)
+#'
+#' sem_model$summary(standardized = TRUE, 
+#'                   effect = TRUE, 
+#'                   all_measures = TRUE)
+#'                   
 
     summary = function(standardized = F, effect = FALSE, all_measures  = F){
 
@@ -350,71 +384,71 @@ SemFC <- R6Class(
 
     },
 
-
-
-
-
-    #' @description
-    #' Extract parameter estimates from the fitted model
-    #'
-    #' @param standardized Logical indicating whether to include standardized
-    #'   estimates (default: FALSE). When TRUE, adds a `std.all` column with
-    #'   fully standardized coefficients.
-    #'
-    #' @details
-    #' Returns a data frame containing all estimated parameters including:
-    #' \itemize{
-    #'   \item \code{lambda}: Loadings (measurement model)
-    #'   \item \code{omega}: Composite weights (for formative blocks)
-    #'   \item \code{beta}: Structural paths between endogenous variables
-    #'   \item \code{gamma}: Structural paths from exogenous to endogenous variables
-    #'   \item \code{residualvariance}: Residual variances of observed variables
-    #' }
-    #'
-    #' If statistical inference has been performed, the returned estimates
-    #' include standard errors, z-values, p-values, and confidence intervals.
-    #'
-    #' @return A data frame with all parameter estimates. Columns include:
-    #' \itemize{
-    #'   \item \code{lhs}: Left-hand side variable
-    #'   \item \code{op}: Operator
-    #'   \item \code{rhs}: Right-hand side variable
-    #'   \item \code{est}: Point estimate
-    #'   \item \code{se}: Standard error (if inference was performed)
-    #'   \item \code{z}: Z-statistic (if inference was performed)
-    #'   \item \code{pvalue}: P-value (if inference was performed)
-    #'   \item \code{std.all}: Standardized estimate (if standardized = TRUE)
-    #' }
-    #'
-    #' @examples
-    #' data(ECSI)
-    #' ECSI = ECSI/10
-    #' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-    #'     PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
-    #'     PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-    #'     CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-    #'     CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
-    #'
-    #' C = matrix(c(0, 0, 0, 0, 0,
-    #'         1, 0, 0, 0, 0,
-    #'         1, 1, 0, 0, 0,
-    #'         1, 1, 1, 0, 0,
-    #'         0, 0, 0, 1, 0),
-    #'       5, 5, byrow = FALSE)
-    #' colnames(C) = rownames(C) = names(A)
-    #'
-    #' sem_model <- SemFC$new(data = A,
-    #' relation_matrix = C,
-    #' mode = rep("reflective", 5),
-    #' scale = FALSE,
-    #' estimator = "svd")
-    #'
-    #' sem_model$fit(infer = TRUE, B = 100)
-    #'
-    #'
-    #'
-    #' estimates <- sem_model$parameterEstimates(standardized = TRUE)
-    #'
+#' @description 
+#' Extract parameter estimates from the fitted SemFC model
+#'
+#' @param standardized Logical indicating whether to include standardized
+#'   estimates (default: FALSE). When TRUE, adds a `std.all` column with
+#'   fully standardized coefficients.
+#'
+#' @details
+#' Returns a data frame containing all estimated parameters including:
+#' \itemize{
+#'   \item \code{lambda}: Loading vectors for reflective and formative 
+#'     blocks
+#'   \item \code{omega}: Composite weights for formative blocks only
+#'   \item \code{beta}: Structural coefficients between endogenous 
+#'     latent variables
+#'   \item \code{gamma}: Structural coefficients from exogenous to 
+#'     endogenous latent variables
+#'   \item \code{residualvariance}: Residual variances for observed 
+#'     variables in reflective blocks
+#' }
+#'
+#' If statistical inference has been performed, the returned estimates
+#' include standard errors, z-values, p-values, and confidence intervals.
+#'
+#' @return A data frame with all parameter estimates. Columns include:
+#' \itemize{
+#'   \item \code{lhs}: Left-hand side variable
+#'   \item \code{op}: Operator
+#'   \item \code{rhs}: Right-hand side variable
+#'   \item \code{est}: Point estimate
+#'   \item \code{se}: Standard error (if inference was performed)
+#'   \item \code{z}: Z-statistic (if inference was performed)
+#'   \item \code{pvalue}: P-value (if inference was performed)
+#'   \item \code{std.all}: Standardized estimate (if standardized = TRUE)
+#' }
+#'
+#' @examples
+#' data(ECSI)
+#' ECSI = ECSI/10
+#' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+#'          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
+#'                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+#'          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+#'          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+#'          CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+#'
+#' C = matrix(c(0, 0, 0, 0, 0,
+#'              1, 0, 0, 0, 0,
+#'              1, 1, 0, 0, 0,
+#'              1, 1, 1, 0, 0,
+#'              0, 0, 0, 1, 0), 5, 5, 
+#'              byrow = FALSE)
+#'              
+#' colnames(C) = rownames(C) = names(A)
+#'
+#' sem_model <- SemFC$new(data = A, 
+#'                        relation_matrix = C,
+#'                        mode = rep("reflective", 5), 
+#'                        scale = FALSE, 
+#'                        estimator = "svd")
+#'
+#' sem_model$fit(infer = TRUE, B = 100)
+#'
+#' estimates <- sem_model$parameterEstimates(standardized = TRUE)
+#'
 
     parameterEstimates = function(standardized = FALSE){
       estimate <- formatting_estimate(self$estimate)
@@ -438,66 +472,74 @@ SemFC <- R6Class(
 
     },
 
-    #' @description
-    #' Check for improper solutions in the estimated model
-    #'
-    #' @details
-    #' Detects types of inadmissible or improper solutions including:
-    #' \itemize{
-    #'   \item \code{reliability_coef}: Reliability coefficients for each block
-    #'   \item \code{P_IMPLIED}: Implied correlation matrix of latent variables
-    #'   \item \code{residual_variance}: List of residual variances
-    #'   \item \code{std_lambda}: Standardized loadings
-    #'   \item \code{SIGMA_IMPLIED}: Implied covariance matrix of observed variables
-    #'   \item \code{R2}: R-squared values for endogenous latent variables
-    #'   \item \code{psi}: Residual covariance matrix of latent variables
-    #'   \item \code{Ptilde}: First estimation of correlation matrix of latent variables (only for SVDSEM)
-    #' }
-    #'
-    #'
-    #' @return Named logical vector of length 8 (or 9 for SVDSEM) indicating presence of each type
-    #'   of improper solution:
-    #' \describe{
-    #'   \item{RELIABILITY_COEF}{\code{TRUE} if any reliability coefficient is outside (0, 1).}
-    #'   \item{RHO_JH}{\code{TRUE} if any correlation in P_IMPLIED is outside (-1, 1).}
-    #'   \item{P_IMPLIED}{\code{TRUE} if P_IMPLIED has negative eigenvalues (not positive definite).}
-    #'   \item{THETA_JH}{\code{TRUE} if any residual variance is negative.}
-    #'   \item{STD_LAMBDA}{\code{TRUE} if any standardized loading is outside (-1, 1).}
-    #'   \item{SIGMA_IMPLIED}{\code{TRUE} if SIGMA_IMPLIED has negative eigenvalues (not positive definite).}
-    #'   \item{R2}{\code{TRUE} if any R-squared is outside (0, 1).}
-    #'   \item{PSI}{\code{TRUE} if PSI has negative eigenvalues (not positive definite).}
-    #'   \item{P_TILDE}{\code{TRUE} if P_TILDE has negative eigenvalues (only for SVDSEM).}
-    #' }
-    #'
-    #'
-    #' @examples
-    #' data(ECSI)
-    #' ECSI = ECSI/10
-    #' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-    #'     PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
-    #'     PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-    #'     CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-    #'     CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
-    #'
-    #' C = matrix(c(0, 0, 0, 0, 0,
-    #'         1, 0, 0, 0, 0,
-    #'         1, 1, 0, 0, 0,
-    #'         1, 1, 1, 0, 0,
-    #'         0, 0, 0, 1, 0),
-    #'       5, 5, byrow = FALSE)
-    #' colnames(C) = rownames(C) = names(A)
-    #'
-    #' sem_model <- SemFC$new(data = A,
-    #' relation_matrix = C,
-    #' mode = rep("reflective", 5),
-    #' scale = FALSE,
-    #' estimator = "svd")
-    #'
-    #' sem_model$fit(infer = TRUE, B = 100)
-    #'
-    #' improper_results <- sem_model$check_improper()
-    #'
-    #'
+#' @description
+#' Check for improper solutions in the fitted SemFC model
+#'
+#' @details
+#' Detects improper solutions for:
+#' \itemize{
+#'   \item \code{reliability_coef}: reliability coefficients for each block
+#'   \item \code{p_implied}: implied correlation matrix between latent 
+#'     variables
+#'   \item \code{residual_variance}: residual variances
+#'   \item \code{std_lambda}: standardized loadings
+#'   \item \code{sigma_implied}: implied covariance matrix of observed 
+#'     variables
+#'   \item \code{r2}: r-squared values for endogenous latent variables
+#'   \item \code{psi}: residual covariance matrix of latent variables
+#'   \item \code{p_tilde}: intermediate estimation of correlation matrix 
+#'     between latent variables (only for SVDSEM)
+#' }
+#'
+#' @return logical vector indicating improper solutions for each of the 
+#'   following criteria:
+#' \describe{
+#'   \item{reliability_coef}{\code{TRUE} if any reliability coefficient is 
+#'     outside (0, 1).}
+#'   \item{rho_jh}{\code{TRUE} if any correlation in P_IMPLIED is outside 
+#'     (-1, 1).}
+#'   \item{p_implied}{\code{TRUE} if p_implied is not positive definite.}
+#'   \item{theta_jh}{\code{TRUE} if any residual variance is negative.}
+#'   \item{std_lambda}{\code{TRUE} if any standardized loading is outside 
+#'     (-1, 1).}
+#'   \item{sigma_implied}{\code{TRUE} if sigma_implied is not positive 
+#'     definite.}
+#'   \item{r2}{\code{TRUE} if any r-squared is outside (0, 1).}
+#'   \item{psi}{\code{TRUE} if psi is not positive definite.}
+#'   \item{p_tilde}{\code{TRUE} if p_tilde is not positive definite (only 
+#'     for svdSEM).}
+#' }
+#'
+#' @examples
+#' data(ECSI)
+#' ECSI = ECSI/10
+#' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+#'          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
+#'                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+#'          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+#'          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+#'          CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+#'
+#' C = matrix(c(0, 0, 0, 0, 0,
+#'              1, 0, 0, 0, 0,
+#'              1, 1, 0, 0, 0,
+#'              1, 1, 1, 0, 0,
+#'              0, 0, 0, 1, 0), 5, 5, 
+#'              byrow = FALSE)
+#'              
+#' colnames(C) = rownames(C) = names(A)
+#'
+#' sem_model <- SemFC$new(data = A, 
+#'                        relation_matrix = C, 
+#'                        mode = rep("reflective", 5), 
+#'                        scale = FALSE, 
+#'                        estimator = "svd")
+#'
+#' sem_model$fit(infer = TRUE, B = 100)
+#'
+#' improper_results <- sem_model$check_improper()
+#'
+
     check_improper = function(){
       if (is.null(self$estimate) || length(self$estimate) == 0L) {
         stop("Model has not been fitted yet. Call `fit()` before `check_improper()`.", call. = FALSE)
@@ -507,16 +549,17 @@ SemFC <- R6Class(
   ),
 
   private = list(
+#
+# ' @description
+# ' Fit the model using Singular Value Decomposition (SVD) method
+# '
+# ' @details
+# ' Estimates model parameters using SVD-based approach which is computationally
+# ' efficient and provides good starting values for ML estimation.
+# '
+# ' @return Invisible self (for method chaining)
+# ' @keywords internal
 
-    # ' @description
-    # ' Fit the model using Singular Value Decomposition (SVD) method
-    # '
-    # ' @details
-    # ' Estimates model parameters using SVD-based approach which is computationally
-    # ' efficient and provides good starting values for ML estimation.
-    # '
-    # ' @return Invisible self (for method chaining)
-    # ' @keywords internal
     fit_svd = function() {
       self$estimator <- 'svd'
       svd_result <- svdSEM(self$data$data,
@@ -539,19 +582,20 @@ SemFC <- R6Class(
       self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
       self$gof$F <- F1(theta_svd, self$data$cov_S, self$model)
     },
-    #
-    # ' @description
-    # ' Perform statistical inference for SVD estimates using bootstrap
-    # '
-    # ' @param B Integer number of bootstrap replications (default: 1000)
-    # ' @param verbose Logical indicating whether to print progress messages (default: TRUE)
-    # '
-    # ' @details
-    # ' Uses non-parametric bootstrap to estimate standard errors, confidence intervals,
-    # ' and p-values for all model parameters.
-    # '
-    # ' @return Invisible self (for method chaining)
-    # ' @keywords internal
+    
+# ' @description
+# ' Perform statistical inference for SVD estimates using bootstrap
+# '
+# ' @param B Integer number of bootstrap samples (default: 1000)
+# ' @param verbose Logical indicating whether to print progress messages (default: TRUE)
+# '
+# ' @details
+# ' Uses non-parametric bootstrap to estimate standard errors, confidence intervals,
+# ' and p-values for all model parameters.
+# '
+# ' @return Invisible self (for method chaining)
+# ' @keywords internal
+
     svd_infer = function(B = 1000, verbose = TRUE){
 
       boot_out <- svdsem_infer(self$estimate, B, verbose = verbose)
@@ -561,25 +605,28 @@ SemFC <- R6Class(
 
     },
 
-    # ' @description
-    # ' Fit the model using Maximum Likelihood (ML) estimation
-    # '
-    # ' @param initialization Character string or numeric vector specifying initialization method:
-    # '   \itemize{
-    # '     \item \code{"svd"} (default): Use SVD estimates as starting values
-    # '     \item \code{"random"}: Use random starting values
-    # '     \item \code{numeric vector}: Use provided values as starting parameters
-    # '       (must have length equal to total number of model parameters)
-    # '   }
-    # ' @param tol Numeric tolerance for convergence in optimization (default: 1e-8)
-    # '
-    # ' @details
-    # ' Uses numerical optimization (via SOLNP) to minimize the ML fit function.
-    # ' SVD initialization is recommended for better convergence.
-    # '
-    # ' @return Invisible self (for method chaining)
-    # ' @keywords internal
-    fit_ml = function(initialization = 'svd', tol) {
+# ' @description
+# ' Fit the model using Maximum Likelihood (ML) estimation
+# '
+# ' @param initialization Character string or numeric vector specifying 
+# '    initialization method:
+# '   \itemize{
+# '     \item \code{"svd"} (default): Use svdSEM estimate as starting values
+# '     \item \code{"random"}: Use random starting values
+# '     \item \code{numeric vector}: use the provided vector as starting 
+# '              values. This vector must have length equal to the total 
+# '              number of model parameters
+# '   }
+# ' @param tol Numeric tolerance for convergence in optimization (default: 1e-8)
+# '
+# ' @details
+# ' Uses numerical optimization (via SOLNP) to minimize the ML fit function.
+# ' SVD initialization is recommended for better convergence.
+# '
+# ' @return Invisible self (for method chaining)
+# ' @keywords internal
+
+  fit_ml = function(initialization = 'svd', tol) {
 
       len_theta <- sum(self$model$lengths_theta)
 
@@ -606,31 +653,35 @@ SemFC <- R6Class(
       self$estimate <- lvm_ml(x = theta_ml, model = self$model, jac = F)
       self$estimate$T_LS <- d_LS(self$data$cov_S, self$estimate$SIGMA_IMPLIED)
 
-      var_MVs <- lapply(self$data$data, function(x) diag(cov2(x, bias = self$model$bias)))
-      std_lambda <- mapply("/", self$estimate$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
+      var_MVs <- lapply(self$data$data, 
+                        function(x) 
+                          diag(cov2(x, bias = self$model$bias)))
+      std_lambda <- mapply("/", self$estimate$lambda, lapply(var_MVs, sqrt),  
+                           SIMPLIFY = FALSE)
       self$estimate$std_lambda <- std_lambda
       std_omega <- mapply(function(Sjj, lambda_j) solve(Sjj) %*% lambda_j,
-                         self$data$S_diag_composites, std_lambda[self$model$mode == "formative"],
+                         self$data$S_diag_composites, 
+                         std_lambda[self$model$mode == "formative"],
                          SIMPLIFY = FALSE)
       names(std_omega) <- names(std_lambda[self$model$mode == "formative"])
       self$estimate$std_omega <- std_omega
       self$estimate$theta <- theta_ml
-      self$estimate$effect <- compute_effect(self$estimate$beta, self$estimate$gamma)
+      self$estimate$effect <- compute_effect(self$estimate$beta, 
+                                             self$estimate$gamma)
       self$gof$F <- F1(theta_ml, self$data$cov_S, self$model)
-
-
     },
 
 
-    # ' @description
-    # ' Perform asymptotic statistical inference for ML estimates
-    # '
-    # ' @details
-    # ' Computes standard errors using the inverse of the information matrix.
-    # ' Provides z-statistics and p-values based on asymptotic normality.
-    # '
-    # ' @return Invisible self (for method chaining)
-    # ' @keywords internal
+# ' @description
+# ' Perform asymptotic statistical inference for restricted Maximum Likelihood estimates
+# '
+# ' @details
+# ' Computes standard errors using the inverse of the information matrix.
+# ' Provides z-statistics and p-values based on asymptotic normality.
+# '
+# ' @return Invisible self (for method chaining)
+# ' @keywords internal
+
     ml_infer = function(){
       theta_ml <- self$estimate$theta
       S <- self$data$cov_S
@@ -645,27 +696,27 @@ SemFC <- R6Class(
     },
 
 
-    # ' @description
-    # ' Calculate goodness-of-fit statistics
-    # '
-    # ' @param B Integer number of bootstrap replications for Bollen-Stine test (default: 1000).
-    # '   Only used when estimator is "svd".
-    # '
-    # ' @details
-    # ' Computes multiple fit indices including:
-    # ' \itemize{
-    # '   \item Reliability coefficients for reflective blocks (Dillon)
-    # '   \item Chi-square test statistic
-    # '   \item CFI (Comparative Fit Index)
-    # '   \item TLI (Tucker-Lewis Index)
-    # '   \item RMSEA (Root Mean Square Error of Approximation)
-    # '   \item SRMR (Standardized Root Mean Square Residual)
-    # '   \item Information criteria (AIC, BIC, SABIC)
-    # '   \item Bollen-Stine bootstrap p-value (for SVD only)
-    # ' }
-    # '
-    # ' @return Invisible self (for method chaining)
-    # ' @keywords internal
+# ' @description
+# ' Calculate goodness-of-fit statistics
+# '
+# ' @param B Integer number of bootstrap samples for Bollen-Stine test (default: 1000).
+# '   Only used when estimator is "svd".
+# '
+# ' @details
+# ' Computes multiple fit indices including:
+# ' \itemize{
+# '   \item Reliability coefficients for reflective blocks (Dillon)
+# '   \item Chi-square test statistic
+# '   \item CFI (Comparative Fit Index)
+# '   \item TLI (Tucker-Lewis Index)
+# '   \item RMSEA (Root Mean Square Error of Approximation)
+# '   \item SRMR (Standardized Root Mean Square Residual)
+# '   \item Information criteria (AIC, BIC, SABIC)
+# '   \item Bollen-Stine bootstrap p-value (for SVD only)
+# ' }
+# '
+# ' @return Invisible self (for method chaining)
+# ' @keywords internal
 
     get_gof = function(B = 1000){
 
@@ -675,7 +726,8 @@ SemFC <- R6Class(
 
       # reliability only for relflective block (Dillon)
       if (sum(self$model$mode == "reflective") > 0){
-        res_reliability <- reliability('Dillon', self$estimate$lambda, self$estimate$residual_variance)
+        res_reliability <- reliability('Dillon', self$estimate$lambda, 
+                                       self$estimate$residual_variance)
         res_gof$reliability <- res_reliability
       }
 
@@ -698,10 +750,6 @@ SemFC <- R6Class(
       self$gof <- c(self$gof, res_gof)
 
     }
-
-
-
-
   )
 )
 
