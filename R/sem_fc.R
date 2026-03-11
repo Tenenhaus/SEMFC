@@ -79,14 +79,7 @@
 SemFC <- R6Class(
   "SemFC",
   public = list(
-    # Attributs
-    estimator = NULL,
-    data = list(),
-    model = list(),
-    estimate = list(),
-    infer_estimate = NULL,
-    boot_rep = NULL,
-    gof = NULL,
+
 
 #' @description
 #' Initialize SemFC object with data and model specification
