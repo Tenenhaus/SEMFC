@@ -37,7 +37,7 @@ svdSEM_gof <- function(fit, B = 100, bias = FALSE){
     # Tranforms the data sets in the way proposed 
     # by Yuan & Hayashi (2003)
     df <- Reduce("cbind", fit$blocks)
-    Z0 <- scaleDataSet(df, fit$SIGMA_IMPLIED)
+    Z0 <- scaleDataSet(df, fit$sigma_implied)
     Z0 <- lapply(split(data.frame(t(Z0)),
                       as.factor(rep(seq_along(fit$blocks),
                                     sapply(fit$blocks, NCOL)))),
@@ -57,10 +57,10 @@ svdSEM_gof <- function(fit, B = 100, bias = FALSE){
                                        scale = fit$scale, 
                                        mode = fit$mode, 
                                        bias = fit$bias)
-                        if (!any(eigen(fit_b$Ptilde)$values<=0)){
+                        if (!any(eigen(fit_b$p_tilde)$values<=0)){
                           return(NA)
                         }else{
-                          return(d_LS(S, fit_b$SIGMA_IMPLIED))
+                          return(d_LS(S, fit_b$sigma_implied))
                         }
                       }
                       )
