@@ -30,7 +30,7 @@ of improper solution:
 \item{std_lambda}{\code{TRUE} if any standardized loading is outside (-1, 1).}
 \item{sigma_implied}{\code{TRUE} if sigma_implied has negative eigenvalues (not positive definite).}
 \item{r2}{\code{TRUE} if any R-squared is outside (0, 1).}
-\item{psi}{\code{TRUE} if PSI has negative eigenvalues (not positive definite).}
+\item{psi}{\code{TRUE} if psi has negative eigenvalues (not positive definite).}
 \item{p_tilde}{\code{TRUE} if p_tilde has negative eigenvalues (only for SVDSEM).}
 }
 }

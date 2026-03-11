@@ -573,7 +573,7 @@ SemFC <- R6Class(
     .estimate       = list(),
     .infer_estimate = NULL,
     .boot_rep       = NULL,
-    .gof            = NULL,
+    .gof            = list(),
 
 
 
