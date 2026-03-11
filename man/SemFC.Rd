@@ -83,7 +83,7 @@ estimates <- sem_model$parameterEstimates(standardized = TRUE)
 data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
@@ -93,9 +93,9 @@ C = matrix(c(0, 0, 0, 0, 0,
              1, 0, 0, 0, 0,
              1, 1, 0, 0, 0,
              1, 1, 1, 0, 0,
-             0, 0, 0, 1, 0), 5, 5,
+             0, 0, 0, 1, 0), 5, 5, 
              byrow = FALSE)
-
+             
 colnames(C) = rownames(C) = names(A)
 
 sem_model <- SemFC$new(data = A,
@@ -112,7 +112,7 @@ estimator = "svd")
 data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
@@ -122,27 +122,27 @@ C = matrix(c(0, 0, 0, 0, 0,
              1, 0, 0, 0, 0,
              1, 1, 0, 0, 0,
              1, 1, 1, 0, 0,
-             0, 0, 0, 1, 0), 5, 5,
+             0, 0, 0, 1, 0), 5, 5, 
              byrow = FALSE)
-
+             
 colnames(C) = rownames(C) = names(A)
 
 sem_model_svd <- SemFC$new(data = A,
                            relation_matrix = C,
-                           mode = rep("reflective", 5),
-                           scale = FALSE,
+                           mode = rep("reflective", 5), 
+                           scale = FALSE, 
                            estimator = "svd")
 
 sem_model_svd$fit(infer = TRUE, B = 100)
 
-sem_model_ml <- SemFC$new(data = A,
-                          relation_matrix = C,
-                          mode = rep("reflective", 5),
-                          scale = FALSE,
+sem_model_ml <- SemFC$new(data = A, 
+                          relation_matrix = C, 
+                          mode = rep("reflective", 5), 
+                          scale = FALSE, 
                           estimator = "ml")
 
-sem_model_ml$fit(infer = TRUE,
-                 initialization = "svd",
+sem_model_ml$fit(infer = TRUE, 
+                 initialization = "svd", 
                  tol = 1e-04)
 
 
@@ -154,7 +154,7 @@ data(ECSI)
 data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
@@ -164,23 +164,23 @@ C = matrix(c(0, 0, 0, 0, 0,
              1, 0, 0, 0, 0,
              1, 1, 0, 0, 0,
              1, 1, 1, 0, 0,
-             0, 0, 0, 1, 0), 5, 5,
+             0, 0, 0, 1, 0), 5, 5, 
              byrow = FALSE)
-
+             
 colnames(C) = rownames(C) = names(A)
 
-sem_model <- SemFC$new(data = A,
-                       relation_matrix = C,
-                       mode = rep("reflective", 5),
-                       scale = FALSE,
+sem_model <- SemFC$new(data = A, 
+                       relation_matrix = C, 
+                       mode = rep("reflective", 5), 
+                       scale = FALSE, 
                        estimator = "svd")
 
 sem_model$fit(infer = TRUE, B = 100)
 
-sem_model$summary(standardized = TRUE,
-                  effect = TRUE,
+sem_model$summary(standardized = TRUE, 
+                  effect = TRUE, 
                   all_measures = TRUE)
-
+                  
 
 ## ------------------------------------------------
 ## Method `SemFC$parameterEstimates`
@@ -189,7 +189,7 @@ sem_model$summary(standardized = TRUE,
 data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
@@ -199,15 +199,15 @@ C = matrix(c(0, 0, 0, 0, 0,
              1, 0, 0, 0, 0,
              1, 1, 0, 0, 0,
              1, 1, 1, 0, 0,
-             0, 0, 0, 1, 0), 5, 5,
+             0, 0, 0, 1, 0), 5, 5, 
              byrow = FALSE)
-
+             
 colnames(C) = rownames(C) = names(A)
 
-sem_model <- SemFC$new(data = A,
+sem_model <- SemFC$new(data = A, 
                        relation_matrix = C,
-                       mode = rep("reflective", 5),
-                       scale = FALSE,
+                       mode = rep("reflective", 5), 
+                       scale = FALSE, 
                        estimator = "svd")
 
 sem_model$fit(infer = TRUE, B = 100)
@@ -222,7 +222,7 @@ estimates <- sem_model$parameterEstimates(standardized = TRUE)
 data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
@@ -232,58 +232,108 @@ C = matrix(c(0, 0, 0, 0, 0,
              1, 0, 0, 0, 0,
              1, 1, 0, 0, 0,
              1, 1, 1, 0, 0,
-             0, 0, 0, 1, 0), 5, 5,
+             0, 0, 0, 1, 0), 5, 5, 
              byrow = FALSE)
-
+             
 colnames(C) = rownames(C) = names(A)
 
-sem_model <- SemFC$new(data = A,
-                       relation_matrix = C,
-                       mode = rep("reflective", 5),
-                       scale = FALSE,
+sem_model <- SemFC$new(data = A, 
+                       relation_matrix = C, 
+                       mode = rep("reflective", 5), 
+                       scale = FALSE, 
                        estimator = "svd")
 
 sem_model$fit(infer = TRUE, B = 100)
 
 improper_results <- sem_model$check_improper()
 
+}
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{estimator}}{Character string specifying estimation method ("svd" or "ml")}
 
-## ------------------------------------------------
-## Method `SemFC$get_estimate`
-## ------------------------------------------------
+\item{\code{data}}{List containing data-related components:
+\itemize{
+\item \code{data}: The input data (list of blocks)
+\item \code{n_row}: Number of observations
+\item \code{cov_S}: Covariance matrix of observed variables
+\item \code{S_diag_composites}: List of covariance matrices for formative blocks
+}}
 
-data(ECSI)
-ECSI = ECSI/10
-A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
-    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+\item{\code{model}}{List containing model specification and parameters:
+\itemize{
+\item \code{relation_matrix}: Square matrix defining structural relationships
+\item \code{mode}: Character vector specifying measurement model types
+\item \code{n_blocks}: Number of measurement blocks
+\item \code{varnames}: List of variable names for each block
+\item \code{block_sizes}: Vector of sizes for each measurement block
+\item \code{dag}: Logical indicating if structural model is recursive
+\item \code{which_exo_endo}: List identifying exogenous/endogenous variables
+\item \code{lengths_theta}: Vector of parameter counts
+\item \code{p}: Total number of observed variables
+\item \code{q}: Total number of free parameters
+\item \code{r}: Number of formative blocks
+\item \code{dof}: Degrees of freedom
+\item \code{scale}: Logical indicating whether to standardize data
+\item \code{bias}: Logical indicating bias correction in covariance estimation
+}}
 
-C = matrix(c(0, 0, 0, 0, 0,
-        1, 0, 0, 0, 0,
-        1, 1, 0, 0, 0,
-        1, 1, 1, 0, 0,
-        0, 0, 0, 1, 0),
-      5, 5, byrow = FALSE)
-colnames(C) = rownames(C) = names(A)
+\item{\code{estimate}}{List containing all estimated model parameters:
+\itemize{
+\item \code{lambda}: List of loading vectors for each block
+\item \code{omega}: List of composite weight vectors for formative blocks
+\item \code{beta}: Matrix of structural paths between endogenous variables
+\item \code{gamma}: Matrix of structural paths from exogenous to endogenous variables
+\item \code{residual_variance}: List of residual variances for each observed variable
+\item \code{P_EXO}: Correlation matrix of exogenous latent variables
+\item \code{P_ENDO}: Correlation matrix of endogenous latent variables
+\item \code{P_IMPLIED}: Implied correlation matrix of all latent variables
+\item \code{SIGMA_IMPLIED}: Implied covariance matrix of observed variables
+\item \code{std_lambda}: List of standardized loadings for each block
+\item \code{std_omega}: List of standardized composite weights for formative blocks
+\item \code{psi}: Residual covariance matrix of latent variables
+\item \code{R2}: Named vector of R-squared values for endogenous latent variables
+\item \code{T_LS}: Least squares fit function value
+\item \code{theta}: Numeric vector of all free parameters
+\item \code{effect}: List of total and indirect effects between latent variables
+\item \code{Ptilde}: First-step correlation matrix estimate (SVD only)
+}}
 
-sem_model <- SemFC$new(data = A,
-relation_matrix = C,
-mode = rep("reflective", 5),
-scale = FALSE,
-estimator = "svd")
+\item{\code{infer_estimate}}{List containing inference results for all parameters:
+\itemize{
+\item \code{lambda}: Data frame of loadings with SE, z-values, p-values and CI
+\item \code{omega}: Data frame of composite weights with SE, z-values, p-values and CI
+\item \code{beta}: Data frame of structural paths (endo) with SE, z-values, p-values and CI
+\item \code{gamma}: Data frame of structural paths (exo) with SE, z-values, p-values and CI
+\item \code{residual_variance}: Data frame of residual variances with SE, z-values, p-values and CI
+\item \code{total_effects}: Data frame of total effects with SE, z-values, p-values and CI
+\item \code{indirect_effects}: Data frame of indirect effects with SE, z-values, p-values and CI
+\item \code{VCOV}: Variance-covariance matrix of parameter estimates (ML only)
+\item \code{vcov_effect}: Variance-covariance matrix of effect estimates (ML only)
+}}
 
-sem_model$fit()
+\item{\code{boot_rep}}{Integer number of bootstrap samples}
 
-# Get specific estimates
-lambda <- sem_model$get_estimate("lambda")
-beta <- sem_model$get_estimate("beta")
-R2 <- sem_model$get_estimate("r2")
-
-# Get all estimates
-all_estimates <- sem_model$get_estimate("all")
-
+\item{\code{gof}}{List containing goodness-of-fit statistics:
+\itemize{
+\item \code{F}: Value of the fit function at the optimal solution
+\item \code{reliability}: Named vector of reliability coefficients (Dillon-Goldstein rho) for reflective blocks
+\item \code{chi2}: Chi-square test statistic
+\item \code{df}: Degrees of freedom for chi-square test
+\item \code{pvalue}: P-value of the chi-square test
+\item \code{CFI}: Comparative Fit Index
+\item \code{TLI}: Tucker-Lewis Index
+\item \code{RMSEA}: Root Mean Square Error of Approximation
+\item \code{RMSEA_CI}: 90\\% confidence interval for RMSEA
+\item \code{SRMR}: Standardized Root Mean Square Residual
+\item \code{AIC}: Akaike Information Criterion
+\item \code{BIC}: Bayesian Information Criterion
+\item \code{SABIC}: Sample-size Adjusted BIC
+\item \code{bollen_stine}: Bollen-Stine bootstrap p-value (SVD only)
+}}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -293,7 +343,6 @@ all_estimates <- sem_model$get_estimate("all")
 \item \href{#method-SemFC-summary}{\code{SemFC$summary()}}
 \item \href{#method-SemFC-parameterEstimates}{\code{SemFC$parameterEstimates()}}
 \item \href{#method-SemFC-check_improper}{\code{SemFC$check_improper()}}
-\item \href{#method-SemFC-get_estimate}{\code{SemFC$get_estimate()}}
 \item \href{#method-SemFC-clone}{\code{SemFC$clone()}}
 }
 }
@@ -347,7 +396,7 @@ A new \code{SemFC} object
 \preformatted{data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
@@ -357,9 +406,9 @@ C = matrix(c(0, 0, 0, 0, 0,
              1, 0, 0, 0, 0,
              1, 1, 0, 0, 0,
              1, 1, 1, 0, 0,
-             0, 0, 0, 1, 0), 5, 5,
+             0, 0, 0, 1, 0), 5, 5, 
              byrow = FALSE)
-
+             
 colnames(C) = rownames(C) = names(A)
 
 sem_model <- SemFC$new(data = A,
@@ -422,7 +471,7 @@ AIC, BIC)
 \preformatted{data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
@@ -432,27 +481,27 @@ C = matrix(c(0, 0, 0, 0, 0,
              1, 0, 0, 0, 0,
              1, 1, 0, 0, 0,
              1, 1, 1, 0, 0,
-             0, 0, 0, 1, 0), 5, 5,
+             0, 0, 0, 1, 0), 5, 5, 
              byrow = FALSE)
-
+             
 colnames(C) = rownames(C) = names(A)
 
 sem_model_svd <- SemFC$new(data = A,
                            relation_matrix = C,
-                           mode = rep("reflective", 5),
-                           scale = FALSE,
+                           mode = rep("reflective", 5), 
+                           scale = FALSE, 
                            estimator = "svd")
 
 sem_model_svd$fit(infer = TRUE, B = 100)
 
-sem_model_ml <- SemFC$new(data = A,
-                          relation_matrix = C,
-                          mode = rep("reflective", 5),
-                          scale = FALSE,
+sem_model_ml <- SemFC$new(data = A, 
+                          relation_matrix = C, 
+                          mode = rep("reflective", 5), 
+                          scale = FALSE, 
                           estimator = "ml")
 
-sem_model_ml$fit(infer = TRUE,
-                 initialization = "svd",
+sem_model_ml$fit(infer = TRUE, 
+                 initialization = "svd", 
                  tol = 1e-04)
 
 }
@@ -505,7 +554,7 @@ Elements that are reported in the summary include:
 data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
@@ -515,23 +564,23 @@ C = matrix(c(0, 0, 0, 0, 0,
              1, 0, 0, 0, 0,
              1, 1, 0, 0, 0,
              1, 1, 1, 0, 0,
-             0, 0, 0, 1, 0), 5, 5,
+             0, 0, 0, 1, 0), 5, 5, 
              byrow = FALSE)
-
+             
 colnames(C) = rownames(C) = names(A)
 
-sem_model <- SemFC$new(data = A,
-                       relation_matrix = C,
-                       mode = rep("reflective", 5),
-                       scale = FALSE,
+sem_model <- SemFC$new(data = A, 
+                       relation_matrix = C, 
+                       mode = rep("reflective", 5), 
+                       scale = FALSE, 
                        estimator = "svd")
 
 sem_model$fit(infer = TRUE, B = 100)
 
-sem_model$summary(standardized = TRUE,
-                  effect = TRUE,
+sem_model$summary(standardized = TRUE, 
+                  effect = TRUE, 
                   all_measures = TRUE)
-
+                  
 }
 \if{html}{\out{</div>}}
 
@@ -592,7 +641,7 @@ A data frame with all parameter estimates. Columns include:
 \preformatted{data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
@@ -602,15 +651,15 @@ C = matrix(c(0, 0, 0, 0, 0,
              1, 0, 0, 0, 0,
              1, 1, 0, 0, 0,
              1, 1, 1, 0, 0,
-             0, 0, 0, 1, 0), 5, 5,
+             0, 0, 0, 1, 0), 5, 5, 
              byrow = FALSE)
-
+             
 colnames(C) = rownames(C) = names(A)
 
-sem_model <- SemFC$new(data = A,
+sem_model <- SemFC$new(data = A, 
                        relation_matrix = C,
-                       mode = rep("reflective", 5),
-                       scale = FALSE,
+                       mode = rep("reflective", 5), 
+                       scale = FALSE, 
                        estimator = "svd")
 
 sem_model$fit(infer = TRUE, B = 100)
@@ -674,7 +723,7 @@ for svdSEM).}
 \preformatted{data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
@@ -684,89 +733,20 @@ C = matrix(c(0, 0, 0, 0, 0,
              1, 0, 0, 0, 0,
              1, 1, 0, 0, 0,
              1, 1, 1, 0, 0,
-             0, 0, 0, 1, 0), 5, 5,
+             0, 0, 0, 1, 0), 5, 5, 
              byrow = FALSE)
-
+             
 colnames(C) = rownames(C) = names(A)
 
-sem_model <- SemFC$new(data = A,
-                       relation_matrix = C,
-                       mode = rep("reflective", 5),
-                       scale = FALSE,
+sem_model <- SemFC$new(data = A, 
+                       relation_matrix = C, 
+                       mode = rep("reflective", 5), 
+                       scale = FALSE, 
                        estimator = "svd")
 
 sem_model$fit(infer = TRUE, B = 100)
 
 improper_results <- sem_model$check_improper()
-
-}
-\if{html}{\out{</div>}}
-
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-get_estimate"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-get_estimate}{}}}
-\subsection{Method \code{get_estimate()}}{
-Get a specific estimate component from the fitted model
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$get_estimate(estimate)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{estimate}}{Character string specifying which estimate component to retrieve.
-Use \code{"all"} to retrieve all estimates. Other possible values include:
-\code{"lambda"}, \code{"omega"}, \code{"beta"}, \code{"gamma"},
-\code{"residual_variance"}, \code{"p_exo"}, \code{"p_endo"}, \code{"p_implied"},
-\code{"sigma_implied"}, \code{"std_lambda"}, \code{"std_omega"}, \code{"psi"},
-\code{"r2"}, \code{"T_LS"}, \code{"theta"}, \code{"effect"}, \code{"p_tilde"}.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-The requested estimate component. Returns \code{NULL} with a warning if:
-\itemize{
-\item The model has not been fitted yet
-\item The requested estimate is not available in the fitted model
-}
-When \code{estimate = "all"}, returns a list containing all available estimates.
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{data(ECSI)
-ECSI = ECSI/10
-A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
-    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
-
-C = matrix(c(0, 0, 0, 0, 0,
-        1, 0, 0, 0, 0,
-        1, 1, 0, 0, 0,
-        1, 1, 1, 0, 0,
-        0, 0, 0, 1, 0),
-      5, 5, byrow = FALSE)
-colnames(C) = rownames(C) = names(A)
-
-sem_model <- SemFC$new(data = A,
-relation_matrix = C,
-mode = rep("reflective", 5),
-scale = FALSE,
-estimator = "svd")
-
-sem_model$fit()
-
-# Get specific estimates
-lambda <- sem_model$get_estimate("lambda")
-beta <- sem_model$get_estimate("beta")
-R2 <- sem_model$get_estimate("r2")
-
-# Get all estimates
-all_estimates <- sem_model$get_estimate("all")
 
 }
 \if{html}{\out{</div>}}
