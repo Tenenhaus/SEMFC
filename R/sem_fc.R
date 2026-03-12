@@ -253,7 +253,6 @@ initialize = function(data, relation_matrix, mode, estimator = 'ml',
 #'
 #' @examples
 #' data(ECSI)
-#' data(ECSI)
 #' ECSI = ECSI/10
 #' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
 #'          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
