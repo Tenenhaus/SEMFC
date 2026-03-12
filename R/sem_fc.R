@@ -141,7 +141,7 @@ SemFC <- R6Class(
 #'
 #' @return A new `SemFC` object
 
-initialize = function(data, relation_matrix, mode, estimator = 'ml',
+initialize = function(data, relation_matrix, mode = rep('reflective', length(data)), estimator = 'ml',
                       scale = FALSE, bias = FALSE) {
 
       private$.estimator <- estimator
