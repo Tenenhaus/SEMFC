@@ -331,7 +331,7 @@ frame or matrix with rows as observations and columns as indicators.}
 \item{\code{relation_matrix}}{Square 0/1 connection matrix (\code{J} x \code{J})
 defining structural connection between latent variables.
 \code{relation_matrix[i, j]} = 1 indicates a structural
-connection from latent variable i to latent variable j; and equal 0
+connection from latent variable \code{i} to latent variable \code{j}; and equal 0
 otherwise.}
 
 \item{\code{mode}}{Character vector of length \code{J} specifying the type of
@@ -409,8 +409,8 @@ asymptotic inference is performed for ML. (default: \code{FALSE})}
 \item{\code{B}}{Integer number of bootstrap samples for svd (default: 1000)}
 
 \item{\code{initialization}}{Character string or numeric vector specifying the
-initialization method for ML. This argument is ignored when estimator
-is "svd".
+initialization strategy for the ML algorithm. This argument is ignored
+when estimator is \code{"svd"}.
 \itemize{
 \item \code{"svd"} (default): use svdSEM estimate as starting values
 \item \code{"random"}: use random starting values
@@ -420,14 +420,14 @@ parameters.
 }}
 
 \item{\code{tol}}{Numeric tolerance for convergence in ML optimization
-(default: 1e-8)}
+(default: \code{1e-8})}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
 This is the main wrapper function that performs:
 \enumerate{
-\item Parameter estimation for svdSEM ("svd") or ML ("ml").
+\item Parameter estimation for svdSEM (\code{"svd"}) or ML (\code{"ml"}).
 \item Statistical inference (bootstrap for svdSEM, asymptotic for ML)
 \item Goodness-of-fit assessment (chi-square, CFI, TLI, RMSEA, SRMR,
 AIC, BIC)
@@ -727,7 +727,7 @@ improper_results <- sem_model$check_improper()
 \if{html}{\out{<a id="method-SemFC-get_estimate"></a>}}
 \if{latex}{\out{\hypertarget{method-SemFC-get_estimate}{}}}
 \subsection{Method \code{get_estimate()}}{
-Get a specific estimate component from the fitted SemFC model
+Get a specific estimate from the fitted SemFC model.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SemFC$get_estimate(estimate)}\if{html}{\out{</div>}}
 }
@@ -735,22 +735,27 @@ Get a specific estimate component from the fitted SemFC model
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{estimate}}{Character string specifying which estimate component to retrieve.
-Use \code{"all"} to retrieve all estimates. Other possible values include:
-\code{"lambda"}, \code{"omega"}, \code{"beta"}, \code{"gamma"},
-\code{"residual_variance"}, \code{"p_exo"}, \code{"p_endo"}, \code{"p_implied"},
-\code{"sigma_implied"}, \code{"std_lambda"}, \code{"std_omega"}, \code{"psi"},
-\code{"r2"}, \code{"T_LS"}, \code{"theta"}, \code{"effect"}, \code{"p_tilde"}.}
+\item{\code{estimate}}{Character string specifying the estimate component to select.
+Possible values include:
+
+\code{"lambda"}, \code{"omega"}, \code{"beta"},
+\code{"gamma"}, \code{"residual_variance"}, \code{"p_exo"}, \code{"p_endo"},
+\code{"p_implied"}, \code{"sigma_implied"}, \code{"std_lambda"},
+\code{"std_omega"}, \code{"psi"}, \code{"r2"}, \code{"T_LS"},
+\code{"theta"}, \code{"effect"}, \code{"p_tilde"}.
+
+Use \code{"all"} to retrieve all estimates.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-The requested estimate component. Returns \code{NULL} with a warning if:
+The requested estimate. Returns \code{NULL} with a warning if:
 \itemize{
 \item The model has not been fitted yet
 \item The requested estimate is not available in the fitted model
 }
-When \code{estimate = "all"}, returns a list containing all available estimates.
+When \code{estimate = "all"}, returns a list containing all available
+estimates.
 }
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
