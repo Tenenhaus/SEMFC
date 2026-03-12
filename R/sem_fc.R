@@ -24,21 +24,21 @@
 #' for ML, as well as a wide range of goodness-of-fit measures to evaluate model
 #' fit (chi-square, CFI, TLI, RMSEA, SRMR, AIC, BIC).
 #'
-#' \strong{References}
-#'
-#' \enumerate{
-#' \item Tenenhaus, A., Tenenhaus, M., Dijkstra, T.K. Structural equation modeling
+#' @references
+#' Tenenhaus, A., Tenenhaus, M., Dijkstra, T.K. Structural equation modeling
 #' with factors and composites within the framework of the basic design.
-#' Advances in Data Analysis Classification (2025).
-#' \url{https://doi.org/10.1007/s11634-025-00647-4}
-#' \item Ye Y (1987) Interior algorithms for linear, quadratic, and
+#' Advances in Data Analysis and Classification (2025).
+#' \doi{10.1007/s11634-025-00647-4}
+#'
+#' Ye, Y. (1987). Interior algorithms for linear, quadratic, and
 #' linearly constrained non-linear programming. \href{https://web.stanford.edu/~yyye/YinyuYePhD.pdf}{PhD thesis}, Department of
-#' ESS, Stanford University
-#' \item Ghalanos A, Theussl S (2015) Rsolnp: general non-linear
+#' ESS, Stanford University.
+#'
+#' Ghalanos, A., Theussl, S. (2015). Rsolnp: general non-linear
 #' optimization using augmented Lagrange multiplier method.
-#' R package version 1.16. \cr
+#' R package version 1.16.
 #' \url{https://CRAN.R-project.org/package=Rsolnp}
-#' }
+#'
 #'
 #' @examples
 #' data("ECSI")
