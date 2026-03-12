@@ -101,7 +101,18 @@ format_estimates_table <- function(type, fit_component, fit_std_component = NULL
 
   # Return empty data frame if no estimates
   if (length(est) == 0) {
-    return(data.frame())
+      return(data.frame(
+        lhs      = character(0),
+        op       = character(0),
+        rhs      = character(0),
+        est      = numeric(0),
+        se       = numeric(0),
+        z        = numeric(0),
+        ci.lower = numeric(0),
+        ci.upper = numeric(0),
+        pvalue   = numeric(0),
+        std.all  = numeric(0)
+      ))
   }
 
   grid <- create_grid(type, fit_component)

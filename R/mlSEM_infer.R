@@ -31,7 +31,7 @@ information_matrix <- function(x, model){
       )
 
   nb_param <- length(x)
-  Sinv <- solve(lvm_ml(x = x, model = model, jac = F)$SIGMA_IMPLIED)
+  Sinv <- solve(lvm_ml(x = x, model = model, jac = F)$sigma_implied)
   Sinv_full_jac <- lapply(full_jac, function(fj) as.matrix(Sinv %*% fj))
   I_ij <- function(i, j) {
     0.5 * sum(diag(Sinv_full_jac[[i]] %*% Sinv_full_jac[[j]]))

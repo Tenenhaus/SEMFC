@@ -2,7 +2,7 @@
 % Please edit documentation in R/parameters_svd.R
 \name{parameters_svd}
 \alias{parameters_svd}
-\title{Convert SVD-SEM Parameter  to Vector Form}
+\title{Convert SVD-SEM Parameters to Vector Form}
 \usage{
 parameters_svd(
   lambda,
@@ -35,8 +35,14 @@ contains the residual variances for the indicators in that block.}
 \item{S_composites}{List of empirical covariance matrices for formative composite blocks.
 Each element is a covariance matrix for a formative block.}
 
+\item{model}{A list containing the model structure, including:
+\describe{
+\item{n_blocks}{Number of blocks in the model.}
 \item{mode}{Character vector indicating the measurement mode for each block:
-"reflective" or "formative".}
+\code{"reflective"} or \code{"formative"}.}
+\item{dag}{Logical; if \code{TRUE}, endogenous correlations are excluded
+(directed acyclic graph assumption).}
+}}
 }
 \value{
 Unnamed numeric vector containing all free parameters in the following order:
