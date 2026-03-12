@@ -412,7 +412,7 @@ initialize = function(data, relation_matrix, mode, estimator = 'ml',
 #' \describe{
 #'   \item{reliability_coef}{\code{TRUE} if any reliability coefficient is
 #'     outside (0, 1).}
-#'   \item{rho_jh}{\code{TRUE} if any correlation in P_IMPLIED is outside
+#'   \item{rho_jh}{\code{TRUE} if any correlation in p_implied is outside
 #'     (-1, 1).}
 #'   \item{p_implied}{\code{TRUE} if p_implied is not positive definite.}
 #'   \item{theta_jh}{\code{TRUE} if any residual variance is negative.}
