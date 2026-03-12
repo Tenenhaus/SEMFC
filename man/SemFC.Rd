@@ -2,22 +2,28 @@
 % Please edit documentation in R/sem_fc.R
 \name{SemFC}
 \alias{SemFC}
-\title{SemFC Class}
+\title{semFC: Structural Equation Modeling (SEM) with factors and composites
+within the framework of the basic design}
 \description{
 The SEMFC package implements Structural Equation Modeling (SEM) with factors
 and composites within the framework of the basic design (Tenenhaus et al, 2025).
 }
 \details{
 The SEMFC package supports the svdSEM and the (restricted) maximum likelihood
-estimation methods. svdSEM relies on a non-iterative SVD-based algorithm for
+estimation methods.
+
+\itemize{
+
+\item svdSEM relies on a non-iterative SVD-based algorithm for
 parameter estimation and produces consistent and asymptotically normal
 estimators, offering a statistically and computationally sound approach.
 
-In addtion SEMFC implements the restricted maximum-likelihood (RML-SEM)
-approach for the basic design with factors and composites. svdSEM estimates
-serve as an initial solution for RML-SEM. The RML-SEM estimator is
-implemented using the solnp algorithm (Ye, 1987), available in the Rsolnp package (Ghalanos and Theussl, 2015),
-which enables efficient nonlinear optimization with constraints.
+\item The restricted maximum-likelihood (RML-SEM) approach for the basic
+design with factors and composites is also implemented within SEMFC.
+svdSEM estimates serve as an initial solution for RML-SEM. The RML-SEM
+estimator is implemented using the solnp algorithm (Ye, 1987), available
+in the Rsolnp package (Ghalanos and Theussl, 2015), which enables efficient
+nonlinear optimization with constraints.}
 
 The SEMFC package also provides comprehensive tools for statistical inference,
 including bootstrap methods for SVD-based estimation and asymptotic inference
@@ -253,26 +259,29 @@ improper_results <- sem_model$check_improper()
 ## ------------------------------------------------
 
 data(ECSI)
+
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
-    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+                               "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+         PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+         CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+         CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
 
 C = matrix(c(0, 0, 0, 0, 0,
-        1, 0, 0, 0, 0,
-        1, 1, 0, 0, 0,
-        1, 1, 1, 0, 0,
-        0, 0, 0, 1, 0),
-      5, 5, byrow = FALSE)
+             1, 0, 0, 0, 0,
+             1, 1, 0, 0, 0,
+             1, 1, 1, 0, 0,
+             0, 0, 0, 1, 0), 5, 5,
+             byrow = FALSE)
+
 colnames(C) = rownames(C) = names(A)
 
 sem_model <- SemFC$new(data = A,
-relation_matrix = C,
-mode = rep("reflective", 5),
-scale = FALSE,
-estimator = "svd")
+                       relation_matrix = C,
+                       mode = rep("reflective", 5),
+                       scale = FALSE,
+                       estimator = "svd")
 
 sem_model$fit()
 
@@ -316,26 +325,34 @@ Initialize SemFC object with data and model specification
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{data}}{A list that contains J blocks of indicator variables.
+\item{\code{data}}{A list that contains \code{J} blocks of indicator variables.
 Blocks are either reflective or formative. Each block should be a data
 frame or matrix with rows as observations and columns as indicators.}
 
-\item{\code{relation_matrix}}{Square connection matrix (J x J) defining
-structural connection between latent variables (1 = connection exists,
-0 = no connection).}
+\item{\code{relation_matrix}}{Square 0/1 connection matrix (\code{J} x \code{J})
+defining structural connection between latent variables.
+\code{relation_matrix[i, j]} = 1 indicates a structural
+connection from latent variable i to latent variable j; and equal 0
+otherwise.}
 
-\item{\code{mode}}{Character vector of length J specifying the type of
-measurement model ("reflective" or "formative") for each block.
-(default: rep("reflective", J))}
+\item{\code{mode}}{Character vector of length \code{J} specifying the type of
+measurement model (\code{"reflective"} or \code{"formative"}) for each block.
+Blocks specified as
+\code{"reflective"} are modeled with latent factors, while blocks specified
+as \code{"formative"} are modeled with composites. (default: \code{rep("reflective", J)})}
 
 \item{\code{estimator}}{Character string specifying the estimation method:
-"svd" or "ml" (default: "ml").}
+\code{"svd"} or \code{"ml"} (default: \code{"ml"}).}
 
 \item{\code{scale}}{Logical indicating whether to standardize the input data or
-not (default: FALSE)}
+not. When \code{TRUE}, all variables are standardized to zero-mean and
+unit variance before estimation. When \code{FALSE}, centered data is used.
+(default: \code{FALSE})}
 
 \item{\code{bias}}{Logical indicating whether to apply bias correction in
-covariance estimation (default: FALSE)}
+covariance estimation. When \code{TRUE}, covariance matrix is computed
+with division by \code{n} (biased estimator);  when \code{FALSE}, division
+by \code{n-1} is used (unbiased estimator). (default: \code{FALSE})}
 }
 \if{html}{\out{</div>}}
 }
@@ -387,7 +404,8 @@ Fit the full model with inference and goodness-of-fit.
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{infer}}{Logical indicating whether to perform statistical inference
-or not (default: FALSE)}
+or not. When TRUE, bootstrap inference is performed for svdSEM and
+asymptotic inference is performed for ML. (default: \code{FALSE})}
 
 \item{\code{B}}{Integer number of bootstrap samples for svd (default: 1000)}
 
@@ -465,7 +483,7 @@ sem_model_ml$fit(infer = TRUE,
 \if{html}{\out{<a id="method-SemFC-summary"></a>}}
 \if{latex}{\out{\hypertarget{method-SemFC-summary}{}}}
 \subsection{Method \code{summary()}}{
-Print comprehensive summary of model estimation results.
+Print comprehensive summary of the fitted SemFC object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SemFC$summary(standardized = F, effect = FALSE, all_measures = F)}\if{html}{\out{</div>}}
 }
@@ -474,13 +492,14 @@ Print comprehensive summary of model estimation results.
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{standardized}}{Logical indicating whether to report standardized
-estimates (default: FALSE)}
+estimates (default: \code{FALSE}).}
 
 \item{\code{effect}}{Logical indicating whether to report total and indirect
-effects (default: FALSE)}
+effects (default: \code{FALSE})}
 
 \item{\code{all_measures}}{Logical indicating whether to report all
-goodness-of-fit measures (default: FALSE)}
+goodness-of-fit measures. When \code{FALSE}, only a subset of key fit
+indices is reported. (default: \code{FALSE})}
 }
 \if{html}{\out{</div>}}
 }
@@ -551,8 +570,8 @@ Extract parameter estimates from the fitted SemFC model
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{standardized}}{Logical indicating whether to include standardized
-estimates (default: FALSE). When TRUE, adds a \code{std.all} column with
-fully standardized coefficients.}
+estimates ((default: \code{FALSE})). When \code{TRUE}, adds a \code{std.all}
+column with fully standardized coefficients.}
 }
 \if{html}{\out{</div>}}
 }
@@ -560,14 +579,15 @@ fully standardized coefficients.}
 Returns a data frame containing all estimated parameters including:
 \itemize{
 \item \code{lambda}: Loading vectors for reflective and formative
-blocks
+blocks.
 \item \code{omega}: Composite weights for formative blocks only
 \item \code{beta}: Structural coefficients between endogenous
-latent variables
+latent variables.
 \item \code{gamma}: Structural coefficients from exogenous to
-endogenous latent variables
+endogenous latent variables.
 \item \code{residualvariance}: Residual variances for observed
-variables in reflective blocks
+variables. Only applies for reflective blocks, as formative blocks do
+not have residual variances.
 }
 
 If statistical inference has been performed, the returned estimates
@@ -737,26 +757,29 @@ When \code{estimate = "all"}, returns a list containing all available estimates.
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{data(ECSI)
+
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-    PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
-    PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-    CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-    CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+                               "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+         PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+         CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+         CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
 
 C = matrix(c(0, 0, 0, 0, 0,
-        1, 0, 0, 0, 0,
-        1, 1, 0, 0, 0,
-        1, 1, 1, 0, 0,
-        0, 0, 0, 1, 0),
-      5, 5, byrow = FALSE)
+             1, 0, 0, 0, 0,
+             1, 1, 0, 0, 0,
+             1, 1, 1, 0, 0,
+             0, 0, 0, 1, 0), 5, 5,
+             byrow = FALSE)
+
 colnames(C) = rownames(C) = names(A)
 
 sem_model <- SemFC$new(data = A,
-relation_matrix = C,
-mode = rep("reflective", 5),
-scale = FALSE,
-estimator = "svd")
+                       relation_matrix = C,
+                       mode = rep("reflective", 5),
+                       scale = FALSE,
+                       estimator = "svd")
 
 sem_model$fit()
 
