@@ -2,7 +2,7 @@
 % Please edit documentation in R/sem_fc.R
 \name{SemFC}
 \alias{SemFC}
-\title{semFC: Structural Equation Modeling (SEM) with factors and composites
+\title{SemFC: Structural Equation Modeling (SEM) with factors and composites
 within the framework of the basic design}
 \description{
 The SEMFC package implements Structural Equation Modeling (SEM) with factors
@@ -568,7 +568,7 @@ Extract parameter estimates from the fitted SemFC model
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{standardized}}{Logical indicating whether to include standardized
-estimates ((default: \code{FALSE})). When \code{TRUE}, adds a \code{std.all}
+estimates ((default: \code{FALSE}). When \code{TRUE}, adds a \code{std.all}
 column with fully standardized coefficients.}
 }
 \if{html}{\out{</div>}}
@@ -663,7 +663,7 @@ variables
 \item \code{r2}: r-squared values for endogenous latent variables
 \item \code{psi}: residual covariance matrix of latent variables
 \item \code{p_tilde}: intermediate estimation of correlation matrix
-between latent variables (only for SVDSEM)
+between latent variables (only for svdSEM)
 }
 }
 
@@ -671,19 +671,19 @@ between latent variables (only for SVDSEM)
 logical vector indicating improper solutions for each of the
 following criteria:
 \describe{
-\item{reliability_coef}{\code{TRUE} if any reliability coefficient is
+\item{\code{reliability_coef}}{\code{TRUE} if any reliability coefficient is
 outside (0, 1).}
-\item{rho_jh}{\code{TRUE} if any correlation in p_implied is outside
+\item{\code{rho_jh}}{\code{TRUE} if any correlation in \code{p_implied} is outside
 (-1, 1).}
-\item{p_implied}{\code{TRUE} if p_implied is not positive definite.}
-\item{theta_jh}{\code{TRUE} if any residual variance is negative.}
-\item{std_lambda}{\code{TRUE} if any standardized loading is outside
+\item{\code{p_implied}}{\code{TRUE} if \code{p_implied} is not positive definite.}
+\item{\code{theta_jh}}{\code{TRUE} if any residual variance is negative.}
+\item{\code{std_lambda}}{\code{TRUE} if any standardized loading is outside
 (-1, 1).}
-\item{sigma_implied}{\code{TRUE} if sigma_implied is not positive
+\item{\code{sigma_implied}}{\code{TRUE} if \code{sigma_implied} is not positive
 definite.}
-\item{r2}{\code{TRUE} if any r-squared is outside (0, 1).}
-\item{psi}{\code{TRUE} if psi is not positive definite.}
-\item{p_tilde}{\code{TRUE} if p_tilde is not positive definite (only
+\item{\code{r2}}{\code{TRUE} if any r-squared is outside (0, 1).}
+\item{\code{psi}}{\code{TRUE} if \code{psi} is not positive definite.}
+\item{\code{p_tilde}}{\code{TRUE} if \code{p_tilde} is not positive definite (only
 for svdSEM).}
 }
 }
@@ -727,7 +727,7 @@ improper_results <- sem_model$check_improper()
 \if{html}{\out{<a id="method-SemFC-get_estimate"></a>}}
 \if{latex}{\out{\hypertarget{method-SemFC-get_estimate}{}}}
 \subsection{Method \code{get_estimate()}}{
-Get a specific estimate component from the fitted model
+Get a specific estimate component from the fitted SemFC model
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SemFC$get_estimate(estimate)}\if{html}{\out{</div>}}
 }
