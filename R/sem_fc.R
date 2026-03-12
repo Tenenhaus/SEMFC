@@ -13,7 +13,7 @@
 #' parameter estimation and produces consistent and asymptotically normal
 #' estimators, offering a statistically and computationally sound approach.
 #'
-#' In addtion SEMFC implements the restricted maximum-likelihood (RML-SEM)
+#' In addition SEMFC implements the restricted maximum-likelihood (RML-SEM)
 #' approach for the basic design with factors and composites. svdSEM estimates
 #' serve as an initial solution for RML-SEM. The RML-SEM estimator is
 #' implemented using the solnp algorithm (Ye, 1987), available in the Rsolnp package (Ghalanos and Theussl, 2015),
