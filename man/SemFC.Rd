@@ -157,7 +157,6 @@ sem_model_ml$fit(infer = TRUE,
 ## ------------------------------------------------
 
 data(ECSI)
-data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
@@ -315,7 +314,7 @@ Initialize SemFC object with data and model specification
 \if{html}{\out{<div class="r">}}\preformatted{SemFC$new(
   data,
   relation_matrix,
-  mode,
+  mode = rep("reflective", length(data)),
   estimator = "ml",
   scale = FALSE,
   bias = FALSE
@@ -521,7 +520,6 @@ Elements that are reported in the summary include:
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{data(ECSI)
-data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
@@ -675,7 +673,7 @@ following criteria:
 \describe{
 \item{reliability_coef}{\code{TRUE} if any reliability coefficient is
 outside (0, 1).}
-\item{rho_jh}{\code{TRUE} if any correlation in P_IMPLIED is outside
+\item{rho_jh}{\code{TRUE} if any correlation in p_implied is outside
 (-1, 1).}
 \item{p_implied}{\code{TRUE} if p_implied is not positive definite.}
 \item{theta_jh}{\code{TRUE} if any residual variance is negative.}
