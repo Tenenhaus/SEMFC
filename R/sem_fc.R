@@ -46,41 +46,6 @@
 #' \url{https://CRAN.R-project.org/package=Rsolnp}
 #' }
 #'
-#' @examples
-#' data("ECSI")
-#' ECSI = ECSI/10
-#' A = list(IMAG = ECSI[, 1:5],
-#'         CUEX = ECSI[, 6:8],
-#'         PERQ = ECSI[, 9:15],
-#'         PERV = ECSI[, 16:17],
-#'         CUSA = ECSI[, 18:20],
-#'         CUSCO = ECSI[, 21, drop = FALSE],
-#'         CUSL = ECSI[, 22:24])
-#'
-#' C <- matrix(c(0, 1, 0, 0, 1, 0, 1,
-#'               0, 0, 1, 1, 1, 0, 0,
-#'               0, 0, 0, 1, 1, 0, 0,
-#'               0, 0, 0, 0, 1, 0, 0,
-#'               0, 0, 0, 0, 0, 1, 1,
-#'               0, 0, 0, 0, 0, 0, 1,
-#'               0, 0, 0, 0, 0, 0, 0), 7, 7, byrow = TRUE)
-#'
-#' colnames(C) = rownames(C) = names(A)
-#'
-#' mode = rep("reflective", 7) ; mode[6] = "formative"
-#'
-#' sem_model <- SemFC$new(data = A,
-#' relation_matrix = C,
-#' mode = mode,
-#' scale = FALSE,
-#' estimator = "svd")
-#'
-#' sem_model$fit(infer = TRUE, B = 100)
-#'
-#' sem_model$summary(standardized = TRUE, effect = TRUE, all_measures = TRUE)
-#'
-#' estimates <- sem_model$parameterEstimates(standardized = TRUE)
-#'
 #' @export
 SemFC <- R6Class(
   "SemFC",
@@ -133,11 +98,10 @@ SemFC <- R6Class(
 #'
 #' colnames(C) = rownames(C) = names(A)
 #'
-#' sem_model <- SemFC$new(data = A,
-#' relation_matrix = C,
-#' mode = rep("reflective", 5),
-#' scale = FALSE,
-#' estimator = "svd")
+#' sem_model <- SemFC$new(data = A, 
+#'                        relation_matrix = C, 
+#'                        mode = rep("reflective", 5), 
+#'                        scale = FALSE, estimator = "svd")
 #'
 #' @return A new `SemFC` object
 
@@ -484,13 +448,13 @@ initialize = function(data, relation_matrix, mode = rep('reflective', length(dat
 #' Get a specific estimate from the fitted SemFC model.
 #'
 #' @param estimate Character string specifying the estimate component to select. 
-#'   Possible values include: 
+#'   Possible values are: 
 #'   
-#'   \code{"lambda"}, \code{"omega"}, \code{"beta"}, 
-#'   \code{"gamma"}, \code{"residual_variance"}, \code{"p_exo"}, \code{"p_endo"}, 
-#'   \code{"p_implied"}, \code{"sigma_implied"}, \code{"std_lambda"}, 
-#'   \code{"std_omega"}, \code{"psi"}, \code{"r2"}, \code{"T_LS"}, 
-#'   \code{"theta"}, \code{"effect"}, \code{"p_tilde"}. 
+#'   \code{"lambda"}, \code{"std_lambda"}, \code{"omega"}, \code{"std_omega"}, 
+#'   \code{"residual_variance"}, \code{"p_tilde"}, 
+#'   \code{"beta"}, \code{"gamma"}, \code{"p_exo"}, \code{"p_endo"}, \code{"psi"},
+#'   \code{"p_implied"}, \code{"sigma_implied"}, \code{"r2"}, \code{"T_LS"}, 
+#'   \code{"theta"}, and \code{"effect"}. 
 #'   
 #'   Use \code{"all"} to retrieve all estimates. 
 #'
@@ -533,7 +497,7 @@ initialize = function(data, relation_matrix, mode = rep('reflective', length(dat
 #' # Get specific estimates
 #' lambda <- sem_model$get_estimate("lambda")
 #' beta <- sem_model$get_estimate("beta")
-#' R2 <- sem_model$get_estimate("r2")
+#' r2 <- sem_model$get_estimate("r2")
 #'
 #' # Get all estimates
 #' all_estimates <- sem_model$get_estimate("all")
