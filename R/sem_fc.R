@@ -554,7 +554,16 @@ initialize = function(data, relation_matrix, mode = rep('reflective', length(dat
       }
 
       return(private$.estimate[[estimate]])
-    }
+    },
+
+get_model = function(attribute){
+  return(private$.model[[attribute]])
+},
+
+get_data = function(attribute){
+  return(private$.data[[attribute]])}
+
+
   ),
 
   private = list(

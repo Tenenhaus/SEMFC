@@ -52,11 +52,11 @@ jac_f_u <- function(block_sizes, j, u_j){
 
 
 
-jac_f_s <- function(block_sizes, j, S, lambda){
+jac_f_s <- function(block_sizes, j, S, lambda, U_j, P_j){
 
-  select_matrix <- selection_block(block_sizes, j)
-  U_j <- select_matrix[[1]]
-  P_j <- select_matrix[[2]]
+  # select_matrix <- selection_block(block_sizes, j)
+  # U_j <- select_matrix[[1]]
+  # P_j <- select_matrix[[2]]
 
 
   A_j <- t(U_j)%*%S%*%P_j%*%S%*%U_j
@@ -90,9 +90,9 @@ duplication_matrix <- function(P) {
 }
 
 
-jac_f_vechs <- function(block_sizes, j, S, lambda, D_P = duplication_matrix(sum(block_sizes))){
+jac_f_vechs <- function(block_sizes, j, S, lambda, U_j, P_j, D_P = duplication_matrix(sum(block_sizes))){
 
-  jac_f_s <- jac_f_s(block_sizes, j, S, lambda)
+  jac_f_s <- jac_f_s(block_sizes, j, S, lambda, U_j, P_j)
 
   jac_f_vechs <- jac_f_s %*% D_P
 
@@ -110,11 +110,40 @@ vcov_vechs <- function(Sigma, D_P){
 }
 
 
-vcov_svd <- function(block_sizes, j, lambda, S, Sigma, D_P = duplication_matrix(sum(block_sizes))){
+vcov_lambda_unit <- function(block_sizes, j, lambda, S, Sigma, U_j, P_j, D_P = duplication_matrix(sum(block_sizes))){
 
-  J <- jac_f_vechs(block_sizes, j, S, lambda, D_P)
+  J <- jac_f_vechs(block_sizes, j, S, lambda, U_j, P_j, D_P)
   V_vechs <- vcov_vechs(Sigma, D_P)
 
   return(J %*% V_vechs %*% t(J))
 
+}
+
+
+offdiag <- function(M){
+
+  M_offdiag <- M
+  diag(M_offdiag) <- 0
+
+  return(M_offdiag)}
+
+
+jac_lambda_reflective <- function(block_sizes, j, lambda, S, U_j, P_j, D_P = duplication_matrix(sum(block_sizes))){
+
+  J_lambda_unit <- jac_f_vechs(block_sizes, j, S, lambda,U_j, P_j, D_P)
+
+  p_j <- block_sizes[j]
+  S_jj_offdiag <- offdiag(t(U_j)%*%S%*%U_j)
+  L_tilde <- offdiag(tcrossprod(lambda))
+
+  A <- as.numeric(t(lambda)%*%S_jj_offdiag%*%lambda)
+  B <- as.numeric(1 - as.numeric(crossprod(lambda^2)))
+  d_j <- as.numeric(sqrt(A/B))
+
+  part1 <- diag(p_j) + lambda %*% ((1/A)*t(lambda)%*%S_jj_offdiag + (2/B)*t(lambda^3))
+  part2 <- (1/(2*A))*lambda%*%t(as.vector(U_j%*%L_tilde%*%t(U_j)))
+
+  J_lambda <- d_j*(part1%*%J_lambda_unit + part2%*%D_P)
+
+  return(J_lambda)
 }
