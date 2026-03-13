@@ -74,5 +74,8 @@ fit = svdSEM(A, C, scale = FALSE,
             
 }
 \references{
-Tenenhaus M., Tenenhaus A. and Groenen PJF (2017), Regularized generalized canonical correlation analysis: A framework for sequential multiblock component methods, Psychometrika, in press
+Tenenhaus, A., Tenenhaus, M., Dijkstra, T.K. Structural equation modeling
+with factors and composites within the framework of the basic design.
+Advances in Data Analysis Classification (2025).
+\url{https://doi.org/10.1007/s11634-025-00647-4}
 }
