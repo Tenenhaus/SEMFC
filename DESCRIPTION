@@ -1,9 +1,12 @@
 Package: SEMFC
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: Structural equation modeling with factors and composites within the framework of the basic design.
+Version: 1.0
 Authors@R:
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+  person("Arthur", "Tenenhaus", , "arthur.tenenhaus@centralesupelec.fr", 
+  role = c("aut", "cre", "rev", "ths"))
+  person("Alain", "Luong", , "alain.luong@centralesupelec.fr", 
+  role = c("aut"; "rev"))
+Description: This package implements two estimation methods for Structural Equation modeling with factors and composites within the framework of the basic design. The packages proposes SVD-SEM which relies on a non-iterative SVD-based algorithm for parameter estimation, producing consistent and asymptotically normal estimators. Additionally, the restricted maximum-likelihood approach (RML-SEM) for the basic design with factors and composites is also proposed. SVD-SEM can serve as an initial solution for RML-SEM. 
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
