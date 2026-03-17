@@ -60,8 +60,9 @@
 #' fit = svdSEM(A, C, scale = FALSE, 
 #'              mode = rep("reflective", length(A)),
 #'             bias = FALSE)
-#'             
-#' @export
+#'
+#'@keywords internal             
+# #' @export
 svdSEM <- function(A, C, scale = TRUE,
                    mode = rep("formative", length(A)), 
                    bias = FALSE){

@@ -7,19 +7,65 @@
 \format{
 A table object
 }
+\source{
+This data has been collected through a cooperation with the European
+Commission Joint Research Center Institute for Prospective Technological
+Studies, contract “Young People and Emerging Digital Services: An Exploratory
+Survey on Motivations, Perceptions, and Acceptance of Risk”. This dataset is available
+in the R package \code{cSEM}.
+}
 \usage{
-LancelotMiltgenetal2016
+data(LancelotMiltgenetal2016)
 }
 \description{
 The data was analysed by Lancelot-Miltgen et al. (2016) to study young
 consumers’ adoption intentions of a location tracker technology in the light
-of privacy concerns. This data has been collected through a cooperation with
-the European Commission Joint Research Center Institute for Prospective
-Technological Studies, contract “Young People and Emerging Digital Services:
-An Exploratory Survey on Motivations, Perceptions, and Acceptance of Risk”.
+of privacy concerns.
 }
 \examples{
 data(LancelotMiltgenetal2016)
+
+A = list(Trust = LancelotMiltgenetal2016[, c("trust1", "trust2")],
+         PrCon = LancelotMiltgenetal2016[, c("privcon1", "privcon2", 
+                                             "privcon3", "privcon4")],
+         Risk  = LancelotMiltgenetal2016[, c("risk1", "risk2", "risk3")],
+         Int   = LancelotMiltgenetal2016[, c("intent1", "intent2")])
+
+C = matrix(c(0, 1, 0, 0,
+             0, 0, 0, 0,
+             1, 1, 0, 0,
+             1, 1, 1, 0), 4, 4, byrow = FALSE)
+
+colnames(C) = rownames(C) = names(A)
+mode = rep("reflective", 4)
+
+##########
+# svdSEM #
+##########
+
+sem_svd <- SemFC$new(data=A,
+                     relation_matrix = C,
+                     mode=mode,
+                     scale = F, bias = T,
+                     estimator = "svd")
+
+sem_svd$fit(infer = T, B = 100)
+sem_svd$summary()
+sem_svd$check_improper()
+
+#########
+# mlSEM #
+#########
+
+sem_ml <- SemFC$new(data = A, 
+                    relation_matrix = C, 
+                    mode = mode, 
+                    scale = F, bias = T, 
+                    estimator = "ml")
+
+sem_ml$fit(infer = T)
+sem_ml$summary(standardized = TRUE)
+sem_svd$check_improper()
 
 }
 \keyword{datasets}

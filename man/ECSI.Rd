@@ -78,6 +78,50 @@ that you would recommend your "mobile phone provider"?
 
 }
 }
+\examples{
+data(ECSI) 
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
+                               "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+         PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+         CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+         CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")]
+)
+
+############
+#  svdSEM  #
+############
+
+C = matrix(c(0, 0, 0, 0, 0,
+             1, 0, 0, 0, 0,
+             1, 1, 0, 0, 0,
+             1, 1, 1, 0, 0,
+             0, 0, 0, 1, 0), 5, 5, byrow = FALSE)
+
+colnames(C) = rownames(C) = names(A)
+
+mode = rep("reflective", 5)
+
+sem_svd <- SemFC$new(data = A,
+                     relation_matrix = C,
+                     mode=mode,
+                     scale = F,
+                     estimator = "svd")
+
+sem_svd$fit(infer = TRUE, B = 100)
+sem_svd$summary(all_measures = TRUE)
+estimate_svd = sem_svd$parameterEstimates()
+
+sem_ml <- SemFC$new(data=A, 
+                    relation_matrix = C, 
+                    mode=mode, 
+                    scale = F,
+                    estimator = "ml")
+
+sem_ml$fit(infer = T)
+sem_ml$summary()
+}
 \references{
 Fornell C. (1992): A national customer satisfaction barometer.
 The Swedish experience. Journal of Marketing, (56), 6-21.

@@ -38,10 +38,60 @@ as distinct aspects of social identity in the organization.
 \emph{British Journal of Social Psychology}, 39(4), 555-577.
 }
 \usage{
-BergamiBagozzi2000
+data(BergamiBagozzi2000)
 }
 \description{
 Dataset from Bergami and Bagozzi (2000) used to study organizational
 identification and affective commitment.
+}
+\examples{
+data(BergamiBagozzi2000)
+A = list(OrgPres = BergamiBagozzi2000[, c("cei1", "cei2", "cei3", "cei4", 
+                                          "cei5", "cei6", "cei7", "cei8")],
+         OrgIden = BergamiBagozzi2000[, c("ma1", "ma2", "ma3", "ma4", "ma5", 
+                                          "ma6")],
+         AffLove = BergamiBagozzi2000[, c("orgcmt1", "orgcmt2", "orgcmt3", 
+                                          "orgcmt7")],
+         AffJoy  = BergamiBagozzi2000[, c("orgcmt5", "orgcmt8")], 
+         Gender  = BergamiBagozzi2000[, "gender", drop = FALSE]
+         )
+
+C = matrix(c(0, 0, 0, 0, 0, 
+             1, 0, 0, 0, 0,
+             1, 1, 0, 0, 1, 
+             1, 1, 0, 0, 1, 
+             0, 0, 0, 0, 0), 5, 5, byrow = FALSE)
+           
+colnames(C) = rownames(C) = names(A)
+mode = c(rep("reflective", 4), "formative")
+
+##########
+# svdSEM #
+##########
+
+sem_svd <- SemFC$new(data = A, 
+                     relation_matrix = C, 
+                     mode = mode, 
+                     scale = F, bias = T,
+                     estimator = "svd")
+sem_svd$fit(infer = T, B = 100)
+sem_svd$check_improper()
+sem_svd$summary(all_measures = T)
+estimate = sem_svd$parameterEstimates(standardized = T)
+
+#########
+# mlSEM #
+#########
+
+sem_ml <- SemFC$new(data = A, 
+                    relation_matrix = C, 
+                    mode = mode, 
+                    scale = F, bias = T, 
+                    estimator = "ml") 
+sem_ml$fit(infer = T)
+sem_ml$check_improper()
+sem_ml$summary(all_measures = T)
+estimate = sem_ml$parameterEstimates(standardized = F)
+
 }
 \keyword{datasets}

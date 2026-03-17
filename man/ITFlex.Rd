@@ -29,13 +29,56 @@ A data frame containing the following variables:
 The data was collected through a survey by Benitez et al. (2018).
 }
 \usage{
-ITFlex
+data(ITFlex)
 }
 \description{
 A data frame containing 16 variables with 100 observations.
 The dataset was studied by Benitez et al. (2018) and is used in
 Henseler (2021) for demonstration purposes. All questionnaire items
 are measured on a 5-point scale.
+}
+\examples{
+data(ITFlex)
+A = list(ITComp = ITFlex[, c("ITCOMP1", "ITCOMP2", "ITCOMP3", "ITCOMP4")],
+         Modul  = ITFlex[, c("MOD1", "MOD2", "MOD3", "MOD4")],
+         ITConn = ITFlex[, c("ITCONN1", "ITCONN2", "ITCONN3", "ITCONN4")],
+         ITPers = ITFlex[, c("ITPSF1", "ITPSF2", "ITPSF3", "ITPSF4")])
+
+C = matrix(c(0, 0, 0, 0,
+             1, 0, 1, 0,
+             1, 0, 0, 0,
+             1, 1, 1, 0),  4, 4, byrow = FALSE)
+
+colnames(C) = rownames(C) = names(A)
+mode = rep("formative", 4)
+
+##########
+# SVDSEM #
+##########
+ 
+sem_svd <- SemFC$new(data = A,
+                     relation_matrix = C,
+                     mode = mode,
+                     scale = T, # scale = T for comparability with cSEM
+                     bias = T,
+                     estimator = "svd")
+
+sem_svd$fit(infer = T, B = 100)
+sem_svd$check_improper()
+sem_svd$summary()
+
+##########
+# ML-SEM #
+##########
+
+sem_ml <- SemFC$new(data = A,
+                    relation_matrix = C,
+                    mode = mode,
+                    scale = T, bias = F,
+                    estimator = "ml")
+
+sem_ml$fit(infer = T)
+sem_ml$summary()
 }
 \references{
 Benitez J, Ray G, Henseler J (2018). "Impact of Information Technology

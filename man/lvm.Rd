@@ -35,3 +35,4 @@ The function performs the following steps:
 \item Handles both directed acyclic graphs (DAGs) and non-DAGs.
 }
 }
+\keyword{internal}

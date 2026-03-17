@@ -5,7 +5,24 @@
 \alias{PoliticalDemocracy}
 \title{The PoliticalDemocracy Dataset}
 \format{
-A table object
+A data frame of 75 observations and the following 11 variables:
+\describe{
+\item{y1}{Expert ratings of the freedom of the press in 1960.}
+\item{y2}{The freedom of political opposition in 1960.}
+\item{y3}{The fairness of elections in 1960.}
+\item{y4}{The effectiveness of the elected legislature in 1960.}
+\item{y5}{Expert ratings of the freedom of the press in 1965.}
+\item{y6}{The freedom of political opposition in 1965.}
+\item{y7}{The fairness of elections in 1965.}
+\item{y8}{The effectiveness of the elected legislature in 1965.}
+\item{x1}{The gross national product (GNP) per capita in 1960.}
+\item{x2}{The inanimate energy consumption per capita in 1960.}
+\item{x3}{The percentage of the labor force in industry in 1960.}
+}
+}
+\source{
+The data was originally collected by Bollen (1989) and is available
+in the R package \code{lavaan}.
 }
 \usage{
 PoliticalDemocracy
@@ -17,6 +34,48 @@ political democracy and industrialization in developing countries.
 }
 \examples{
 data(PoliticalDemocracy)
+A = list(ind60 = PoliticalDemocracy[, c("x1", "x2", "x3")],
+         dem60 = PoliticalDemocracy[, c("y1", "y2", "y3", "y4")],
+         dem65 = PoliticalDemocracy[, c("y5", "y6", "y7", "y8")]
+)
 
+C = matrix(c(0, 0, 0, 
+             1, 0, 0, 
+             1, 1, 0), 3, 3, byrow = FALSE)
+
+colnames(C) = rownames(C) = names(A)
+
+mode = rep("reflective", 3)
+
+##########
+# svdSEM #
+##########
+
+sem_svd <- SemFC$new(data=A,
+                     relation_matrix = C,
+                     mode=mode,
+                     scale = F, bias = T,
+                     estimator = "svd")
+
+sem_svd$fit(infer = T, B = 100)
+sem_svd$summary(standardized = TRUE)
+sem_svd$check_improper()
+
+#########
+# mlSEM #
+#########
+
+sem_ml <- SemFC$new(data=A, 
+                    relation_matrix = C, 
+                    mode=mode, 
+                    estimator = "ml")
+
+sem_ml$fit(infer = T)
+sem_ml$summary(standardized = TRUE)
+sem_ml$check_improper()
+}
+\references{
+Bollen, K. A. (1989). Structural Equations with Latent Variables. Wiley
+Series in Probability and Mathematical Statistics. New York: Wiley.
 }
 \keyword{datasets}

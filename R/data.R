@@ -74,24 +74,142 @@
 #' @references Fornell C. (1992): A national customer satisfaction barometer.
 #' The Swedish experience. Journal of Marketing, (56), 6-21.
 #' @usage data(ECSI)
+
+#' @examples
+#' data(ECSI) 
+#' ECSI = ECSI/10
+#' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+#'          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
+#'                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+#'          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+#'          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+#'          CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")]
+#' )
+#' 
+#' ############
+#' #  svdSEM  #
+#' ############
+#' 
+#' C = matrix(c(0, 0, 0, 0, 0,
+#'              1, 0, 0, 0, 0,
+#'              1, 1, 0, 0, 0,
+#'              1, 1, 1, 0, 0,
+#'              0, 0, 0, 1, 0), 5, 5, byrow = FALSE)
+#' 
+#' colnames(C) = rownames(C) = names(A)
+#' 
+#' mode = rep("reflective", 5)
+#' 
+#' sem_svd <- SemFC$new(data = A,
+#'                      relation_matrix = C,
+#'                      mode=mode,
+#'                      scale = F,
+#'                      estimator = "svd")
+#' 
+#' sem_svd$fit(infer = TRUE, B = 100)
+#' sem_svd$summary(all_measures = TRUE)
+#' estimate_svd = sem_svd$parameterEstimates()
+#' 
+#' sem_ml <- SemFC$new(data=A, 
+#'                     relation_matrix = C, 
+#'                     mode=mode, 
+#'                     scale = F,
+#'                     estimator = "ml")
+#' 
+#' sem_ml$fit(infer = T)
+#' sem_ml$summary()
 #' @keywords datasets
 "ECSI"
 
-#' Russett Dataset
+#' Russett data
+#'
+#' @format A data frame with 47 rows and 12 variables.
+#' @docType data
 #'
 #' @description
-#' Dataset containing socio-economic and political variables for various countries.
-#' Often used for demonstrating path analysis and structural equation modeling techniques.
+#' The Russett data set (Russett, 1964) is studied in Gifi (1990). Three
+#' blocks of variables have been defined for 47 countries. The first block
+#' is related to "Agricultural Inequality", the second to
+#' "Industrial Development", and the last one describes the
+#' "Political Instability". Russett collected this data to study
+#' relationships between Agricultural Inequality, Industrial Development and
+#' Political Instability. Russett's hypotheses can be formulated as follows:
+#' It is difficult for a country to escape dictatorship when its agricultural
+#' inequality is above-average and its industrial development below-average.
 #'
-#' @format A table object
+#' \describe{
 #'
+#' \item{X1}{Agricultural Inequality \itemize{
+#'      \item GINI: Inequality of land distribution,
+#'      \item FARM: Percentage of farmers that own half of the land,
+#'      \item RENT: Percentage of farmers that rent all their land.
+#' }}
+#'
+#' \item{X2}{Industrial Development \itemize{
+#'      \item GNPR: Gross national product per capita ($1955),
+#'      \item LABO: Percentage of labor forced employed in agriculture.
+#' }}
+#'
+#' \item{X3}{Political Instability \itemize{
+#'      \item INST: Instability of executive (45-61),
+#'      \item ECKS: Number of violent internal war incidents (46-61),
+#'      \item DEAT: Number of people killed as a result of civic group
+#' violence (50-62),
+#'      \item DEMOSTAB: Stable democracy,
+#'      \item DEMOINST: Unstable democracy,
+#'      \item DICTATOR: Dictatorship.
+#' }}
+#' }
+#'
+#' @references Russett B.M. (1964), Inequality and Instability: The Relation of
+#' Land Tenure to Politics, World Politics 16:3, 442-454.
+#' @references Gifi, A. (1990), Nonlinear multivariate analysis,
+#' Chichester: Wiley.
+#' @usage data(Russett)
 #' @examples
-#'
 #' data(Russett)
-#' head(Russett)
-#'
+#' A = list(AgrIneq = Russett[, c("gini", "farm", "rent")],
+#'          IndDev  = Russett[, c("gnpr", "labo")],
+#'          PolInst = Russett[, c("inst", "ecks", "deat", "stab", "dict")])
+#' 
+#' C = matrix(c(0, 0, 0,
+#'              0, 0, 0,
+#'              1, 1, 0), 3, 3, byrow = FALSE)
+#' 
+#' colnames(C) = rownames(C) = names(A)
+#' 
+#' mode = rep("formative", 3)
+#' 
+#' ##########
+#' # svdSEM #
+#' ##########
+#' 
+#' sem_svd <- SemFC$new(data = A,
+#'                      relation_matrix = C,
+#'                      mode = mode,
+#'                      scale = F,
+#'                      bias = T,
+#'                      estimator = "svd")
+#' 
+#' sem_svd$fit(infer = T, B = 100)
+#' sem_svd$summary(standardized = T, all_measures = T)
+#' sem_svd$check_improper()
+#' 
+#' ##########
+#' # mlSEM #
+#' ##########
+#' 
+#' sem_ml <- SemFC$new(data = A,
+#'                     relation_matrix = C,
+#'                     mode = mode,
+#'                     scale = F, bias = F,
+#'                     estimator = "ml")
+#' 
+#' sem_ml$fit(infer = T)
+#' sem_ml$check_improper()
+#' sem_ml$summary(standardized = TRUE, all_measures = TRUE)
+#' @keywords datasets
 "Russett"
-
 
 
 #' BergamiBagozzi2000 Dataset
@@ -129,9 +247,59 @@
 #' Self-categorization, affective commitment and group self-esteem
 #' as distinct aspects of social identity in the organization.
 #' \emph{British Journal of Social Psychology}, 39(4), 555-577.
+#' 
+#' @usage data(BergamiBagozzi2000)
+#' @examples
+#' data(BergamiBagozzi2000)
+#' A = list(OrgPres = BergamiBagozzi2000[, c("cei1", "cei2", "cei3", "cei4", 
+#'                                           "cei5", "cei6", "cei7", "cei8")],
+#'          OrgIden = BergamiBagozzi2000[, c("ma1", "ma2", "ma3", "ma4", "ma5", 
+#'                                           "ma6")],
+#'          AffLove = BergamiBagozzi2000[, c("orgcmt1", "orgcmt2", "orgcmt3", 
+#'                                           "orgcmt7")],
+#'          AffJoy  = BergamiBagozzi2000[, c("orgcmt5", "orgcmt8")], 
+#'          Gender  = BergamiBagozzi2000[, "gender", drop = FALSE]
+#'          )
+#' 
+#' C = matrix(c(0, 0, 0, 0, 0, 
+#'              1, 0, 0, 0, 0,
+#'              1, 1, 0, 0, 1, 
+#'              1, 1, 0, 0, 1, 
+#'              0, 0, 0, 0, 0), 5, 5, byrow = FALSE)
+#'            
+#' colnames(C) = rownames(C) = names(A)
+#' mode = c(rep("reflective", 4), "formative")
+#' 
+#' ##########
+#' # svdSEM #
+#' ##########
+#' 
+#' sem_svd <- SemFC$new(data = A, 
+#'                      relation_matrix = C, 
+#'                      mode = mode, 
+#'                      scale = F, bias = T,
+#'                      estimator = "svd")
+#' sem_svd$fit(infer = T, B = 100)
+#' sem_svd$check_improper()
+#' sem_svd$summary(all_measures = T)
+#' estimate = sem_svd$parameterEstimates(standardized = T)
+#' 
+#' #########
+#' # mlSEM #
+#' #########
+#' 
+#' sem_ml <- SemFC$new(data = A, 
+#'                     relation_matrix = C, 
+#'                     mode = mode, 
+#'                     scale = F, bias = T, 
+#'                     estimator = "ml") 
+#' sem_ml$fit(infer = T)
+#' sem_ml$check_improper()
+#' sem_ml$summary(all_measures = T)
+#' estimate = sem_ml$parameterEstimates(standardized = F)
+#' 
+#' @keywords datasets
 "BergamiBagozzi2000"
-
-
 
 #' ITFlex Dataset
 #'
@@ -166,23 +334,113 @@
 #' \emph{MIS Quarterly}, 42(1), 25-43.
 #'
 #' Henseler J (2021). \emph{Composite-Based Structural Equation Modeling}.
+#' 
+#' @usage data(ITFlex)
+#' @examples
+#' data(ITFlex)
+#' A = list(ITComp = ITFlex[, c("ITCOMP1", "ITCOMP2", "ITCOMP3", "ITCOMP4")],
+#'          Modul  = ITFlex[, c("MOD1", "MOD2", "MOD3", "MOD4")],
+#'          ITConn = ITFlex[, c("ITCONN1", "ITCONN2", "ITCONN3", "ITCONN4")],
+#'          ITPers = ITFlex[, c("ITPSF1", "ITPSF2", "ITPSF3", "ITPSF4")])
+#' 
+#' C = matrix(c(0, 0, 0, 0,
+#'              1, 0, 1, 0,
+#'              1, 0, 0, 0,
+#'              1, 1, 1, 0),  4, 4, byrow = FALSE)
+#' 
+#' colnames(C) = rownames(C) = names(A)
+#' mode = rep("formative", 4)
+#'
+#' ##########
+#' # SVDSEM #
+#' ##########
+#'  
+#' sem_svd <- SemFC$new(data = A,
+#'                      relation_matrix = C,
+#'                      mode = mode,
+#'                      scale = T, # scale = T for comparability with cSEM
+#'                      bias = T,
+#'                      estimator = "svd")
+#' 
+#' sem_svd$fit(infer = T, B = 100)
+#' sem_svd$check_improper()
+#' sem_svd$summary()
+#' 
+#' ##########
+#' # ML-SEM #
+#' ##########
+#' 
+#' sem_ml <- SemFC$new(data = A,
+#'                     relation_matrix = C,
+#'                     mode = mode,
+#'                     scale = T, bias = F,
+#'                     estimator = "ml")
+#' 
+#' sem_ml$fit(infer = T)
+#' sem_ml$summary()
+#' @keywords datasets
 "ITFlex"
-
 
 #' The Lancelot-Miltgen et al Dataset
 #'
 #' @description
 #' The data was analysed by Lancelot-Miltgen et al. (2016) to study young 
 #' consumers’ adoption intentions of a location tracker technology in the light 
-#' of privacy concerns. This data has been collected through a cooperation with 
-#' the European Commission Joint Research Center Institute for Prospective 
-#' Technological Studies, contract “Young People and Emerging Digital Services: 
-#' An Exploratory Survey on Motivations, Perceptions, and Acceptance of Risk”. 
+#' of privacy concerns. 
 #' 
 #' @format A table object
+#' @source This data has been collected through a cooperation with the European 
+#' Commission Joint Research Center Institute for Prospective Technological 
+#' Studies, contract “Young People and Emerging Digital Services: An Exploratory 
+#' Survey on Motivations, Perceptions, and Acceptance of Risk”. This dataset is available 
+#' in the R package `cSEM`.
+#' @usage data(LancelotMiltgenetal2016)
 #' @examples
 #' data(LancelotMiltgenetal2016)
-#'
+#' 
+#' A = list(Trust = LancelotMiltgenetal2016[, c("trust1", "trust2")],
+#'          PrCon = LancelotMiltgenetal2016[, c("privcon1", "privcon2", 
+#'                                              "privcon3", "privcon4")],
+#'          Risk  = LancelotMiltgenetal2016[, c("risk1", "risk2", "risk3")],
+#'          Int   = LancelotMiltgenetal2016[, c("intent1", "intent2")])
+#' 
+#' C = matrix(c(0, 1, 0, 0,
+#'              0, 0, 0, 0,
+#'              1, 1, 0, 0,
+#'              1, 1, 1, 0), 4, 4, byrow = FALSE)
+#' 
+#' colnames(C) = rownames(C) = names(A)
+#' mode = rep("reflective", 4)
+#' 
+#' ##########
+#' # svdSEM #
+#' ##########
+#' 
+#' sem_svd <- SemFC$new(data=A,
+#'                      relation_matrix = C,
+#'                      mode=mode,
+#'                      scale = F, bias = T,
+#'                      estimator = "svd")
+#' 
+#' sem_svd$fit(infer = T, B = 100)
+#' sem_svd$summary()
+#' sem_svd$check_improper()
+#' 
+#' #########
+#' # mlSEM #
+#' #########
+#' 
+#' sem_ml <- SemFC$new(data = A, 
+#'                     relation_matrix = C, 
+#'                     mode = mode, 
+#'                     scale = F, bias = T, 
+#'                     estimator = "ml")
+#' 
+#' sem_ml$fit(infer = T)
+#' sem_ml$summary(standardized = TRUE)
+#' sem_svd$check_improper()
+#' 
+#' @keywords datasets
 "LancelotMiltgenetal2016"
 
 
@@ -193,11 +451,66 @@
 #' throughout Bollen's 1989 book. The dataset contains various measures of 
 #' political democracy and industrialization in developing countries. 
 #' 
-#' @format A table object
+#' @format A data frame of 75 observations and the following 11 variables:
+#' \describe{
+#'   \item{y1}{Expert ratings of the freedom of the press in 1960.}
+#'   \item{y2}{The freedom of political opposition in 1960.}
+#'   \item{y3}{The fairness of elections in 1960.}
+#'   \item{y4}{The effectiveness of the elected legislature in 1960.}
+#'   \item{y5}{Expert ratings of the freedom of the press in 1965.}
+#'   \item{y6}{The freedom of political opposition in 1965.}
+#'   \item{y7}{The fairness of elections in 1965.}
+#'   \item{y8}{The effectiveness of the elected legislature in 1965.}
+#'   \item{x1}{The gross national product (GNP) per capita in 1960.}
+#'   \item{x2}{The inanimate energy consumption per capita in 1960.}
+#'   \item{x3}{The percentage of the labor force in industry in 1960.}
+#' }
+#' @references
+#' Bollen, K. A. (1989). Structural Equations with Latent Variables. Wiley 
+#' Series in Probability and Mathematical Statistics. New York: Wiley.
+#' @source The data was originally collected by Bollen (1989) and is available 
+#' in the R package `lavaan`.
 #' @examples
 #' data(PoliticalDemocracy)
+#' A = list(ind60 = PoliticalDemocracy[, c("x1", "x2", "x3")],
+#'          dem60 = PoliticalDemocracy[, c("y1", "y2", "y3", "y4")],
+#'          dem65 = PoliticalDemocracy[, c("y5", "y6", "y7", "y8")]
+#' )
+#' 
+#' C = matrix(c(0, 0, 0, 
+#'              1, 0, 0, 
+#'              1, 1, 0), 3, 3, byrow = FALSE)
+#' 
+#' colnames(C) = rownames(C) = names(A)
+#' 
+#' mode = rep("reflective", 3)
+#' 
+#' ##########
+#' # svdSEM #
+#' ##########
+#' 
+#' sem_svd <- SemFC$new(data=A,
+#'                      relation_matrix = C,
+#'                      mode=mode,
+#'                      scale = F, bias = T,
+#'                      estimator = "svd")
+#' 
+#' sem_svd$fit(infer = T, B = 100)
+#' sem_svd$summary(standardized = TRUE)
+#' sem_svd$check_improper()
+#' 
+#' #########
+#' # mlSEM #
+#' #########
+#' 
+#' sem_ml <- SemFC$new(data=A, 
+#'                     relation_matrix = C, 
+#'                     mode=mode, 
+#'                     estimator = "ml")
+#' 
+#' sem_ml$fit(infer = T)
+#' sem_ml$summary(standardized = TRUE)
+#' sem_ml$check_improper()
+#'@keywords datasets
 #'
 "PoliticalDemocracy"
-
-
-
