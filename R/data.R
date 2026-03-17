@@ -104,3 +104,37 @@
 #'
 #' Henseler J (2021). \emph{Composite-Based Structural Equation Modeling}.
 "ITFlex"
+
+
+#' The Lancelot-Miltgen et al Dataset
+#'
+#' @description
+#' The data was analysed by Lancelot-Miltgen et al. (2016) to study young 
+#' consumers’ adoption intentions of a location tracker technology in the light 
+#' of privacy concerns. This data has been collected through a cooperation with 
+#' the European Commission Joint Research Center Institute for Prospective 
+#' Technological Studies, contract “Young People and Emerging Digital Services: 
+#' An Exploratory Survey on Motivations, Perceptions, and Acceptance of Risk”. 
+#' 
+#' @format A table object
+#' @examples
+#' data(LancelotMiltgenetal2016)
+#'
+"LancelotMiltgenetal2016"
+
+
+#' The PoliticalDemocracy Dataset
+#'
+#' @description
+#' The Industrialization and Political Democracy dataset. This dataset is used
+#' throughout Bollen's 1989 book. The dataset contains various measures of 
+#' political democracy and industrialization in developing countries. 
+#' 
+#' @format A table object
+#' @examples
+#' data(PoliticalDemocracy)
+#'
+"PoliticalDemocracy"
+
+
+
