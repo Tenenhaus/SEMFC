@@ -6,19 +6,6 @@
 \title{The PoliticalDemocracy Dataset}
 \format{
 A data frame of 75 observations and the following 11 variables:
-\describe{
-\item{y1}{Expert ratings of the freedom of the press in 1960.}
-\item{y2}{The freedom of political opposition in 1960.}
-\item{y3}{The fairness of elections in 1960.}
-\item{y4}{The effectiveness of the elected legislature in 1960.}
-\item{y5}{Expert ratings of the freedom of the press in 1965.}
-\item{y6}{The freedom of political opposition in 1965.}
-\item{y7}{The fairness of elections in 1965.}
-\item{y8}{The effectiveness of the elected legislature in 1965.}
-\item{x1}{The gross national product (GNP) per capita in 1960.}
-\item{x2}{The inanimate energy consumption per capita in 1960.}
-\item{x3}{The percentage of the labor force in industry in 1960.}
-}
 }
 \source{
 The data was originally collected by Bollen (1989) and is available
@@ -31,6 +18,25 @@ PoliticalDemocracy
 The Industrialization and Political Democracy dataset. This dataset is used
 throughout Bollen's 1989 book. The dataset contains various measures of
 political democracy and industrialization in developing countries.
+
+\describe{
+\item{Political democracy in 1960 (ind60)}{\itemize{
+\item y1: Expert ratings of the freedom of the press in 1960,
+\item y2: The freedom of political opposition in 1960,
+\item y3: The fairness of elections in 1960,
+\item y4: The effectiveness of the elected legislature in 1960.
+}}
+\item{Political democracy in 1965 (ind65)}{\itemize{
+\item y5: Expert ratings of the freedom of the press in 1965,
+\item y6: The freedom of political opposition in 1965,
+\item y7: The fairness of elections in 1965,
+\item y8: The effectiveness of the elected legislature in 1965.
+}}
+\item{Industrialization in 1960 (ind60)}{\itemize{
+\item x1: The gross national product (GNP) per capita in 1960,
+\item x2: The inanimate energy consumption per capita in 1960,
+\item x3: The percentage of the labor force in industry in 1960.}}
+}
 }
 \examples{
 data(PoliticalDemocracy)
@@ -54,10 +60,11 @@ mode = rep("reflective", 3)
 sem_svd <- SemFC$new(data=A,
                      relation_matrix = C,
                      mode=mode,
-                     scale = F, bias = T,
+                     scale = FALSE, 
+                     bias = TRUE,
                      estimator = "svd")
 
-sem_svd$fit(infer = T, B = 100)
+sem_svd$fit(infer = TRUE, B = 100)
 sem_svd$summary(standardized = TRUE)
 sem_svd$check_improper()
 
@@ -70,7 +77,7 @@ sem_ml <- SemFC$new(data=A,
                     mode=mode, 
                     estimator = "ml")
 
-sem_ml$fit(infer = T)
+sem_ml$fit(infer = TRUE)
 sem_ml$summary(standardized = TRUE)
 sem_ml$check_improper()
 }

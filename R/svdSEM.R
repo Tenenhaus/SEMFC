@@ -38,31 +38,8 @@
 #' Advances in Data Analysis Classification (2025).
 #' \url{https://doi.org/10.1007/s11634-025-00647-4}
 #' @title Structural Equation Modeling with Factors and Composites (svdSEM)
-#' @examples
-#' #############
-#' # Example 1 #
-#' #############
-#' data(ECSI)
-#' ECSI = ECSI/10
-#' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-#'          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", "PERQ4", 
-#'                                "PERQ5", "PERQ6", "PERQ7")],
-#'          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-#'          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-#'          CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
-#'          
-#' C = matrix(c(0, 0, 0, 0, 0,
-#'              1, 0, 0, 0, 0,
-#'              1, 1, 0, 0, 0,
-#'              1, 1, 1, 0, 0,
-#'              0, 0, 0, 1, 0), 5, 5, byrow = FALSE)
-#' 
-#' fit = svdSEM(A, C, scale = FALSE, 
-#'              mode = rep("reflective", length(A)),
-#'             bias = FALSE)
-#'
 #'@keywords internal             
-# #' @export
+
 svdSEM <- function(A, C, scale = TRUE,
                    mode = rep("formative", length(A)), 
                    bias = FALSE){

@@ -22,26 +22,23 @@ It is difficult for a country to escape dictatorship when its agricultural
 inequality is above-average and its industrial development below-average.
 
 \describe{
-
-\item{X1}{Agricultural Inequality \itemize{
-\item GINI: Inequality of land distribution,
-\item FARM: Percentage of farmers that own half of the land,
-\item RENT: Percentage of farmers that rent all their land.
+\item{Agricultural Inequality (AgrIneq)}{\itemize{
+\item gini: Inequality of land distribution,
+\item farm: Percentage of farmers that own half of the land,
+\item rent: Percentage of farmers that rent all their land.
 }}
-
-\item{X2}{Industrial Development \itemize{
-\item GNPR: Gross national product per capita ($1955),
-\item LABO: Percentage of labor forced employed in agriculture.
+\item{Industrial Development (IndDev)}{\itemize{
+\item gnpr: Gross national product per capita ($1955),
+\item labo: Percentage of labor forced employed in agriculture.
 }}
-
-\item{X3}{Political Instability \itemize{
-\item INST: Instability of executive (45-61),
-\item ECKS: Number of violent internal war incidents (46-61),
-\item DEAT: Number of people killed as a result of civic group
+\item{Political Instability (PolInst)}{\itemize{
+\item inst: Instability of executive (45-61),
+\item ecks: Number of violent internal war incidents (46-61),
+\item deat: Number of people killed as a result of civic group
 violence (50-62),
-\item DEMOSTAB: Stable democracy,
-\item DEMOINST: Unstable democracy,
-\item DICTATOR: Dictatorship.
+\item demostab: Stable democracy,
+\item demoinst: Unstable democracy,
+\item dictator: Dictatorship.
 }}
 }
 }
@@ -49,7 +46,8 @@ violence (50-62),
 data(Russett)
 A = list(AgrIneq = Russett[, c("gini", "farm", "rent")],
          IndDev  = Russett[, c("gnpr", "labo")],
-         PolInst = Russett[, c("inst", "ecks", "deat", "stab", "dict")])
+         PolInst = Russett[, c("inst", "ecks", "death", 
+                               "demostab", "dictator")])
 
 C = matrix(c(0, 0, 0,
              0, 0, 0,
@@ -66,12 +64,12 @@ mode = rep("formative", 3)
 sem_svd <- SemFC$new(data = A,
                      relation_matrix = C,
                      mode = mode,
-                     scale = F,
-                     bias = T,
+                     scale = FALSE,
+                     bias = TRUE,
                      estimator = "svd")
 
-sem_svd$fit(infer = T, B = 100)
-sem_svd$summary(standardized = T, all_measures = T)
+sem_svd$fit(infer = TRUE, B = 100)
+sem_svd$summary(standardized = TRUE, all_measures = TRUE)
 sem_svd$check_improper()
 
 ##########
@@ -81,10 +79,11 @@ sem_svd$check_improper()
 sem_ml <- SemFC$new(data = A,
                     relation_matrix = C,
                     mode = mode,
-                    scale = F, bias = F,
+                    scale = FALSE, 
+                    bias = FALSE,
                     estimator = "ml")
 
-sem_ml$fit(infer = T)
+sem_ml$fit(infer = TRUE)
 sem_ml$check_improper()
 sem_ml$summary(standardized = TRUE, all_measures = TRUE)
 }

@@ -5,37 +5,13 @@
 \alias{BergamiBagozzi2000}
 \title{BergamiBagozzi2000 Dataset}
 \format{
-A data frame with 23 variables:
-\describe{
-\item{cei1}{Organizational prestige indicator 1}
-\item{cei2}{Organizational prestige indicator 2}
-\item{cei3}{Organizational prestige indicator 3}
-\item{cei4}{Organizational prestige indicator 4}
-\item{cei5}{Organizational prestige indicator 5}
-\item{cei6}{Organizational prestige indicator 6}
-\item{cei7}{Organizational prestige indicator 7}
-\item{cei8}{Organizational prestige indicator 8}
-\item{ma1}{Organizational identification indicator 1}
-\item{ma2}{Organizational identification indicator 2}
-\item{ma3}{Organizational identification indicator 3}
-\item{ma4}{Organizational identification indicator 4}
-\item{ma5}{Organizational identification indicator 5}
-\item{ma6}{Organizational identification indicator 6}
-\item{orgcmt1}{Affective commitment indicator 1 (love)}
-\item{orgcmt2}{Affective commitment indicator 2 (love)}
-\item{orgcmt3}{Affective commitment indicator 3 (love)}
-\item{orgcmt5}{Affective commitment indicator 5 (joy)}
-\item{orgcmt6}{Affective commitment indicator 6}
-\item{orgcmt7}{Affective commitment indicator 7 (love)}
-\item{orgcmt8}{Affective commitment indicator 8 (joy)}
-\item{gender}{Gender (formative indicator)}
-}
+A data frame with 305 rows and 22 variables.
 }
 \source{
-Bergami, M., & Bagozzi, R. P. (2000).
-Self-categorization, affective commitment and group self-esteem
-as distinct aspects of social identity in the organization.
-\emph{British Journal of Social Psychology}, 39(4), 555-577.
+Bergami, M., & Bagozzi, R. P. (2000). Self-categorization,
+affective commitment and group self-esteem as distinct aspects of
+social identity in the organization. British Journal of Social
+Psychology, 39(4), 555-577.
 }
 \usage{
 data(BergamiBagozzi2000)
@@ -43,17 +19,48 @@ data(BergamiBagozzi2000)
 \description{
 Dataset from Bergami and Bagozzi (2000) used to study organizational
 identification and affective commitment.
+
+\describe{
+\item{Organizational prestige}{\itemize{
+\item cei1: Organizational prestige indicator 1,
+\item cei2: Organizational prestige indicator 2,
+\item cei3: Organizational prestige indicator 3,
+\item cei4: Organizational prestige indicator 4,
+\item cei5: Organizational prestige indicator 5,
+\item cei6: Organizational prestige indicator 6,
+\item cei7: Organizational prestige indicator 7,
+\item cei8: Organizational prestige indicator 8,
+}}
+\item{Organizational identification}{\itemize{
+\item ma1: Organizational identification indicator 1,
+\item ma2: Organizational identification indicator 2,
+\item ma3: Organizational identification indicator 3,
+\item ma4: Organizational identification indicator 4,
+\item ma5: Organizational identification indicator 5,
+\item ma6: Organizational identification indicator 6,
+}}
+\item{Affective commitment}{\itemize{
+\item orgcmt1: Affective commitment indicator 1 (love),
+\item orgcmt2: Affective commitment indicator 2 (love),
+\item orgcmt3: Affective commitment indicator 3 (love),
+\item orgcmt5: Affective commitment indicator 5 (joy),
+\item orgcmt6: Affective commitment indicator 6,
+\item orgcmt7: Affective commitment indicator 7 (love),
+\item orgcmt8: Affective commitment indicator 8 (joy),
+}}
+\item{Gender}{\itemize{
+\item gender (formative indicator).}}
+}
 }
 \examples{
 data(BergamiBagozzi2000)
-A = list(OrgPres = BergamiBagozzi2000[, c("cei1", "cei2", "cei3", "cei4", 
-                                          "cei5", "cei6", "cei7", "cei8")],
-         OrgIden = BergamiBagozzi2000[, c("ma1", "ma2", "ma3", "ma4", "ma5", 
-                                          "ma6")],
-         AffLove = BergamiBagozzi2000[, c("orgcmt1", "orgcmt2", "orgcmt3", 
-                                          "orgcmt7")],
-         AffJoy  = BergamiBagozzi2000[, c("orgcmt5", "orgcmt8")], 
-         Gender  = BergamiBagozzi2000[, "gender", drop = FALSE]
+BB = BergamiBagozzi2000
+A = list(OrgPres = BB[, grep("cei", colnames(BB))],
+         OrgIden = BB[, grep("ma", colnames(BB))],
+         AffLove = BB[, c("orgcmt1", "orgcmt2", 
+                          "orgcmt3", "orgcmt7")],
+         AffJoy  = BB[, c("orgcmt5", "orgcmt8")], 
+         Gender  = BB[, "gender", drop = FALSE]
          )
 
 C = matrix(c(0, 0, 0, 0, 0, 
@@ -72,12 +79,13 @@ mode = c(rep("reflective", 4), "formative")
 sem_svd <- SemFC$new(data = A, 
                      relation_matrix = C, 
                      mode = mode, 
-                     scale = F, bias = T,
+                     scale = FALSE, 
+                     bias = TRUE,
                      estimator = "svd")
-sem_svd$fit(infer = T, B = 100)
+sem_svd$fit(infer = TRUE, B = 100)
 sem_svd$check_improper()
-sem_svd$summary(all_measures = T)
-estimate = sem_svd$parameterEstimates(standardized = T)
+sem_svd$summary(all_measures = TRUE)
+estimate = sem_svd$parameterEstimates(standardized = TRUE)
 
 #########
 # mlSEM #
@@ -86,12 +94,13 @@ estimate = sem_svd$parameterEstimates(standardized = T)
 sem_ml <- SemFC$new(data = A, 
                     relation_matrix = C, 
                     mode = mode, 
-                    scale = F, bias = T, 
+                    scale = FALSE, 
+                    bias = TRUE, 
                     estimator = "ml") 
-sem_ml$fit(infer = T)
+sem_ml$fit(infer = TRUE)
 sem_ml$check_improper()
-sem_ml$summary(all_measures = T)
-estimate = sem_ml$parameterEstimates(standardized = F)
+sem_ml$summary(all_measures = TRUE)
+estimate = sem_ml$parameterEstimates(standardized = FALSE)
 
 }
 \keyword{datasets}

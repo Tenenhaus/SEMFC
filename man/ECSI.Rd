@@ -21,7 +21,7 @@ value of each variable is 0 and its maximum possible value is equal to 10.
 
 \describe{
 
-\item{IMAG}{Image of the phone provider (eta_1) \itemize{
+\item{Image of the phone provider (IMAG)}{\itemize{
 \item (a) Reputation of the phone provider,
 \item (b) Trustworthiness,
 \item (c) Seriousness,
@@ -29,7 +29,7 @@ value of each variable is 0 and its maximum possible value is equal to 10.
 \item (e) Caring about customer's needs.
 }}
 
-\item{EXPE}{Customer Expectations of the overall quality (eta_2) \itemize{
+\item{Customer Expectations of the overall quality (EXPE)}{\itemize{
 \item (a) Expectations for the overall quality of your "mobile phone
 provider" at the moment you became customer of this provider,
 \item (b) Expectations for your "mobile phone provider" to provide
@@ -38,7 +38,7 @@ products and services to meet your personal need,
 "mobile phone provider".
 }}
 
-\item{QUAL}{Perceived Quality (eta_3) \itemize{
+\item{Perceived Quality (QUAL)}{\itemize{
 \item (a) Overall perceived quality,
 \item (b) Overall perceived quality,
 \item (c) Customer service and personal advice offered,
@@ -49,7 +49,7 @@ provided,
 \item (g) Clarity and transparency of information provided.
 }}
 
-\item{VAL}{Perceived Value (eta_4) \itemize{
+\item{Perceived Value (VAL)}{\itemize{
 \item (a) Given the quality of the products and services offered by
 your "mobile phone provider" how would you rate the fees and prices that
 you pay for them?
@@ -58,14 +58,14 @@ provider how would you rate the quality of the products and services offered
 by your "mobile phone provider"?
 }}
 
-\item{SAT}{Customer Satisfaction (eta_5) \itemize{
+\item{Customer Satisfaction (SAT)}{ \itemize{
 \item (a) Overall satisfaction,
 \item (b) Fulfillment of expectations,
 \item (c) How well do you think your "mobile phone provider" compares
 with your ideal "mobile phone provider"?
 }}
 
-\item{LOY}{Customer Loyalty (eta_6) \itemize{
+\item{Customer Loyalty (LOY)}{\itemize{
 \item (a) If you would need to choose a new "mobile phone provider" how
 likely is it that you would choose your provider again?
 \item (b) Let us now suppose that other "mobile phone provider"s decide
@@ -81,12 +81,11 @@ that you would recommend your "mobile phone provider"?
 \examples{
 data(ECSI) 
 ECSI = ECSI/10
-A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3", 
-                               "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
-         PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-         CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-         CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")]
+A = list(EXPE = ECSI[, grep("CUEX", colnames(ECSI))],
+         QUAL = ECSI[, grep("PERQ", colnames(ECSI))],
+         VAL  = ECSI[, grep("PERV", colnames(ECSI))],
+         SAT  = ECSI[, grep("CUSA", colnames(ECSI))],
+         LOY  = ECSI[, grep("CUSL", colnames(ECSI))]
 )
 
 ############
@@ -106,7 +105,7 @@ mode = rep("reflective", 5)
 sem_svd <- SemFC$new(data = A,
                      relation_matrix = C,
                      mode=mode,
-                     scale = F,
+                     scale = FALSE,
                      estimator = "svd")
 
 sem_svd$fit(infer = TRUE, B = 100)
@@ -116,10 +115,10 @@ estimate_svd = sem_svd$parameterEstimates()
 sem_ml <- SemFC$new(data=A, 
                     relation_matrix = C, 
                     mode=mode, 
-                    scale = F,
+                    scale = FALSE,
                     estimator = "ml")
 
-sem_ml$fit(infer = T)
+sem_ml$fit(infer = TRUE)
 sem_ml$summary()
 }
 \references{

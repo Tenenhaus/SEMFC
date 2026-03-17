@@ -6,13 +6,40 @@
 \title{The Lancelot-Miltgen et al Dataset}
 \format{
 A table object
+\describe{
+\item{To what extent do you agree with the following description of the service? (Trust in technology)}{\itemize{
+\item trust1:  My personal data is shared with third parties without my
+agreement.
+\item trust2:  My behavior and activities can be monitored online.
+}}
+\item{How concerned are you about the following risks in relation to your
+personal information? (PRivacy CONcers)}{\itemize{
+\item privcon1: My personal data is shared with third parties without my
+agreement.
+\item privcon2: My behavior and activities can be monitored online.
+\item privcon3: My online personal data is used to send me commercial
+offers.
+\item privcon4: My identity is reconstructed using personal data from
+various sources.
+}}
+\item{What are the potential risks you would mention to your friend? (Risk)}{\itemize{
+\item risk1: Information may be collected that could be used against you in
+future life.
+\item risk2: Someone may use your identity instead of you.
+\item risk3: Your personal data will be shared with unauthorized persons.
+}}
+\item{What would you recommend to your friend? (INTention of adoption)}{\itemize{
+\item intent1: He/she should apply this service as soon as possible.
+\item intent2: He/she should use this service soon after it is launched.
+}}
+}
 }
 \source{
 This data has been collected through a cooperation with the European
 Commission Joint Research Center Institute for Prospective Technological
 Studies, contract “Young People and Emerging Digital Services: An Exploratory
-Survey on Motivations, Perceptions, and Acceptance of Risk”. This dataset is available
-in the R package \code{cSEM}.
+Survey on Motivations, Perceptions, and Acceptance of Risk”. This dataset is
+available in the R package \code{cSEM}.
 }
 \usage{
 data(LancelotMiltgenetal2016)
@@ -24,12 +51,12 @@ of privacy concerns.
 }
 \examples{
 data(LancelotMiltgenetal2016)
+LM = LancelotMiltgenetal2016
 
-A = list(Trust = LancelotMiltgenetal2016[, c("trust1", "trust2")],
-         PrCon = LancelotMiltgenetal2016[, c("privcon1", "privcon2", 
-                                             "privcon3", "privcon4")],
-         Risk  = LancelotMiltgenetal2016[, c("risk1", "risk2", "risk3")],
-         Int   = LancelotMiltgenetal2016[, c("intent1", "intent2")])
+A = list(Trust = LM[, grep("trust", colnames(LM))],
+         PrCon = LM[, grep("priv", colnames(LM))],
+         Risk  = LM[, grep("risk", colnames(LM))],
+         Int   = LM[, grep("intent", colnames(LM))])
 
 C = matrix(c(0, 1, 0, 0,
              0, 0, 0, 0,
@@ -46,10 +73,11 @@ mode = rep("reflective", 4)
 sem_svd <- SemFC$new(data=A,
                      relation_matrix = C,
                      mode=mode,
-                     scale = F, bias = T,
+                     scale = FALSE, 
+                     bias = TRUE,
                      estimator = "svd")
 
-sem_svd$fit(infer = T, B = 100)
+sem_svd$fit(infer = TRUE, B = 100)
 sem_svd$summary()
 sem_svd$check_improper()
 
@@ -60,12 +88,18 @@ sem_svd$check_improper()
 sem_ml <- SemFC$new(data = A, 
                     relation_matrix = C, 
                     mode = mode, 
-                    scale = F, bias = T, 
+                    scale = FALSE, 
+                    bias = TRUE, 
                     estimator = "ml")
 
-sem_ml$fit(infer = T)
+sem_ml$fit(infer = TRUE)
 sem_ml$summary(standardized = TRUE)
 sem_svd$check_improper()
 
+}
+\references{
+Lancelot Miltgen, C., Henseler, J., Gelhard, C., and Popovic, A.
+(2016). Introducing new products that affect consumer privacy: A mediation
+model, Journal of Business Research, 69(10), 4659-4666.
 }
 \keyword{datasets}

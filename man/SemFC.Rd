@@ -165,7 +165,7 @@ sem_model <- SemFC$new(data = A,
 
 sem_model$fit(infer = TRUE, B = 100)
 
-Print comprehensive summary of the fitted SemFC object.
+# Print comprehensive summary of the fitted SemFC object.
 
 sem_model$summary(standardized = TRUE,
                   effect = TRUE,
@@ -207,8 +207,8 @@ sem_model <- SemFC$new(data = A,
 
 sem_model$fit(infer = TRUE, B = 100)
 
-Extract parameter estimates from the fitted SemFC model, including 
-standardized solutions. 
+# Extract parameter estimates from the fitted SemFC model, including 
+# standardized solutions. 
 
 estimates <- sem_model$parameterEstimates(standardized = TRUE)
 
@@ -248,7 +248,7 @@ sem_model <- SemFC$new(data = A,
 
 sem_model$fit(infer = TRUE, B = 100)
 
-Check for improper solutions in the fitted SemFC model.
+# Check for improper solutions in the fitted SemFC model.
 
 improper_results <- sem_model$check_improper()
 
@@ -567,7 +567,7 @@ sem_model <- SemFC$new(data = A,
 
 sem_model$fit(infer = TRUE, B = 100)
 
-Print comprehensive summary of the fitted SemFC object.
+# Print comprehensive summary of the fitted SemFC object.
 
 sem_model$summary(standardized = TRUE,
                   effect = TRUE,
@@ -662,8 +662,8 @@ sem_model <- SemFC$new(data = A,
 
 sem_model$fit(infer = TRUE, B = 100)
 
-Extract parameter estimates from the fitted SemFC model, including 
-standardized solutions. 
+# Extract parameter estimates from the fitted SemFC model, including 
+# standardized solutions. 
 
 estimates <- sem_model$parameterEstimates(standardized = TRUE)
 
@@ -752,7 +752,7 @@ sem_model <- SemFC$new(data = A,
 
 sem_model$fit(infer = TRUE, B = 100)
 
-Check for improper solutions in the fitted SemFC model.
+# Check for improper solutions in the fitted SemFC model.
 
 improper_results <- sem_model$check_improper()
 

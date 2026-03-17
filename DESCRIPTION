@@ -1,5 +1,5 @@
 Package: SEMFC
-Title: Structural equation modeling with factors and composites within the framework of the basic design.
+Title: Structural equation modeling with factors and composites
 Version: 1.0
 Authors@R:
   c(person("Alain", "Luong", , 
