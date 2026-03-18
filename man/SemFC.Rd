@@ -523,15 +523,24 @@ indices is reported. (default: \code{FALSE})}
 Elements that are reported in the summary include:
 \itemize{
 \item Model information (estimator, sample size, number of parameters)
-\item Chi-square test results
+\item Chi-square test: This is the primary test of our model. If the test
+not significant (p > 0.05), it suggests that the model-implied
+covariance matrix does not significantly differ from the sample
+covariance matrix, indicating good fit.
 \item Baseline model comparison
-\item Fit indices (CFI, TLI)
-\item Information criteria (AIC, BIC, SABIC)
-\item RMSEA with confidence intervals
-\item SRMR
+\item Fit indices: Comparative Fit Index (CFI) and Tucker-Lewis Index
+(TLI). Values above 0.95 indicate good fit.
+\item Root Mean Square Error of Approximation (RMSEA) with confidence
+intervals: values below 0.05 indicate good fit.
+\item Standardized Root Mean Square Residual (SRMR): values below 0.06
+indicate good fit.
+\item Information criteria (AIC, BIC) and Sample-size adjusted BIC (SABIC)
 \item Bollen-Stine bootstrap results (for SVD only)
 \item Parameter estimates with standard errors and p-values
 }
+There is a lot of controversy about the use (and misuse) of these fit
+indices. Current practice is to report: chi-square value, degree of freedom
+and pvalue, RMSEA, CFI and SRMR.
 }
 
 \subsection{Examples}{
