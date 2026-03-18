@@ -416,13 +416,15 @@
 "ITFlex"
 
 #' The Lancelot-Miltgen et al Dataset
+#' 
+#' @format A data frame with 1090 rows and 11 variables.
+#' @docType data
 #'
 #' @description
 #' The data was analysed by Lancelot-Miltgen et al. (2016) to study young 
 #' consumers’ adoption intentions of a location tracker technology in the light 
 #' of privacy concerns. 
 #' 
-#' @format A table object
 #' \describe{
 #' \item{To what extent do you agree with the following description of the service? (Trust in technology)}{\itemize{
 #'  \item trust1:  My personal data is shared with third parties without my 
@@ -450,6 +452,7 @@
 #'  \item intent2: He/she should use this service soon after it is launched.
 #'  }}
 #'  }
+#'  
 #' @source This data has been collected through a cooperation with the European 
 #' Commission Joint Research Center Institute for Prospective Technological 
 #' Studies, contract “Young People and Emerging Digital Services: An Exploratory 

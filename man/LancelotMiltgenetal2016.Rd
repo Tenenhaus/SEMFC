@@ -5,7 +5,23 @@
 \alias{LancelotMiltgenetal2016}
 \title{The Lancelot-Miltgen et al Dataset}
 \format{
-A table object
+A data frame with 1090 rows and 11 variables.
+}
+\source{
+This data has been collected through a cooperation with the European
+Commission Joint Research Center Institute for Prospective Technological
+Studies, contract “Young People and Emerging Digital Services: An Exploratory
+Survey on Motivations, Perceptions, and Acceptance of Risk”. This dataset is
+available in the R package \code{cSEM}.
+}
+\usage{
+data(LancelotMiltgenetal2016)
+}
+\description{
+The data was analysed by Lancelot-Miltgen et al. (2016) to study young
+consumers’ adoption intentions of a location tracker technology in the light
+of privacy concerns.
+
 \describe{
 \item{To what extent do you agree with the following description of the service? (Trust in technology)}{\itemize{
 \item trust1:  My personal data is shared with third parties without my
@@ -33,21 +49,6 @@ future life.
 \item intent2: He/she should use this service soon after it is launched.
 }}
 }
-}
-\source{
-This data has been collected through a cooperation with the European
-Commission Joint Research Center Institute for Prospective Technological
-Studies, contract “Young People and Emerging Digital Services: An Exploratory
-Survey on Motivations, Perceptions, and Acceptance of Risk”. This dataset is
-available in the R package \code{cSEM}.
-}
-\usage{
-data(LancelotMiltgenetal2016)
-}
-\description{
-The data was analysed by Lancelot-Miltgen et al. (2016) to study young
-consumers’ adoption intentions of a location tracker technology in the light
-of privacy concerns.
 }
 \examples{
 data(LancelotMiltgenetal2016)
