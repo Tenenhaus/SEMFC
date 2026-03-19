@@ -29,12 +29,12 @@ inequality is above-average and its industrial development below-average.
 }}
 \item{Industrial Development (IndDev)}{\itemize{
 \item gnpr: Gross national product per capita ($1955),
-\item labo: Percentage of labor forced employed in agriculture.
+\item labo: Percentage of labor force employed in agriculture.
 }}
 \item{Political Instability (PolInst)}{\itemize{
 \item inst: Instability of executive (45-61),
 \item ecks: Number of violent internal war incidents (46-61),
-\item deat: Number of people killed as a result of civic group
+\item death: Number of people killed as a result of civic group
 violence (50-62),
 \item demostab: Stable democracy,
 \item demoinst: Unstable democracy,

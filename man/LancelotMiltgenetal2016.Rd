@@ -29,7 +29,7 @@ agreement.
 \item trust2:  My behavior and activities can be monitored online.
 }}
 \item{How concerned are you about the following risks in relation to your
-personal information? (PRivacy CONcers)}{\itemize{
+personal information? (Privacy Concerns)}{\itemize{
 \item privcon1: My personal data is shared with third parties without my
 agreement.
 \item privcon2: My behavior and activities can be monitored online.
@@ -95,7 +95,7 @@ sem_ml <- SemFC$new(data = A,
 
 sem_ml$fit(infer = TRUE)
 sem_ml$summary(standardized = TRUE)
-sem_svd$check_improper()
+sem_ml$check_improper()
 
 }
 \references{

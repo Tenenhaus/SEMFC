@@ -524,7 +524,7 @@ Elements that are reported in the summary include:
 \itemize{
 \item Model information (estimator, sample size, number of parameters)
 \item Chi-square test: This is the primary test of our model. If the test
-not significant (p > 0.05), it suggests that the model-implied
+is not significant (p > 0.05), it suggests that the model-implied
 covariance matrix does not significantly differ from the sample
 covariance matrix, indicating good fit.
 \item Baseline model comparison
