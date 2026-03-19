@@ -128,11 +128,10 @@ offdiag <- function(M){
   return(M_offdiag)}
 
 
-jac_lambda_reflective <- function(block_sizes, j, lambda, S, U_j, P_j, D_P = duplication_matrix(sum(block_sizes))){
+jac_lambda_reflective <- function(J_lambda_unit, lambda, S, U_j){
 
-  J_lambda_unit <- jac_f_vechs(block_sizes, j, S, lambda,U_j, P_j, D_P)
+  # J_lambda_unit <- jac_f_vechs(block_sizes, j, S, lambda,U_j, P_j, D_P)
 
-  p_j <- block_sizes[j]
   S_jj_offdiag <- offdiag(t(U_j)%*%S%*%U_j)
   L_tilde <- offdiag(tcrossprod(lambda))
 
@@ -140,10 +139,47 @@ jac_lambda_reflective <- function(block_sizes, j, lambda, S, U_j, P_j, D_P = dup
   B <- as.numeric(1 - as.numeric(crossprod(lambda^2)))
   d_j <- as.numeric(sqrt(A/B))
 
-  part1 <- diag(p_j) + lambda %*% ((1/A)*t(lambda)%*%S_jj_offdiag + (2/B)*t(lambda^3))
-  part2 <- (1/(2*A))*lambda%*%t(as.vector(U_j%*%L_tilde%*%t(U_j)))
+  v_T <- (1/A)*crossprod(lambda, S_jj_offdiag) + (2/B)*t(lambda^3)
+  part1 <- J_lambda_unit + lambda %*% v_T %*% J_lambda_unit
 
-  J_lambda <- d_j*(part1%*%J_lambda_unit + part2%*%D_P)
+
+  M <- U_j%*%L_tilde%*%t(U_j)
+  vec_Dn_M <- M[lower.tri(M, diag = TRUE)]
+  part2 <- (1/A)*lambda%*%t(vec_Dn_M)
+
+  J_lambda <- d_j*(part1 + part2)
 
   return(J_lambda)
 }
+
+
+jac_lambda_formative <- function(J_lambda_unit, lambda, S, U_j ){
+
+  # J_lambda_unit <- jac_f_vechs(block_sizes, j, S, lambda,U_j, P_j, D_P)
+  S_inv_lambda <- solve(t(U_j)%*%S%*%U_j, lambda)
+  u <- as.numeric(crossprod(lambda, S_inv_lambda))
+  d_j <- 1 / sqrt(u)
+  d_j3 <- d_j^3
+  part1 <- (d_j * J_lambda_unit) - (d_j3 * lambda%*%crossprod(S_inv_lambda, J_lambda_unit))
+
+  w <- U_j %*% S_inv_lambda
+  H <- tcrossprod(w)
+  diag_H <- diag(H)
+  H <- H * 2
+  diag(H) <- diag_H
+  vec_Dn_H <- H[lower.tri(H, diag = TRUE)]
+  part2 <- (d_j3 / 2) * tcrossprod(lambda, vec_Dn_H)
+
+  J_lambda <- part1 + part2
+
+  return(J_lambda)
+}
+
+
+
+
+
+
+
+
+
