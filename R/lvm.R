@@ -26,7 +26,7 @@
 #'
 #' @importFrom igraph graph_from_adjacency_matrix is_dag
 #'
-#' @export
+#' @keywords internal
 lvm <- function(R, C){
   gr = igraph::graph_from_adjacency_matrix(C)
   which_exo_endo = ind_exo_endo(C)
@@ -43,9 +43,6 @@ lvm <- function(R, C){
   BETA = as.matrix(tC[J, J, drop = F])
   GAMMA = as.matrix(tC[J, H, drop = F])
   PSI = matrix(0, NCOL(BETA), NCOL(BETA))
-
-
-
 
   for (i in 1:length(which_exo_endo$Ji)){
     # les endo lie a l'endo i

@@ -33,53 +33,19 @@
 #' \strong{References}
 #'
 #' \enumerate{
-#' \item Tenenhaus, A., Tenenhaus, M., Dijkstra, T.K. Structural equation modeling
-#' with factors and composites within the framework of the basic design.
+#' \item Tenenhaus, A., Tenenhaus, M., Dijkstra, T.K. Structural equation 
+#' modeling with factors and composites within the framework of the basic design.
 #' Advances in Data Analysis Classification (2025).
 #' \url{https://doi.org/10.1007/s11634-025-00647-4}
 #' \item Ye Y (1987) Interior algorithms for linear, quadratic, and
-#' linearly constrained non-linear programming. \href{https://web.stanford.edu/~yyye/YinyuYePhD.pdf}{PhD thesis}, Department of
-#' ESS, Stanford University
+#' linearly constrained non-linear programming. 
+#' \href{https://web.stanford.edu/~yyye/YinyuYePhD.pdf}{PhD thesis}, Department 
+#' of ESS, Stanford University
 #' \item Ghalanos A, Theussl S (2015) Rsolnp: general non-linear
 #' optimization using augmented Lagrange multiplier method.
 #' R package version 1.16. \cr
 #' \url{https://CRAN.R-project.org/package=Rsolnp}
 #' }
-#'
-#' @examples
-#' data("ECSI")
-#' ECSI = ECSI/10
-#' A = list(IMAG = ECSI[, 1:5],
-#'         CUEX = ECSI[, 6:8],
-#'         PERQ = ECSI[, 9:15],
-#'         PERV = ECSI[, 16:17],
-#'         CUSA = ECSI[, 18:20],
-#'         CUSCO = ECSI[, 21, drop = FALSE],
-#'         CUSL = ECSI[, 22:24])
-#'
-#' C <- matrix(c(0, 1, 0, 0, 1, 0, 1,
-#'               0, 0, 1, 1, 1, 0, 0,
-#'               0, 0, 0, 1, 1, 0, 0,
-#'               0, 0, 0, 0, 1, 0, 0,
-#'               0, 0, 0, 0, 0, 1, 1,
-#'               0, 0, 0, 0, 0, 0, 1,
-#'               0, 0, 0, 0, 0, 0, 0), 7, 7, byrow = TRUE)
-#'
-#' colnames(C) = rownames(C) = names(A)
-#'
-#' mode = rep("reflective", 7) ; mode[6] = "formative"
-#'
-#' sem_model <- SemFC$new(data = A,
-#' relation_matrix = C,
-#' mode = mode,
-#' scale = FALSE,
-#' estimator = "svd")
-#'
-#' sem_model$fit(infer = TRUE, B = 100)
-#'
-#' sem_model$summary(standardized = TRUE, effect = TRUE, all_measures = TRUE)
-#'
-#' estimates <- sem_model$parameterEstimates(standardized = TRUE)
 #'
 #' @export
 SemFC <- R6Class(
@@ -96,13 +62,14 @@ SemFC <- R6Class(
 #' @param relation_matrix Square 0/1 connection matrix (\code{J} x \code{J})
 #'   defining structural connection between latent variables.
 #'   \code{relation_matrix[i, j]} = 1 indicates a structural
-#'   connection from latent variable \code{i} to latent variable \code{j}; and equal 0
-#'   otherwise.
+#'   connection from latent variable \code{i} to latent variable \code{j}; 
+#'   and equal 0 otherwise.
 #' @param mode Character vector of length \code{J} specifying the type of
 #'   measurement model (\code{"reflective"} or \code{"formative"}) for each block.
 #'   Blocks specified as
 #'   \code{"reflective"} are modeled with latent factors, while blocks specified
-#'   as \code{"formative"} are modeled with composites. (default: \code{rep("reflective", J)})
+#'   as \code{"formative"} are modeled with composites. 
+#'   (default: \code{rep("reflective", J)})
 #' @param estimator Character string specifying the estimation method:
 #'   \code{"svd"} or \code{"ml"} (default: \code{"ml"}).
 #' @param scale Logical indicating whether to standardize the input data or
@@ -132,16 +99,20 @@ SemFC <- R6Class(
 #'              byrow = FALSE)
 #'
 #' colnames(C) = rownames(C) = names(A)
-#'
-#' sem_model <- SemFC$new(data = A,
-#' relation_matrix = C,
-#' mode = rep("reflective", 5),
-#' scale = FALSE,
-#' estimator = "svd")
+#' 
+#' # Initialize SemFC object with data, model specification 
+#' # and svd-based estimation method.
+#' 
+#' sem_model <- SemFC$new(data = A, 
+#'                        relation_matrix = C, 
+#'                        mode = rep("reflective", 5), 
+#'                        scale = FALSE, estimator = "svd")
 #'
 #' @return A new `SemFC` object
 
-initialize = function(data, relation_matrix, mode = rep('reflective', length(data)), estimator = 'ml',
+initialize = function(data, relation_matrix, 
+                      mode = rep('reflective', length(data)), 
+                      estimator = 'ml',
                       scale = FALSE, bias = FALSE) {
 
       private$.estimator <- estimator
@@ -201,21 +172,30 @@ initialize = function(data, relation_matrix, mode = rep('reflective', length(dat
 #'              byrow = FALSE)
 #'
 #' colnames(C) = rownames(C) = names(A)
-#'
+#' 
+#' # Initialize SemFC object with data, model specification 
+#' # and svd-based estimation method.
+#' 
 #' sem_model_svd <- SemFC$new(data = A,
 #'                            relation_matrix = C,
 #'                            mode = rep("reflective", 5),
 #'                            scale = FALSE,
 #'                            estimator = "svd")
+#'                            
+#'# Fit the full model with bootstrap inference and goodness-of-fit.
 #'
 #' sem_model_svd$fit(infer = TRUE, B = 100)
-#'
+#' 
+#' # Initialize SemFC object with data model specification 
+#' # and ml estimation method.
+#' 
 #' sem_model_ml <- SemFC$new(data = A,
 #'                           relation_matrix = C,
 #'                           mode = rep("reflective", 5),
 #'                           scale = FALSE,
 #'                           estimator = "ml")
 #'
+#'# Fit the full model with asymptotic inference and goodness-of-fit.
 #' sem_model_ml$fit(infer = TRUE,
 #'                  initialization = "svd",
 #'                  tol = 1e-04)
@@ -257,16 +237,25 @@ initialize = function(data, relation_matrix, mode = rep('reflective', length(dat
 #' Elements that are reported in the summary include:
 #' \itemize{
 #'   \item Model information (estimator, sample size, number of parameters)
-#'   \item Chi-square test results
+#'   \item Chi-square test: This is the primary test of our model. If the test 
+#'   is not significant (p > 0.05), it suggests that the model-implied 
+#'   covariance matrix does not significantly differ from the sample 
+#'   covariance matrix, indicating good fit. 
 #'   \item Baseline model comparison
-#'   \item Fit indices (CFI, TLI)
-#'   \item Information criteria (AIC, BIC, SABIC)
-#'   \item RMSEA with confidence intervals
-#'   \item SRMR
+#'   \item Fit indices: Comparative Fit Index (CFI) and Tucker-Lewis Index 
+#'   (TLI). Values above 0.95 indicate good fit.
+#'   \item Root Mean Square Error of Approximation (RMSEA) with confidence 
+#'   intervals: values below 0.05 indicate good fit.
+#'   \item Standardized Root Mean Square Residual (SRMR): values below 0.06 
+#'   indicate good fit.
+#'   \item Information criteria (AIC, BIC) and Sample-size adjusted BIC (SABIC)
 #'   \item Bollen-Stine bootstrap results (for SVD only)
 #'   \item Parameter estimates with standard errors and p-values
 #' }
-#'
+#' There is a lot of controversy about the use (and misuse) of these fit 
+#' indices. Current practice is to report: chi-square value, degree of freedom 
+#' and pvalue, RMSEA, CFI and SRMR.
+#' 
 #' @examples
 #' data(ECSI)
 #' ECSI = ECSI/10
@@ -285,14 +274,21 @@ initialize = function(data, relation_matrix, mode = rep('reflective', length(dat
 #'              byrow = FALSE)
 #'
 #' colnames(C) = rownames(C) = names(A)
-#'
+#' 
+#' # Initialize SemFC object with data, model specification 
+#' # and svd-based estimation method.
+#' 
 #' sem_model <- SemFC$new(data = A,
 #'                        relation_matrix = C,
 #'                        mode = rep("reflective", 5),
 #'                        scale = FALSE,
 #'                        estimator = "svd")
+#'                        
+#'# Fit the full model with bootstrap inference and goodness-of-fit.
 #'
 #' sem_model$fit(infer = TRUE, B = 100)
+#' 
+#' # Print comprehensive summary of the fitted SemFC object.
 #'
 #' sem_model$summary(standardized = TRUE,
 #'                   effect = TRUE,
@@ -371,14 +367,22 @@ initialize = function(data, relation_matrix, mode = rep('reflective', length(dat
 #'              byrow = FALSE)
 #'
 #' colnames(C) = rownames(C) = names(A)
+#' 
+#' # Initialize SemFC object with data, model specification 
+#' # and svd-based estimation method.
 #'
 #' sem_model <- SemFC$new(data = A,
 #'                        relation_matrix = C,
 #'                        mode = rep("reflective", 5),
 #'                        scale = FALSE,
 #'                        estimator = "svd")
+#'                        
+#'# Fit the full model with bootstrap inference and goodness-of-fit.
 #'
 #' sem_model$fit(infer = TRUE, B = 100)
+#' 
+#' # Extract parameter estimates from the fitted SemFC model, including 
+#' # standardized solutions. 
 #'
 #' estimates <- sem_model$parameterEstimates(standardized = TRUE)
 #'
@@ -461,14 +465,21 @@ initialize = function(data, relation_matrix, mode = rep('reflective', length(dat
 #'              byrow = FALSE)
 #'
 #' colnames(C) = rownames(C) = names(A)
+#' 
+#' # Initialize SemFC object with data, model specification 
+#' # and svd-based estimation method.
 #'
 #' sem_model <- SemFC$new(data = A,
 #'                        relation_matrix = C,
 #'                        mode = rep("reflective", 5),
 #'                        scale = FALSE,
 #'                        estimator = "svd")
+#'                        
+#'# Fit the full model with bootstrap inference and goodness-of-fit.
 #'
 #' sem_model$fit(infer = TRUE, B = 100)
+#' 
+#' # Check for improper solutions in the fitted SemFC model.
 #'
 #' improper_results <- sem_model$check_improper()
 #'
@@ -484,13 +495,13 @@ initialize = function(data, relation_matrix, mode = rep('reflective', length(dat
 #' Get a specific estimate from the fitted SemFC model.
 #'
 #' @param estimate Character string specifying the estimate component to select. 
-#'   Possible values include: 
+#'   Possible values are: 
 #'   
-#'   \code{"lambda"}, \code{"omega"}, \code{"beta"}, 
-#'   \code{"gamma"}, \code{"residual_variance"}, \code{"p_exo"}, \code{"p_endo"}, 
-#'   \code{"p_implied"}, \code{"sigma_implied"}, \code{"std_lambda"}, 
-#'   \code{"std_omega"}, \code{"psi"}, \code{"r2"}, \code{"T_LS"}, 
-#'   \code{"theta"}, \code{"effect"}, \code{"p_tilde"}. 
+#'   \code{"lambda"}, \code{"std_lambda"}, \code{"omega"}, \code{"std_omega"}, 
+#'   \code{"residual_variance"}, \code{"p_tilde"}, 
+#'   \code{"beta"}, \code{"gamma"}, \code{"p_exo"}, \code{"p_endo"}, \code{"psi"},
+#'   \code{"p_implied"}, \code{"sigma_implied"}, \code{"r2"}, \code{"T_LS"}, 
+#'   \code{"theta"}, and \code{"effect"}. 
 #'   
 #'   Use \code{"all"} to retrieve all estimates. 
 #'
@@ -521,19 +532,24 @@ initialize = function(data, relation_matrix, mode = rep('reflective', length(dat
 #'              byrow = FALSE)
 #'
 #' colnames(C) = rownames(C) = names(A)
+#'  
+#' # Initialize SemFC object with data, model specification 
+#' # and svd-based estimation method.
 #'
 #' sem_model <- SemFC$new(data = A,
 #'                        relation_matrix = C,
 #'                        mode = rep("reflective", 5),
 #'                        scale = FALSE,
 #'                        estimator = "svd")
+#'                        
+#' # Fit the full model with no inference and goodness-of-fit.                        
 #'
 #' sem_model$fit()
-#'
+#' 
 #' # Get specific estimates
 #' lambda <- sem_model$get_estimate("lambda")
 #' beta <- sem_model$get_estimate("beta")
-#' R2 <- sem_model$get_estimate("r2")
+#' r2 <- sem_model$get_estimate("r2")
 #'
 #' # Get all estimates
 #' all_estimates <- sem_model$get_estimate("all")
