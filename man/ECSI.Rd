@@ -3,22 +3,126 @@
 \docType{data}
 \name{ECSI}
 \alias{ECSI}
-\title{European Customer Satisfaction Index Data}
+\title{European Customer Satisfaction Index}
 \format{
-A table object
+A data frame with 250 rows and 24 variables
 }
 \usage{
-ECSI
+data(ECSI)
 }
 \description{
-Dataset containing customer satisfaction measurements for European companies.
-This dataset is commonly used for structural equation modeling examples
-involving customer satisfaction indices.
+The European Consumer Satisfaction Index (ECSI) is an economic indicator that
+measures customer satisfaction. ECSI is an adaptation of the Swedish Customer
+Satisfaction Barometer (Fornell, 1992) and is compatible with the American
+Customer Satisfaction Index.  The indicators describing the latent variables
+are given for the Mobile Phone Industry. The original items scaled from 1 to
+10 have been transformed into new normalized variables. The minimum possible
+value of each variable is 0 and its maximum possible value is equal to 10.
+
+\describe{
+
+\item{Image of the phone provider (IMAG)}{\itemize{
+\item (a) Reputation of the phone provider,
+\item (b) Trustworthiness,
+\item (c) Seriousness,
+\item (d) Solidness,
+\item (e) Caring about customer's needs.
+}}
+
+\item{Customer Expectations of the overall quality (EXPE)}{\itemize{
+\item (a) Expectations for the overall quality of your "mobile phone
+provider" at the moment you became customer of this provider,
+\item (b) Expectations for your "mobile phone provider" to provide
+products and services to meet your personal need,
+\item (c) How often did you expect that things could go wrong at your
+"mobile phone provider".
+}}
+
+\item{Perceived Quality (QUAL)}{\itemize{
+\item (a) Overall perceived quality,
+\item (b) Overall perceived quality,
+\item (c) Customer service and personal advice offered,
+\item (d) Quality of the services you use,
+\item (e) Range of services and products offered,
+\item (f) Reliability and accuracy of the products and services
+provided,
+\item (g) Clarity and transparency of information provided.
+}}
+
+\item{Perceived Value (VAL)}{\itemize{
+\item (a) Given the quality of the products and services offered by
+your "mobile phone provider" how would you rate the fees and prices that
+you pay for them?
+\item (b) Given the fees and prices that you pay for your mobile phone
+provider how would you rate the quality of the products and services offered
+by your "mobile phone provider"?
+}}
+
+\item{Customer Satisfaction (SAT)}{ \itemize{
+\item (a) Overall satisfaction,
+\item (b) Fulfillment of expectations,
+\item (c) How well do you think your "mobile phone provider" compares
+with your ideal "mobile phone provider"?
+}}
+
+\item{Customer Loyalty (LOY)}{\itemize{
+\item (a) If you would need to choose a new "mobile phone provider" how
+likely is it that you would choose your provider again?
+\item (b) Let us now suppose that other "mobile phone provider"s decide
+to lower their fees and prices, but your "mobile phone provider" stays at
+the same level as today. At which level of difference (in \\%) would you
+choose another "mobile phone provider"?
+\item (c) If a friend or colleague asks you for advice, how likely is it
+that you would recommend your "mobile phone provider"?
+}}
+
+}
 }
 \examples{
+data(ECSI) 
+ECSI = ECSI/10
+A = list(EXPE = ECSI[, grep("CUEX", colnames(ECSI))],
+         QUAL = ECSI[, grep("PERQ", colnames(ECSI))],
+         VAL  = ECSI[, grep("PERV", colnames(ECSI))],
+         SAT  = ECSI[, grep("CUSA", colnames(ECSI))],
+         LOY  = ECSI[, grep("CUSL", colnames(ECSI))]
+)
 
-data(ECSI)
-head(ECSI)
+############
+#  svdSEM  #
+############
 
+C = matrix(c(0, 0, 0, 0, 0,
+             1, 0, 0, 0, 0,
+             1, 1, 0, 0, 0,
+             1, 1, 1, 0, 0,
+             0, 0, 0, 1, 0), 5, 5, byrow = FALSE)
+
+colnames(C) = rownames(C) = names(A)
+
+mode = rep("reflective", 5)
+
+sem_svd <- SemFC$new(data = A,
+                     relation_matrix = C,
+                     mode=mode,
+                     scale = FALSE,
+                     estimator = "svd")
+
+sem_svd$fit(infer = TRUE, B = 100)
+sem_svd$summary(all_measures = TRUE)
+estimate_svd = sem_svd$parameterEstimates()
+
+sem_ml <- SemFC$new(data=A, 
+                    relation_matrix = C, 
+                    mode=mode, 
+                    scale = FALSE,
+                    estimator = "ml")
+
+sem_ml$fit(infer = TRUE)
+sem_ml$summary()
+}
+\references{
+Fornell C. (1992): A national customer satisfaction barometer.
+The Swedish experience. Journal of Marketing, (56), 6-21.
 }
 \keyword{datasets}

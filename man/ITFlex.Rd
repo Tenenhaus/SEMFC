@@ -5,37 +5,105 @@
 \alias{ITFlex}
 \title{ITFlex Dataset}
 \format{
-A data frame containing the following variables:
-\describe{
-\item{ITCOMP1}{Software applications can be easily transported and used across multiple platforms.}
-\item{ITCOMP2}{Our firm provides multiple interfaces or entry points (e.g., web access) for external end users.}
-\item{ITCOMP3}{Our firm establishes corporate rules and standards for hardware and operating systems to ensure platform compatibility.}
-\item{ITCOMP4}{Data captured in one part of our organization are immediately available to everyone in the firm.}
-\item{ITCONN1}{Our organization has electronic links and connections throughout the entire firm.}
-\item{ITCONN2}{Our firm is linked to business partners through electronic channels (e.g., websites, e-mail, wireless devices, electronic data interchange).}
-\item{ITCONN3}{All remote, branch, and mobile offices are connected to the central office.}
-\item{ITCONN4}{There are very few identifiable communications bottlenecks within our firm.}
-\item{MOD1}{Our firm possesses a great speed in developing new business applications or modifying existing applications.}
-\item{MOD2}{Our corporate database is able to communicate in several different protocols.}
-\item{MOD3}{Reusable software modules are widely used in new systems development.}
-\item{MOD4}{IT personnel use object-oriented and prepackaged modular tools to create software applications.}
-\item{ITPSF1}{Our IT personnel have the ability to work effectively in cross-functional teams.}
-\item{ITPSF2}{Our IT personnel are able to interpret business problems and develop appropriate technical solutions.}
-\item{ITPSF3}{Our IT personnel are self-directed and proactive.}
-\item{ITPSF4}{Our IT personnel are knowledgeable about the key success factors in our firm.}
-}
+A data frame with 100 rows and 16 variables.
 }
 \source{
 The data was collected through a survey by Benitez et al. (2018).
 }
 \usage{
-ITFlex
+data(ITFlex)
 }
 \description{
-A data frame containing 16 variables with 100 observations.
-The dataset was studied by Benitez et al. (2018) and is used in
+The ITFlex dataset contains information about the flexibility of IT
+infrastructure in organizations, measured through four dimensions: IT
+infrastructure compatibility, IT infrastructure connectivity,
+IT infrastructure modularity, and IT personnel skills and flexibility.
+This dataset was studied by Benitez et al. (2018) and is used in
 Henseler (2021) for demonstration purposes. All questionnaire items
 are measured on a 5-point scale.
+
+\describe{
+\item{IT infrastructure compatibility (ITComp)}{\itemize{
+\item ITCOMP1: Software applications can be easily transported and used
+across multiple platforms,
+\item ITCOMP2: Our firm provides multiple interfaces or entry points
+(e.g., web access) for external end users,
+\item ITCOMP3: Our firm establishes corporate rules and standards for
+hardware and operating systems to ensure platform compatibility,
+\item ITCOMP4: Data captured in one part of our organization are
+immediately available to everyone in the firm.}}
+\item{IT infrastructure connectivity (ITConn)}{\itemize{
+\item ITCONN1: Our organization has electronic links and connections
+throughout the entire firm,
+\item ITCONN2: Our firm is linked to business partners through electronic
+channels (e.g., websites, e-mail, wireless devices, electronic data
+interchange),
+\item ITCONN3: All remote, branch, and mobile offices are connected to
+the central office,
+\item ITCONN4: There are very few identifiable communications bottlenecks
+within our firm.}}
+\item{IT infrastructure modularity (Modul)}{\itemize{
+\item MOD1: Our firm possesses a great speed in developing new business
+applications or modifying existing applications,
+\item MOD2: Our corporate database is able to communicate in several
+different protocols,
+\item MOD3: Reusable software modules are widely used in new systems
+development,
+\item MOD4: IT personnel use object-oriented and prepackaged modular tools
+to create software applications.}}
+\item{IT personnel skills and flexibility (ITPers)}{\itemize{
+\item ITPSF1: Our IT personnel have the ability to work effectively in
+cross-functional teams,
+\item ITPSF2: Our IT personnel are able to interpret business problems
+and develop appropriate technical solutions,
+\item ITPSF3: Our IT personnel are self-directed and proactive,
+\item ITPSF4: Our IT personnel are knowledgeable about the key success
+factors in our firm.}}
+}
+}
+\examples{
+data(ITFlex)
+A = list(ITComp = ITFlex[, grep("COM", colnames(ITFlex))],
+         Modul  = ITFlex[, grep("MOD", colnames(ITFlex))],
+         ITConn = ITFlex[, grep("CON", colnames(ITFlex))],
+         ITPers = ITFlex[, grep("PSF", colnames(ITFlex))])
+
+C = matrix(c(0, 0, 0, 0,
+             1, 0, 1, 0,
+             1, 0, 0, 0,
+             1, 1, 1, 0),  4, 4, byrow = FALSE)
+
+colnames(C) = rownames(C) = names(A)
+mode = rep("formative", 4)
+
+##########
+# SVDSEM #
+##########
+ 
+sem_svd <- SemFC$new(data = A,
+                     relation_matrix = C,
+                     mode = mode,
+                     scale = FALSE, 
+                     bias = TRUE,
+                     estimator = "svd")
+
+sem_svd$fit(infer = TRUE, B = 100)
+sem_svd$check_improper()
+sem_svd$summary()
+
+##########
+# ML-SEM #
+##########
+
+sem_ml <- SemFC$new(data = A,
+                    relation_matrix = C,
+                    mode = mode,
+                    scale = FALSE, 
+                    bias = TRUE,
+                    estimator = "ml")
+
+sem_ml$fit(infer = TRUE)
+sem_ml$summary()
 }
 \references{
 Benitez J, Ray G, Henseler J (2018). "Impact of Information Technology
