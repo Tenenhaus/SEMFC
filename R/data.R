@@ -144,12 +144,12 @@
 #' }}
 #' \item{Industrial Development (IndDev)}{\itemize{
 #'      \item gnpr: Gross national product per capita ($1955),
-#'      \item labo: Percentage of labor forced employed in agriculture.
+#'      \item labo: Percentage of labor force employed in agriculture.
 #' }}
 #' \item{Political Instability (PolInst)}{\itemize{
 #'      \item inst: Instability of executive (45-61),
 #'      \item ecks: Number of violent internal war incidents (46-61),
-#'      \item deat: Number of people killed as a result of civic group
+#'      \item death: Number of people killed as a result of civic group
 #' violence (50-62),
 #'      \item demostab: Stable democracy,
 #'      \item demoinst: Unstable democracy,
@@ -432,7 +432,7 @@
 #'  \item trust2:  My behavior and activities can be monitored online.
 #'  }}
 #'  \item{How concerned are you about the following risks in relation to your 
-#'  personal information? (PRivacy CONcers)}{\itemize{
+#'  personal information? (Privacy Concerns)}{\itemize{
 #'  \item privcon1: My personal data is shared with third parties without my 
 #'  agreement.
 #'  \item privcon2: My behavior and activities can be monitored online.
@@ -510,7 +510,7 @@
 #' 
 #' sem_ml$fit(infer = TRUE)
 #' sem_ml$summary(standardized = TRUE)
-#' sem_svd$check_improper()
+#' sem_ml$check_improper()
 #' 
 #' @keywords datasets
 "LancelotMiltgenetal2016"
