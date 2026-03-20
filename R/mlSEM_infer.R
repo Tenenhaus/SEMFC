@@ -181,7 +181,7 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect,
                      initial_start_index_cov = start_indices_in_x[6])
   sd_residual_variance <- unlist(lapply(BDIAG[mode == 'reflective'], diag))
 
-  sd_omegas <- lapply(vcov_omegas, function(vcov_omega_j) sqrt(diag(vcov_omega_j)))
+  sd_omega <- unlist(lapply(vcov_omegas, function(vcov_omega_j) sqrt(diag(vcov_omega_j))))
 
 
   return(list(
@@ -191,7 +191,7 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect,
     sd_total_effects = sd_total_effects,
     sd_indirect_effects = sd_indirect_effects,
     sd_residual_variance = sd_residual_variance,
-    sd_omegas = sd_omegas
+    sd_omega = sd_omega
   ))
 
 
