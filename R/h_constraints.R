@@ -110,7 +110,7 @@ heq1 <- function (x, S, model){
 
 
 
-  # list of lengths of the upper values in the cov matrix for the composite block i or
+  # list of lengths of the lower values in the cov matrix for the composite block i or
   # of the diagonal values for formative for each block
   lengths_values_cov <- block_sizes
   lengths_values_cov[mode == "formative"] <- (block_sizes[mode == "formative"]^2 + block_sizes[mode == "formative"]) / 2
