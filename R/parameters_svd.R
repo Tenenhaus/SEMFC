@@ -58,7 +58,7 @@ parameters_svd <- function(lambda,
   mode <- model$mode
   dag <- model$dag
 
-  S_composites_upper <- lapply(S_composites, function(mat) mat[upper.tri(mat, diag = TRUE)])
+  S_composites_upper <- lapply(S_composites, function(mat) mat[lower.tri(mat, diag = TRUE)])
 
   # empirical covariance for composite blocks or residual_variance for reflective
   diag_jj <- vector("list", J)
@@ -67,8 +67,8 @@ parameters_svd <- function(lambda,
 
 
   vect_lambda <- Reduce("c", lambda)
-  vect_exo <- P_EXO[upper.tri(P_EXO)]
-  vect_endo <- P_ENDO[upper.tri(P_ENDO)]
+  vect_exo <- P_EXO[lower.tri(P_EXO)]
+  vect_endo <- P_ENDO[lower.tri(P_ENDO)]
   if (dag){
       vect_endo <- numeric(0)
   }
