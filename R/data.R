@@ -109,6 +109,10 @@
 #' sem_svd$summary(all_measures = TRUE)
 #' estimate_svd = sem_svd$parameterEstimates()
 #' 
+#' ###########
+#' #  mlSEM  #
+#' ###########
+#' 
 #' sem_ml <- SemFC$new(data=A, 
 #'                     relation_matrix = C, 
 #'                     mode=mode, 
@@ -385,7 +389,7 @@
 #' mode = rep("formative", 4)
 #'
 #' ##########
-#' # SVDSEM #
+#' # svdSEM #
 #' ##########
 #'  
 #' sem_svd <- SemFC$new(data = A,
@@ -399,9 +403,9 @@
 #' sem_svd$check_improper()
 #' sem_svd$summary()
 #' 
-#' ##########
-#' # ML-SEM #
-#' ##########
+#' #########
+#' # mlSEM #
+#' #########
 #' 
 #' sem_ml <- SemFC$new(data = A,
 #'                     relation_matrix = C,
