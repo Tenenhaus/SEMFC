@@ -4,7 +4,14 @@
 \alias{get_se_series}
 \title{Extract Standard Errors for Model Parameters}
 \usage{
-get_se_series(SD, mode, lengths_parameter, block_sizes, vcov_effect)
+get_se_series(
+  SD,
+  mode,
+  lengths_parameter,
+  block_sizes,
+  vcov_effect,
+  vcov_omegas
+)
 }
 \arguments{
 \item{SD}{Numeric vector of standard deviations for all model parameters.}

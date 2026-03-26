@@ -377,7 +377,7 @@ list_vcov_omega <- function(S_composites, omegas, block_sizes, mode, lengths_par
   ends_cov <- cumsum(lengths_values_cov) + idx_start -1
   starts_cov <- c(idx_start, head(ends_cov, -1) + 1)
 
-  list_index_omega <- lapply(1:length(S_composites), function(j){
+  list_index_omega <- lapply(seq_along(S_composites), function(j){
     c(starts_lambda[mode == "formative"][j]:ends_lambda[mode == "formative"][j],
       starts_cov[mode == "formative"][j]:ends_cov[mode == "formative"][j])
   })
