@@ -142,12 +142,15 @@ lvm_ml <- function(x, model, jac = TRUE){
     } else {
       diag(diag_PSI)
     }
-    dimnames(PSI) <- list(rownames(B), rownames(B))
 
     P_ENDO <- I_B_1%*%(G%*%P_EXO%*%t(G) + PSI)%*%t(I_B_1)
 
 
   }
+  dimnames(PSI) <- list(
+    paste0(".", rownames(B)),
+    paste0(".", rownames(B))
+  )
 
   rownames(P_ENDO) <- names(m)
   colnames(P_ENDO) <- names(m)

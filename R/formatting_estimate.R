@@ -53,6 +53,11 @@ create_grid <- function(type, fit_component) {
       grid <- data.frame(lhs = grid_temp$rhs, rhs = grid_temp$rhs, op = "~~")
       grid
     },
+    "disturbance"  = {
+      clean_names <- gsub("^\\.", "", colnames(fit_component))
+      grid <- data.frame(lhs = clean_names, rhs = clean_names, op = "~~")
+      grid
+    },
     "effect" = {
       grid <- expand.grid(lhs = rownames(fit_component), rhs = colnames(fit_component))
       grid$op <- "~"
@@ -92,6 +97,7 @@ format_estimates_table <- function(type, fit_component, fit_std_component = NULL
     "lambda" = unlist(fit_component),
     "regression" = fit_component[fit_component != 0],
     "residual" = unlist(unname(fit_component)),
+    "disturbance" = diag(fit_component),
     "effect" = as.vector(fit_component),
     "omega" = unlist(lapply(names(fit_component), function(lv) {
       as.vector(fit_component[[lv]])
@@ -123,6 +129,7 @@ format_estimates_table <- function(type, fit_component, fit_std_component = NULL
       "lambda" = unlist(fit_std_component),
       "regression" = fit_std_component,
       "omega" = unlist(fit_std_component),
+      "disturbance"  = fit_std_component,
       NA
     )
   } else {
@@ -221,6 +228,14 @@ formatting_estimate <- function(fit, se_list = list()){
   )
   table_residual_variance$std.all <- 1 - (table_lambda[table_lambda$rhs %in% table_residual_variance$rhs, "std.all"])^2
 
+  # Psi
+  table_psi <- format_estimates_table(
+    type = "disturbance",
+    fit_component = fit$psi,
+    fit_std_component = diag(fit$psi),
+    se = se_list$sd_psi
+  )
+
   # Total effects
   table_total_effects <- format_estimates_table(
     type = "effect",
@@ -251,6 +266,7 @@ formatting_estimate <- function(fit, se_list = list()){
               residual_variance = table_residual_variance,
               total_effects = table_total_effects,
               indirect_effects = table_indirect_effects,
-              omega = table_omega))
+              omega = table_omega,
+              psi = table_psi))
 
 }

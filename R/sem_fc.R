@@ -397,9 +397,10 @@ initialize = function(data, relation_matrix,
       beta <- estimate$beta
       gamma <- estimate$gamma
       omega <- estimate$omega
+      psi <- estimate$psi
 
 
-      table_estimate <- rbind(lambda, omega, beta, gamma, residualvariance)
+      table_estimate <- rbind(lambda, omega, beta, gamma, residualvariance, psi)
       rownames(table_estimate) <- NULL
       if (!standardized){
         table_estimate$std.all <- NULL

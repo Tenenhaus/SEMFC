@@ -108,7 +108,8 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                               boot_residual_variance = as.vector(Reduce("c", fit_b$residual_variance)),
                               boot_total_effects = as.vector(total_effects_b),
                               boot_indirect_effects = as.vector(indirect_effects_b),
-                              boot_omega = as.vector(Reduce("c", fit_b$omega))
+                              boot_omega = as.vector(Reduce("c", fit_b$omega)),
+                              boot_psi = diag(fit_b$psi)
                             )
 
                           }
@@ -121,7 +122,8 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
                               boot_residual_variance = NA,
                               boot_total_effects = NA,
                               boot_indirect_effects = NA,
-                              boot_omega = NA
+                              boot_omega = NA,
+                              boot_psi = NA
                             )
                           }
                           if (!any(eigen(fit_bs_b$p_tilde)$values<=0)){
@@ -141,10 +143,11 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
   boot_total_effects <- Reduce("rbind", L[6, ][!is.na(L[6, ])])
   boot_indirect_effects <- Reduce("rbind", L[7, ][!is.na(L[7, ])])
   boot_omega <- Reduce("rbind", L[8, ][!is.na(L[8, ])])
+  boot_psi <- Reduce("rbind", L[9, ][!is.na(L[9, ])])
 
-  boot_Tb_LS <- unlist(L[9, ])
+  boot_Tb_LS <- unlist(L[10, ])
   improper <- sum(is.na(L[1, ]))
-  improper_gof <- sum(is.na(L[9, ]))
+  improper_gof <- sum(is.na(L[10, ]))
 
 
 
@@ -157,6 +160,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
     boot_total_effects = boot_total_effects,
     boot_indirect_effects = boot_indirect_effects,
     boot_omega = boot_omega,
+    boot_psi = boot_psi,
     boot_Tb_LS = boot_Tb_LS,
     improper = improper,
     improper_gof = improper_gof
@@ -207,6 +211,7 @@ get_se_boot <- function(boot){
   sd_total_effects <- safe_sd(boot$boot_total_effects)
   sd_indirect_effects <- safe_sd(boot$boot_indirect_effects)
   sd_omega <- safe_sd(boot$boot_omega)
+  sd_psi <- safe_sd(boot$boot_psi)
 
   return(list(
     sd_lambda = sd_lambda,
@@ -216,7 +221,8 @@ get_se_boot <- function(boot){
     sd_residual_variance = sd_residual_variance,
     sd_total_effects = sd_total_effects,
     sd_indirect_effects = sd_indirect_effects,
-    sd_omega = sd_omega
+    sd_omega = sd_omega,
+    sd_psi = sd_psi
   ))
 }
 
