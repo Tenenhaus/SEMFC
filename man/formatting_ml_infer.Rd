@@ -4,7 +4,7 @@
 \alias{formatting_ml_infer}
 \title{Format ML Inference Results}
 \usage{
-formatting_ml_infer(fit, model, VCOV, vcov_effect)
+formatting_ml_infer(fit, model, VCOV, vcov_effect, vcov_omegas)
 }
 \arguments{
 \item{fit}{List containing model fit results from \code{lvm_ml()}. Includes parameter estimates

@@ -17,8 +17,8 @@
 #'
 #' @examples
 #' \dontrun{
-#' latent_variables <- c("LV1", "LV2", "LV3")
-#' x <- c(0.5, 0.3, 0.2, 0.5, 0.4) # upper triangle values for a 3x3 matrix
+#' latent_variables <- c("LV1", "LV2", "LV3", "LV4")
+#' x <- c(0.5, 0.3, 0.2, 0.5, 0.4, 0.2) # upper triangle values for a 4x4 matrix
 #' start_index <- 1
 #' get_correlation_coeff(x, latent_variables, start_index)}
 #' @keywords internal
@@ -31,13 +31,13 @@ get_correlation_coeff <- function(x, latent_variables, start_index) {
   #length upper values vector from this symetric matrix:
   length_correl <- dim * (dim - 1) / 2
   end_index <- start_index + length_correl - 1
-  upper_values <- x[start_index:end_index]
+  lower_values <- x[start_index:end_index]
 
   # Building of the correlation matrix
   P_matrix <- diag(1, dim, dim)
   if (dim > 1) {
-    P_matrix[upper.tri(P_matrix)] <- upper_values
-    P_matrix[lower.tri(P_matrix)] <- t(P_matrix)[lower.tri(P_matrix)]
+    P_matrix[lower.tri(P_matrix)] <- lower_values
+    P_matrix[upper.tri(P_matrix)] <- t(P_matrix)[upper.tri(P_matrix)]
   }
 
   return(P_matrix)
