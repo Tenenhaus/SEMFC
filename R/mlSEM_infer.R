@@ -159,7 +159,7 @@ P_ml <- function(x, S, model){
 #'   \item{sd_residual_variance}{Standard errors for residual variances (reflective blocks only).}
 #'
 #' @keywords internal
-get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect, vcov_omegas){
+get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect, vcov_omegas, vcov_psi){
   start_indices_in_x <- cumsum(c(1, head(lengths_parameter, -1)))
   lambda_start_index <- start_indices_in_x[1]
   lambda_end_index <- lambda_start_index + lengths_parameter[1] - 1
@@ -183,6 +183,14 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect,
 
   sd_omega <- unlist(lapply(vcov_omegas, function(vcov_omega_j) sqrt(diag(vcov_omega_j))))
 
+  m <- as.integer(sqrt(ncol(vcov_psi)))
+  idx_diag_psi <- seq(from = 1, to = m^2, by = m + 1)
+  vcov_diag_psi <- vcov_psi[idx_diag_psi, idx_diag_psi]
+  sd_psi <- sqrt(diag(vcov_diag_psi))
+
+
+
+
 
   return(list(
     sd_lambda = sd_lambda,
@@ -191,7 +199,8 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect,
     sd_total_effects = sd_total_effects,
     sd_indirect_effects = sd_indirect_effects,
     sd_residual_variance = sd_residual_variance,
-    sd_omega = sd_omega
+    sd_omega = sd_omega,
+    sd_psi = sd_psi
   ))
 
 
@@ -231,7 +240,7 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect,
 #'   \item{residual_variance}{Residual variances (reflective blocks only).}
 #'
 #' @keywords internal
-formatting_ml_infer <- function(fit, model, VCOV, vcov_effect, vcov_omegas ){
+formatting_ml_infer <- function(fit, model, VCOV, vcov_effect, vcov_omegas, vcov_psi ){
 
 
   mode <- model$mode
@@ -240,7 +249,7 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect, vcov_omegas ){
   SD <- sqrt(diag(VCOV))
 
 
-  se <- get_se_series(SD, mode, lengths_parameter, block_sizes, vcov_effect, vcov_omegas)
+  se <- get_se_series(SD, mode, lengths_parameter, block_sizes, vcov_effect, vcov_omegas, vcov_psi)
   table <- formatting_estimate(fit, se)
 
   return(table)
@@ -282,16 +291,24 @@ mlSEM_infer <- function(x, S, model, N, fit){
   VCOV <- P_ml/N
   # SD <- sqrt(diag(VCOV))
 
-  vcov_effect <- effect_infer(fit$beta, fit$gamma, model$lengths_theta, VCOV)
-  vcov_omegas <- list_vcov_omega(fit$S_composites, fit$omega, model$block_sizes, model$mode, model$lengths_theta, VCOV)
+  vcov_effect <- effect_infer(fit$beta, fit$gamma,
+                              model$lengths_theta,
+                              VCOV)
+  vcov_omegas <- list_vcov_omega(fit$S_composites, fit$omega,
+                                 model$block_sizes, model$mode, model$lengths_theta,
+                                 VCOV)
+  vcov_psi <- vcov_psi_nonrecursive(fit$gamma, fit$beta, fit$p_endo, fit$p_exo,
+                                    model$which_exo_endo, model$relation_matrix,model$lengths_theta,
+                                    VCOV)
 
-  table <- formatting_ml_infer(fit, model, VCOV, vcov_effect, vcov_omegas)
+  table <- formatting_ml_infer(fit, model, VCOV, vcov_effect, vcov_omegas, vcov_psi)
 
   out <- list(
     estimate = table,
     VCOV = VCOV,
     vcov_effect = vcov_effect,
-    vcov_omegas = vcov_omegas
+    vcov_omegas = vcov_omegas,
+    vcov_psi = vcov_psi
 
   )
 
@@ -340,27 +357,38 @@ Jac_omega <- function(Sigma_jj, omega_j){
   D <- duplication_matrix(length(omega_j))
   Sigma_jj_inv <- solve(Sigma_jj)
   J <- cbind(Sigma_jj_inv, -kronecker(t(as.vector(omega_j)), Sigma_jj_inv)%*%D)
-
-
   return(J)
+}
 
+Jac_psi_nonrecursive <- function(Gamma, Beta, P_endo, P_exo, M_gamma, M_beta, M_endo, M_exo){
+
+  m <- nrow(Beta)
+  I_B <- diag(m) - Beta
+  N_m <- diag(m^2) + commutation_matrix(m)
+
+  part_gamma <- N_m %*% kronecker(Gamma %*% P_exo, diag(m))
+  J_gamma <- -part_gamma %*% M_gamma
+
+  part_beta <- N_m %*% kronecker(I_B %*% P_endo, diag(m))
+  J_beta <- -part_beta %*% M_beta
+
+  J <- cbind(-kronecker(Gamma, Gamma)%*%M_exo, J_gamma, J_beta, kronecker(I_B,I_B)%*%M_endo)
+  return(J)
 }
 
 
-sub_vcov_theta_omega_j <- function(idx_omega, VCOV){
-  vcov <- VCOV[idx_omega, idx_omega]
-
+sub_vcov <- function(idx, VCOV){
+  vcov <- VCOV[idx, idx]
   return(vcov)
 }
 
 
-vcov_omega_j <- function(Sigma_jj, omega_j, idx_omega, VCOV){
+vcov_estimator <- function(J, idx, VCOV){
 
-  J_omega_j <- Jac_omega(Sigma_jj, omega_j)
-  sub_vcov_theta <- sub_vcov_theta_omega_j(idx_omega, VCOV)
-  vcov_omega_j <- J_omega_j %*% sub_vcov_theta %*% t(J_omega_j)
+  sub_vcov_theta_estimator<- sub_vcov(idx, VCOV)
+  vcov_estimator <- J %*% sub_vcov_theta_estimator %*% t(J)
 
-  return(vcov_omega_j)
+  return(vcov_estimator)
 
 }
 
@@ -384,13 +412,40 @@ list_vcov_omega <- function(S_composites, omegas, block_sizes, mode, lengths_par
 
   vcov_omega <- mapply(
     function(S, omega, idx){
-      vcov_omega_j(S, omega, idx, VCOV)
+      vcov_estimator(Jac_omega(S, omega), idx, VCOV)
     },
     S_composites, omegas, list_index_omega)
 
 
   return(vcov_omega)
 }
+
+
+
+vcov_psi_nonrecursive <- function(Gamma, Beta, P_endo, P_exo, which_exo_endo, C, lengths_parameter, VCOV){
+
+  m <- nrow(P_endo)
+  n <- nrow(P_exo)
+  M_endo <- correlation_duplication_matrix(m)
+  M_exo <- correlation_duplication_matrix(n)
+
+  H <- which_exo_endo$ind_exo
+  J <- which_exo_endo$ind_endo
+  s_gamma <- as.vector(t(C[H, J, drop = FALSE]))
+  s_beta  <- as.vector(t(C[J, J, drop = FALSE]))
+  M_gamma <- diag(length(s_gamma))[, s_gamma == 1, drop = FALSE]
+  M_beta  <- diag(length(s_beta))[, s_beta == 1, drop = FALSE]
+
+  start_index <- cumsum(c(1, head(lengths_parameter, -1)))
+  idx <- start_index[2]:(start_index[6]-1)
+
+  J <- Jac_psi_nonrecursive(Gamma, Beta, P_endo, P_exo, M_gamma, M_beta, M_endo, M_exo)
+  vcov_psi <- vcov_estimator(J, idx, VCOV)
+
+  return(vcov_psi)
+}
+
+
 
 
 duplication_matrix <- function(P) {
@@ -408,6 +463,30 @@ duplication_matrix <- function(P) {
   )
 
   return(D_P)
+}
+
+
+correlation_duplication_matrix <- function(n, D_n = duplication_matrix(n)) {
+
+  # we remove the columns corresponding to the diagonal elements in vech() to get the correlation duplication matrix
+  # Direct computation of the indices of the diagonal elements in vech() for a matrix of size n x n
+  j <- 1:n
+  indices_diag <- 1 + (j - 1) * n - (j - 1) * (j - 2) / 2
+  return(D_n[, -indices_diag, drop = FALSE])
+}
+
+
+
+commutation_matrix <- function(m, n = m) {
+  mn <- m * n
+  index_col <- as.vector(t(matrix(1:mn, nrow = m, ncol = n)))
+  K_mn <- sparseMatrix(
+    i = 1:mn,
+    j = index_col,
+    x = 1,
+    dims = c(mn, mn)
+  )
+  return(K_mn)
 }
 
 
