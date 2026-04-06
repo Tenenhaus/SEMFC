@@ -149,6 +149,7 @@ P_ml <- function(x, S, model){
 #'     \item \code{vcov_exo_indirect}: Variance-covariance matrix for indirect effects on exogenous variables.
 #'     \item \code{vcov_endo_indirect}: Variance-covariance matrix for indirect effects on endogenous variables.
 #'   }
+#' @param vcov_omegas List of variance-covariance matrices for composite weights of formative blocks.
 #'
 #' @return List containing standard errors for each parameter type:
 #'   \item{sd_lambda}{Standard errors for loadings.}
@@ -157,6 +158,7 @@ P_ml <- function(x, S, model){
 #'   \item{sd_total_effects}{Standard errors for total effects.}
 #'   \item{sd_indirect_effects}{Standard errors for indirect effects.}
 #'   \item{sd_residual_variance}{Standard errors for residual variances (reflective blocks only).}
+#'   \item{sd_omega}{Standard errors for composite weights of formative blocks.}
 #'
 #' @keywords internal
 get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect, vcov_omegas){
@@ -221,6 +223,7 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect,
 #'     \item \code{vcov_exo_indirect}: Variance-covariance matrix for indirect effects on exogenous variables.
 #'     \item \code{vcov_endo_indirect}: Variance-covariance matrix for indirect effects on endogenous variables.
 #'   }
+#' @param vcov_omegas List of variance-covariance matrices for composite weights of formative blocks.
 #'
 #' @return List of data frames with columns: lhs, op, rhs, est, se, z, ci.lower, ci.upper, pvalue, std.all:
 #'   \item{lambda}{Loadings estimates and inference statistics.}
@@ -229,6 +232,7 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect,
 #'   \item{total_effects}{Total effects.}
 #'   \item{indirect_effects}{Indirect effects.}
 #'   \item{residual_variance}{Residual variances (reflective blocks only).}
+#'   \item{omega}{Composite weights of formative blocks.}
 #'
 #' @keywords internal
 formatting_ml_infer <- function(fit, model, VCOV, vcov_effect, vcov_omegas ){
@@ -269,7 +273,8 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect, vcov_omegas ){
 #' @return List containing:
 #'   \item{estimate}{List of data frames with parameter estimates and inference statistics.}
 #'   \item{VCOV}{Variance-covariance matrix of parameter estimates.}
-#'   \item{SD}{Vector of standard errors for all parameters.}
+#'   \item{vcov_effect}{List of variance-covariance matrices for effects.}
+#'   \item{vcov_omegas}{List of variance-covariance matrices for composite weights of formative blocks.}
 #'
 #' @details
 #' The variance-covariance matrix is computed as VCOV = P/N, where P is the
@@ -386,7 +391,8 @@ list_vcov_omega <- function(S_composites, omegas, block_sizes, mode, lengths_par
     function(S, omega, idx){
       vcov_omega_j(S, omega, idx, VCOV)
     },
-    S_composites, omegas, list_index_omega)
+    S_composites, omegas, list_index_omega,
+    SIMPLIFY = FALSE)
 
 
   return(vcov_omega)
