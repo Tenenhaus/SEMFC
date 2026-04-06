@@ -49,8 +49,8 @@ Unnamed numeric vector containing all free parameters in the following order:
 \enumerate{
 \item Loadings (all blocks concatenated)
 \item Exogenous correlations (lower triangle of P_EXO, excluding diagonal)
-\item Gamma coefficients (non-zero elements, row by column)
-\item Beta coefficients (non-zero elements, row by column)
+\item Gamma coefficients (non-zero elements, column by column)
+\item Beta coefficients (non-zero elements, column by column)
 \item Endogenous correlations (lower triangle of P_ENDO, excluding diagonal)
 \item Residual variances (reflective blocks) or composite covariances
 (lower triangle with diagonal, formative blocks)

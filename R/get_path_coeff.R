@@ -34,9 +34,12 @@ get_path_coeff <- function(x, row_exo_endo, col_exo_endo, C, initial_start_index
 
 
   vec_m <- as.vector(t(C[col_exo_endo, row_exo_endo, drop = FALSE]))
-  M_select <- diag(length(vec_m))[, vec_m == 1, drop = FALSE]
   len_param <- sum(vec_m)
+  if (len_param == 0){
+    return(matrix(0, nrow = length(row_exo_endo), ncol = length(col_exo_endo)))
+  }
   end_index <- initial_start_index + len_param - 1
+  M_select <- diag(length(vec_m))[, vec_m == 1, drop = FALSE]
   vec_regression <- M_select%*%x[initial_start_index:end_index]
 
   Matrix_path <- matrix(vec_regression, nrow = length(row_exo_endo), ncol = length(col_exo_endo))
