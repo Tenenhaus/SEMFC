@@ -6,10 +6,9 @@
 #' based on the parameter vector `x` and the provided relationships between variables.
 #'
 #' @param x A numeric vector of parameters. Contains path coefficient values to be extracted.
-#' @param list_linked_exo_endo A list where each element represents the linked exogenous or
-#'   endogenous variables for each endogenous variable. Keys correspond to variable names.
-#' @param exo_or_endo_variable A named numeric vector representing the exogenous or endogenous
-#'   variables. Used to define the structure of the path coefficient matrix.
+#' @param row_exo_endo A named numeric vector representing the row indices (endogenous variables).
+#' @param col_exo_endo A named numeric vector representing the column indices (exogenous or endogenous variables).
+#' @param C A matrix defining the relationships between variables (1 indicates a relationship exists).
 #' @param initial_start_index An integer specifying the index in `x` where the path coefficient
 #'   parameters start.
 #'
@@ -19,46 +18,28 @@
 #' @examples
 #' \dontrun{
 #' x <- c(0.8, 0.5, 0.3, 0.7, 0.8, 0.4)
-#' list_linked_exo_endo <- list(c(X1 = 1, X2 = 2), c(X3 = 3, X4 = 4))
-#' exo_or_endo_variable <- c(X1 = 1, X2 = 2, X3 = 3, X4 = 4)
+#' row_exo_endo <- c(X5 = 5, X6 = 6)
+#' col_exo_endo <- c(X1 = 1, X2 = 2, X3 = 3, X4 = 4)
 #' initial_start_index <- 1
-#' get_path_coeff(x, list_linked_exo_endo, exo_or_endo_variable, initial_start_index)}
+#' C <- matrix(c(0, 0, 0, 0, 1, 0,
+#'             0, 0, 0, 0, 1, 0,
+#'             0, 0, 0, 0, 0, 1,
+#'             0, 0, 0, 0, 0, 1,
+#'             0, 0, 0, 0, 0, 1,
+#'             0, 0, 0, 0, 1, 0), 6, 6, byrow = TRUE)
+#' get_path_coeff(x, row_exo_endo, col_exo_endo, C, initial_start_index)}
 #' @keywords internal
 
-get_path_coeff <- function(x, list_linked_exo_endo, exo_or_endo_variable, initial_start_index) {
+get_path_coeff <- function(x, row_exo_endo, col_exo_endo, C, initial_start_index) {
 
 
-  # list of number of linked exos/endos for each endo variable
-  # length_exo_endo <- sapply(list_linked_exo_endo, length)
-  length_exo_endo <- sapply(list_linked_exo_endo,
-                            function(sublist) {
-                              ifelse((length(sublist) == 1 && sublist[[1]] == 0),
-                                     return(0),
-                                     return(length(sublist)))
-                            })
+  vec_m <- as.vector(t(C[col_exo_endo, row_exo_endo, drop = FALSE]))
+  M_select <- diag(length(vec_m))[, vec_m == 1, drop = FALSE]
+  len_param <- sum(vec_m)
+  end_index <- initial_start_index + len_param - 1
+  vec_regression <- M_select%*%x[initial_start_index:end_index]
 
-
-  # Initialisation of index for the rows of the path coeff matrix
-  start_index <- initial_start_index + c(0, cumsum(head(length_exo_endo, -1)))
-  end_index <- start_index + length_exo_endo - 1
-
-  # in the matrix, replace non zero value by x values
-  Matrix_row <- mapply(
-    function(linked_variable_i, start_ind, end_ind) {
-      # Create a vector based on list_linked_exo_endo[i]
-      result <- ifelse(names(exo_or_endo_variable) %in% names(linked_variable_i),
-                       exo_or_endo_variable, 0)
-      result[result != 0] <- x[start_ind:end_ind]
-      names(result) <- names(exo_or_endo_variable)
-      return(result)
-    },
-    list_linked_exo_endo,                  # List of linked variables
-    start_index,
-    end_index,
-    SIMPLIFY = FALSE
-  )
-
-  Matrix_path <- do.call(rbind, Matrix_row)
+  Matrix_path <- matrix(vec_regression, nrow = length(row_exo_endo), ncol = length(col_exo_endo))
 
   return(Matrix_path)
 }

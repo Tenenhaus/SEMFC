@@ -23,6 +23,7 @@ exogenous and endogenous latent variables (output from \code{ind_exo_endo()}).}
 \item{varnames}{list of character vectors containing variable names.}
 \item{dag}{Logical indicating whether the structural model is recursive (FALSE)
 or non-recursive (TRUE).}
+\item{relation_matrix}{defining structural connection between latent variables.}
 }}
 
 \item{jac}{Logical value. If TRUE, returns only the upper triangular values of

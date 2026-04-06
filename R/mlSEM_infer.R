@@ -149,6 +149,8 @@ P_ml <- function(x, S, model){
 #'     \item \code{vcov_exo_indirect}: Variance-covariance matrix for indirect effects on exogenous variables.
 #'     \item \code{vcov_endo_indirect}: Variance-covariance matrix for indirect effects on endogenous variables.
 #'   }
+#' @param vcov_omegas List of variance-covariance matrices for composite weights of formative blocks.
+#' @param vcov_psi Variance-covariance matrix for the covariance of structural disturbances (PSI).
 #'
 #' @return List containing standard errors for each parameter type:
 #'   \item{sd_lambda}{Standard errors for loadings.}
@@ -157,6 +159,8 @@ P_ml <- function(x, S, model){
 #'   \item{sd_total_effects}{Standard errors for total effects.}
 #'   \item{sd_indirect_effects}{Standard errors for indirect effects.}
 #'   \item{sd_residual_variance}{Standard errors for residual variances (reflective blocks only).}
+#'   \item{sd_omega}{Standard errors for composite weights of formative blocks.}
+#'   \item{sd_psi}{Standard errors for the covariance of structural disturbances (PSI).}
 #'
 #' @keywords internal
 get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect, vcov_omegas, vcov_psi){
@@ -183,14 +187,14 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect,
 
   sd_omega <- unlist(lapply(vcov_omegas, function(vcov_omega_j) sqrt(diag(vcov_omega_j))))
 
-  m <- as.integer(sqrt(ncol(vcov_psi)))
-  idx_diag_psi <- seq(from = 1, to = m^2, by = m + 1)
-  vcov_diag_psi <- vcov_psi[idx_diag_psi, idx_diag_psi]
-  sd_psi <- sqrt(diag(vcov_diag_psi))
-
-
-
-
+  if (!is.null(vcov_psi)){
+    m <- as.integer(sqrt(ncol(vcov_psi)))
+    idx_diag_psi <- seq(from = 1, to = m^2, by = m + 1)
+    vcov_diag_psi <- vcov_psi[idx_diag_psi, idx_diag_psi]
+    sd_psi <- sqrt(diag(vcov_diag_psi))
+  } else {
+    sd_psi <- NULL
+  }
 
   return(list(
     sd_lambda = sd_lambda,
@@ -230,6 +234,8 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect,
 #'     \item \code{vcov_exo_indirect}: Variance-covariance matrix for indirect effects on exogenous variables.
 #'     \item \code{vcov_endo_indirect}: Variance-covariance matrix for indirect effects on endogenous variables.
 #'   }
+#' @param vcov_omegas List of variance-covariance matrices for composite weights of formative blocks.
+#' @param vcov_psi Variance-covariance matrix for the covariance of structural disturbances (PSI).
 #'
 #' @return List of data frames with columns: lhs, op, rhs, est, se, z, ci.lower, ci.upper, pvalue, std.all:
 #'   \item{lambda}{Loadings estimates and inference statistics.}
@@ -238,6 +244,8 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect,
 #'   \item{total_effects}{Total effects.}
 #'   \item{indirect_effects}{Indirect effects.}
 #'   \item{residual_variance}{Residual variances (reflective blocks only).}
+#'   \item{omega}{Composite weights of formative blocks.}
+#'   \item{psi}{Variance of structural disturbances (PSI).}
 #'
 #' @keywords internal
 formatting_ml_infer <- function(fit, model, VCOV, vcov_effect, vcov_omegas, vcov_psi ){
@@ -289,6 +297,7 @@ mlSEM_infer <- function(x, S, model, N, fit){
 
   P_ml <- P_ml(x, S, model)
   VCOV <- P_ml/N
+  dag <- model$dag
   # SD <- sqrt(diag(VCOV))
 
   vcov_effect <- effect_infer(fit$beta, fit$gamma,
@@ -297,9 +306,13 @@ mlSEM_infer <- function(x, S, model, N, fit){
   vcov_omegas <- list_vcov_omega(fit$S_composites, fit$omega,
                                  model$block_sizes, model$mode, model$lengths_theta,
                                  VCOV)
-  vcov_psi <- vcov_psi_nonrecursive(fit$gamma, fit$beta, fit$p_endo, fit$p_exo,
-                                    model$which_exo_endo, model$relation_matrix,model$lengths_theta,
-                                    VCOV)
+  if (!dag){
+    vcov_psi <- vcov_psi_nonrecursive(fit$gamma, fit$beta, fit$p_endo, fit$p_exo,
+                                      model$which_exo_endo, model$relation_matrix,model$lengths_theta,
+                                      VCOV)
+  } else {
+    vcov_psi <- NULL
+  }
 
   table <- formatting_ml_infer(fit, model, VCOV, vcov_effect, vcov_omegas, vcov_psi)
 

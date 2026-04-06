@@ -4,7 +4,7 @@
 \alias{formatting_ml_infer}
 \title{Format ML Inference Results}
 \usage{
-formatting_ml_infer(fit, model, VCOV, vcov_effect, vcov_omegas)
+formatting_ml_infer(fit, model, VCOV, vcov_effect, vcov_omegas, vcov_psi)
 }
 \arguments{
 \item{fit}{List containing model fit results from \code{lvm_ml()}. Includes parameter estimates
@@ -27,6 +27,10 @@ residual variances, and effects.}
 \item \code{vcov_exo_indirect}: Variance-covariance matrix for indirect effects on exogenous variables.
 \item \code{vcov_endo_indirect}: Variance-covariance matrix for indirect effects on endogenous variables.
 }}
+
+\item{vcov_omegas}{List of variance-covariance matrices for composite weights of formative blocks.}
+
+\item{vcov_psi}{Variance-covariance matrix for the covariance of structural disturbances (PSI).}
 }
 \value{
 List of data frames with columns: lhs, op, rhs, est, se, z, ci.lower, ci.upper, pvalue, std.all:
@@ -36,6 +40,8 @@ List of data frames with columns: lhs, op, rhs, est, se, z, ci.lower, ci.upper, 
 \item{total_effects}{Total effects.}
 \item{indirect_effects}{Indirect effects.}
 \item{residual_variance}{Residual variances (reflective blocks only).}
+\item{omega}{Composite weights of formative blocks.}
+\item{psi}{Variance of structural disturbances (PSI).}
 }
 \description{
 Organizes parameter estimates, standard errors, z-scores and p-values into
