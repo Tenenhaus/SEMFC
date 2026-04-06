@@ -29,16 +29,16 @@
 #' @return Unnamed numeric vector containing all free parameters in the following order:
 #'   \enumerate{
 #'     \item Loadings (all blocks concatenated)
-#'     \item Exogenous correlations (upper triangle of P_EXO, excluding diagonal)
+#'     \item Exogenous correlations (lower triangle of P_EXO, excluding diagonal)
 #'     \item Gamma coefficients (non-zero elements, row by row)
 #'     \item Beta coefficients (non-zero elements, row by row)
-#'     \item Endogenous correlations (upper triangle of P_ENDO, excluding diagonal)
+#'     \item Endogenous correlations (lower triangle of P_ENDO, excluding diagonal)
 #'     \item Residual variances (reflective blocks) or composite covariances
-#'       (upper triangle with diagonal, formative blocks)
+#'       (lower triangle with diagonal, formative blocks)
 #'   }
 #'
 #' @details
-#' For formative blocks, the upper triangular part (including diagonal) of the
+#' For formative blocks, the lower triangular part (including diagonal) of the
 #' empirical covariance matrix is included. For reflective blocks, only residual
 #' variances are included.
 #'
@@ -58,17 +58,17 @@ parameters_svd <- function(lambda,
   mode <- model$mode
   dag <- model$dag
 
-  S_composites_upper <- lapply(S_composites, function(mat) mat[upper.tri(mat, diag = TRUE)])
+  S_composites_lower <- lapply(S_composites, function(mat) mat[lower.tri(mat, diag = TRUE)])
 
   # empirical covariance for composite blocks or residual_variance for reflective
   diag_jj <- vector("list", J)
-  diag_jj[mode == "formative"] <- S_composites_upper
+  diag_jj[mode == "formative"] <- S_composites_lower
   diag_jj[mode != "formative"] <- residual_variance
 
 
   vect_lambda <- Reduce("c", lambda)
-  vect_exo <- P_EXO[upper.tri(P_EXO)]
-  vect_endo <- P_ENDO[upper.tri(P_ENDO)]
+  vect_exo <- P_EXO[lower.tri(P_EXO)]
+  vect_endo <- P_ENDO[lower.tri(P_ENDO)]
   if (dag){
       vect_endo <- numeric(0)
   }

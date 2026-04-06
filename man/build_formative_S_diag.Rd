@@ -4,10 +4,10 @@
 \alias{build_formative_S_diag}
 \title{Construct Symmetric Formative S Matrix}
 \usage{
-build_formative_S_diag(upper_values_composite_i)
+build_formative_S_diag(lower_values_composite_i)
 }
 \arguments{
-\item{upper_values_composite_i}{A numeric vector containing the values for the upper
+\item{lower_values_composite_i}{A numeric vector containing the values for the upper
 triangle (including the diagonal) of the symmetric matrix.}
 }
 \value{
@@ -15,7 +15,7 @@ A symmetric formative covariance matrix.
 }
 \description{
 This function builds a symmetric covariance matrix (S_composite_i) for a formative block,
-using the upper triangular values provided in \code{upper_values_composite_i}.
+using the lower triangular values provided in \code{lower_values_composite_i}.
 }
 \examples{
 \dontrun{

@@ -149,6 +149,7 @@ P_ml <- function(x, S, model){
 #'     \item \code{vcov_exo_indirect}: Variance-covariance matrix for indirect effects on exogenous variables.
 #'     \item \code{vcov_endo_indirect}: Variance-covariance matrix for indirect effects on endogenous variables.
 #'   }
+#' @param vcov_omegas List of variance-covariance matrices for composite weights of formative blocks.
 #'
 #' @return List containing standard errors for each parameter type:
 #'   \item{sd_lambda}{Standard errors for loadings.}
@@ -157,9 +158,10 @@ P_ml <- function(x, S, model){
 #'   \item{sd_total_effects}{Standard errors for total effects.}
 #'   \item{sd_indirect_effects}{Standard errors for indirect effects.}
 #'   \item{sd_residual_variance}{Standard errors for residual variances (reflective blocks only).}
+#'   \item{sd_omega}{Standard errors for composite weights of formative blocks.}
 #'
 #' @keywords internal
-get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect){
+get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect, vcov_omegas){
   start_indices_in_x <- cumsum(c(1, head(lengths_parameter, -1)))
   lambda_start_index <- start_indices_in_x[1]
   lambda_end_index <- lambda_start_index + lengths_parameter[1] - 1
@@ -181,13 +183,17 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect)
                      initial_start_index_cov = start_indices_in_x[6])
   sd_residual_variance <- unlist(lapply(BDIAG[mode == 'reflective'], diag))
 
+  sd_omega <- unlist(lapply(vcov_omegas, function(vcov_omega_j) sqrt(diag(vcov_omega_j))))
+
+
   return(list(
     sd_lambda = sd_lambda,
     sd_gamma = sd_gamma,
     sd_beta = sd_beta,
     sd_total_effects = sd_total_effects,
     sd_indirect_effects = sd_indirect_effects,
-    sd_residual_variance = sd_residual_variance
+    sd_residual_variance = sd_residual_variance,
+    sd_omega = sd_omega
   ))
 
 
@@ -217,6 +223,7 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect)
 #'     \item \code{vcov_exo_indirect}: Variance-covariance matrix for indirect effects on exogenous variables.
 #'     \item \code{vcov_endo_indirect}: Variance-covariance matrix for indirect effects on endogenous variables.
 #'   }
+#' @param vcov_omegas List of variance-covariance matrices for composite weights of formative blocks.
 #'
 #' @return List of data frames with columns: lhs, op, rhs, est, se, z, ci.lower, ci.upper, pvalue, std.all:
 #'   \item{lambda}{Loadings estimates and inference statistics.}
@@ -225,9 +232,10 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect)
 #'   \item{total_effects}{Total effects.}
 #'   \item{indirect_effects}{Indirect effects.}
 #'   \item{residual_variance}{Residual variances (reflective blocks only).}
+#'   \item{omega}{Composite weights of formative blocks.}
 #'
 #' @keywords internal
-formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
+formatting_ml_infer <- function(fit, model, VCOV, vcov_effect, vcov_omegas ){
 
 
   mode <- model$mode
@@ -236,7 +244,7 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
   SD <- sqrt(diag(VCOV))
 
 
-  se <- get_se_series(SD, mode, lengths_parameter, block_sizes, vcov_effect)
+  se <- get_se_series(SD, mode, lengths_parameter, block_sizes, vcov_effect, vcov_omegas)
   table <- formatting_estimate(fit, se)
 
   return(table)
@@ -265,7 +273,8 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect ){
 #' @return List containing:
 #'   \item{estimate}{List of data frames with parameter estimates and inference statistics.}
 #'   \item{VCOV}{Variance-covariance matrix of parameter estimates.}
-#'   \item{SD}{Vector of standard errors for all parameters.}
+#'   \item{vcov_effect}{List of variance-covariance matrices for effects.}
+#'   \item{vcov_omegas}{List of variance-covariance matrices for composite weights of formative blocks.}
 #'
 #' @details
 #' The variance-covariance matrix is computed as VCOV = P/N, where P is the
@@ -279,13 +288,15 @@ mlSEM_infer <- function(x, S, model, N, fit){
   # SD <- sqrt(diag(VCOV))
 
   vcov_effect <- effect_infer(fit$beta, fit$gamma, model$lengths_theta, VCOV)
+  vcov_omegas <- list_vcov_omega(fit$S_composites, fit$omega, model$block_sizes, model$mode, model$lengths_theta, VCOV)
 
-  table <- formatting_ml_infer(fit, model, VCOV, vcov_effect)
+  table <- formatting_ml_infer(fit, model, VCOV, vcov_effect, vcov_omegas)
 
   out <- list(
     estimate = table,
     VCOV = VCOV,
-    vcov_effect = vcov_effect
+    vcov_effect = vcov_effect,
+    vcov_omegas = vcov_omegas
 
   )
 
@@ -330,12 +341,80 @@ z_H0 <- function(x, S, X, model, L){
 
 
 
+Jac_omega <- function(Sigma_jj, omega_j){
+  D <- duplication_matrix(length(omega_j))
+  Sigma_jj_inv <- solve(Sigma_jj)
+  J <- cbind(Sigma_jj_inv, -kronecker(t(as.vector(omega_j)), Sigma_jj_inv)%*%D)
 
 
+  return(J)
+
+}
 
 
+sub_vcov_theta_omega_j <- function(idx_omega, VCOV){
+  vcov <- VCOV[idx_omega, idx_omega]
+
+  return(vcov)
+}
 
 
+vcov_omega_j <- function(Sigma_jj, omega_j, idx_omega, VCOV){
+
+  J_omega_j <- Jac_omega(Sigma_jj, omega_j)
+  sub_vcov_theta <- sub_vcov_theta_omega_j(idx_omega, VCOV)
+  vcov_omega_j <- J_omega_j %*% sub_vcov_theta %*% t(J_omega_j)
+
+  return(vcov_omega_j)
+
+}
+
+
+list_vcov_omega <- function(S_composites, omegas, block_sizes, mode, lengths_parameter, VCOV){
+
+
+  idx_start <- cumsum(c(1, head(lengths_parameter, -1)))[6]
+  ends_lambda <- cumsum(block_sizes)
+  starts_lambda  <- c(1, head(ends_lambda, -1) + 1)
+
+  lengths_values_cov <- block_sizes
+  lengths_values_cov[mode == "formative"] <- (block_sizes[mode == "formative"]^2 + block_sizes[mode == "formative"]) / 2
+  ends_cov <- cumsum(lengths_values_cov) + idx_start -1
+  starts_cov <- c(idx_start, head(ends_cov, -1) + 1)
+
+  list_index_omega <- lapply(seq_along(S_composites), function(j){
+    c(starts_lambda[mode == "formative"][j]:ends_lambda[mode == "formative"][j],
+      starts_cov[mode == "formative"][j]:ends_cov[mode == "formative"][j])
+  })
+
+  vcov_omega <- mapply(
+    function(S, omega, idx){
+      vcov_omega_j(S, omega, idx, VCOV)
+    },
+    S_composites, omegas, list_index_omega,
+    SIMPLIFY = FALSE)
+
+
+  return(vcov_omega)
+}
+
+
+duplication_matrix <- function(P) {
+
+  n_vech <- P * (P + 1) / 2
+  mat_index <- matrix(0, nrow = P, ncol = P)
+  mat_index[lower.tri(mat_index, diag = TRUE)] <- 1:n_vech
+  mat_index[upper.tri(mat_index)] <- t(mat_index)[upper.tri(mat_index)]
+  index_col <- as.vector(mat_index)
+  D_P <- sparseMatrix(
+    i = 1:(P^2),
+    j = index_col,
+    x = 1,
+    dims = c(P^2, n_vech)
+  )
+
+  return(D_P)
+}
 
 
 
