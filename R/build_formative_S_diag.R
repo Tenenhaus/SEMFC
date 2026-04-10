@@ -18,7 +18,7 @@
 build_formative_S_diag <- function(lower_values_composite_i) {
 
 
-  # dim of the matrix extracted from the length of the upper values
+  # dim of the matrix extracted from the length of the lower values
   dim_block <- (-1 + sqrt(1 + 8 * length(lower_values_composite_i))) / 2
   S_composite_i <- matrix(0, dim_block, dim_block)
   S_composite_i[lower.tri(S_composite_i, diag = TRUE)] <- lower_values_composite_i

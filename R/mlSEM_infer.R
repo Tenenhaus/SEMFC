@@ -286,7 +286,8 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect, vcov_omegas, vcov
 #' @return List containing:
 #'   \item{estimate}{List of data frames with parameter estimates and inference statistics.}
 #'   \item{VCOV}{Variance-covariance matrix of parameter estimates.}
-#'   \item{SD}{Vector of standard errors for all parameters.}
+#'   \item{vcov_effect}{List of variance-covariance matrices for effects.}
+#'   \item{vcov_omegas}{List of variance-covariance matrices for composite weights of formative blocks.}
 #'
 #' @details
 #' The variance-covariance matrix is computed as VCOV = P/N, where P is the
@@ -427,7 +428,8 @@ list_vcov_omega <- function(S_composites, omegas, block_sizes, mode, lengths_par
     function(S, omega, idx){
       vcov_estimator(Jac_omega(S, omega), idx, VCOV)
     },
-    S_composites, omegas, list_index_omega)
+    S_composites, omegas, list_index_omega,
+    SIMPLIFY = FALSE)
 
 
   return(vcov_omega)

@@ -58,11 +58,11 @@ parameters_svd <- function(lambda,
   mode <- model$mode
   dag <- model$dag
 
-  S_composites_upper <- lapply(S_composites, function(mat) mat[lower.tri(mat, diag = TRUE)])
+  S_composites_lower <- lapply(S_composites, function(mat) mat[lower.tri(mat, diag = TRUE)])
 
   # empirical covariance for composite blocks or residual_variance for reflective
   diag_jj <- vector("list", J)
-  diag_jj[mode == "formative"] <- S_composites_upper
+  diag_jj[mode == "formative"] <- S_composites_lower
   diag_jj[mode != "formative"] <- residual_variance
 
 
