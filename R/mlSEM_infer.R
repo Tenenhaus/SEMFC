@@ -187,14 +187,10 @@ get_se_series <- function(SD, mode, lengths_parameter, block_sizes, vcov_effect,
 
   sd_omega <- unlist(lapply(vcov_omegas, function(vcov_omega_j) sqrt(diag(vcov_omega_j))))
 
-  if (!is.null(vcov_psi)){
-    m <- as.integer(sqrt(ncol(vcov_psi)))
-    idx_diag_psi <- seq(from = 1, to = m^2, by = m + 1)
-    vcov_diag_psi <- vcov_psi[idx_diag_psi, idx_diag_psi]
-    sd_psi <- sqrt(diag(vcov_diag_psi))
-  } else {
-    sd_psi <- NULL
-  }
+  m <- as.integer((sqrt(1 + 8 * ncol(vcov_psi)) - 1) / 2)
+  j <- 1:m
+  idx_diag_psi_vech <- 1 + (j - 1) * m - (j - 1) * (j - 2) / 2
+  sd_psi <- sqrt(diag(vcov_psi)[idx_diag_psi_vech])
 
   return(list(
     sd_lambda = sd_lambda,
@@ -288,6 +284,7 @@ formatting_ml_infer <- function(fit, model, VCOV, vcov_effect, vcov_omegas, vcov
 #'   \item{VCOV}{Variance-covariance matrix of parameter estimates.}
 #'   \item{vcov_effect}{List of variance-covariance matrices for effects.}
 #'   \item{vcov_omegas}{List of variance-covariance matrices for composite weights of formative blocks.}
+#'   \item{vcov_psi}{Variance-covariance matrix for the covariance of structural disturbances (PSI).}
 #'
 #' @details
 #' The variance-covariance matrix is computed as VCOV = P/N, where P is the
@@ -307,13 +304,11 @@ mlSEM_infer <- function(x, S, model, N, fit){
   vcov_omegas <- list_vcov_omega(fit$S_composites, fit$omega,
                                  model$block_sizes, model$mode, model$lengths_theta,
                                  VCOV)
-  if (!dag){
-    vcov_psi <- vcov_psi_nonrecursive(fit$gamma, fit$beta, fit$p_endo, fit$p_exo,
-                                      model$which_exo_endo, model$relation_matrix,model$lengths_theta,
-                                      VCOV)
-  } else {
-    vcov_psi <- NULL
-  }
+
+  vcov_psi <- vcov_psi(fit$gamma, fit$beta, fit$p_endo, fit$p_exo, fit$psi,
+                       model$which_exo_endo, model$relation_matrix,model$lengths_theta,
+                       VCOV, dag)
+
 
   table <- formatting_ml_infer(fit, model, VCOV, vcov_effect, vcov_omegas, vcov_psi)
 
@@ -379,6 +374,7 @@ Jac_psi_nonrecursive <- function(Gamma, Beta, P_endo, P_exo, M_gamma, M_beta, M_
   m <- nrow(Beta)
   I_B <- diag(m) - Beta
   N_m <- diag(m^2) + commutation_matrix(m)
+  E <- elimination_matrix(m)
 
   part_gamma <- N_m %*% kronecker(Gamma %*% P_exo, diag(m))
   J_gamma <- -part_gamma %*% M_gamma
@@ -387,9 +383,32 @@ Jac_psi_nonrecursive <- function(Gamma, Beta, P_endo, P_exo, M_gamma, M_beta, M_
   J_beta <- -part_beta %*% M_beta
 
   J <- cbind(-kronecker(Gamma, Gamma)%*%M_exo, J_gamma, J_beta, kronecker(I_B,I_B)%*%M_endo)
+  # We need to multiply by the elimination matrix E to get the Jacobian of vech(Psi)
+  J <- E %*% J
+
   return(J)
 }
 
+Jac_psi_recursive <- function(Gamma, Beta, P_exo, Psi, M_gamma, M_beta, M_exo){
+  m <- nrow(Beta)
+  A <- solve(diag(m) - Beta)
+  C <- Gamma %*% P_exo %*% t(Gamma)
+  H <- A * A
+  H_1 <- solve(H)
+  W <- A %*% (Psi + C) %*% t(A)
+  L <- diagonal_extraction_matrix(m)
+  E <- elimination_matrix(m)
+
+  J_beta <- -2 * H_1 %*% L %*% kronecker(W, A) %*% M_beta
+  J_gamma <- -2 * H_1 %*% L %*% kronecker(A %*% Gamma %*% P_exo, A) %*% M_gamma
+  J_exo <- -H_1 %*% L %*% kronecker(A %*% Gamma, A %*% Gamma) %*% M_exo
+
+  # Jacobian of the vector diag(Psi)
+  J <- cbind(J_exo, J_gamma, J_beta)
+  # We need to multiply by E %*% t(L) to get the Jacobian of the vector vech(Psi) instead of diag(Psi)
+  J <- E %*% t(L) %*% J
+  return(J)
+}
 
 sub_vcov <- function(idx, VCOV){
   vcov <- VCOV[idx, idx]
@@ -437,11 +456,9 @@ list_vcov_omega <- function(S_composites, omegas, block_sizes, mode, lengths_par
 
 
 
-vcov_psi_nonrecursive <- function(Gamma, Beta, P_endo, P_exo, which_exo_endo, C, lengths_parameter, VCOV){
+vcov_psi <- function(Gamma, Beta, P_endo, P_exo, Psi, which_exo_endo, C, lengths_parameter, VCOV, dag){
 
-  m <- nrow(P_endo)
   n <- nrow(P_exo)
-  M_endo <- correlation_duplication_matrix(m)
   M_exo <- correlation_duplication_matrix(n)
 
   H <- which_exo_endo$ind_exo
@@ -452,9 +469,18 @@ vcov_psi_nonrecursive <- function(Gamma, Beta, P_endo, P_exo, which_exo_endo, C,
   M_beta  <- diag(length(s_beta))[, s_beta == 1, drop = FALSE]
 
   start_index <- cumsum(c(1, head(lengths_parameter, -1)))
+  # in recursive case, the indices of the end of beta are the same as the length of p_endo will be 0,
+  # so we can use the same indices for both cases
   idx <- start_index[2]:(start_index[6]-1)
 
-  J <- Jac_psi_nonrecursive(Gamma, Beta, P_endo, P_exo, M_gamma, M_beta, M_endo, M_exo)
+  if (!dag){
+    m <- nrow(P_endo)
+    M_endo <- correlation_duplication_matrix(m)
+    J <- Jac_psi_nonrecursive(Gamma, Beta, P_endo, P_exo, M_gamma, M_beta, M_endo, M_exo)
+  } else {
+    J <- Jac_psi_recursive(Gamma, Beta, P_exo, Psi, M_gamma, M_beta, M_exo)
+  }
+
   vcov_psi <- vcov_estimator(J, idx, VCOV)
 
   return(vcov_psi)
@@ -504,7 +530,29 @@ commutation_matrix <- function(m, n = m) {
   return(K_mn)
 }
 
+diagonal_extraction_matrix <- function(m) {
+  L_D <- sparseMatrix(
+    i = 1:m,
+    j = seq(from = 1, to = m^2, by = m + 1),
+    x = 1,
+    dims = c(m, m^2)
+  )
+  return(L_D)
+}
 
+elimination_matrix<- function(m) {
+
+  nb_vech <- m * (m + 1) / 2
+  mat_index <- matrix(1:(m^2), nrow = m, ncol = m)
+  idx_keep <- mat_index[lower.tri(mat_index, diag = TRUE)]
+  L_m <- sparseMatrix(
+    i = 1:nb_vech,
+    j = idx_keep,
+    x = 1,
+    dims = c(nb_vech, m^2)
+  )
+  return(L_m)
+}
 
 
 
