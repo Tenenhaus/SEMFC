@@ -29,6 +29,7 @@ List containing:
 \item{VCOV}{Variance-covariance matrix of parameter estimates.}
 \item{vcov_effect}{List of variance-covariance matrices for effects.}
 \item{vcov_omegas}{List of variance-covariance matrices for composite weights of formative blocks.}
+\item{vcov_psi}{Variance-covariance matrix for the covariance of structural disturbances (PSI).}
 }
 \description{
 Performs statistical inference for maximum likelihood structural equation models,
