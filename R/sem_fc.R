@@ -201,7 +201,7 @@ initialize = function(data, relation_matrix,
 #'                  tol = 1e-04)
 #'
 
-    fit = function(infer = FALSE, B = 1000, initialization = 'svd', tol = 1e-8){
+    fit = function(infer = FALSE, B = 1000, initialization = 'svd', tol = 1e-8, verbose = TRUE, seed = NULL){
       estimator <- private$.estimator
       private$.boot_rep <- B
       if (estimator == 'svd'){
@@ -213,7 +213,7 @@ initialize = function(data, relation_matrix,
       }
       if (infer){
         if (estimator == 'svd'){
-          private$svd_infer(B, verbose = TRUE)
+          private$svd_infer(B, verbose = verbose, seed = seed)
           private$get_gof()
         }
       else if(estimator == 'ml'){
@@ -707,9 +707,9 @@ initialize = function(data, relation_matrix,
 # ' @return Invisible self (for method chaining)
 # ' @keywords internal
 
-    svd_infer = function(B = 1000, verbose = TRUE){
+    svd_infer = function(B = 1000, verbose = TRUE, seed = NULL){
 
-      boot_out <- svdsem_infer(private$.estimate, B, verbose = verbose)
+      boot_out <- svdsem_infer(private$.estimate, B, verbose = verbose, seed = seed)
       private$.infer_estimate <- boot_out$result$infer
       private$.gof$bollen_stine <- boot_out$gof
 

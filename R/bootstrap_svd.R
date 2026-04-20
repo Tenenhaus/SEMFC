@@ -43,7 +43,7 @@
 #' @importFrom stats sd pnorm setNames
 #' @keywords internal
 
-bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
+bootstrap_svd <- function(fit, B = 100, verbose = TRUE, seed = NULL){
 
   df <- data.frame(Reduce("cbind", fit$blocks))
 
@@ -65,6 +65,9 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE){
     pbapply::pboptions(type = "none")
   }else{
     pbapply::pboptions(type = "txt")
+  }
+  if (!is.null(seed)) {
+    set.seed(seed)
   }
 
   L <- pbapply::pbsapply(1:B,
@@ -279,9 +282,9 @@ formatting_svd_infer <- function(fit, boot){
 #'     - `improper`: Number of improper bootstrap solutions (negative eigenvalues).
 #'
 #' @keywords internal
-svdsem_infer <- function(fit, B, verbose = TRUE){
+svdsem_infer <- function(fit, B, verbose = TRUE, seed = seed){
 
-  boot <- bootstrap_svd(fit, B, verbose)
+  boot <- bootstrap_svd(fit, B, verbose, seed = seed)
   infer <- formatting_svd_infer(fit, boot)
   gof <- list(T_LS = fit$T_LS,
               Tb_LS = boot$boot_Tb_LS,
