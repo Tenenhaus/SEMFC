@@ -90,7 +90,7 @@ format_estimates_table <- function(type, fit_component, fit_std_component = NULL
 
   est <- switch(type,
     "lambda" = unlist(fit_component),
-    "regression" = fit_component[fit_component != 0],
+    "regression" = unname(Reduce('c', apply(fit_component, 1, function(row) row[row != 0]))),
     "residual" = unlist(unname(fit_component)),
     "effect" = as.vector(fit_component),
     "omega" = unlist(lapply(names(fit_component), function(lv) {
@@ -201,7 +201,7 @@ formatting_estimate <- function(fit, se_list = list()){
   table_gamma <- format_estimates_table(
     type = "regression",
     fit_component = fit$gamma,
-    fit_std_component = fit$gamma[fit$gamma != 0],
+    fit_std_component = unname(Reduce('c', apply(fit$gamma, 1, function(row) row[row != 0]))),
     se = se_list$sd_gamma
   )
 
@@ -209,7 +209,7 @@ formatting_estimate <- function(fit, se_list = list()){
   table_beta <- format_estimates_table(
     type = "regression",
     fit_component = fit$beta,
-    fit_std_component = fit$beta[fit$beta != 0],
+    fit_std_component = unname(Reduce('c', apply(fit$beta, 1, function(row) row[row != 0]))),
     se = se_list$sd_beta
   )
 
