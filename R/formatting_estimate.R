@@ -14,6 +14,7 @@
 #' @keywords internal
 extract_matrix_pairs <- function(matrix) {
   indices <- which(matrix != 0, arr.ind = TRUE)
+  indices <- indices[order(indices[, 1], indices[, 2]), ]  # Tri par ligne, puis colonne
   data.frame(
     lhs = rownames(matrix)[indices[, 1]],
     rhs = colnames(matrix)[indices[, 2]]
