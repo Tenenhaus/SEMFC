@@ -144,6 +144,9 @@ initialize = function(data, relation_matrix,
 #'   }
 #' @param tol Numeric tolerance for convergence in ML optimization
 #'   (default: \code{1e-8})
+#' @param verbose Logical indicating whether to print progress messages during
+#' bootstrap inference (default: \code{TRUE})
+#' @param seed Numeric seed for reproducibility of bootstrap inference (default: \code{NULL})
 #'
 #' @details
 #' This is the main wrapper function that performs:

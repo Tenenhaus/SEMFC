@@ -11,6 +11,7 @@
 #' @param B Integer specifying the number of bootstrap replications (default: 100).
 #' @param verbose Logical indicating whether to display a progress bar during
 #'   bootstrap resampling (default: `TRUE`).
+#' @param seed Optional integer for reproducibility of bootstrap results. If `NULL`, no seed is set (default: `NULL`).
 #'
 #' @return A list containing bootstrap replications for all parameters:
 #'   - `boot_lambda`: Matrix of bootstrap replications for factor loadings.
@@ -275,6 +276,7 @@ formatting_svd_infer <- function(fit, boot){
 #' @param B Integer specifying the number of bootstrap replications to perform.
 #' @param verbose Logical indicating whether to display a progress bar during
 #'   bootstrap resampling (default: `TRUE`).
+#' @param seed Optional integer for reproducibility of bootstrap results. If `NULL`, no seed is set (default: `NULL`).
 #'
 #' @return A list containing two main components:
 #'   - `result`: List with bootstrap and inference results:
@@ -288,7 +290,7 @@ formatting_svd_infer <- function(fit, boot){
 #'     - `improper`: Number of improper bootstrap solutions (negative eigenvalues).
 #'
 #' @keywords internal
-svdsem_infer <- function(fit, B, verbose = TRUE, seed = seed){
+svdsem_infer <- function(fit, B, verbose = TRUE, seed = NULL){
 
   boot <- bootstrap_svd(fit, B, verbose, seed = seed)
   infer <- formatting_svd_infer(fit, boot)
