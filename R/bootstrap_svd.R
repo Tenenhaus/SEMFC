@@ -106,8 +106,8 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE, seed = NULL){
                             res <- list(
                               boot_lambda  = as.vector(Reduce("c", fit_b$lambda)),
                               boot_std_loadings = as.vector(Reduce("c", fit_b$lambda)/SD),
-                              boot_beta = fit_b$beta[fit_b$beta!=0],
-                              boot_gamma = fit_b$gamma[fit_b$gamma!=0],
+                              boot_beta =  unname(Reduce('c', apply(fit_b$beta, 1, function(row) row[row != 0]))),
+                              boot_gamma = unname(Reduce('c', apply(fit_b$gamma, 1, function(row) row[row != 0]))),
                               boot_residual_variance = as.vector(Reduce("c", fit_b$residual_variance)),
                               boot_total_effects = as.vector(total_effects_b),
                               boot_indirect_effects = as.vector(indirect_effects_b),
