@@ -7,7 +7,7 @@
 build_formative_S_diag(lower_values_composite_i)
 }
 \arguments{
-\item{lower_values_composite_i}{A numeric vector containing the values for the upper
+\item{lower_values_composite_i}{A numeric vector containing the values for the lower
 triangle (including the diagonal) of the symmetric matrix.}
 }
 \value{

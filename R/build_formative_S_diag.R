@@ -3,7 +3,7 @@
 #' This function builds a symmetric covariance matrix (S_composite_i) for a formative block,
 #' using the lower triangular values provided in `lower_values_composite_i`.
 #'
-#' @param lower_values_composite_i A numeric vector containing the values for the upper
+#' @param lower_values_composite_i A numeric vector containing the values for the lower
 #'   triangle (including the diagonal) of the symmetric matrix.
 #'
 #' @return A symmetric formative covariance matrix.
