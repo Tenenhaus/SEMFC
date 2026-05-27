@@ -23,13 +23,13 @@ table_fort_FN <- matrix(NA, nrow = length(Ns), ncol = 4)
 table_faible_FN <- matrix(NA, nrow = length(Ns), ncol = 4)
 
 
-faible_range <- 41:60
-fort_range <- 1:20
-nul_range <- 21:40
+# faible_range <- 41:60
+# fort_range <- 1:20
+# nul_range <- 21:40
 
-# faible_range <- 131:160
-# fort_range <- 1:30
-# nul_range <- 31:130
+faible_range <- 131:160
+fort_range <- 1:30
+nul_range <- 31:130
 
 
 colnames(table_nul_FP) <- colnames(table_fort_FN) <- colnames(table_faible_FN) <-
@@ -102,6 +102,15 @@ for (N in Ns){
 
   table_sparcity[which(Ns == N), ] <- c(optsvd[[1]], optrgcca[[1]]*sqrt(ncol(Y[[1]])),
                                         sparse.svd.cv$param, perm_out$best_params[[1]]*sqrt(ncol(Y[[1]])))
+
+
+
+  plot(rgcca_final$a[[1]])
+  plot(sgcca_opt$a[[1]])
+
+  plot(-sparse.svd.cv$a[[1]])
+  plot(-ssvd_opt[[1]])
+
 
 
   print(table_AUC)
