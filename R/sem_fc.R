@@ -574,6 +574,10 @@ initialize = function(data, relation_matrix,
       }
 
       return(private$.estimate[[estimate]])
+    },
+
+    get_model = function(){
+      return(private$.model)
     }
   ),
 
