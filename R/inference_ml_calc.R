@@ -63,101 +63,102 @@ calcul_J_Lambda_theta <- function(length_other_param, list_Pj) {
 
 ####################################################  Jac Theta / theta #############################################
 
-calcul_Jacobienne_Theta_j_reflective <- function(j, lengths_theta, block_sizes, lengths_values_cov) {
-  # lengths_theta = c(18,6,4,2,1,30)
-  # 1. Calcul de l'opérateur local
-  p_j <- block_sizes[j]
+calcul_Jacobienne_Theta_j_reflective <- function(p_j, n_total_cols, start_theta_j) {
+
+  # Création du bloc local
   D_local <- calcul_D_vech_diag(p_j)
   n_row <- nrow(D_local)
 
+  index_fin <- start_theta_j + p_j - 1
 
-  n_theta_other <- tail(cumsum(lengths_theta), 2)[1]
-  index_debut <- n_theta_other + cumsum(c(0,lengths_values_cov))[j] + 1
-  index_fin <- index_debut + p_j - 1
-
-  # 3. Création de la matrice globale vide (que des zéros, format creux)
+  # Création globale
   J_Globale <- sparseMatrix(i = integer(0),
                             j = integer(0),
                             x = numeric(0),
-                            dims = c(n_row, sum(lengths_theta)))
-
-  # 4. Insertion du bloc D à la position exacte
-  J_Globale[, index_debut:index_fin] <- D_local
+                            dims = c(n_row, n_total_cols))
+  J_Globale[, start_theta_j:index_fin] <- D_local
 
   return(J_Globale)
 }
 
-calcul_Jacobienne_Theta_j_formatif <- function(j, lambda_j, block_sizes, lengths_theta, lengths_values_cov) {
-
-  p_j <- block_sizes[j]
-  n_row <- lengths_values_cov[j]
+calcul_Jacobienne_Theta_j_formatif <- function(lambda_j, p_j, n_row, D_pj, n_total_cols, start_lam_j, start_theta_j) {
 
 
-  # Bloc Lambda : -2D^+ (lambda_j ⊗ I_pj)
-  D <- duplication_matrix(p_j)
-  D_plus <- solve(crossprod(D), t(D))
+  DtD <- crossprod(D_pj)
+  D_plus <- solve(DtD, t(D_pj))
+
   I_pj <- Diagonal(p_j)
 
-  mat_lambda_sparse <- -2 * D_plus %*% kronecker(lambda_j, I_pj)
+  # 2. Blocs locaux
+  J_lambda <- -2 * (D_plus %*% kronecker(lambda_j, I_pj))
+  J_cov <- Diagonal(n_row)
 
+  # 3. Indices de fin
+  idx_lam_end   <- start_lam_j + p_j - 1
+  idx_theta_end <- start_theta_j + n_row - 1
 
-  # Bloc Theta : Matrice identité I_{vech_pj}
-  mat_theta_sparse <- Diagonal(n_row)
-
-
-  idx_lam_start <- cumsum(c(0,block_sizes))[j] + 1
-  idx_lam_end   <- idx_lam_start + p_j - 1
-
-
-
-  offset_theta_global <- tail(cumsum(lengths_theta), 2)[1]
-  idx_theta_start <-  offset_theta_global + cumsum(c(0,lengths_values_cov))[j] + 1
-  idx_theta_end   <- idx_theta_start + lengths_values_cov[j] - 1
-
-
-  J_Globale <- sparseMatrix(i = integer(0),
-                            j = integer(0),
-                            x = numeric(0),
-                            dims = c(n_row, sum(lengths_theta)))
-
-  # Insertion de nos deux blocs aux emplacements exacts
-  J_Globale[, idx_lam_start:idx_lam_end] <- mat_lambda_sparse
-  J_Globale[, idx_theta_start:idx_theta_end] <- mat_theta_sparse
+  # 4. Création et insertion
+  J_Globale <- sparseMatrix(i = integer(0), j = integer(0), x = numeric(0), dims = c(n_row, n_total_cols))
+  J_Globale[, start_lam_j:idx_lam_end] <- J_lambda
+  J_Globale[, start_theta_j:idx_theta_end] <- J_cov
 
   return(J_Globale)
-
 }
 
 
-jac_Theta_j_theta <- function(j, lambda_j, block_sizes, lengths_theta, mode, P_j, D_pj) {
+
+jac_Theta_j_theta <- function(lambda_j, p_j, n_row, mode_j, P_j, D_pj, n_total_cols, start_lam_j, start_theta_j) {
 
 
-  lengths_values_cov <- block_sizes
-  lengths_values_cov[mode == "formative"] <- (block_sizes[mode == "formative"]^2 + block_sizes[mode == "formative"]) / 2
-
-  #  (P_j ⊗ P_j) %*% D_pj
   mat_j <- kronecker(P_j, P_j) %*% D_pj
 
-  if (mode[j] == "formative") {
-    return(mat_j %*% calcul_Jacobienne_Theta_j_formatif(j,lambda_j, block_sizes, lengths_theta, lengths_values_cov))
-  } else if (mode[j] == "reflective") {
-    return(mat_j %*% calcul_Jacobienne_Theta_j_reflective(j, lengths_theta, block_sizes, lengths_values_cov))
+  # Routage direct avec les constantes
+  if (mode_j == "formative") {
+    J_loc <- calcul_Jacobienne_Theta_j_formatif(lambda_j, p_j, n_row, D_pj, n_total_cols, start_lam_j, start_theta_j)
+  } else if (mode_j == "reflective") {
+    J_loc <- calcul_Jacobienne_Theta_j_reflective(p_j, n_total_cols, start_theta_j)
   }
-}
 
+  return(mat_j %*% J_loc)
+}
 
 
 jac_Theta_theta <- function(lambda, block_sizes, lengths_theta, mode, L_p, list_Pj) {
-  return(
-    L_p %*% Reduce("+",
-                   Map(function(j) {
-                     jac_Theta_j_theta(
-                       j, as.vector(lambda[[j]]), block_sizes, lengths_theta, mode,
-                       list_Pj[[j]], duplication_matrix(block_sizes[j])
-                     )
-                   }, seq_along(block_sizes))
+
+
+
+  n_total_cols <- sum(lengths_theta)
+  offset_theta_global <- tail(cumsum(lengths_theta), 2)[1]
+
+  # sizes of the covariance parameters for each block of indicators
+  lengths_values_cov <- block_sizes
+  idx_form <- mode == "formative"
+  lengths_values_cov[idx_form] <- (block_sizes[idx_form]^2 + block_sizes[idx_form]) / 2
+
+  # Pré-calcul EXHAUSTIF de tous les index de départ pour éviter les cumsum dans la boucle
+  # On ajoute un 0 au début du cumsum pour avoir l'index "avant" le bloc courant
+  starts_lambda <- cumsum(c(0, block_sizes))
+  starts_theta  <- offset_theta_global + cumsum(c(0, lengths_values_cov))
+
+
+  list_matrix <- Map(function(j) {
+
+
+    jac_Theta_j_theta(
+      lambda_j = as.vector(lambda[[j]]),
+      p_j = block_sizes[j],
+      n_row = lengths_values_cov[j],
+      mode_j = mode[j],
+      P_j = list_Pj[[j]],
+      D_pj =  duplication_matrix(block_sizes[j]),
+      n_total_cols = n_total_cols,
+      start_lam_j = starts_lambda[j] + 1,
+      start_theta_j = starts_theta[j] + 1
     )
-  )
+  }, seq_along(block_sizes))
+
+
+  return(L_p %*% Reduce("+", list_matrix))
 }
 
 
@@ -186,9 +187,6 @@ calcul_J_rhoR_endo <- function(P_endo, M_endo, L_bar) {
 
 calcul_J_rhoR_exo <- function(P_endo, P_exo, C, Gamma, M_exo, L_bar, K_m) {
 
-
-
-
   I_m2 <- Diagonal(nrow(K_m))
   J_exo <- L_bar %*% (kronecker(P_exo, P_exo) + (I_m2 + K_m) %*% kronecker(P_endo %*% C %*% Gamma, P_exo)) %*% M_exo
 
@@ -196,16 +194,7 @@ calcul_J_rhoR_exo <- function(P_endo, P_exo, C, Gamma, M_exo, L_bar, K_m) {
 }
 
 
-
-
-
-
-calcul_J_rhoR_Gamma <- function(P_endo, P_exo, C, Phi_exo, M_Gamma) {
-
-  D_bar <- correlation_duplication_matrix(nrow(P_endo))
-  D_bar_plus <- solve(crossprod(D_bar), t(D_bar))
-
-
+calcul_J_rhoR_Gamma <- function(P_endo, P_exo, C, Phi_exo, M_Gamma, D_bar_plus) {
 
   Kron_prod <- kronecker(P_exo %*% Phi_exo,  P_endo %*% C)
 
@@ -215,11 +204,7 @@ calcul_J_rhoR_Gamma <- function(P_endo, P_exo, C, Phi_exo, M_Gamma) {
   return(J_Gamma)
 }
 
-calcul_J_rhoR_B <- function(P_endo, P_exo, C, Gamma, Phi_exo, M_B) {
-
-  D_bar <- correlation_duplication_matrix(nrow(P_endo))
-  D_bar_plus <- solve(crossprod(D_bar), t(D_bar))
-
+calcul_J_rhoR_B <- function(P_endo, P_exo, C, Gamma, Phi_exo, M_B, D_bar_plus) {
 
 
   Kron_prod <- kronecker(P_exo %*% Phi_exo %*% t(Gamma) %*% t(C), P_endo %*% C)
@@ -230,15 +215,131 @@ calcul_J_rhoR_B <- function(P_endo, P_exo, C, Gamma, Phi_exo, M_B) {
   return(J_B)
 }
 
+calcul_J_rhoR_nonrecursif <- function(P_endo, P_exo, C, Gamma, Phi_exo,
+                                      M_exo, M_endo, M_Gamma, M_B,
+                                      D_bar_plus, L_bar, K_m) {
+
+  J_rhoR_endo <- calcul_J_rhoR_endo(P_endo, M_endo, L_bar)
+  J_rhoR_exo <- calcul_J_rhoR_exo(P_endo, P_exo, C, Gamma, M_exo, L_bar, K_m)
+  J_rhoR_gamma <- calcul_J_rhoR_Gamma(P_endo, P_exo, C, Phi_exo, M_Gamma, D_bar_plus)
+  J_rhoR_B <- calcul_J_rhoR_B(P_endo, P_exo, C, Gamma, Phi_exo, M_B, D_bar_plus)
+
+  return(list(J_rhoR_endo = J_rhoR_endo,
+              J_rhoR_exo = J_rhoR_exo,
+              J_rhoR_gamma = J_rhoR_gamma,
+              J_rhoR_B = J_rhoR_B))
+}
+
+
+######################################## Modèle Structurel Récursif #########################
+
+
+calculer_K_psi <- function(L_bar, P_endo, C) {
+  PC <- P_endo %*% C
+  K_psi <- L_bar %*% KhatriRao(PC, PC)
+
+  return(K_psi)
+}
+
+calcul_J_rhoR_exo_recursif <- function(M, C, Gamma, M_Phi_exo, L_bar, K_psi, H_inv) {
+
+  # 1. Terme principal : L_bar(M ⊗ M)
+  Term1 <- L_bar %*% kronecker(M, M)
+
+  # 2. Terme de correction récursif : K_psi H^{-1} S_diag (C.Gamma ⊗ C.Gamma)
+  C_Gamma <- C %*% Gamma
+  # Term2 <- K_psi %*% H_inv %*% S_diag %*% kronecker(C_Gamma, C_Gamma)
+  Term2 <- K_psi %*% H_inv %*% t(KhatriRao(t(C_Gamma), t(C_Gamma)))
+
+  # 3. Application de la matrice de sélection M_Phi_exo
+  J_exo <- (Term1 - Term2) %*% M_Phi_exo
+
+  return(J_exo)
+}
+
+
+calcul_J_rhoR_Gamma_recursif <- function(M, C, Phi_exo, Gamma, P_endo, M_Gamma, D_bar_plus, K_psi, H_inv) {
+
+  # 1. Terme principal : 2*D_bar_plus (M.Phi_exo ⊗ P_endo.C)
+  M_Phi <- M %*% Phi_exo
+  PC <- P_endo %*% C
+  Term1 <- 2 * D_bar_plus %*% kronecker(M_Phi, PC)
+
+  # 2. Terme de correction récursif : K_psi H^{-1} 2*S_diag (C.Gamma.Phi_exo ⊗ C)
+  CGP <- C %*% Gamma %*% Phi_exo
+  Term2 <- K_psi %*% H_inv %*% (2 * t(KhatriRao(t(CGP), t(C))))
+
+  # 3. Application de la matrice de sélection M_Gamma
+  J_Gamma <- (Term1 - Term2) %*% M_Gamma
+
+  return(J_Gamma)
+}
+
+
+calcul_J_rhoR_B_recursif <- function(R, R_endo, P_endo, C, M_B, D_bar_plus, K_psi, H_inv) {
+
+  # 1. Terme principal : 2*D_bar_plus (R.P_endo ⊗ P_endo.C)
+  RP <- R %*% P_endo
+  PC <- P_endo %*% C
+  Term1 <- 2 * D_bar_plus %*% kronecker(RP, PC)
+
+  # 2. Terme de correction récursif : K_psi H^{-1} 2*S_diag (R_endo ⊗ C)
+  Term2 <- K_psi %*% H_inv %*% (2 * t(KhatriRao(t(as(R_endo, "dgCMatrix")), t(C))))
+
+  # 3. Application de la matrice de sélection M_B
+  J_B <- (Term1 - Term2) %*% M_B
+
+  return(J_B)
+}
 
 
 
-calcul_J_rhoR_theta <- function(J_exo, J_Gamma, J_B, J_endo, n_lambda, n_Theta) {
+calcul_J_rhoR_recursif <- function(C, Gamma, Phi_exo, R, R_endo,
+                                   P_endo, P_exo,
+                                   M_Phi_exo, M_Gamma, M_B,
+                                   D_bar_plus, L_bar) {
+  H_inv <- solve(C*C)
+  M <- P_exo + P_endo %*% C %*% Gamma
+
+  K_psi <- calculer_K_psi(L_bar, P_endo, C)
+
+  J_rhoR_exo <- calcul_J_rhoR_exo_recursif(M, C, Gamma, M_Phi_exo, L_bar, K_psi, H_inv)
+  J_rhoR_gamma <- calcul_J_rhoR_Gamma_recursif(M, C, Phi_exo, Gamma, P_endo, M_Gamma, D_bar_plus, K_psi, H_inv)
+  J_rhoR_B <- calcul_J_rhoR_B_recursif(R, R_endo, P_endo, C, M_B, D_bar_plus, K_psi, H_inv)
+
+  return(list(J_rhoR_exo = J_rhoR_exo,
+              J_rhoR_gamma = J_rhoR_gamma,
+              J_rhoR_B = J_rhoR_B))
+}
 
 
-  n_row <- nrow(J_endo)
+
+calcul_J_rhoR <- function(dag, C, Gamma, Phi_exo, R, R_endo,
+                          P_endo, P_exo,
+                          M_exo, M_endo, M_Gamma, M_B,
+                          D_bar_plus, L_bar, K_m) {
+
+  if (dag) {
+    J_rhoR <- calcul_J_rhoR_recursif(C, Gamma, Phi_exo, R, R_endo,
+                                     P_endo, P_exo,
+                                     M_exo, M_Gamma, M_B,
+                                     D_bar_plus, L_bar)
+  } else {
+    J_rhoR <- calcul_J_rhoR_nonrecursif(P_endo, P_exo , C, Gamma, Phi_exo,
+                                        M_exo, M_endo, M_Gamma, M_B,
+                                        D_bar_plus, L_bar, K_m)
+  }
+
+  return(J_rhoR)
+}
 
 
+
+
+
+assemble_J_rhoR_theta <- function(n_lambda, n_Theta,
+                                  J_rhoR_exo, J_rhoR_gamma, J_rhoR_B, J_rhoR_endo = NULL) {
+  n_row <- nrow(J_rhoR_exo)
   zeros_lambda <- sparseMatrix(i = integer(0),
                                j = integer(0),
                                x = numeric(0),
@@ -248,17 +349,31 @@ calcul_J_rhoR_theta <- function(J_exo, J_Gamma, J_B, J_endo, n_lambda, n_Theta) 
                                j = integer(0),
                                x = numeric(0),
                                dims = c(n_row, n_Theta))
-
-  J_rhoR_theta <- cbind(zeros_lambda, J_exo, J_Gamma, J_B, J_endo, zeros_Theta)
-
+  J_rhoR_theta <- cbind(zeros_lambda, J_rhoR_exo, J_rhoR_gamma, J_rhoR_B, J_rhoR_endo, zeros_Theta)
   return(J_rhoR_theta)
 }
 
 
 
+compute_J_rhoR_theta <- function(dag, C, Gamma, Phi_exo, R, R_endo, P_endo, P_exo,
+                                 M_exo, M_endo,
+                                 M_Gamma, M_B,
+                                 D_bar_plus, L_bar, K_m,
+                                 n_lambda, n_Theta) {
+  list_J_rhoR <- calcul_J_rhoR(dag, C, Gamma, Phi_exo, R, R_endo,
+                               P_endo, P_exo,
+                               M_exo, M_endo,
+                               M_Gamma, M_B,
+                               D_bar_plus, L_bar, K_m)
 
+  # On combine les scalaires et la liste des matrices en une seule grande liste d'arguments
+  args <- c(list(n_lambda = n_lambda, n_Theta = n_Theta), list_J_rhoR)
 
+  # do.call exécute la fonction en lui injectant toute la liste d'un coup
+  J_rhoR_theta <- do.call(assemble_J_rhoR_theta, args)
 
+  return(J_rhoR_theta)
+}
 
 
 
@@ -283,23 +398,21 @@ calcul_jac_F_Sigma <- function(Sigma, S) {
 }
 
 
-calcul_Gradient <- function(J_F_Sigma, J_Sigma_theta) {
-
-
-
-  return(J_F_Sigma %*% J_Sigma_theta)
+compute_gradient <- function(Sigma, S, J_Sigma_theta) {
+  J_F <- calcul_jac_F_Sigma(Sigma, S)
+  Gradient_ml <- J_F %*% J_Sigma_theta
+  return(Gradient_ml)
 }
 
 
 
 
-
-
-calcul_Hessian <- function(Sigma, D, J_vech) {
+compute_Hessian <- function(Sigma, J_vech) {
 
 
   p <- nrow(Sigma)
   W <- solve(Sigma)
+  D <- duplication_matrix(p)
   J_vec <- D %*% J_vech
   I_p <- Diagonal(p)
 
@@ -311,6 +424,12 @@ calcul_Hessian <- function(Sigma, D, J_vech) {
 
   return(H)
 }
+
+
+
+
+
+
 
 
 

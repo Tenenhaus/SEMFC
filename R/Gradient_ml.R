@@ -10,7 +10,7 @@
 #' @param R Correlation matrix of latent variables
 #' @param rel_matrix Relationship matrix (C matrix) for structural model
 #' @param m_exo Number of exogenous variables
-#' @param PHI Covariance matrix of exogenous variables
+#' @param Phi_exo Covariance matrix of exogenous variables
 #' @param BETA Regression matrix of structural model
 #' @param GAMMA Regression matrix from exogenous to endogenous
 #'
@@ -26,21 +26,23 @@
 #'   R = R,
 #'   rel_matrix = rel_matrix,
 #'   m_exo = 4,
-#'   PHI = PHI,
+#'   Phi_exo = Phi_exo,
 #'   BETA = BETA,
 #'   GAMMA = GAMMA
 #' )
 #' }
 #'
 #' @export
-compute_J_Sigma_theta <- function(block_sizes, lengths_theta, mode, R,
-                                   rel_matrix, lambda, PHI, BETA, GAMMA) {
+compute_J_Sigma_theta <- function(block_sizes, lengths_theta, mode, dag, R,
+                                   rel_matrix, lambda, BETA, GAMMA) {
 
 
   C <- solve(diag(nrow(BETA)) - BETA)
   which_exo_endo <- ind_exo_endo(rel_matrix)
   ind_exo <- which_exo_endo$ind_exo
   ind_endo <- which_exo_endo$ind_endo
+  Phi_exo <- R[ind_exo, ind_exo, drop = FALSE]
+  Phi_endo <- R[ind_endo, ind_endo, drop = FALSE]
   J <- ncol(rel_matrix)  # Total number of latent variables
   p <- sum(block_sizes)  # Total number of observed variables
 
@@ -77,35 +79,31 @@ compute_J_Sigma_theta <- function(block_sizes, lengths_theta, mode, R,
 
   J_Sigma_R <- jac_Sigma_R(Lambda, L_p, D_bar_J)
 
-  J_rhoR_endo <- calcul_J_rhoR_endo(P_endo, 
-                                    M_endo = correlation_duplication_matrix(length(ind_endo)),
-                                    L_bar = L_bar)
-  J_rhoR_exo <- calcul_J_rhoR_exo(P_endo, P_exo, C, GAMMA,
-                                  M_exo = correlation_duplication_matrix(length(ind_exo)),
-                                  L_bar = L_bar,
-                                  K_m = commutation_matrix(J))
-  J_rhoR_gamma <- calcul_J_rhoR_Gamma(P_endo, P_exo, C, PHI, M_gamma, D_bar_plus)
-  J_rhoR_B <- calcul_J_rhoR_B(P_endo, P_exo, C, GAMMA, PHI, M_beta, D_bar_plus)
-  
-  # 4e. Combine structural model Jacobians
-  J_rhoR_theta <- calcul_J_rhoR_theta(J_rhoR_exo, J_rhoR_gamma, J_rhoR_B, J_rhoR_endo,
-                                      n_lambda = p,
-                                      n_Theta = tail(lengths_theta, 1))
-  
-  # 5. Combine all components
+
+  J_rhoR_theta <- compute_J_rhoR_theta(dag, C, GAMMA, Phi_exo, R, Phi_endo,
+                                       P_endo, P_exo,
+                                       M_exo = correlation_duplication_matrix(length(ind_exo)),
+                                       M_endo = correlation_duplication_matrix(length(ind_endo)),
+                                       M_gamma, M_beta,
+                                       D_bar_plus, L_bar = L_bar, K_m = commutation_matrix(J),
+                                       n_lambda = p,
+                                       n_Theta = tail(lengths_theta, 1))
+
+
+
 
   J_Sigma_theta <- jac_vech_Sigma(J_Sigma_Lambda, J_Lambda_theta, J_Sigma_R, J_rhoR_theta, J_Theta_theta)
-  
+
   return(J_Sigma_theta)
 }
 
 
 
 compute_gradient_hessian <- function(lambda, block_sizes, lengths_theta, mode, R,
-                                   rel_matrix, m_exo, PHI, BETA, GAMMA, SIGMA, S) {
+                                   rel_matrix, m_exo, Phi_exo, BETA, GAMMA, SIGMA, S) {
   # Compute J_Sigma_theta
   J_Sigma_theta <- compute_J_Sigma_theta(block_sizes, lengths_theta, mode,
-                                         R, rel_matrix, m_exo, lambda, PHI, BETA, GAMMA)
+                                         R, rel_matrix, m_exo, lambda, Phi_exo, BETA, GAMMA)
   # Compute Gradient
   Gradient <- compute_gradient(Sigma, S, J_Sigma_theta)
   # Compute Hessian

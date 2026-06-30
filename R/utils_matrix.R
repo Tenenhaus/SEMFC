@@ -62,17 +62,14 @@ generate_Pj <- function(block_sizes) {
 
 
 
-P_exo_endo <- function(m_total, m_exo) {
+P_exo_endo <- function(ind_exo, ind_endo) {
 
-  # 1. Création de la matrice identité globale (ultra-léger en mémoire)
-  I_m <- Diagonal(m_total)
+  J <- length(ind_exo) + length(ind_endo)
 
-  # 2. P_exo : on prend simplement les m_exo premières colonnes
-  P_exo <- I_m[, 1:m_exo, drop = FALSE]
+  I_J <- Diagonal(J)
 
-  # 3. P_endo : on prend toutes les colonnes restantes
-  P_endo <- I_m[, (m_exo + 1):m_total, drop = FALSE]
-
+  P_exo <- I_J[, ind_exo, drop = FALSE]
+  P_endo <- I_J[, ind_endo, drop = FALSE]
   return(list(P_exo = P_exo, P_endo = P_endo))
 }
 
@@ -84,8 +81,8 @@ M_beta_gamma <- function(C) {
   J <- which_exo_endo$ind_endo
   s_gamma <- as.vector(t(C[H, J, drop = FALSE]))
   s_beta  <- as.vector(t(C[J, J, drop = FALSE]))
-  M_gamma <- diag(length(s_gamma))[, s_gamma == 1, drop = FALSE]
-  M_beta  <- diag(length(s_beta))[, s_beta == 1, drop = FALSE]
+  M_gamma <- Diagonal(length(s_gamma))[, s_gamma == 1, drop = FALSE]
+  M_beta  <- Diagonal(length(s_beta))[, s_beta == 1, drop = FALSE]
 
   return(list(M_gamma = M_gamma, M_beta = M_beta))
 }
@@ -100,6 +97,22 @@ correlation_elimination_matrix <- function(n, L_n = elimination_matrix(n)) {
   j <- 1:n
   indices_diag <- 1 + (j - 1) * n - (j - 1) * (j - 2) / 2
   return(L_n[ -indices_diag, , drop = FALSE])
+}
+
+
+extraction_diagonale <- function(n) {
+
+  # Les indices de la diagonale dans un vecteur de taille m_endo^2
+  indices_diag <- 1 + (0:(n - 1)) * (n + 1)
+
+  # D_diag : Matrice creuse de dimension (m_endo^2) x (m_endo)
+  D_diag <- sparseMatrix(i = indices_diag,
+                         j = 1:n,
+                         x = 1,
+                         dims = c(n^2, n))
+
+
+  return(D_diag)
 }
 
 

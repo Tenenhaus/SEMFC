@@ -37,14 +37,16 @@ BETA = model$get_estimate('beta')
 GAMMA = model$get_estimate('gamma')
 C = solve(diag(2) - model$get_estimate('beta'))
 PHI = model$get_estimate('p_implied')[1:4, 1:4]
+PSI = model$get_estimate('psi')
+PHI_endo = model$get_estimate('p_implied')[5:6, 5:6]
 
 
 
 
 
-# system.time({
+system.time({
   I = information_matrix(model$get_estimate('theta'), mod)
-# })
+})
 
 
 
@@ -101,12 +103,15 @@ PHI = model$get_estimate('p_implied')[1:4, 1:4]
 #
 # sum(I - I2)
 
+system.time({
+res = compute_J_Sigma_theta(block_sizes, lengths_theta, mode, mod$dag, model$get_estimate('p_implied'),
+                                   rel_matrix, model$get_estimate('lambda'), BETA, GAMMA)
 
-res = compute_J_Sigma_theta(model$get_estimate('lambda'), block_sizes, lengths_theta, mode, model$get_estimate('p_implied'),
-                                   rel_matrix, 4, PHI, BETA, GAMMA)
-
-H3 = calcul_Hessian(model$get_estimate('sigma_implied'), duplication_matrix(18), res)
+H3 = compute_Hessian(model$get_estimate('sigma_implied'), res)
 
 I2 = H3 * 0.5
+})
+#
+
 
 sum(I - I2)
