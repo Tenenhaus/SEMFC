@@ -1,0 +1,139 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+The [R plugin](https://www.jetbrains.com/help/pycharm/r-plugin-support.html) for IntelliJ-based IDEs provides
+handy capabilities to work with the [R Markdown](https://www.jetbrains.com/help/pycharm/r-markdown.html) files.
+To [add](https://www.jetbrains.com/help/pycharm/r-markdown.html#add-code-chunk) a new R chunk,
+position the caret at any line or the code chunk, then click "+".
+
+The code chunk appears:
+```{r}
+
+
+pkg_root <- getwd()
+
+# Sourcer les configurations
+source(file.path(pkg_root, "tests/testthat/dataset_configs/load_configs.R"))
+
+# Sourcer les fonctions utiles
+source(file.path(pkg_root, "inst/report/report_utils.R"))
+
+library(devtools)
+load_all()
+```
+
+
+```{r}
+dataset_name = 'PoliticalDemocracy'
+dataset <- load_dataset_data(dataset_name)
+config <- get_dataset_config(dataset_name, dataset)
+
+svd_results <- fit_and_get_estimates(config, "svd", list(B = 100))
+ml_results <- fit_and_get_estimates(config, "ml", list(tol = 1e-8))
+lavaan_ml <- sem(config$sem,
+               data = data.frame(Reduce("cbind", config$data)),
+                       estimator = "ML",
+                       likelihood = "wishart")
+lavaan_results <- parameterEstimates(lavaan_ml, standardized = TRUE)
+```
+
+```{r}
+cat(config$sem)
+```
+
+
+```{r}
+print(merge_estimates_with_lavaan(ml_results$param, lavaan_results))
+```
+
+
+
+
+```{r}
+ml_results$param[] <- lapply(ml_results$param, function(x) if (is.numeric(x)) round(x, 3) else x)
+ml_results$param
+```
+```{r}
+svd_results$param[] <- lapply(svd_results$param, function(x) if (is.numeric(x)) round(x, 3) else x)
+svd_results$param
+```
+
+
+```{r}
+lavaan_results
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+source('inst/model/model_mixed.R')
+
+Y <- Y_2
+X <- X_2
+print(mode)
+print(C)
+cat(sem.model)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "svd")
+model$fit(infer = T, B = 100)
+est = model$parameterEstimates(standardized = T)
+```
+
+
+```{r}
+model$summary(standardized = T)
+```
+
+
+
+
+```{r}
+print(model$get_estimate('psi'))
+```
+
+```{r}
+print(model$get_estimate('beta'))
+```
+
+
+
+```{r}
+print(model$get_estimate('gamma'))
+```
+
+
+
+```{r}
+print(model$get_estimate('lambda'))
+```
+
+
+
+```{r}
+est
+```
