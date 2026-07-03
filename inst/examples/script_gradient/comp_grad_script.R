@@ -10,7 +10,8 @@ Y <- Y_2
 X <- X_2
 
 set.seed(27)
-model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "svd")
+model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "ml")
+model$fit(infer = T)
 
 model$fit(infer = T, B = 100)
 model$fit(infer = F)
