@@ -3,7 +3,7 @@ source('inst/simulations/data_simulation_reflective.R')
 library(MASS)
 library(mvtnorm)
 
-# set.seed(20091979)
+set.seed(20091979)
 N <- 300
 
 X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = TRUE)

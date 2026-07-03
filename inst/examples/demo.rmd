@@ -1,27 +1,238 @@
 ---
-title: "R Notebook"
+title: "SEMFC Usecase"
 output: html_notebook
 ---
 
-The [R plugin](https://www.jetbrains.com/help/pycharm/r-plugin-support.html) for IntelliJ-based IDEs provides
-handy capabilities to work with the [R Markdown](https://www.jetbrains.com/help/pycharm/r-markdown.html) files.
-To [add](https://www.jetbrains.com/help/pycharm/r-markdown.html#add-code-chunk) a new R chunk,
-position the caret at any line or the code chunk, then click "+".
 
-The code chunk appears:
+
+
+# SEMFC USECASE
+
+
+
+
+
 ```{r}
 
 
-pkg_root <- getwd()
-
-# Sourcer les configurations
-source(file.path(pkg_root, "tests/testthat/dataset_configs/load_configs.R"))
-
-# Sourcer les fonctions utiles
-source(file.path(pkg_root, "inst/report/report_utils.R"))
+source("tests/testthat/dataset_configs/load_configs.R")
+source("inst/report/report_utils.R")
 
 library(devtools)
 load_all()
+library(MASS)
+library(mvtnorm)
+library(lavaan)
+```
+
+
+## SIMULATED DATA
+
+
+### ALL REFLECTIVE
+
+
+```{r}
+source('inst/simulations/data_simulation_reflective.R')
+
+set.seed(20091979)
+N <- 300
+
+X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = TRUE)
+colnames(X) <- paste("X", rep(1:6, each = 3), rep(1:3, 6), sep ="")
+
+
+Y <- list(LV1 = X[, 1:3], LV2 = X[, 4:6], LV3 = X[, 7:9],
+         LV4 = X[, 10:12], LV5 = X[, 13:15], LV6 = X[, 16:18])
+
+
+
+C <- matrix(c(0, 0, 0, 0, 1, 0,
+             0, 0, 0, 0, 1, 0,
+             0, 0, 0, 0, 0, 1,
+             0, 0, 0, 0, 0, 1,
+             0, 0, 0, 0, 0, 1,
+             0, 0, 0, 0, 1, 0), 6, 6, byrow = TRUE)
+
+colnames(C) <- rownames(C) <- names(Y)
+
+mode <- rep("reflective", 6)
+
+
+source('inst/model/model_reflective.R')
+
+Y <- Y_2
+X <- X_2
+
+
+```
+
+```{r}
+cat(sem.model)
+```
+
+
+```{r}
+model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "svd")
+model$fit(infer = T, B = 100)
+est = model$parameterEstimates(standardized = T)
+
+modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "ml")
+modelml$fit(infer = T, tol = 1e-8)
+est_ml = modelml$parameterEstimates(standardized = T)
+```
+
+
+
+```{r}
+model$summary(standardized = T)
+```
+
+
+
+
+```{r}
+lavaan_ml <- sem(sem.model,
+               data = X,
+                       estimator = "ML",
+                       likelihood = "wishart")
+
+lavaan_results <- parameterEstimates(lavaan_ml, standardized = TRUE)
+```
+
+#### Comparison of estimates between ML and lavaan
+
+```{r}
+print(merge_estimates_with_lavaan(est_ml, lavaan_results))
+```
+
+
+#### Comparison of estimates between SVD, ML and lavaan
+
+
+```{r}
+print(merge_estimates(est_ml, est, lavaan_results))
+```
+
+
+
+
+### FACTORS AND COMPOSITES
+
+
+
+
+```{r}
+source('inst/simulations/data_simulation_mixed.R')
+
+
+# set.seed(20091979)
+N <- 300
+
+X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = TRUE)
+colnames(X) <- paste("X", rep(1:6, each = 3), rep(1:3, 6), sep ="")
+
+
+Y <- list(LV1 = X[, 1:3], LV2 = X[, 4:6], LV3 = X[, 7:9],
+         LV4 = X[, 10:12], LV5 = X[, 13:15], LV6 = X[, 16:18])
+
+mode <- c(rep("formative", 4), rep("reflective", 2))
+
+C <- matrix(c(0, 0, 0, 0, 1, 0,
+             0, 0, 0, 0, 1, 0,
+             0, 0, 0, 0, 0, 1,
+             0, 0, 0, 0, 0, 1,
+             0, 0, 0, 0, 0, 1,
+             0, 0, 0, 0, 1, 0), 6, 6, byrow = TRUE)
+```
+
+
+
+
+
+```{r}
+source('inst/model/model_mixed.R')
+
+Y <- Y_2
+X <- X_2
+
+cat(sem.model)
+```
+
+
+
+
+```{r}
+model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "svd")
+model$fit(infer = T, B = 100)
+estfc = model$parameterEstimates(standardized = T)
+
+modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "ml")
+modelml$fit(infer = T, tol = 1e-8)
+est_mlfc = modelml$parameterEstimates(standardized = T)
+```
+
+
+```{r}
+model$summary(standardized = T)
+```
+
+
+#### Comparison of estimates between SVD, ML FC and lavaan Factors
+
+```{r}
+print(merge_estimates(est_mlfc, estfc, lavaan_results))
+```
+
+
+
+#### ESTIMATES RESULTS
+
+
+
+```{r}
+print(model$get_estimate('psi'))
+```
+
+```{r}
+print(model$get_estimate('beta'))
+```
+
+
+
+```{r}
+print(model$get_estimate('gamma'))
+```
+
+
+
+```{r}
+print(model$get_estimate('lambda'))
+```
+
+
+
+```{r}
+est
+```
+
+
+## PoliticalDemocracy DATA
+
+```{r}
+
+get_dataset_config <- function(dataset_name, dataset = NULL) {
+
+  config <- DATASETS_CONFIG[[dataset_name]]
+  func <- get(config$config_func)
+
+  # Pour les datasets générés, on ne passe pas dataset en paramètre
+  if (config$is_generated) {
+    return(func())
+  } else {
+    return(func(dataset))
+  }
+}
 ```
 
 
@@ -63,77 +274,4 @@ svd_results$param
 
 ```{r}
 lavaan_results
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-source('inst/model/model_mixed.R')
-
-Y <- Y_2
-X <- X_2
-print(mode)
-print(C)
-cat(sem.model)
-```
-
-
-
-
-
-
-
-
-
-```{r}
-model <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "svd")
-model$fit(infer = T, B = 100)
-est = model$parameterEstimates(standardized = T)
-```
-
-
-```{r}
-model$summary(standardized = T)
-```
-
-
-
-
-```{r}
-print(model$get_estimate('psi'))
-```
-
-```{r}
-print(model$get_estimate('beta'))
-```
-
-
-
-```{r}
-print(model$get_estimate('gamma'))
-```
-
-
-
-```{r}
-print(model$get_estimate('lambda'))
-```
-
-
-
-```{r}
-est
 ```

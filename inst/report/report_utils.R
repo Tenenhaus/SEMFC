@@ -252,3 +252,33 @@ merge_estimates_with_lavaan <- function(ml_param, lavaan_param) {
 }
 
 
+merge_estimates <- function(ml_param, svd_param, lavaan_param) {
+  # Créer des clés de fusion basées sur lhs, op, rhs
+  ml_param$merge_key <- paste(ml_param$lhs, ml_param$op, ml_param$rhs, sep = "___")
+  svd_param$merge_key <- paste(svd_param$lhs, svd_param$op, svd_param$rhs, sep = "___")
+  lavaan_param$merge_key <- paste(lavaan_param$lhs, lavaan_param$op, lavaan_param$rhs, sep = "___")
+
+  # Garder seulement les colonnes nécessaires de lavaan (référence)
+  lavaan_subset <- lavaan_param[, c("merge_key", "lhs", "op", "rhs", "std.all")]
+  colnames(lavaan_subset)[colnames(lavaan_subset) == "std.all"] <- "std.all.lavaan"
+  lavaan_subset$std.all.lavaan <- round(lavaan_subset$std.all.lavaan, 3)
+
+  # Garder seulement les colonnes nécessaires de ML
+  ml_subset <- ml_param[, c("merge_key", "std.all")]
+  colnames(ml_subset)[colnames(ml_subset) == "std.all"] <- "std.all.ml"
+  ml_subset$std.all.ml <- round(ml_subset$std.all.ml, 3)
+
+  # Garder seulement les colonnes nécessaires de SVD
+  svd_subset <- svd_param[, c("merge_key", "std.all")]
+  colnames(svd_subset)[colnames(svd_subset) == "std.all"] <- "std.all.svd"
+  svd_subset$std.all.svd <- round(svd_subset$std.all.svd, 3)
+
+  # Fusionner par la clé avec all.x = TRUE pour garder l'ordre de lavaan
+  merged <- merge(lavaan_subset, ml_subset, by = "merge_key", all.x = TRUE, sort = FALSE)
+  merged <- merge(merged, svd_subset, by = "merge_key", all.x = TRUE, sort = FALSE)
+
+  # Garder seulement les colonnes utiles (sans la colonne différence)
+  merged <- merged[, c("lhs", "op", "rhs", "std.all.lavaan", "std.all.ml", "std.all.svd")]
+
+  return(merged)
+}
