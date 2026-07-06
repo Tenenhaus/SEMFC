@@ -22,6 +22,7 @@ library(devtools)
 load_all()
 library(MASS)
 library(mvtnorm)
+# remotes::install_github("yrosseel/lavaan")
 library(lavaan)
 ```
 
@@ -126,7 +127,7 @@ print(merge_estimates(est_ml, est, lavaan_results))
 source('inst/simulations/data_simulation_mixed.R')
 
 
-# set.seed(20091979)
+set.seed(20091979)
 N <- 300
 
 X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = FALSE)
@@ -159,7 +160,17 @@ X <- X_2
 cat(sem.model)
 ```
 
+```{r}
 
+
+lavaan_composite <- sem(sem.model,
+               data = X,
+                       estimator = "ML",
+                       likelihood = "wishart")
+
+lavaan_results_composite <- parameterEstimates(lavaan_composite, standardized = TRUE)
+
+```
 
 
 ```{r}
@@ -226,7 +237,7 @@ get_dataset_config <- function(dataset_name, dataset = NULL) {
   config <- DATASETS_CONFIG[[dataset_name]]
   func <- get(config$config_func)
 
-  # Pour les datasets générés, on ne passe pas dataset en paramètre
+
   if (config$is_generated) {
     return(func())
   } else {
