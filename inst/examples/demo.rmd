@@ -22,7 +22,7 @@ library(devtools)
 load_all()
 library(MASS)
 library(mvtnorm)
-# remotes::install_github("yrosseel/lavaan")
+remotes::install_github("yrosseel/lavaan")
 library(lavaan)
 ```
 
@@ -86,7 +86,7 @@ est_ml = modelml$parameterEstimates(standardized = T)
 
 
 ```{r}
-model$summary(standardized = T)
+modelml$summary(standardized = T)
 ```
 
 
@@ -99,7 +99,19 @@ lavaan_ml <- sem(sem.model,
                        likelihood = "wishart")
 
 lavaan_results <- parameterEstimates(lavaan_ml, standardized = TRUE)
+
+lavaan_ml
+
+
 ```
+
+
+
+```{r}
+lavInspect(lavaan_ml)
+```
+
+
 
 #### Comparison of estimates between ML and lavaan
 
@@ -182,6 +194,18 @@ modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "ml")
 modelml$fit(infer = T, tol = 1e-8)
 est_mlfc = modelml$parameterEstimates(standardized = T)
 ```
+
+```{r}
+print(merge_estimates_with_lavaan(est_mlfc, lavaan_results_composite))
+```
+
+
+
+```{r}
+print(merge_estimates(est_mlfc, estfc, lavaan_results_composite))
+```
+
+
 
 
 ```{r}

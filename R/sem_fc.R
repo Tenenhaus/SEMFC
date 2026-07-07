@@ -771,7 +771,7 @@ initialize = function(data, relation_matrix,
       var_MVs <- lapply(private$.data$data, function(x) diag(cov2(x, bias = private$.model$bias)))
       std_lambda <- mapply("/", private$.estimate$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
       private$.estimate$std_lambda <- std_lambda
-      std_omega <- mapply(function(Sjj, lambda_j) solve(Sjj) %*% lambda_j,
+      std_omega <- mapply(function(Sjj, lambda_j) solve(cov2cor(Sjj)) %*% lambda_j,
                          private$.data$S_diag_composites, std_lambda[private$.model$mode == "formative"],
                          SIMPLIFY = FALSE)
       names(std_omega) <- names(std_lambda[private$.model$mode == "formative"])

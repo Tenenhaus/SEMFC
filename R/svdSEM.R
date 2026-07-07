@@ -132,7 +132,7 @@ svdSEM <- function(A, C, scale = TRUE,
 
 
     for (j in which(mode == "formative")){
-        std_omega[[j]] <- solve(cov2(A[[j]], bias = bias))%*%std_lambda[[j]]
+        std_omega[[j]] <- solve(cor(A[[j]]))%*%std_lambda[[j]]
     }
     std_omega <- std_omega[!sapply(std_omega, is.null)]
 
