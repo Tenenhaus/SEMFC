@@ -429,6 +429,66 @@ compute_Hessian <- function(Sigma, J_vech) {
 
 
 
+########################################  Constraint #########################
+
+
+
+calcul_dh <- function(lambda_j, Sigma_jj, n_row, p_j, D_pj, n_total_cols, start_lam_j, start_theta_j) {
+
+
+  # 2. Blocs locaux
+  J_lambda <- 2 * t(lambda_j) %*% solve(Sigma_jj)
+
+  v_j <- solve(Sigma_jj)%*%lambda_j
+  J_cov <- -t(kronecker(v_j, v_j)) %*% D_pj
+
+  # 3. Indices de fin
+  idx_lam_end   <- start_lam_j + p_j - 1
+  idx_theta_end <- start_theta_j + n_row - 1
+
+  # 4. Création et insertion
+  J_Globale <- sparseMatrix(i = integer(0), j = integer(0), x = numeric(0), dims = c(1, n_total_cols))
+  J_Globale[, start_lam_j:idx_lam_end] <- J_lambda
+  J_Globale[, start_theta_j:idx_theta_end] <- J_cov
+
+  return(J_Globale)
+}
+
+
+compute_gradient_constraint <- function(lambda, Sigma_cov, block_sizes, lengths_theta, mode) {
+  n_total_cols <- sum(lengths_theta)
+  offset_theta_global <- tail(cumsum(lengths_theta), 2)[1]
+
+  # sizes of the covariance parameters for each block of indicators
+  lengths_values_cov <- block_sizes
+  idx_form <- mode == "formative"
+  lengths_values_cov[idx_form] <- (block_sizes[idx_form]^2 + block_sizes[idx_form]) / 2
+
+  # Pré-calcul EXHAUSTIF de tous les index de départ pour éviter les cumsum dans la boucle
+  # On ajoute un 0 au début du cumsum pour avoir l'index "avant" le bloc courant
+  starts_lambda <- cumsum(c(0, block_sizes))
+  starts_theta  <- offset_theta_global + cumsum(c(0, lengths_values_cov))
+
+
+  lambda_form <- lambda[mode == "formative"]
+  lengths_values_cov_form <- lengths_values_cov[mode == "formative"]
+  block_sizes_form <- block_sizes[mode == "formative"]
+  starts_lambda_form <- starts_lambda[mode == "formative"]
+
+  list_matrix <- Map(function(j) {
+    calcul_dh(lambda_form[[j]], Sigma_cov[[j]], lengths_values_cov_form[j], block_sizes_form[j],
+              duplication_matrix(block_sizes_form[j]), n_total_cols,
+              starts_lambda_form[j] + 1, starts_theta[j] + 1)
+  }, seq_along(block_sizes_form))
+
+  return(do.call(rbind, list_matrix))
+
+
+}
+
+
+
+
 
 
 

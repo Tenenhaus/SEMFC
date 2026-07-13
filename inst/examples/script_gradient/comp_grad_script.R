@@ -40,9 +40,10 @@ C = solve(diag(2) - model$get_estimate('beta'))
 PHI = model$get_estimate('p_implied')[1:4, 1:4]
 PSI = model$get_estimate('psi')
 PHI_endo = model$get_estimate('p_implied')[5:6, 5:6]
+S_composites = model$get_estimate('S_composites')
 
 
-
+compute_gradient_constraint(lambda, S_composites, block_sizes, lengths_theta, mode)
 
 
 system.time({
