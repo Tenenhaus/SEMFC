@@ -37,7 +37,7 @@ create_ecsi_full_config <- function(dataset) {
     PERQ  =~ PERQ1 + PERQ2 + PERQ3 + PERQ4 + PERQ5 + PERQ6 + PERQ7
     PERV  =~ PERV1 + PERV2
     CUSA  =~ CUSA1 + CUSA2 + CUSA3
-    COMP =~ CUSCO
+    COMP <~ CUSCO
     CUSL  =~ CUSL1 + CUSL2 + CUSL3
 
     # structural model
