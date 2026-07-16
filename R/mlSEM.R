@@ -40,6 +40,7 @@ mlSEM <- function (init, S, model, tol = 1e-08){
   grad <- function(x){ return(grad_F1(x, S, model)) }
   h_eq <- function(x){ return(heq(x, S, model)) }
   grad_h_eq <- function(x){ return(grad_heq(x, S, model)) }
+  hess <- function(x){ return(hess_F1(x, S, model)) }
 
   if(r !=0){
     result <- nloptr(
@@ -51,19 +52,23 @@ mlSEM <- function (init, S, model, tol = 1e-08){
       opts = list("algorithm"="NLOPT_LD_SLSQP",
                   'xtol_rel' = tol)
     )
+    x <- result$solution
   }
   else{
-    result <- nloptr(
-      x0=init,
-      eval_f=f,
-      eval_grad_f=grad,
-      opts = list("algorithm"="NLOPT_LD_LBFGS",
-                  'xtol_rel' = tol)
+    result <- nlminb(
+      start = init,
+      objective = f,
+      gradient = grad,
+      hessian = hess,
+      lower = -Inf,
+      upper = Inf,
+      control = list(x.tol = tol)
     )
+    x <- result$par
 
   }
 
-  return(result)
+  return(x)
 
 
 

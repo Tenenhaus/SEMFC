@@ -773,7 +773,7 @@ initialize = function(data, relation_matrix,
       }
 
       ml_sol <- mlSEM(initial_params, private$.data$cov_S, private$.model, tol)
-      theta_ml <- ml_sol$solution
+      theta_ml <- ml_sol
       private$.estimate <- lvm_ml(x = theta_ml, model = private$.model, jac = F)
       private$.estimate$T_LS <- d_LS(private$.data$cov_S, private$.estimate$sigma_implied)
 

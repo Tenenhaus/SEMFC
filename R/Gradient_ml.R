@@ -114,3 +114,20 @@ grad_F1 <- function (x, S, model) {
 
   return(as.vector(Gradient))
 }
+
+
+hess_F1 <- function(x, S, model) {
+  est <- lvm_ml(x, model, jac = FALSE)
+  R <- est$p_implied
+  lambda <- est$lambda
+  BETA <- est$beta
+  GAMMA <- est$gamma
+  Sigma <- est$sigma_implied
+
+  J_Sigma_theta <- compute_J_Sigma_theta(model$block_sizes, model$lengths_theta, model$mode,model$dag,
+                                         R, model$relation_matrix, lambda, BETA, GAMMA)
+
+  H <- compute_Hessian(Sigma, J_Sigma_theta)
+
+  return(as.matrix(H))
+}
