@@ -19,7 +19,19 @@ create_russett_config <- function(dataset) {
   mode <- rep("formative", length(A))
   names(mode) <- names(A)
 
-  return(list(data = A, relation_matrix = C, mode = mode))
+
+
+  sem <- '
+  # 1. Modèle de mesure (Variables latentes)
+  AgrIneq <~ gini + farm + rent
+  IndDev  <~ gnpr + labo
+  PolInst <~ inst + ecks + death + demostab + dictator
+
+  # 2. Modèle structurel (Régressions)
+  PolInst ~ AgrIneq + IndDev
+'
+
+  return(list(data = A, relation_matrix = C, mode = mode, sem = sem))
 }
 
 
