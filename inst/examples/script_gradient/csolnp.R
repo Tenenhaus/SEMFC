@@ -2,6 +2,7 @@
 
 devtools::load_all()
 
+library('nloptr')
 
 prob <- solnp_problem_suite(number = 10)
 sol <- csolnp(pars = prob$start, fn = prob$fn, gr = prob$gr, eq = prob$eq_fn, eq_b = prob$eq_b,
@@ -52,12 +53,12 @@ f <- function (x) {
 }
 
 eq_fin <- function (x) {
-  return(heq1(x, S, model))
+  return(heq(x, S, model))
 }
 
 
 
-grad <- function (x) {
+grad <- function (x, S, model) {
   est <- lvm_ml(x, model, jac = FALSE)
   R <- est$p_implied
   lambda <- est$lambda
@@ -73,7 +74,7 @@ grad <- function (x) {
   return(as.vector(Gradient))
 }
 
-grad_eq <- function(x) {
+grad_heq <- function(x, S, model) {
   est <- lvm_ml(x, model, jac = FALSE)
   lambda <- est$lambda
   S_composites <- est$S_composites
@@ -88,7 +89,7 @@ grad_eq <- function(x) {
 
 
 system.time({
-sol <- csolnp(pars = init, fn =f ,eq_fn =eq_fin, gr = grad, eq_b = rep(0,r), S = S, model = model, lower = -10*abs(init), upper = 10*abs(init),
+sol <- csolnp(pars = init, fn =f ,eq_fn =eq_fin, gr = grad, eq_b = rep(0,r), eq_jac = grad_eq, lower = -10*abs(init), upper = 10*abs(init),
               control = list(trace = 0, tol = tol), use_r_version = FALSE)
 })
 
@@ -107,7 +108,22 @@ res0 <- nloptr(x0=init,
         opts = list("algorithm"="NLOPT_LD_SLSQP", 'xtol_rel' = 1e-8))
 
   })
-print(res0)
+
+
+system.time({
+res0bis <- nloptr(x0=init,
+        eval_f=F1,
+        eval_grad_f=grad,
+        eval_g_eq = heq,
+        eval_jac_g_eq = grad_eq,
+        opts = list("algorithm"="NLOPT_LD_SLSQP", 'xtol_rel' = 1e-8),
+        S = S, model = model)
+
+  })
+
+
+
+
 
 system.time({
 res1 <- nloptr(x0=init,
@@ -116,12 +132,77 @@ res1 <- nloptr(x0=init,
         opts = list("algorithm"="NLOPT_GN_ISRES", 'xtol_rel' = 1e-8))
 
 })
-print(res0)
+
+
+system.time({
+res_slsqp <- nloptr(x0 = init,
+                    eval_f = f,
+                    eval_grad_f = grad,
+                    eval_g_eq = eq_fin,
+                    eval_jac_g_eq = grad_eq,
+                    opts = list("algorithm" = "NLOPT_LD_SLSQP",
+                                "xtol_rel" = 1e-6,
+                                "maxeval" = 1000))
+})
+
+# On doit définir un sous-algorithme pour l'optimisation interne
+local_opts <- list("algorithm" = "NLOPT_LD_LBFGS",
+                   "xtol_rel"  = 1.0e-6)
+system.time({
+res_auglag <- nloptr(x0 = init,
+                     eval_f = f,
+                     eval_grad_f = grad,
+                     eval_g_eq = eq_fin,
+                     eval_jac_g_eq = grad_eq,
+                     opts = list("algorithm" = "NLOPT_LD_AUGLAG_EQ", # EQ = spécifique pour égalités
+                                 "xtol_rel" = 1.0e-6,
+                                 "maxeval" = 1000,
+                                 "local_opts" = local_opts)) # Ajout du sous-algorithme
+})
 
 
 
 
+library(alabama)
+
+# Exécution de l'optimisation
+res_alabama <- auglag(
+  par = init,               # Point de départ (équivalent à x0)
+  fn = f,                   # Fonction objectif (équivalent à eval_f)
+  gr = grad,                # Gradient objectif (équivalent à eval_grad_f)
+  heq = eq_fin,             # Contraintes d'égalité (équivalent à eval_g_eq)
+  heq.jac = grad_eq,        # Jacobien des contraintes (équivalent à eval_jac_g_eq)
+  control.outer = list(
+    eps = 1e-8,             # Tolérance pour la convergence
+    trace = FALSE            # TRUE pour voir la progression s'afficher
+  )
+)
+system.time({
+res_constr <- constrOptim.nl(
+  par = init,                 # Votre point de départ
+  fn = f,                     # Votre fonction objectif
+  heq = eq_fin,               # Vos contraintes d'égalité (h(x) = 0)
+  control.outer = list(eps = 1e-8, trace = TRUE) # Tolérance et affichage
+)
+})
 
 round(res0$solution - res1$solution, 3)
 
+round(result$pars - res_alabama$par, 3)
+round(result$pars - res_constr$par, 3)
+
+round(res_alabama$par - res_constr$par, 3)
+round(res_auglag$solution - res_constr$par, 3)
+
 round(result$pars -res0$solution, 3)
+
+
+round(result$pars -res_slsqp$solution, 3)
+
+
+round(res0$solution - res_slsqp$solution, 3)
+
+round(res_auglag$solution - res_slsqp$solution, 3)
+
+
+round(result$pars -sol$pars, 3)

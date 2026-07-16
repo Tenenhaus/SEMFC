@@ -135,3 +135,45 @@ heq1 <- function (x, S, model){
   return(h)
 
 }
+
+
+
+heq <- function (x, S, model){
+
+  block_sizes <- model$block_sizes
+  mode <- model$mode
+  r <- sum(mode == "formative")
+
+  loadings <- get_loadings(x, block_sizes)
+  loadings_formative <- loadings[mode == "formative"]
+  Lambda_formative <- Matrix::bdiag(loadings_formative)
+
+
+
+ # list of lengths: diagonal covariances for reflective blocks,
+ # or lower-triangular covariance values for formative blocks
+  lengths_values_cov <- block_sizes
+  lengths_values_cov[mode == "formative"] <- (block_sizes[mode == "formative"]^2 + block_sizes[mode == "formative"]) / 2
+  # number of parameters for covariance
+  total_cov_parameter <- sum(lengths_values_cov)
+    # the coefficient are stocked at the end of x
+  initial_start_index_cov <- length(x) - total_cov_parameter +1
+  end_endex_cov <- initial_start_index_cov + total_cov_parameter - 1
+
+  # part of the vector corresponding to covariance blocks
+  extracted_parameters_cov <- x[initial_start_index_cov:end_endex_cov]
+  # list of parameters corresponding to each covariance bloc
+  list_cov <- split(extracted_parameters_cov,
+                    rep(seq_along(lengths_values_cov), lengths_values_cov))
+
+  # list of formative covariance matrices
+  S_composite <- lapply(list_cov[mode == "formative"], build_formative_S_diag)
+
+
+  inv_Sigma_formative <- bdiag(lapply(S_composite, solve))
+
+  h <- diag(t(Lambda_formative) %*% inv_Sigma_formative %*% Lambda_formative) - rep(1, r)
+
+  return(h)
+
+}

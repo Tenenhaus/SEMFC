@@ -34,11 +34,6 @@ jac_Sigma_R <- function(Lambda, L_p, D_bar_J){
 
 
 
-
-
-
-
-
 ####################################################  Jac Lambda / theta #############################################
 
 
@@ -436,22 +431,21 @@ compute_Hessian <- function(Sigma, J_vech) {
 calcul_dh <- function(lambda_j, Sigma_jj, n_row, p_j, D_pj, n_total_cols, start_lam_j, start_theta_j) {
 
 
-  # 2. Blocs locaux
   J_lambda <- 2 * t(lambda_j) %*% solve(Sigma_jj)
 
   v_j <- solve(Sigma_jj)%*%lambda_j
   J_cov <- -t(kronecker(v_j, v_j)) %*% D_pj
 
-  # 3. Indices de fin
+
   idx_lam_end   <- start_lam_j + p_j - 1
   idx_theta_end <- start_theta_j + n_row - 1
 
-  # 4. Création et insertion
-  J_Globale <- sparseMatrix(i = integer(0), j = integer(0), x = numeric(0), dims = c(1, n_total_cols))
-  J_Globale[, start_lam_j:idx_lam_end] <- J_lambda
-  J_Globale[, start_theta_j:idx_theta_end] <- J_cov
 
-  return(J_Globale)
+  J_row <- sparseMatrix(i = integer(0), j = integer(0), x = numeric(0), dims = c(1, n_total_cols))
+  J_row[, start_lam_j:idx_lam_end] <- J_lambda
+  J_row[, start_theta_j:idx_theta_end] <- J_cov
+
+  return(J_row)
 }
 
 
