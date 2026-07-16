@@ -468,11 +468,12 @@ compute_gradient_constraint <- function(lambda, Sigma_cov, block_sizes, lengths_
   lengths_values_cov_form <- lengths_values_cov[mode == "formative"]
   block_sizes_form <- block_sizes[mode == "formative"]
   starts_lambda_form <- starts_lambda[mode == "formative"]
+  starts_theta_form <- starts_theta[mode == "formative"]
 
   list_matrix <- Map(function(j) {
     calcul_dh(lambda_form[[j]], Sigma_cov[[j]], lengths_values_cov_form[j], block_sizes_form[j],
               duplication_matrix(block_sizes_form[j]), n_total_cols,
-              starts_lambda_form[j] + 1, starts_theta[j] + 1)
+              starts_lambda_form[j] + 1, starts_theta_form[j] + 1)
   }, seq_along(block_sizes_form))
 
   return(do.call(rbind, list_matrix))

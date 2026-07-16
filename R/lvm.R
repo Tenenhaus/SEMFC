@@ -28,120 +28,39 @@
 #'
 #' @keywords internal
 lvm <- function(R, C){
-  gr = igraph::graph_from_adjacency_matrix(C)
-  which_exo_endo = ind_exo_endo(C)
-  rownames(C) = colnames(C) = rownames(R)
-  xx = list()
-  xy = list()
-  bg = list()
-  b = list()
-  g = list()
-  tC = t(C)
-  H = which_exo_endo$ind_exo
-  J = which_exo_endo$ind_endo
-  
-  BETA = as.matrix(tC[J, J, drop = F])
-  GAMMA = as.matrix(tC[J, H, drop = F])
-  PSI = matrix(0, NCOL(BETA), NCOL(BETA))
+  gr <- igraph::graph_from_adjacency_matrix(C)
+  which_exo_endo <- ind_exo_endo(C)
+  rownames(C) <- colnames(C) <- rownames(R)
 
-  for (i in 1:length(which_exo_endo$Ji)){
-    # les endo lie a l'endo i
-    Ji = which_exo_endo$Ji[[i]]
-    # les exos lies a l'endo i
-    Hi = which_exo_endo$Hi[[i]]
-    l_j = length(Ji)
-    l_h = length(Hi)
-    l = length(c(Hi, Ji))
-    
-    config1 = any(Ji != 0) & any(Hi != 0)
-    config2 = any(Ji != 0) & any(Hi == 0)
-    config3 = any(Ji == 0) & any(Hi != 0)
-    config4 = any(Ji == 0) & any(Hi == 0)
-    
-    if(!igraph::is_dag(gr) & config1){
-      xx = matrix(NA, l, l)    
-      xx[1:l_j, 1:l_j] = R[Ji, H]%*%solve(R[H, H])%*%R[H, Ji]
-      xx[1:l_j, (l_j+1):l] = R[Ji, Hi]
-      xx[(l_j+1):l, 1:l_j] = R[Hi, Ji]
-      xx[(l_j+1):l, (l_j+1):l] = R[Hi, Hi]
-      
-      xy = c(R[Ji, H]%*%solve(R[H, H])%*%R[H, J[[i]]], R[Hi, J[[i]]])
-      bg[[i]] = solve(xx)%*%xy
-    }
-    
-    if(!igraph::is_dag(gr) & config2){
-      xx = R[Ji, H]%*%solve(R[H, H])%*%R[H, Ji]
-      xy = R[Ji, H]%*%solve(R[H, H])%*%R[H, J[[i]]]
-      bg[[i]] = solve(xx)%*%xy
-      
-    }
-    
-    if(!igraph::is_dag(gr) & config3){
-      xx = R[Hi, Hi]
-      xy = R[Hi, J[[i]]]
-      bg[[i]] = solve(xx)%*%xy
-    }
-    
-    if(!igraph::is_dag(gr) & config4){
-      print(paste("the ", i, "th structural model is not properly specified", 
-                  sep = "")
-            )
-      break 
-    }
-    
-    if(igraph::is_dag(gr) & config1){
-    #   cov vect(endo-i,exo-i)
-    xx = matrix(NA, l, l)
-    xx[1:l_j, 1:l_j] = R[Ji, Ji]
-    xx[1:l_j, (l_j+1):l] = R[Ji, Hi]
-    xx[(l_j+1):l, 1:l_j] = R[Hi, Ji]
-    xx[(l_j+1):l, (l_j+1):l] = R[Hi, Hi] 
-    xy = c(R[Ji, J[i]], R[Hi, J[i]])
-    bg[[i]] = solve(xx)%*%xy
-    }
-    
-    if(igraph::is_dag(gr) & config2){
-      
-      xx = R[Ji, Ji]
-      xy = R[Ji, J[i]]
-      bg[[i]] = solve(xx)%*%xy
-    }
-    
-    if(igraph::is_dag(gr) & config3){
-      xx = R[Hi, Hi] 
-      xy = R[Hi, J[i]]
-      bg[[i]] = solve(xx)%*%xy
-    }
-    
+  H <- which_exo_endo$ind_exo
+  J <- which_exo_endo$ind_endo
 
-    if(igraph::is_dag(gr) & config4){
-      print(paste("the ", i, "th structural model is not properly specified", 
-                  sep = "")
-      )
-      break 
-    }
 
-    ifelse(Ji == 0, 
-           yes = {b[[i]] = 0},
-           no = {b[[i]] = list(bg[[i]][1:length(Ji)])} 
-    )
-    
-    ifelse(Hi == 0, 
-      yes = {g[[i]] = 0},
-      no = {ifelse(Ji == 0,
-            yes = {g[[i]] = list(bg[[i]])},
-            no = {g[[i]] = list(bg[[i]][seq(length(bg[[i]]))[-seq(length(Ji))]])})
-           })
-    
-    BETA[i, ] = replace(BETA[i, ], BETA[i, ] == 1, b[[i]][[1]])
-    GAMMA[i, ] = replace(GAMMA[i, ], GAMMA[i , ] == 1, g[[i]][[1]])
-    
-
+  if(any(colSums(C[, J, drop = FALSE]) == 0)){
+    bad_idx <- which(colSums(C[, J, drop = FALSE]) == 0)
+    stop(paste("The structural model is not properly specified for endo variable(s):",
+               paste(colnames(C[, J, drop = FALSE])[bad_idx], collapse = ", ")))
   }
-
-  PI = solve(diag(NROW(BETA))- BETA)
+  R_proj <- R
   if(!igraph::is_dag(gr)){
-    PSI = (diag(NROW(BETA))- BETA)%*%R[J,J]%*%t(diag(NROW(BETA))- BETA) -
+    R_proj <-  R[, H, drop = F] %*% solve(R[H, H, drop = F]) %*% t(R[, H, drop = F])
+  }
+  I <- diag(length(J))
+  S <- C[, J, drop = F]
+  s <- as.vector(S)
+  S <- diag(ncol(C)*length(J))[, s == 1]
+  gb_vec <- solve(t(S)%*%kronecker(I, R_proj)%*%S)%*%(t(S)%*%as.vector(R_proj[, J, drop = F]))
+
+  GAMMA_BETA <- matrix(S%*%gb_vec, ncol(C), length(J))
+  dimnames(GAMMA_BETA) <- dimnames(C[, J, drop = F])
+
+  BETA <- t(GAMMA_BETA[J, , drop = F])
+  GAMMA <- t(GAMMA_BETA[H, , drop = F])
+
+
+  PI <- solve(diag(NROW(BETA))- BETA)
+  if(!igraph::is_dag(gr)){
+    PSI <- (diag(NROW(BETA))- BETA)%*%R[J,J]%*%t(diag(NROW(BETA))- BETA) -
       GAMMA%*%R[H,H]%*%t(GAMMA)
   } else {
     D <- diag(diag(ncol(BETA)) - (PI%*%GAMMA%*%R[H, H]%*%t(GAMMA)%*%t(PI)))
@@ -153,36 +72,38 @@ lvm <- function(R, C){
     }
 
   }
-  dimnames(PSI) <- list(
-    paste0(".", rownames(BETA)),
-    paste0(".", rownames(BETA))
-  )
 
-  R2 = 1-diag(PSI)
 
-  R_LVM = matrix(0, NCOL(C), NCOL(C))
-  
+  dimnames(PSI) <- dimnames(BETA)
+
+  R2 <- 1-diag(PSI)
+
+  R_LVM <- matrix(0, NCOL(C), NCOL(C))
+
   if(!igraph::is_dag(gr)){
-    R_LVM[H, H] = R[H, H]
-    R_LVM[J, J] = R[J, J]
-    R_LVM[H, J] = R[H, H]%*%t(GAMMA)%*%t(PI)
-    R_LVM[J, H] = PI%*%GAMMA%*%R[H, H]
+    R_LVM[H, H] <- R[H, H]
+    R_LVM[J, J] <- R[J, J]
+    R_LVM[H, J] <- R[H, H]%*%t(GAMMA)%*%t(PI)
+    R_LVM[J, H] <- PI%*%GAMMA%*%R[H, H]
   }else{
-    R_LVM[H, H] = R[H, H]
-    R_LVM[H, J] = R[H, H]%*%t(GAMMA)%*%t(PI)
-    R_LVM[J, H] = PI%*%GAMMA%*%R[H, H]
-    R_LVM[J, J] = PI%*%(GAMMA%*%R[H, H]%*%t(GAMMA) + PSI)%*%t(PI)
+    R_LVM[H, H] <- R[H, H]
+    R_LVM[H, J] <- R[H, H]%*%t(GAMMA)%*%t(PI)
+    R_LVM[J, H] <- PI%*%GAMMA%*%R[H, H]
+    R_LVM[J, J] <- PI%*%(GAMMA%*%R[H, H]%*%t(GAMMA) + PSI)%*%t(PI)
   }
 
-  dimnames(R_LVM) <- list(rownames(C), rownames(C))
-  
+  dimnames(R_LVM) <- dimnames(C)
 
-  return(list(gr = gr, 
-              BETA = BETA, GAMMA = GAMMA, 
-              PSI = PSI, 
+
+  return(list(gr = gr,
+              BETA = BETA, GAMMA = GAMMA,
+              PSI = PSI,
               R2 = R2,
               P_EXO = R_LVM[H, H],
               P_ENDO = R_LVM[J, J],
               R_LVM = R_LVM))
+
+
+
 }
 
