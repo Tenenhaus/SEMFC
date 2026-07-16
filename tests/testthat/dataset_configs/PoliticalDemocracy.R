@@ -19,7 +19,20 @@ create_politicaldemocracy_config <- function(dataset) {
   mode <- rep("reflective", length(A))
   names(mode) <- names(A)
 
-  return(list(data = A, relation_matrix = C, mode = mode))
+  sem <-  '
+  # latent variable definitions
+      ind60 =~ x1+x2+x3
+      dem60 =~ y1+y2+y3+y4
+      dem65 =~ y5+y6+y7+y8
+
+
+    # Regressions
+      dem65 ~ dem60 + ind60
+      dem60 ~ ind60'
+
+
+
+  return(list(data = A, relation_matrix = C, mode = mode, sem = sem))
 }
 
 
