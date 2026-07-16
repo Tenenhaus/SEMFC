@@ -36,17 +36,30 @@ mlSEM <- function (init, S, model, tol = 1e-08){
   # number of formative blocks
   r <- sum(mode == "formative")
 
-  if(r !=0){
+  f <- function (x) { return(F1(x, S, model)) }
+  grad <- function(x){ return(grad_F1(x, S, model)) }
+  h_eq <- function(x){ return(heq(x, S, model)) }
+  grad_h_eq <- function(x){ return(grad_heq(x, S, model)) }
 
-  result <- solnp(pars = init,
-                  fun=F1, eqfun=heq1,
-                  eqB = rep(0,r), S = S, model = model,
-                  control = list(trace = 0, tol = tol))
+  if(r !=0){
+    result <- nloptr(
+      x0=init,
+      eval_f=f,
+      eval_grad_f=grad,
+      eval_g_eq = h_eq,
+      eval_jac_g_eq = grad_h_eq,
+      opts = list("algorithm"="NLOPT_LD_SLSQP",
+                  'xtol_rel' = tol)
+    )
   }
   else{
-    result <- solnp(pars = init,
-                    fun=F1, S = S, model = model,
-                    control = list(trace = 0, tol = tol))
+    result <- nloptr(
+      x0=init,
+      eval_f=f,
+      eval_grad_f=grad,
+      opts = list("algorithm"="NLOPT_LD_LBFGS",
+                  'xtol_rel' = tol)
+    )
 
   }
 

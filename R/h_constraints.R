@@ -177,3 +177,15 @@ heq <- function (x, S, model){
   return(h)
 
 }
+
+
+grad_heq <- function(x, S, model) {
+  est <- lvm_ml(x, model, jac = FALSE)
+  lambda <- est$lambda
+  S_composites <- est$S_composites
+
+
+  J_H <- compute_gradient_constraint(lambda, S_composites, model$block_sizes, model$lengths_theta, model$mode)
+
+  return(as.matrix(J_H))
+}

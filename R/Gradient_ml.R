@@ -99,16 +99,18 @@ compute_J_Sigma_theta <- function(block_sizes, lengths_theta, mode, dag, R,
 
 
 
-compute_gradient_hessian <- function(lambda, block_sizes, lengths_theta, mode, R,
-                                   rel_matrix, m_exo, Phi_exo, BETA, GAMMA, SIGMA, S) {
-  # Compute J_Sigma_theta
-  J_Sigma_theta <- compute_J_Sigma_theta(block_sizes, lengths_theta, mode,
-                                         R, rel_matrix, m_exo, lambda, Phi_exo, BETA, GAMMA)
+grad_F1 <- function (x, S, model) {
+  est <- lvm_ml(x, model, jac = FALSE)
+  R <- est$p_implied
+  lambda <- est$lambda
+  BETA <- est$beta
+  GAMMA <- est$gamma
+  Sigma <- est$sigma_implied
+
+  J_Sigma_theta <- compute_J_Sigma_theta(model$block_sizes, model$lengths_theta, model$mode,model$dag,
+                                         R, model$relation_matrix, lambda, BETA, GAMMA)
   # Compute Gradient
   Gradient <- compute_gradient(Sigma, S, J_Sigma_theta)
-  # Compute Hessian
-  H <- compute_Hessian(SIGMA, J_Sigma_theta)
 
-  return(list(Gradient = Gradient, Hessian = H))
-
+  return(as.vector(Gradient))
 }

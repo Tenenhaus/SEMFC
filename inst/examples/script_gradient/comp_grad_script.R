@@ -177,11 +177,18 @@ theta_final <- theta_os
 theta_final[1:12] <- unlist(loadings_final_form)
 
 
-
+system.time({
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode, estimator = "ml")
-modelml$fit(infer = F)
-
+modelml$fit(infer = T)
+})
 theta_ml = modelml$get_estimate('theta')
 
 round(theta_os - theta_ml, 3)
 round(theta_os - theta_svd, 3)
+
+
+
+set.seed(27)
+source('inst/model/model_reflective.R')
+Y <- Y_2
+X <- X_2

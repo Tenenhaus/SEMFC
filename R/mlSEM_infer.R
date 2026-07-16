@@ -21,31 +21,11 @@
 #'
 #' @keywords internal
 information_matrix <- function(x, model){
-  JAC <- numDeriv::jacobian(lvm_ml, x = x, model = model, jac = TRUE)
-  full_jac <- sapply(1:NCOL(JAC),
-                        function(col){
-                          ds_dt <- matrix(0, sum(model$block_sizes), sum(model$block_sizes))
-                          ds_dt[upper.tri(ds_dt, diag = T)] <- JAC[, col]
-                          ds_dt <- ds_dt + t(ds_dt) - diag(diag(ds_dt))
-                        }, simplify = FALSE
-      )
-
-  nb_param <- length(x)
-  Sinv <- solve(lvm_ml(x = x, model = model, jac = F)$sigma_implied)
-  Sinv_full_jac <- lapply(full_jac, function(fj) as.matrix(Sinv %*% fj))
-  I_ij <- function(i, j) {
-    0.5 * sum(diag(Sinv_full_jac[[i]] %*% Sinv_full_jac[[j]]))
-  }
-  # Generate only indices of the upper triangular part
-  index_upper <- which(upper.tri(matrix(0, nrow = nb_param, ncol = nb_param), diag = TRUE), arr.ind = TRUE)
-
-  # Calculate only the elements of the upper triangular part
-  I_upper <- mapply(I_ij, index_upper[, "row"], index_upper[, "col"])
-
-  I <- matrix(0, nrow = nb_param, ncol = nb_param)
-  I[upper.tri(I, diag = TRUE)] <- I_upper
-  I <- I + t(I) - diag(diag(I))
-
+  est <- lvm_ml(x, model, jac = FALSE)
+  J_Sigma_theta <- compute_J_Sigma_theta(model$block_sizes, model$lengths_theta, model$mode,model$dag,
+                                         est$p_implied, model$relation_matrix, est$lambda, est$beta, est$gamma)
+  H <- compute_Hessian(est$sigma_implied, J_Sigma_theta)
+  I <- 0.5 * H
   return(I)
 }
 
@@ -106,15 +86,15 @@ P_ml <- function(x, S, model){
   I <- information_matrix(x, model)
   t <- nrow(I)
   r <- length(mode[mode=='formative'])
-  H <- matrix(0, t, r)
+  H <- matrix(0, r, t)
   if (r>0){
-    H  <- Jac_constraints(x, S, model)
+    H  <- grad_heq(x, S, model)
   }
 
 
 
-  M <- rbind(cbind(I+H%*%t(H), H),
-             cbind(t(H), matrix(0, r, r)))
+  M <- rbind(cbind(I+t(H)%*%H, t(H)),
+             cbind(H, matrix(0, r, r)))
 
   invM <- tryCatch(
     solve(M),
@@ -486,73 +466,6 @@ vcov_psi <- function(Gamma, Beta, P_endo, P_exo, Psi, which_exo_endo, C, lengths
   return(vcov_psi)
 }
 
-
-
-
-duplication_matrix <- function(P) {
-
-  n_vech <- P * (P + 1) / 2
-  mat_index <- matrix(0, nrow = P, ncol = P)
-  mat_index[lower.tri(mat_index, diag = TRUE)] <- 1:n_vech
-  mat_index[upper.tri(mat_index)] <- t(mat_index)[upper.tri(mat_index)]
-  index_col <- as.vector(mat_index)
-  D_P <- sparseMatrix(
-    i = 1:(P^2),
-    j = index_col,
-    x = 1,
-    dims = c(P^2, n_vech)
-  )
-
-  return(D_P)
-}
-
-
-correlation_duplication_matrix <- function(n, D_n = duplication_matrix(n)) {
-
-  # we remove the columns corresponding to the diagonal elements in vech() to get the correlation duplication matrix
-  # Direct computation of the indices of the diagonal elements in vech() for a matrix of size n x n
-  j <- 1:n
-  indices_diag <- 1 + (j - 1) * n - (j - 1) * (j - 2) / 2
-  return(D_n[, -indices_diag, drop = FALSE])
-}
-
-
-
-commutation_matrix <- function(m, n = m) {
-  mn <- m * n
-  index_col <- as.vector(t(matrix(1:mn, nrow = m, ncol = n)))
-  K_mn <- sparseMatrix(
-    i = 1:mn,
-    j = index_col,
-    x = 1,
-    dims = c(mn, mn)
-  )
-  return(K_mn)
-}
-
-diagonal_extraction_matrix <- function(m) {
-  L_D <- sparseMatrix(
-    i = 1:m,
-    j = seq(from = 1, to = m^2, by = m + 1),
-    x = 1,
-    dims = c(m, m^2)
-  )
-  return(L_D)
-}
-
-elimination_matrix<- function(m) {
-
-  nb_vech <- m * (m + 1) / 2
-  mat_index <- matrix(1:(m^2), nrow = m, ncol = m)
-  idx_keep <- mat_index[lower.tri(mat_index, diag = TRUE)]
-  L_m <- sparseMatrix(
-    i = 1:nb_vech,
-    j = idx_keep,
-    x = 1,
-    dims = c(nb_vech, m^2)
-  )
-  return(L_m)
-}
 
 
 

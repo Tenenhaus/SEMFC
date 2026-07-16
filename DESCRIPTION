@@ -20,7 +20,8 @@ Imports:
     MASS,
     Rsolnp,
     numDeriv,
-    pbapply
+    pbapply,
+    nloptr
 Depends:
     R (>= 3.5)
 LazyData: true

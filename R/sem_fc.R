@@ -578,7 +578,12 @@ initialize = function(data, relation_matrix,
 
     get_model = function(){
       return(private$.model)
+    },
+
+    get_data = function(){
+      return(private$.data)
     }
+
   ),
 
   private = list(
@@ -768,7 +773,7 @@ initialize = function(data, relation_matrix,
       }
 
       ml_sol <- mlSEM(initial_params, private$.data$cov_S, private$.model, tol)
-      theta_ml <- ml_sol$pars
+      theta_ml <- ml_sol$solution
       private$.estimate <- lvm_ml(x = theta_ml, model = private$.model, jac = F)
       private$.estimate$T_LS <- d_LS(private$.data$cov_S, private$.estimate$sigma_implied)
 
