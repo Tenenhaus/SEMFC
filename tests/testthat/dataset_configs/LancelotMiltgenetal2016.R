@@ -21,7 +21,18 @@ create_lancelot_config <- function(dataset) {
   mode <- rep("reflective", length(A))
   names(mode) <- names(A)
 
-  return(list(data = A, relation_matrix = C, mode = mode))
+  sem <- '
+  Trust  =~ trust1 + trust2
+  PrCon  =~ privcon1 + privcon2 + privcon3 + privcon4
+  Risk   =~ risk1 + risk2 + risk3
+  Intent =~ intent1 + intent2
+
+  Trust  ~ PrCon
+  Risk   ~ Trust + PrCon
+  Intent ~ Trust + PrCon + Risk
+'
+
+  return(list(data = A, relation_matrix = C, mode = mode, sem = sem))
 }
 
 

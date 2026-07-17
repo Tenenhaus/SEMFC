@@ -21,5 +21,17 @@ create_itflex_config <- function(dataset) {
   mode <- rep("formative", length(A))
   names(mode) <- names(A)
 
-  return(list(data = A, relation_matrix = C, mode = mode))
+  sem <- '
+  ITComp <~ ITCOMP1 + ITCOMP2 + ITCOMP3 + ITCOMP4
+  Modul  <~ MOD1 + MOD2 + MOD3 + MOD4
+  ITConn <~ ITCONN1 + ITCONN2 + ITCONN3 + ITCONN4
+  ITPers <~ ITPSF1 + ITPSF2 + ITPSF3 + ITPSF4
+
+  Modul  ~ ITComp + ITConn
+  ITConn ~ ITComp
+  ITPers ~ ITComp + Modul + ITConn
+'
+
+
+  return(list(data = A, relation_matrix = C, mode = mode, sem = sem))
 }
