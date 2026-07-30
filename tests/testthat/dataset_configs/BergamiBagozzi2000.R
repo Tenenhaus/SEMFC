@@ -31,7 +31,7 @@ create_bergami_config <- function(dataset) {
   OrgIden =~ ma1 + ma2 + ma3 + ma4 + ma5 + ma6
   AffLove =~ orgcmt1 + orgcmt2 + orgcmt3 + orgcmt7
   AffJoy  =~ orgcmt5 + orgcmt8
-  Gender  =~ gender
+  Gender  <~ gender
 
   # Structural model
   OrgIden ~ OrgPres
