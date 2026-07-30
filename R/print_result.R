@@ -200,12 +200,14 @@ print_estimates <- function(estimate, standardized, effect){
       total_effects <- estimate$total_effects
       indirect_effects <- estimate$indirect_effects
       omega <- estimate$omega
+      psi <- estimate$psi
 
       cat("\nParameter Estimates:\n")
       print_link(lambda, 'Loadings', '=~', standardized)
       print_link(omega, 'Formative block weight', '<~', standardized)
       print_link(rbind(beta, gamma), 'Regression', '~', standardized)
       print_variance(residualvariance, 'Residual Variances', standardized)
+      print_variance(psi, 'Disturbances', standardized)
       if (effect){
         print_link(total_effects, 'Total Effects', '~', standardized)
         print_link(indirect_effects, 'Indirect Effects', '~', standardized)

@@ -7,7 +7,7 @@ A <- list(IMAG = ECSI[, 1:5],
           PERQ = ECSI[, 9:15],
           PERV = ECSI[, 16:17],
           CUSA = ECSI[, 18:20],
-          CUSCO = ECSI[, 21, drop = F],
+          COMP = ECSI[, 21, drop = F],
           CUSL = ECSI[, 22:24])
 
 

@@ -144,6 +144,9 @@ initialize = function(data, relation_matrix,
 #'   }
 #' @param tol Numeric tolerance for convergence in ML optimization
 #'   (default: \code{1e-8})
+#' @param verbose Logical indicating whether to print progress messages during
+#' bootstrap inference (default: \code{TRUE})
+#' @param seed Numeric seed for reproducibility of bootstrap inference (default: \code{NULL})
 #'
 #' @details
 #' This is the main wrapper function that performs:
@@ -201,7 +204,7 @@ initialize = function(data, relation_matrix,
 #'                  tol = 1e-04)
 #'
 
-    fit = function(infer = FALSE, B = 1000, initialization = 'svd', tol = 1e-8){
+    fit = function(infer = FALSE, B = 1000, initialization = 'svd', tol = 1e-8, verbose = TRUE, seed = NULL){
       estimator <- private$.estimator
       private$.boot_rep <- B
       if (estimator == 'svd'){
@@ -213,7 +216,7 @@ initialize = function(data, relation_matrix,
       }
       if (infer){
         if (estimator == 'svd'){
-          private$svd_infer(B, verbose = TRUE)
+          private$svd_infer(B, verbose = verbose, seed = seed)
           private$get_gof()
         }
       else if(estimator == 'ml'){
@@ -397,9 +400,10 @@ initialize = function(data, relation_matrix,
       beta <- estimate$beta
       gamma <- estimate$gamma
       omega <- estimate$omega
+      psi <- estimate$psi
 
 
-      table_estimate <- rbind(lambda, omega, beta, gamma, residualvariance)
+      table_estimate <- rbind(lambda, omega, beta, gamma, residualvariance, psi)
       rownames(table_estimate) <- NULL
       if (!standardized){
         table_estimate$std.all <- NULL
@@ -707,9 +711,9 @@ initialize = function(data, relation_matrix,
 # ' @return Invisible self (for method chaining)
 # ' @keywords internal
 
-    svd_infer = function(B = 1000, verbose = TRUE){
+    svd_infer = function(B = 1000, verbose = TRUE, seed = NULL){
 
-      boot_out <- svdsem_infer(private$.estimate, B, verbose = verbose)
+      boot_out <- svdsem_infer(private$.estimate, B, verbose = verbose, seed = seed)
       private$.infer_estimate <- boot_out$result$infer
       private$.gof$bollen_stine <- boot_out$gof
 

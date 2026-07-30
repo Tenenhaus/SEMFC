@@ -22,6 +22,7 @@
 #'      \item{varnames}{list of character vectors containing variable names.}
 #'    \item{dag}{Logical indicating whether the structural model is recursive (FALSE)
 #'       or non-recursive (TRUE).}
+#'    \item{relation_matrix}{defining structural connection between latent variables.}
 #'   }
 #' @param jac Logical value. If TRUE, returns only the upper triangular values of
 #'   the implied covariance matrix (for Jacobian computation). If FALSE, returns
@@ -62,6 +63,7 @@ lvm_ml <- function(x, model, jac = TRUE){
   which_exo_endo <- model$which_exo_endo
   varnames <- model$varnames
   dag <- model$dag
+  C <- model$relation_matrix
 
   n <- which_exo_endo$ind_exo
   m <- which_exo_endo$ind_endo
@@ -98,9 +100,11 @@ lvm_ml <- function(x, model, jac = TRUE){
   ##################################################################
 
   G <- get_path_coeff(x,
-                      list_linked_exo_endo = which_exo_endo$Hi,
-                      exo_or_endo_variable = n,
+                      row_exo_endo = m,
+                      col_exo_endo = n,
+                      C = C,
                       initial_start_index = start_indices_in_x[3])
+  colnames(G) <- names(n)
   rownames(G) <- names(m)
 
   ##################################################################
@@ -108,10 +112,12 @@ lvm_ml <- function(x, model, jac = TRUE){
   ##################################################################
 
   B <- get_path_coeff(x,
-                      list_linked_exo_endo = which_exo_endo$Ji,
-                      exo_or_endo_variable = m,
+                      row_exo_endo = m,
+                      col_exo_endo = m,
+                      C = C,
                       initial_start_index = start_indices_in_x[4])
 
+  colnames(B) <- names(m)
   rownames(B) <- names(m)
 
   ##################################################################
@@ -142,12 +148,15 @@ lvm_ml <- function(x, model, jac = TRUE){
     } else {
       diag(diag_PSI)
     }
-    dimnames(PSI) <- list(rownames(B), rownames(B))
 
     P_ENDO <- I_B_1%*%(G%*%P_EXO%*%t(G) + PSI)%*%t(I_B_1)
 
 
   }
+  dimnames(PSI) <- list(
+    paste0(".", rownames(B)),
+    paste0(".", rownames(B))
+  )
 
   rownames(P_ENDO) <- names(m)
   colnames(P_ENDO) <- names(m)

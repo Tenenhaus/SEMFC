@@ -110,8 +110,8 @@ heq1 <- function (x, S, model){
 
 
 
-  # list of lengths of the upper values in the cov matrix for the composite block i or
-  # of the diagonal values for formative for each block
+ # list of lengths: diagonal covariances for reflective blocks,
+ # or lower-triangular covariance values for formative blocks
   lengths_values_cov <- block_sizes
   lengths_values_cov[mode == "formative"] <- (block_sizes[mode == "formative"]^2 + block_sizes[mode == "formative"]) / 2
   # number of parameters for covariance

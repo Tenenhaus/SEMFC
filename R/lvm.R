@@ -153,7 +153,10 @@ lvm <- function(R, C){
     }
 
   }
-  dimnames(PSI) <- list(rownames(BETA), rownames(BETA))
+  dimnames(PSI) <- list(
+    paste0(".", rownames(BETA)),
+    paste0(".", rownames(BETA))
+  )
 
   R2 = 1-diag(PSI)
 

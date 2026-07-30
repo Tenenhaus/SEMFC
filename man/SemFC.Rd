@@ -404,7 +404,14 @@ sem_model <- SemFC$new(data = A,
 \subsection{Method \code{fit()}}{
 Fit the full model with inference and goodness-of-fit.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit(infer = FALSE, B = 1000, initialization = "svd", tol = 1e-08)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit(
+  infer = FALSE,
+  B = 1000,
+  initialization = "svd",
+  tol = 1e-08,
+  verbose = TRUE,
+  seed = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -429,6 +436,11 @@ parameters.
 
 \item{\code{tol}}{Numeric tolerance for convergence in ML optimization
 (default: \code{1e-8})}
+
+\item{\code{verbose}}{Logical indicating whether to print progress messages during
+bootstrap inference (default: \code{TRUE})}
+
+\item{\code{seed}}{Numeric seed for reproducibility of bootstrap inference (default: \code{NULL})}
 }
 \if{html}{\out{</div>}}
 }

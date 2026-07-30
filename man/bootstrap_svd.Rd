@@ -4,7 +4,7 @@
 \alias{bootstrap_svd}
 \title{Bootstrap Inference and Goodness-of-Fit Test for SVD-Estimated SEM Models}
 \usage{
-bootstrap_svd(fit, B = 100, verbose = TRUE)
+bootstrap_svd(fit, B = 100, verbose = TRUE, seed = NULL)
 }
 \arguments{
 \item{fit}{A svdSEM fit object containing the fitted model information, including
@@ -14,6 +14,8 @@ parameter estimates, model-implied covariance matrix, and data blocks.}
 
 \item{verbose}{Logical indicating whether to display a progress bar during
 bootstrap resampling (default: \code{TRUE}).}
+
+\item{seed}{Optional integer for reproducibility of bootstrap results. If \code{NULL}, no seed is set (default: \code{NULL}).}
 }
 \value{
 A list containing bootstrap replications for all parameters:
