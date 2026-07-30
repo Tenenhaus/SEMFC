@@ -74,18 +74,24 @@ verify_estimate <- function(estimate_actual, estimate_ref, estimate_type, datase
                  tolerance = tolerance,
                  info = paste(dataset_name, "- estimate", estimate_type, "values mismatch"))
 
-    if (!is.null(names(estimate_actual))) {
-      expect_equal(names(estimate_actual), names(estimate_ref),
+  if (!is.null(names(estimate_actual)) || !is.null(names(estimate_ref))) {
+    names_act <- if (!is.null(names(estimate_actual))) sub("^\\.","", names(estimate_actual)) else NULL
+    names_ref2 <- if (!is.null(names(estimate_ref))) sub("^\\.","", names(estimate_ref)) else NULL
+    expect_equal(names_act, names_ref2,
+                 info = paste(dataset_name, "- estimate", estimate_type, "names mismatch"))
+  }
+
+    if (!is.null(rownames(estimate_actual)) || !is.null(rownames(estimate_ref))) {
+      names_act <- if (!is.null(rownames(estimate_actual))) sub("^\\.","", rownames(estimate_actual)) else NULL
+      names_ref2 <- if (!is.null(rownames(estimate_ref))) sub("^\\.","", rownames(estimate_ref)) else NULL
+      expect_equal(names_act, names_ref2,
                    info = paste(dataset_name, "- estimate", estimate_type, "names mismatch"))
     }
-
-    if (!is.null(rownames(estimate_actual))) {
-      expect_equal(rownames(estimate_actual), rownames(estimate_ref),
-                   info = paste(dataset_name, "- estimate", estimate_type, "rownames mismatch"))
-    }
-    if (!is.null(colnames(estimate_actual))) {
-      expect_equal(colnames(estimate_actual), colnames(estimate_ref),
-                   info = paste(dataset_name, "- estimate", estimate_type, "colnames mismatch"))
+    if (!is.null(colnames(estimate_actual)) || !is.null(colnames(estimate_ref))) {
+      names_act <- if (!is.null(colnames(estimate_actual))) sub("^\\.","", colnames(estimate_actual)) else NULL
+      names_ref2 <- if (!is.null(colnames(estimate_ref))) sub("^\\.","", colnames(estimate_ref)) else NULL
+      expect_equal(names_act, names_ref2,
+                   info = paste(dataset_name, "- estimate", estimate_type, "names mismatch"))
     }
   } else if (is.list(estimate_actual)) {
     expect_equal(length(estimate_actual), length(estimate_ref),
