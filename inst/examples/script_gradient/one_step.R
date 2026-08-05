@@ -8,7 +8,7 @@ source("inst/report/report_utils.R")
 source("inst/examples/script_gradient/utils.num.R")
 
 # choisir un dataset formatif
-dataset_name = 'ECSI_full'
+dataset_name = 'model_reflective'
 
 
 
@@ -71,6 +71,14 @@ Psi = c(grad_F, h_eq)
 theta_os = theta_svd - solve(Psi_point, Psi)[1:length(theta_svd)]
 
 
+# au lieu d'inverser la matrice de hessienne, on peut utiliser la formule de Schur,
+# risquant la stabilité numérique
+proj = (H_1 - H_1 %*% t(J_h_eq) %*% solve(J_h_eq %*% H_1 %*% t(J_h_eq), J_h_eq %*% H_1))
+proj = (H_1 - H_1 %*% t(J_h_eq) %*% solve(J_h_eq %*% H_1 %*% t(J_h_eq)) %*% J_h_eq %*% H_1)
+
+theta_os_schur = as.vector(theta_svd - proj %*% grad_F)
+
+
 #normalisation des loadings sujets aux contraintes des blocs formatifs
 loadings_os_form <- get_loadings(theta_os, block_sizes)[config$mode == "formative"]
 
@@ -115,4 +123,13 @@ cat('f theta_ml:', f(modelml$get_estimate('theta')), '\n')
 
 
 
+estimate <- modelsvd$get_estimate('all')
+theta_fina_func = one_step_estimator(estimate, model, dat)
 
+
+
+modelml <- SemFC$new(data=config$data, relation_matrix = config$relation_matrix, mode=config$mode, estimator = "ml")
+
+modelml$fit(infer = F)
+
+theta_ml = modelml$get_estimate('theta')

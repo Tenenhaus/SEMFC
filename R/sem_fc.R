@@ -213,6 +213,8 @@ initialize = function(data, relation_matrix,
       } else if(estimator == 'ml'){
         private$fit_ml(initialization, tol)
         private$get_gof()
+      } else if(estimator == 'one_step'){
+        private$fit_one_step()
       }
       if (infer){
         if (estimator == 'svd'){
@@ -220,6 +222,9 @@ initialize = function(data, relation_matrix,
           private$get_gof()
         }
       else if(estimator == 'ml'){
+          private$ml_infer()
+        }
+      else if(estimator == 'one_step'){
           private$ml_infer()
         }
       }
@@ -587,82 +592,7 @@ initialize = function(data, relation_matrix,
   ),
 
   private = list(
-#
-# ' @field estimator Character string specifying estimation method ("svd" or "ml")
-# ' @field data List containing data-related components:
-# '   \itemize{
-# '     \item \code{data}: The input data (list of blocks)
-# '     \item \code{n_row}: Number of observations
-# '     \item \code{cov_S}: Covariance matrix of observed variables
-# '     \item \code{S_diag_composites}: List of covariance matrices for formative blocks
-# '   }
-# ' @field model List containing model specification and parameters:
-# '   \itemize{
-# '     \item \code{relation_matrix}: Square matrix defining structural relationships
-# '     \item \code{mode}: Character vector specifying measurement model types
-# '     \item \code{n_blocks}: Number of measurement blocks
-# '     \item \code{varnames}: List of variable names for each block
-# '     \item \code{block_sizes}: Vector of sizes for each measurement block
-# '     \item \code{dag}: Logical indicating if structural model is recursive
-# '     \item \code{which_exo_endo}: List identifying exogenous/endogenous variables
-# '     \item \code{lengths_theta}: Vector of parameter counts
-# '     \item \code{p}: Total number of observed variables
-# '     \item \code{q}: Total number of free parameters
-# '     \item \code{r}: Number of formative blocks
-# '     \item \code{dof}: Degrees of freedom
-# '     \item \code{scale}: Logical indicating whether to standardize data
-# '     \item \code{bias}: Logical indicating bias correction in covariance estimation
-# '   }
-# ' @field estimate List containing all estimated model parameters:
-# '   \itemize{
-# '     \item \code{lambda}: List of loading vectors for each block
-# '     \item \code{omega}: List of composite weight vectors for formative blocks
-# '     \item \code{beta}: Matrix of structural paths between endogenous variables
-# '     \item \code{gamma}: Matrix of structural paths from exogenous to endogenous variables
-# '     \item \code{residual_variance}: List of residual variances for each observed variable
-# '     \item \code{P_EXO}: Correlation matrix of exogenous latent variables
-# '     \item \code{P_ENDO}: Correlation matrix of endogenous latent variables
-# '     \item \code{P_IMPLIED}: Implied correlation matrix of all latent variables
-# '     \item \code{SIGMA_IMPLIED}: Implied covariance matrix of observed variables
-# '     \item \code{std_lambda}: List of standardized loadings for each block
-# '     \item \code{std_omega}: List of standardized composite weights for formative blocks
-# '     \item \code{psi}: Residual covariance matrix of latent variables
-# '     \item \code{R2}: Named vector of R-squared values for endogenous latent variables
-# '     \item \code{T_LS}: Least squares fit function value
-# '     \item \code{theta}: Numeric vector of all free parameters
-# '     \item \code{effect}: List of total and indirect effects between latent variables
-# '     \item \code{Ptilde}: First-step correlation matrix estimate (SVD only)
-# '   }
-# ' @field infer_estimate List containing inference results for all parameters:
-# '   \itemize{
-# '     \item \code{lambda}: Data frame of loadings with SE, z-values, p-values and CI
-# '     \item \code{omega}: Data frame of composite weights with SE, z-values, p-values and CI
-# '     \item \code{beta}: Data frame of structural paths (endo) with SE, z-values, p-values and CI
-# '     \item \code{gamma}: Data frame of structural paths (exo) with SE, z-values, p-values and CI
-# '     \item \code{residual_variance}: Data frame of residual variances with SE, z-values, p-values and CI
-# '     \item \code{total_effects}: Data frame of total effects with SE, z-values, p-values and CI
-# '     \item \code{indirect_effects}: Data frame of indirect effects with SE, z-values, p-values and CI
-# '     \item \code{VCOV}: Variance-covariance matrix of parameter estimates (ML only)
-# '     \item \code{vcov_effect}: Variance-covariance matrix of effect estimates (ML only)
-# '   }
-# ' @field boot_rep Integer number of bootstrap replications
-# ' @field gof List containing goodness-of-fit statistics:
-# '   \itemize{
-# '     \item \code{F}: Value of the fit function at the optimal solution
-# '     \item \code{reliability}: Named vector of reliability coefficients (Dillon-Goldstein rho) for reflective blocks
-# '     \item \code{chi2}: Chi-square test statistic
-# '     \item \code{df}: Degrees of freedom for chi-square test
-# '     \item \code{pvalue}: P-value of the chi-square test
-# '     \item \code{CFI}: Comparative Fit Index
-# '     \item \code{TLI}: Tucker-Lewis Index
-# '     \item \code{RMSEA}: Root Mean Square Error of Approximation
-# '     \item \code{RMSEA_CI}: 90\% confidence interval for RMSEA
-# '     \item \code{SRMR}: Standardized Root Mean Square Residual
-# '     \item \code{AIC}: Akaike Information Criterion
-# '     \item \code{BIC}: Bayesian Information Criterion
-# '     \item \code{SABIC}: Sample-size Adjusted BIC
-# '     \item \code{bollen_stine}: Bollen-Stine bootstrap p-value (SVD only)
-# '   }
+
 
 
     .estimator      = NULL,
@@ -675,15 +605,7 @@ initialize = function(data, relation_matrix,
 
 
 
-    # ' @description
-    # ' Fit the model using Singular Value Decomposition (SVD) method
-    # '
-    # ' @details
-    # ' Estimates model parameters using SVD-based approach which is computationally
-    # ' efficient and provides good starting values for ML estimation.
-    # '
-    # ' @return Invisible self (for method chaining)
-    # ' @keywords internal
+
     fit_svd = function() {
       private$.estimator <- 'svd'
       svd_result <- svdSEM(private$.data$data,
@@ -707,18 +629,7 @@ initialize = function(data, relation_matrix,
       private$.gof$F <- F1(theta_svd, private$.data$cov_S, private$.model)
     },
 
-# ' @description
-# ' Perform statistical inference for SVD estimates using bootstrap
-# '
-# ' @param B Integer number of bootstrap samples (default: 1000)
-# ' @param verbose Logical indicating whether to print progress messages (default: TRUE)
-# '
-# ' @details
-# ' Uses non-parametric bootstrap to estimate standard errors, confidence intervals,
-# ' and p-values for all model parameters.
-# '
-# ' @return Invisible self (for method chaining)
-# ' @keywords internal
+
 
     svd_infer = function(B = 1000, verbose = TRUE, seed = NULL){
 
@@ -729,26 +640,28 @@ initialize = function(data, relation_matrix,
 
     },
 
-# ' @description
-# ' Fit the model using Maximum Likelihood (ML) estimation
-# '
-# ' @param initialization Character string or numeric vector specifying
-# '    initialization method:
-# '   \itemize{
-# '     \item \code{"svd"} (default): Use svdSEM estimate as starting values
-# '     \item \code{"random"}: Use random starting values
-# '     \item \code{numeric vector}: use the provided vector as starting
-# '              values. This vector must have length equal to the total
-# '              number of model parameters
-# '   }
-# ' @param tol Numeric tolerance for convergence in optimization (default: 1e-8)
-# '
-# ' @details
-# ' Uses numerical optimization (via SOLNP) to minimize the ML fit function.
-# ' SVD initialization is recommended for better convergence.
-# '
-# ' @return Invisible self (for method chaining)
-# ' @keywords internal
+    fit_one_step = function(){
+      private$fit_svd()
+      private$.estimator <- 'one_step'
+      estimate_svd <- private$.estimate
+
+      theta_os <- one_step_estimator(estimate_svd, private$.model, private$.data)
+      private$.estimate <- lvm_ml(x = theta_os, model = private$.model, jac = F)
+      private$.estimate$T_LS <- d_LS(private$.data$cov_S, private$.estimate$sigma_implied)
+      var_MVs <- lapply(private$.data$data, function(x) diag(cov2(x, bias = private$.model$bias)))
+      std_lambda <- mapply("/", private$.estimate$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
+      private$.estimate$std_lambda <- std_lambda
+      std_omega <- mapply(function(Sjj, lambda_j) solve(cov2cor(as.matrix(Sjj))) %*% lambda_j,
+                         private$.data$S_diag_composites, std_lambda[private$.model$mode == "formative"],
+                         SIMPLIFY = FALSE)
+      names(std_omega) <- names(std_lambda[private$.model$mode == "formative"])
+      private$.estimate$std_omega <- std_omega
+      private$.estimate$theta <- theta_os
+      private$.estimate$effect <- compute_effect(private$.estimate$beta, private$.estimate$gamma)
+      private$.gof$F <- F1(theta_os, private$.data$cov_S, private$.model)
+    },
+
+
 
   fit_ml = function(initialization = 'svd', tol) {
 
@@ -793,15 +706,6 @@ initialize = function(data, relation_matrix,
     },
 
 
-# ' @description
-# ' Perform asymptotic statistical inference for restricted Maximum Likelihood estimates
-# '
-# ' @details
-# ' Computes standard errors using the inverse of the information matrix.
-# ' Provides z-statistics and p-values based on asymptotic normality.
-# '
-# ' @return Invisible self (for method chaining)
-# ' @keywords internal
 
     ml_infer = function(){
       theta_ml <- private$.estimate$theta
@@ -817,27 +721,6 @@ initialize = function(data, relation_matrix,
     },
 
 
-# ' @description
-# ' Calculate goodness-of-fit statistics
-# '
-# ' @param B Integer number of bootstrap samples for Bollen-Stine test (default: 1000).
-# '   Only used when estimator is "svd".
-# '
-# ' @details
-# ' Computes multiple fit indices including:
-# ' \itemize{
-# '   \item Reliability coefficients for reflective blocks (Dillon)
-# '   \item Chi-square test statistic
-# '   \item CFI (Comparative Fit Index)
-# '   \item TLI (Tucker-Lewis Index)
-# '   \item RMSEA (Root Mean Square Error of Approximation)
-# '   \item SRMR (Standardized Root Mean Square Residual)
-# '   \item Information criteria (AIC, BIC, SABIC)
-# '   \item Bollen-Stine bootstrap p-value (for SVD only)
-# ' }
-# '
-# ' @return Invisible self (for method chaining)
-# ' @keywords internal
 
     get_gof = function(B = 1000){
 
