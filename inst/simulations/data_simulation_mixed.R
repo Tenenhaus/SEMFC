@@ -34,48 +34,54 @@ R <- rbind(cbind(PHI, PHI%*%t(GAMMA)%*%t(solve(diag(NROW(BETA))-BETA))),
 R2 <- 1- diag(PSI)
 
 
-n1 <- 1
-n2 <- 1
-somme <- (n2 - n1 + 1) * (n1 + n2  - 2) / 2
+# q <- 3
+rho <- 0.4
+
+SIGMA_form <- matrix(rho, q, q)
+diag(SIGMA_form) <- 1
+
+SIGMA_form[1:3, 1:3] <- matrix(
+  c(
+    1,   0.3, 0.4,
+    0.3, 1,   0.5,
+    0.4, 0.5, 1
+  ),
+  nrow = 3,
+  byrow = TRUE
+)
+
+SIGMA11 <- SIGMA_form
+SIGMA22 <- SIGMA_form
+SIGMA33 <- SIGMA_form
+SIGMA44 <- SIGMA_form
+
+
+
+SIGMA_ref <- matrix(0.49, q, q)
+diag(SIGMA_ref) <- 1
+
+SIGMA55 <- SIGMA_ref
+SIGMA66 <- SIGMA_ref
 
 
 
 
-val_sup <- c(0.3,0.4,0.5, rep(0, somme))
-dim_form <-(1 + sqrt(1 + 8*length(val_sup))) / 2
 
 
-
-
-SIGMA11 <- matrix(0, dim_form, dim_form)
-SIGMA11[upper.tri(SIGMA11)] <- val_sup
-SIGMA11[lower.tri(SIGMA11)] <- t(SIGMA11)[lower.tri(SIGMA11)]
-diag(SIGMA11) <- rep(1, dim_form)
-
-SIGMA22 <- SIGMA33 <- SIGMA44 <- SIGMA11[1:3,1:3]
-
-
-
-
-SIGMA55 <- SIGMA66 <- matrix(c(1, .49, .49,
-                             .49, 1, .49,
-                             .49, .49, 1), 3, 3)
-
-
-w_exo_1 <-  c(rep(1,3), rep(0, dim_form-3))
+w_exo_1 <- rep(1, q)
 w_exo_1  <- w_exo_1/drop(sqrt(t(w_exo_1)%*%SIGMA11%*%w_exo_1))
 
-w_exo_2 <- rep(1, 3)
+w_exo_2 <- rep(1, q)
 w_exo_2  <- w_exo_2/drop(sqrt(t(w_exo_2)%*%SIGMA22%*%w_exo_2))
 
 
-w_exo_3 <- (1:3)
+w_exo_3 <- seq(1, 3, length.out = q)
 w_exo_3 <- w_exo_4 <- w_exo_3/drop(sqrt(t(w_exo_3)%*%SIGMA22%*%w_exo_3))
 
 l1 <- SIGMA11%*%w_exo_1
 l2 <- SIGMA22%*%w_exo_2
 l3 <- l4 <- SIGMA22%*%w_exo_3
-l5 <- l6 <- rep(.7, 3)
+l5 <- l6 <- rep(.7, q)
 
 
 lambda <- list(l1, l2, l3, l4, l5, l6)
@@ -112,12 +118,12 @@ for (j in 1:(J-1)){
 true_param_with_S <- c(l1, l2 , l3, l4, l5, l6,
                       R[1:4, 1:4][upper.tri(R[1:4, 1:4])],
                       GAMMA[1, 1:2], GAMMA[2, 3:4],
-                      BETA[1, 2], BETA[2, 1],
+                      BETA[2, 1], BETA[1, 2],
                       R[5, 6],
-                      SIGMA11[upper.tri(SIGMA11, diag = TRUE)],
-                      SIGMA22[upper.tri(SIGMA22, diag = TRUE)],
-                      SIGMA33[upper.tri(SIGMA33, diag = TRUE)],
-                      SIGMA44[upper.tri(SIGMA44, diag = TRUE)],
+                      SIGMA11[lower.tri(SIGMA11, diag = TRUE)],
+                      SIGMA22[lower.tri(SIGMA22, diag = TRUE)],
+                      SIGMA33[lower.tri(SIGMA33, diag = TRUE)],
+                      SIGMA44[lower.tri(SIGMA44, diag = TRUE)],
                       1 - l5^2,
                       1 - l6^2
 )

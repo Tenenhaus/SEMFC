@@ -1,27 +1,23 @@
 # ============================================================
 # Monte-Carlo experiment:
-# variation of the sample size n
+# variation of the number of indicators per block, with a fixed number of blocks.
 # ============================================================
 devtools::load_all()
 rm(list = ls())
 source('inst/os_experiment/utils_os.R')
 
 set.seed(123)
-q <- 3
-source('inst/simulations/data_simulation_mixed.R')
+
 
 # ============================================================
 # 1. Simulation parameters
 # ============================================================
 
-n_grid <- c(300, 600, 1200, 2400, 4800)
+q_grid <- c(3,5,10,15,20)
+N <- 2000
 n_rep  <- 5
 
-# True parameter vector.
-# It must follow exactly the same ordering as the estimators.
-theta_true <- true_param_with_S
 
-d <- length(theta_true)
 
 
 # ============================================================
@@ -30,23 +26,21 @@ d <- length(theta_true)
 
 results <- vector(
   mode = "list",
-  length = length(n_grid) * n_rep
+  length = length(q_grid) * n_rep
 )
 
 # Optional storage of all parameter estimates.
 # Useful for componentwise bias and coverage analyses.
-estimates_svd <- array(
-  NA_real_,
-  dim = c(length(n_grid), n_rep, d),
-  dimnames = list(
-    n = as.character(n_grid),
-    replication = seq_len(n_rep),
-    parameter = names(theta_true)
-  )
-)
+estimates_svd <- vector("list", length(q_grid))
+estimates_os  <- vector("list", length(q_grid))
+estimates_rml <- vector("list", length(q_grid))
+theta_true_list <- vector("list", length(q_grid))
 
-estimates_os <- estimates_svd
-estimates_rml <- estimates_svd
+names(estimates_svd) <-
+  names(estimates_os) <-
+  names(estimates_rml) <-
+  names(theta_true_list) <-
+  as.character(q_grid)
 
 # ============================================================
 # 5. Monte-Carlo loop
@@ -54,13 +48,38 @@ estimates_rml <- estimates_svd
 
 row_id <- 0L
 
-for (n_index in seq_along(n_grid)) {
+for (q_index in seq_along(q_grid)) {
 
-  N <- n_grid[n_index]
+  q <- q_grid[q_index]
+  source('inst/simulations/data_simulation_mixed.R')
+
+  # True parameter vector.
+  # It must follow exactly the same ordering as the estimators.
+  theta_true <- true_param_with_S
+
+  d <- length(theta_true)
+
+  theta_true_list[[q_index]] <- theta_true
+
+  make_storage <- function() {
+    matrix(
+      NA_real_,
+      nrow = n_rep,
+      ncol = d,
+      dimnames = list(
+        replication = seq_len(n_rep),
+        parameter = names(theta_true)
+      )
+    )
+  }
+
+  estimates_svd[[q_index]] <- make_storage()
+  estimates_os[[q_index]]  <- make_storage()
+  estimates_rml[[q_index]] <- make_storage()
 
   message(
-    "Sample size n = ", N,
-    " (", n_index, "/", length(n_grid), ")"
+    "Number of indicators per block q = ", q,
+    " (", q_index, "/", length(q_grid), ")"
   )
 
   for (rep_id in seq_len(n_rep)) {
@@ -123,15 +142,15 @@ for (n_index in seq_along(n_grid)) {
     # --------------------------------------------------------
 
     if (fit_svd$success) {
-      estimates_svd[n_index, rep_id, ] <- fit_svd$theta
+      estimates_svd[[q_index]][rep_id, ] <- fit_svd$theta
     }
 
     if (fit_os$success) {
-      estimates_os[n_index, rep_id, ] <- fit_os$theta
+      estimates_os[[q_index]][rep_id, ] <- fit_os$theta
     }
 
     if (fit_rml$success) {
-      estimates_rml[n_index, rep_id, ] <- fit_rml$theta
+      estimates_rml[[q_index]][rep_id, ] <- fit_rml$theta
     }
 
 
@@ -218,6 +237,15 @@ for (n_index in seq_along(n_grid)) {
       NA_real_
     }
 
+    rmse_os_rml <- if (fit_os$success && fit_rml$success) {
+      os_rml_rmse(
+        fit_os$theta,
+        fit_rml$theta
+      )
+    } else {
+      NA_real_
+    }
+
 
     # --------------------------------------------------------
     # Direct comparison between svd and RML
@@ -270,6 +298,9 @@ for (n_index in seq_along(n_grid)) {
     # --------------------------------------------------------
 
     results[[row_id]] <- data.frame(
+      q = q,
+      p = 6 * q,
+      d = d,
       n = N,
       replication = rep_id,
 
@@ -294,7 +325,7 @@ for (n_index in seq_along(n_grid)) {
       scaled_svd_rml_distance = scaled_distance_svd_rml,
       relative_svd_rml_distance = relative_distance_svd,
       likelihood_gap_svd = objective_gap_svd,
-
+      os_rml_rmse = rmse_os_rml,
 
       svd_time = fit_svd$elapsed_time,
       os_time = fit_os$elapsed_time,
@@ -328,17 +359,17 @@ rownames(results_mc) <- NULL
 
 
 
-summary_by_n <- do.call(
+summary_by_q <- do.call(
   rbind,
   lapply(
-    split(results_mc, results_mc$n),
-    summarize_one_n
+    split(results_mc, results_mc$q),
+    summarize_one_q
   )
 )
 
-rownames(summary_by_n) <- NULL
+rownames(summary_by_q) <- NULL
 
-print(summary_by_n)
+print(summary_by_q)
 
 
 # ============================================================
@@ -347,24 +378,23 @@ print(summary_by_n)
 
 
 
-componentwise_svd <- componentwise_metrics(
+componentwise_svd <- componentwise_metrics_indicators(
   estimates = estimates_svd,
-  theta_true = theta_true,
-  n_grid = n_grid
+  theta_true_list = theta_true_list,
+  q_grid = q_grid
 )
 
-componentwise_os <- componentwise_metrics(
+componentwise_os <- componentwise_metrics_indicators(
   estimates = estimates_os,
-  theta_true = theta_true,
-  n_grid = n_grid
+  theta_true_list = theta_true_list,
+  q_grid = q_grid
 )
 
-componentwise_rml <- componentwise_metrics(
+componentwise_rml <- componentwise_metrics_indicators(
   estimates = estimates_rml,
-  theta_true = theta_true,
-  n_grid = n_grid
+  theta_true_list = theta_true_list,
+  q_grid = q_grid
 )
-
 
 
 # ============================================================
@@ -373,30 +403,30 @@ componentwise_rml <- componentwise_metrics(
 
 write.csv(
   results_mc,
-  file = "monte_carlo_replications.csv",
+  file = "scaling_q_replications.csv",
   row.names = FALSE
 )
 
 write.csv(
-  summary_by_n,
-  file = "monte_carlo_summary_by_n.csv",
+  summary_by_q,
+  file = "scaling_q_summary.csv",
   row.names = FALSE
 )
 
 write.csv(
   componentwise_svd,
-  file = "componentwise_metrics_svd.csv",
+  file = "scaling_q_componentwise_svd.csv",
   row.names = FALSE
 )
 
 write.csv(
   componentwise_os,
-  file = "componentwise_metrics_one_step.csv",
+  file = "scaling_q_componentwise_one_step.csv",
   row.names = FALSE
 )
 
 write.csv(
   componentwise_rml,
-  file = "componentwise_metrics_rml.csv",
+  file = "scaling_q_componentwise_rml.csv",
   row.names = FALSE
 )

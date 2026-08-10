@@ -1,27 +1,24 @@
 # ============================================================
 # Monte-Carlo experiment:
-# variation of the sample size n
+# variation of the number of the number of formative blocks
 # ============================================================
 devtools::load_all()
 rm(list = ls())
 source('inst/os_experiment/utils_os.R')
+source('inst/os_experiment/population.R')
 
 set.seed(123)
-q <- 3
-source('inst/simulations/data_simulation_mixed.R')
+
 
 # ============================================================
 # 1. Simulation parameters
 # ============================================================
 
-n_grid <- c(300, 600, 1200, 2400, 4800)
+J_grid <- c(6, 10, 14, 18, 22)
+N <- 2000
 n_rep  <- 5
 
-# True parameter vector.
-# It must follow exactly the same ordering as the estimators.
-theta_true <- true_param_with_S
 
-d <- length(theta_true)
 
 
 # ============================================================
@@ -30,23 +27,21 @@ d <- length(theta_true)
 
 results <- vector(
   mode = "list",
-  length = length(n_grid) * n_rep
+  length = length(J_grid) * n_rep
 )
 
 # Optional storage of all parameter estimates.
 # Useful for componentwise bias and coverage analyses.
-estimates_svd <- array(
-  NA_real_,
-  dim = c(length(n_grid), n_rep, d),
-  dimnames = list(
-    n = as.character(n_grid),
-    replication = seq_len(n_rep),
-    parameter = names(theta_true)
-  )
-)
+estimates_svd <- vector("list", length(J_grid))
+estimates_os  <- vector("list", length(J_grid))
+estimates_rml <- vector("list", length(J_grid))
+theta_true_list <- vector("list", length(J_grid))
 
-estimates_os <- estimates_svd
-estimates_rml <- estimates_svd
+names(estimates_svd) <-
+  names(estimates_os) <-
+  names(estimates_rml) <-
+  names(theta_true_list) <-
+  as.character(J_grid)
 
 # ============================================================
 # 5. Monte-Carlo loop
@@ -54,13 +49,42 @@ estimates_rml <- estimates_svd
 
 row_id <- 0L
 
-for (n_index in seq_along(n_grid)) {
+for (J_index in seq_along(J_grid)) {
 
-  N <- n_grid[n_index]
+  J <- J_grid[J_index]
+  q <- 3
+  population <- make_population_J(J, q)
+
+
+  # True parameter vector.
+  # It must follow exactly the same ordering as the estimators.
+  theta_true <- population$true_param_with_S
+
+  d <- length(theta_true)
+
+  theta_true_list[[J_index]] <- theta_true
+
+  make_storage <- function() {
+    matrix(
+      NA_real_,
+      nrow = n_rep,
+      ncol = d,
+      dimnames = list(
+        replication = seq_len(n_rep),
+        parameter = names(theta_true)
+      )
+    )
+  }
+
+  estimates_svd[[J_index]] <- make_storage()
+  estimates_os[[J_index]]  <- make_storage()
+  estimates_rml[[J_index]] <- make_storage()
 
   message(
-    "Sample size n = ", N,
-    " (", n_index, "/", length(n_grid), ")"
+    "Number of blocks J = ", J,
+    ", p = ", J * q,
+    ", d = ", d,
+    " (", J_index, "/", length(J_grid), ")"
   )
 
   for (rep_id in seq_len(n_rep)) {
@@ -74,7 +98,17 @@ for (n_index in seq_along(n_grid)) {
     # Expected output:
     #   either the empirical covariance matrix S directly,
     #   or adapt this block if simulate_sample_fun returns raw data.
-    source('inst/model/model_mixed.R')
+    sim <- generate_mixed_sample(
+      N = N,
+      J = J,
+      q = q,
+      SIGMA = population$SIGMA,
+      empirical = FALSE
+    )
+    X_2 <- sim$X
+    Y_2 <- sim$Y
+    C <- sim$C
+    mode <- sim$mode
 
 
 
@@ -123,15 +157,15 @@ for (n_index in seq_along(n_grid)) {
     # --------------------------------------------------------
 
     if (fit_svd$success) {
-      estimates_svd[n_index, rep_id, ] <- fit_svd$theta
+      estimates_svd[[J_index]][rep_id, ] <- fit_svd$theta
     }
 
     if (fit_os$success) {
-      estimates_os[n_index, rep_id, ] <- fit_os$theta
+      estimates_os[[J_index]][rep_id, ] <- fit_os$theta
     }
 
     if (fit_rml$success) {
-      estimates_rml[n_index, rep_id, ] <- fit_rml$theta
+      estimates_rml[[J_index]][rep_id, ] <- fit_rml$theta
     }
 
 
@@ -218,6 +252,15 @@ for (n_index in seq_along(n_grid)) {
       NA_real_
     }
 
+    rmse_os_rml <- if (fit_os$success && fit_rml$success) {
+      os_rml_rmse(
+        fit_os$theta,
+        fit_rml$theta
+      )
+    } else {
+      NA_real_
+    }
+
 
     # --------------------------------------------------------
     # Direct comparison between svd and RML
@@ -270,6 +313,10 @@ for (n_index in seq_along(n_grid)) {
     # --------------------------------------------------------
 
     results[[row_id]] <- data.frame(
+      J = J,
+      q = q,
+      p = J*q,
+      d = d,
       n = N,
       replication = rep_id,
 
@@ -294,7 +341,7 @@ for (n_index in seq_along(n_grid)) {
       scaled_svd_rml_distance = scaled_distance_svd_rml,
       relative_svd_rml_distance = relative_distance_svd,
       likelihood_gap_svd = objective_gap_svd,
-
+      os_rml_rmse = rmse_os_rml,
 
       svd_time = fit_svd$elapsed_time,
       os_time = fit_os$elapsed_time,
@@ -328,17 +375,17 @@ rownames(results_mc) <- NULL
 
 
 
-summary_by_n <- do.call(
+summary_by_J <- do.call(
   rbind,
   lapply(
-    split(results_mc, results_mc$n),
-    summarize_one_n
+    split(results_mc, results_mc$J),
+    summarize_one_J
   )
 )
 
-rownames(summary_by_n) <- NULL
+rownames(summary_by_J) <- NULL
 
-print(summary_by_n)
+print(summary_by_J)
 
 
 # ============================================================
@@ -347,25 +394,23 @@ print(summary_by_n)
 
 
 
-componentwise_svd <- componentwise_metrics(
-  estimates = estimates_svd,
-  theta_true = theta_true,
-  n_grid = n_grid
+componentwise_svd <- componentwise_metrics_J(
+  estimates_svd,
+  theta_true_list,
+  J_grid
 )
 
-componentwise_os <- componentwise_metrics(
-  estimates = estimates_os,
-  theta_true = theta_true,
-  n_grid = n_grid
+componentwise_os <- componentwise_metrics_J(
+  estimates_os,
+  theta_true_list,
+  J_grid
 )
 
-componentwise_rml <- componentwise_metrics(
-  estimates = estimates_rml,
-  theta_true = theta_true,
-  n_grid = n_grid
+componentwise_rml <- componentwise_metrics_J(
+  estimates_rml,
+  theta_true_list,
+  J_grid
 )
-
-
 
 # ============================================================
 # 8. Export
@@ -373,30 +418,30 @@ componentwise_rml <- componentwise_metrics(
 
 write.csv(
   results_mc,
-  file = "monte_carlo_replications.csv",
+  "scaling_J_replications.csv",
   row.names = FALSE
 )
 
 write.csv(
-  summary_by_n,
-  file = "monte_carlo_summary_by_n.csv",
+  summary_by_J,
+  "scaling_J_summary.csv",
   row.names = FALSE
 )
 
 write.csv(
   componentwise_svd,
-  file = "componentwise_metrics_svd.csv",
+  "scaling_J_componentwise_svd.csv",
   row.names = FALSE
 )
 
 write.csv(
   componentwise_os,
-  file = "componentwise_metrics_one_step.csv",
+  "scaling_J_componentwise_one_step.csv",
   row.names = FALSE
 )
 
 write.csv(
   componentwise_rml,
-  file = "componentwise_metrics_rml.csv",
+  "scaling_J_componentwise_rml.csv",
   row.names = FALSE
 )
