@@ -15,7 +15,7 @@ source('inst/simulations/data_simulation_mixed.R')
 # ============================================================
 
 n_grid <- c(300, 600, 1200, 2400, 4800)
-n_rep  <- 5
+n_rep  <- 2
 
 # True parameter vector.
 # It must follow exactly the same ordering as the estimators.
@@ -139,20 +139,20 @@ for (n_index in seq_along(n_grid)) {
     # Individual estimator metrics
     # --------------------------------------------------------
 
-    svd_rmse <- if (fit_svd$success) {
-      parameter_rmse(fit_svd$theta, theta_true)
+    svd_mse <- if (fit_svd$success) {
+      parameter_mse(fit_svd$theta, theta_true)
     } else {
       NA_real_
     }
 
-    os_rmse <- if (fit_os$success) {
-      parameter_rmse(fit_os$theta, theta_true)
+    os_mse <- if (fit_os$success) {
+      parameter_mse(fit_os$theta, theta_true)
     } else {
       NA_real_
     }
 
-    rml_rmse <- if (fit_rml$success) {
-      parameter_rmse(fit_rml$theta, theta_true)
+    rml_mse <- if (fit_rml$success) {
+      parameter_mse(fit_rml$theta, theta_true)
     } else {
       NA_real_
     }
@@ -277,9 +277,9 @@ for (n_index in seq_along(n_grid)) {
       os_success = fit_os$success,
       rml_success = fit_rml$success,
 
-      svd_rmse = svd_rmse,
-      os_rmse = os_rmse,
-      rml_rmse = rml_rmse,
+      svd_mse = svd_mse,
+      os_mse = os_mse,
+      rml_mse = rml_mse,
 
       svd_constraint = svd_constraint,
       os_constraint = os_constraint,
@@ -341,29 +341,6 @@ rownames(summary_by_n) <- NULL
 print(summary_by_n)
 
 
-# ============================================================
-# 7. Componentwise Monte-Carlo bias and RMSE
-# ============================================================
-
-
-
-componentwise_svd <- componentwise_metrics(
-  estimates = estimates_svd,
-  theta_true = theta_true,
-  n_grid = n_grid
-)
-
-componentwise_os <- componentwise_metrics(
-  estimates = estimates_os,
-  theta_true = theta_true,
-  n_grid = n_grid
-)
-
-componentwise_rml <- componentwise_metrics(
-  estimates = estimates_rml,
-  theta_true = theta_true,
-  n_grid = n_grid
-)
 
 
 
@@ -373,30 +350,30 @@ componentwise_rml <- componentwise_metrics(
 
 write.csv(
   results_mc,
-  file = "monte_carlo_replications.csv",
+  file = "inst/os_experiment/monte_carlo_replications.csv",
   row.names = FALSE
 )
 
 write.csv(
   summary_by_n,
-  file = "monte_carlo_summary_by_n.csv",
+  file = "inst/os_experiment/monte_carlo_summary_by_n.csv",
   row.names = FALSE
 )
 
-write.csv(
-  componentwise_svd,
-  file = "componentwise_metrics_svd.csv",
-  row.names = FALSE
-)
 
-write.csv(
-  componentwise_os,
-  file = "componentwise_metrics_one_step.csv",
-  row.names = FALSE
-)
 
-write.csv(
-  componentwise_rml,
-  file = "componentwise_metrics_rml.csv",
-  row.names = FALSE
+saveRDS(
+  list(
+    results_mc = results_mc,
+    summary_by_n = summary_by_n,
+
+    estimates_svd = estimates_svd,
+    estimates_os = estimates_os,
+    estimates_rml = estimates_rml,
+
+    theta_true = theta_true,
+    n_grid = n_grid,
+    n_rep = n_rep
+  ),
+  file = "inst/os_experiment/monte_carlo_scaling_n_full.rds"
 )

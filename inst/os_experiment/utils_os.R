@@ -5,28 +5,13 @@
 # 2. Metric functions
 # ============================================================
 
-# Euclidean estimation error
-l2_error <- function(theta_hat, theta_true) {
-  sqrt(sum((theta_hat - theta_true)^2))
-}
-
 
 # Root mean squared error across parameters
-parameter_rmse <- function(theta_hat, theta_true) {
-  sqrt(mean((theta_hat - theta_true)^2))
+parameter_mse <- function(theta_hat, theta_true) {
+  mean((theta_hat - theta_true)^2)
 }
 
 
-# Mean absolute error across parameters
-parameter_mae <- function(theta_hat, theta_true) {
-  mean(abs(theta_hat - theta_true))
-}
-
-
-# Average signed bias across parameters
-mean_bias <- function(theta_hat, theta_true) {
-  mean(theta_hat - theta_true)
-}
 
 
 # Distance between One-Step and RML
@@ -75,8 +60,8 @@ relative_os_rml_distance <- function(theta_os, theta_rml) {
 
 
 
-os_rml_rmse <- function(theta_os, theta_rml) {
-  sqrt(mean((theta_os - theta_rml)^2))
+os_rml_mse <- function(theta_os, theta_rml) {
+  mean((theta_os - theta_rml)^2)
 }
 
 # ============================================================
@@ -123,7 +108,47 @@ safe_estimation <- function(model, infer = FALSE, ...) {
   result
 }
 
+safe_estimation_lavaan <- function(
+    model,
+    data,
+    composites_cov = "fixed"
+) {
 
+  start_time <- proc.time()[["elapsed"]]
+
+  fit <- tryCatch(
+    lavaan::sem(
+      model = model,
+      data = data,
+      estimator = "ML",
+      likelihood = "wishart",
+      composites.cov = composites_cov,
+      se = "none",
+      test = "none"
+    ),
+    error = function(e) e
+  )
+
+  elapsed_time <- proc.time()[["elapsed"]] - start_time
+
+  if (inherits(fit, "error")) {
+    return(
+      list(
+        success = FALSE,
+        elapsed_time = elapsed_time,
+        fit = NULL,
+        error_message = conditionMessage(fit)
+      )
+    )
+  }
+
+  list(
+    success = TRUE,
+    elapsed_time = elapsed_time,
+    fit = fit,
+    error_message = NA_character_
+  )
+}
 
 
 
@@ -143,14 +168,11 @@ summarize_one_n <- function(data_n) {
     os_failure_rate = mean(!data_n$os_success),
     rml_failure_rate = mean(!data_n$rml_success),
 
-    svd_rmse_mean = mean_na(data_n$svd_rmse),
-    svd_rmse_sd = sd_na(data_n$svd_rmse),
+    svd_rmse = sqrt(mean_na(data_n$svd_mse)),
 
-    os_rmse_mean = mean_na(data_n$os_rmse),
-    os_rmse_sd = sd_na(data_n$os_rmse),
+    os_rmse = sqrt(mean_na(data_n$os_mse)),
 
-    rml_rmse_mean = mean_na(data_n$rml_rmse),
-    rml_rmse_sd = sd_na(data_n$rml_rmse),
+    rml_rmse = sqrt(mean_na(data_n$rml_mse)),
 
     scaled_distance_mean =
       mean_na(data_n$scaled_os_rml_distance),
@@ -277,20 +299,15 @@ summarize_one_q <- function(data_q) {
     os_failure_rate = mean(!data_q$os_success),
     rml_failure_rate = mean(!data_q$rml_success),
 
-    svd_rmse_mean = mean_na(data_q$svd_rmse),
-    svd_rmse_sd = sd_na(data_q$svd_rmse),
+    svd_rmse = sqrt(mean_na(data_q$svd_mse)),
 
-    os_rmse_mean = mean_na(data_q$os_rmse),
-    os_rmse_sd = sd_na(data_q$os_rmse),
+    os_rmse = sqrt(mean_na(data_q$os_mse)),
 
-    rml_rmse_mean = mean_na(data_q$rml_rmse),
-    rml_rmse_sd = sd_na(data_q$rml_rmse),
+    rml_rmse = sqrt(mean_na(data_q$rml_mse)),
 
-    rmse_os_rml_mean =
-      mean_na(data_q$os_rml_rmse),
+    rmse_os_rml =
+      sqrt(mean_na(data_q$os_rml_mse)),
 
-    rmse_os_rml_sd =
-      sd_na(data_q$os_rml_rmse),
 
     os_rml_distance_mean =
       mean_na(data_q$os_rml_distance),
@@ -313,8 +330,15 @@ summarize_one_q <- function(data_q) {
     rml_time_mean =
       mean_na(data_q$rml_time),
 
+    lavaan_time_mean =
+      mean_na(data_q$lavaan_time),
+
     speedup =
       mean_na(data_q$rml_time) /
+      mean_na(data_q$os_time),
+
+    speedup_lavaan =
+      mean_na(data_q$lavaan_time) /
       mean_na(data_q$os_time),
 
     svd_constraint_mean =
@@ -413,20 +437,15 @@ summarize_one_J <- function(data_J) {
     os_failure_rate  = mean(!data_J$os_success),
     rml_failure_rate = mean(!data_J$rml_success),
 
-    svd_rmse_mean = mean_na(data_J$svd_rmse),
-    svd_rmse_sd   = sd_na(data_J$svd_rmse),
+    svd_rmse = sqrt(mean_na(data_J$svd_mse)),
 
-    os_rmse_mean = mean_na(data_J$os_rmse),
-    os_rmse_sd   = sd_na(data_J$os_rmse),
+    os_rmse = sqrt(mean_na(data_J$os_mse)),
 
-    rml_rmse_mean = mean_na(data_J$rml_rmse),
-    rml_rmse_sd   = sd_na(data_J$rml_rmse),
+    rml_rmse = sqrt(mean_na(data_J$rml_mse)),
 
-    os_rml_rmse_mean =
-      mean_na(data_J$os_rml_rmse),
+    os_rml_rmse =
+      sqrt(mean_na(data_J$os_rml_mse)),
 
-    os_rml_rmse_sd =
-      sd_na(data_J$os_rml_rmse),
 
     likelihood_gap_mean =
       mean_na(data_J$likelihood_gap),

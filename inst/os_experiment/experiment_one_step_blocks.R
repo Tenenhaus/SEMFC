@@ -173,20 +173,20 @@ for (J_index in seq_along(J_grid)) {
     # Individual estimator metrics
     # --------------------------------------------------------
 
-    svd_rmse <- if (fit_svd$success) {
-      parameter_rmse(fit_svd$theta, theta_true)
+    svd_mse <- if (fit_svd$success) {
+      parameter_mse(fit_svd$theta, theta_true)
     } else {
       NA_real_
     }
 
-    os_rmse <- if (fit_os$success) {
-      parameter_rmse(fit_os$theta, theta_true)
+    os_mse <- if (fit_os$success) {
+      parameter_mse(fit_os$theta, theta_true)
     } else {
       NA_real_
     }
 
-    rml_rmse <- if (fit_rml$success) {
-      parameter_rmse(fit_rml$theta, theta_true)
+    rml_mse <- if (fit_rml$success) {
+      parameter_mse(fit_rml$theta, theta_true)
     } else {
       NA_real_
     }
@@ -252,8 +252,8 @@ for (J_index in seq_along(J_grid)) {
       NA_real_
     }
 
-    rmse_os_rml <- if (fit_os$success && fit_rml$success) {
-      os_rml_rmse(
+    mse_os_rml <- if (fit_os$success && fit_rml$success) {
+      os_rml_mse(
         fit_os$theta,
         fit_rml$theta
       )
@@ -324,9 +324,9 @@ for (J_index in seq_along(J_grid)) {
       os_success = fit_os$success,
       rml_success = fit_rml$success,
 
-      svd_rmse = svd_rmse,
-      os_rmse = os_rmse,
-      rml_rmse = rml_rmse,
+      svd_mse = svd_mse,
+      os_mse = os_mse,
+      rml_mse = rml_mse,
 
       svd_constraint = svd_constraint,
       os_constraint = os_constraint,
@@ -341,7 +341,7 @@ for (J_index in seq_along(J_grid)) {
       scaled_svd_rml_distance = scaled_distance_svd_rml,
       relative_svd_rml_distance = relative_distance_svd,
       likelihood_gap_svd = objective_gap_svd,
-      os_rml_rmse = rmse_os_rml,
+      os_rml_mse = mse_os_rml,
 
       svd_time = fit_svd$elapsed_time,
       os_time = fit_os$elapsed_time,
@@ -388,29 +388,7 @@ rownames(summary_by_J) <- NULL
 print(summary_by_J)
 
 
-# ============================================================
-# 7. Componentwise Monte-Carlo bias and RMSE
-# ============================================================
 
-
-
-componentwise_svd <- componentwise_metrics_J(
-  estimates_svd,
-  theta_true_list,
-  J_grid
-)
-
-componentwise_os <- componentwise_metrics_J(
-  estimates_os,
-  theta_true_list,
-  J_grid
-)
-
-componentwise_rml <- componentwise_metrics_J(
-  estimates_rml,
-  theta_true_list,
-  J_grid
-)
 
 # ============================================================
 # 8. Export
@@ -428,20 +406,24 @@ write.csv(
   row.names = FALSE
 )
 
-write.csv(
-  componentwise_svd,
-  "scaling_J_componentwise_svd.csv",
-  row.names = FALSE
-)
 
-write.csv(
-  componentwise_os,
-  "scaling_J_componentwise_one_step.csv",
-  row.names = FALSE
-)
 
-write.csv(
-  componentwise_rml,
-  "scaling_J_componentwise_rml.csv",
-  row.names = FALSE
+
+
+
+saveRDS(
+  list(
+    results_mc = results_mc,
+    summary_by_J = summary_by_J,
+
+    estimates_svd = estimates_svd,
+    estimates_os = estimates_os,
+    estimates_rml = estimates_rml,
+
+    theta_true_list = theta_true_list,
+    J_grid = J_grid,
+    N = N,
+    n_rep = n_rep
+  ),
+  file = "monte_carlo_scaling_J_full.rds"
 )
