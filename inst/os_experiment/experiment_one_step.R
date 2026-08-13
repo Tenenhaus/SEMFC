@@ -15,7 +15,7 @@ source('inst/simulations/data_simulation_mixed.R')
 # ============================================================
 
 n_grid <- c(300, 600, 1200, 2400, 4800)
-n_rep  <- 2
+n_rep  <- 500
 
 # True parameter vector.
 # It must follow exactly the same ordering as the estimators.

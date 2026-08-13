@@ -396,13 +396,13 @@ print(summary_by_J)
 
 write.csv(
   results_mc,
-  "scaling_J_replications.csv",
+  "inst/os_experiment/scaling_J_replications.csv",
   row.names = FALSE
 )
 
 write.csv(
   summary_by_J,
-  "scaling_J_summary.csv",
+  "inst/os_experiment/scaling_J_summary.csv",
   row.names = FALSE
 )
 
@@ -425,5 +425,5 @@ saveRDS(
     N = N,
     n_rep = n_rep
   ),
-  file = "monte_carlo_scaling_J_full.rds"
+  file = "inst/os_experiment/monte_carlo_scaling_J_full.rds"
 )
