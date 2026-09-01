@@ -13,7 +13,7 @@ correction <- function(A, a, mode = "reflective", bias = FALSE) {
     W <- a %*% t(a)
     diag(W) <- 0
     WS <- W * S
-    d <- ifelse(any(WS > 0), sqrt(sum(WS[WS > 0]) / sum(W[WS > 0]^2)), 1) # POURQUOI CETTE CONDITION ETRANGE et PAS LA LIGNE DU DESSOUS
+    d <- ifelse(any(WS > 0), sqrt(sum(WS[WS > 0]) / sum(W[WS > 0]^2)), 1)
     # d =  sqrt(sum(WS)/sum(W^2))
     n <- length(which(WS < 0))
   }

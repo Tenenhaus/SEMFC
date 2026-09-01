@@ -49,7 +49,6 @@ li_Phi_full_diag <- lapply(1:R_true, function(r) {
                   li_R22[[r]]
             )
       )
-      print(eigen(Phi_r, only.values = TRUE, symmetric = TRUE)$values)
       return(Phi_r)
 }) # R devient Phi_full
 
@@ -80,8 +79,7 @@ if (least_val_propre <= 0) {
 bloc_perturbation <- matrix(least_val_propre, nrow = R_true, ncol = R_true, byrow = TRUE)
 diag(bloc_perturbation) <- 0
 perturbation <- Matrix::bdiag(lapply(1:6, function(i) bloc_perturbation))
-print(dim(perturbation))
-print(dim(P))
+
 
 P <- P + perturbation # On ajoute une petite perturbation pour que la matrice soit positive definie
 
@@ -137,13 +135,11 @@ if (do_composite) {
       # Construire la matrice finale
       bloc_lambda <- Q
       bloc_lambda[, -1] <- sweep(Q[, -1, drop = FALSE], 2, normes, "*")
-
       # Remplacer la premiere colonne par sa valeur originale
       bloc_lambda[, 1] <- first_lambda
+
       Lambda <- Matrix::bdiag(lapply(1:6, function(i) bloc_lambda)) # 6 blocs identiques pour lambda
 }
-
-
 
 
 Sigma_no_perturbation <- Lambda %*% P %*% t(Lambda) # covariance imlpied by the model

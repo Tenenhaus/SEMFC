@@ -37,8 +37,8 @@ source("functions/h_constraints.R")
 #############################################
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
-set.seed(20091979) # my date of birth
-n_simu <- 2
+set.seed(150401) # my date of birth
+n_simu <- 1
 N <- 300
 sol_svd <- matrix(0, 61, n_simu)
 sol_ml <- matrix(0, 61, n_simu)
@@ -56,6 +56,8 @@ f_svd <- rep(0, n_simu)
 param_svd <- matrix(0, 61, n_simu)
 z <- rep(NA, n_simu)
 svd_pval <- rep(NA, n_simu)
+ratio_error_SVD <- rep(NA, n_simu)
+R_try <- 2
 
 # Maximum likelihood
 lambda_hat_ml <- matrix(0, 18, n_simu) # les correlations entre facteurs et y
@@ -78,298 +80,322 @@ gof <- matrix(NA, 2, n_simu)
 
 for (b in seq_len(n_simu)) {
   if (b %% 10 == 0) print(b)
-  try(
-    {
-      X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = FALSE)
-      colnames(X) <- paste("X", rep(1:6, each = 3), rep(1:3, 6), sep = "")
-      S <- cov(X)
+  # try(
+  #   {
+  X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = FALSE)
+  colnames(X) <- paste("X", rep(1:6, each = 3), rep(1:3, 6), sep = "")
+  S <- cov(X)
 
-      Y <- list(
-        X1 = X[, 1:3], X2 = X[, 4:6], X3 = X[, 7:9],
-        X4 = X[, 10:12], X5 = X[, 13:15], X6 = X[, 16:18]
-      )
-
-      C <- matrix(c(
-        0, 0, 0, 0, 1, 0,
-        0, 0, 0, 0, 1, 0,
-        0, 0, 0, 0, 0, 1,
-        0, 0, 0, 0, 0, 1,
-        0, 0, 0, 0, 0, 1,
-        0, 0, 0, 0, 1, 0
-      ), 6, 6, byrow = TRUE)
-
-      colnames(C) <- rownames(C) <- names(Y)
-
-      fit.svd <- svdSEM(Y, C,
-        scale = FALSE,
-        mode = c(
-          rep("formative", 4),
-          rep("reflective", 2)
-        ),
-        bias = FALSE
-      )
-
-      # # TEST de significativité
-      # boot_out <- svdSEM_infer(fit.svd, B = 1000, verbose = TRUE)
-      # z[b] <- diff(boot_out$gamma[2:3, 1]) / sd(diff(t(boot_out$out[[4]][, 2:3]))) # meme test de significativite gaussian par bootstrap qu'ailleurs
-      # svd_pval[b] <- 2 * pnorm(abs(z[b]), lower.tail = FALSE)
-
-      #################
-      # Sigma_implied #
-      #################
-
-      R_LVM_SVD <- fit.svd$P_IMPLIED # Estimation SVD de la matrice de correlation entre les variables latentes
-      SIGMA_SVD <- fit.svd$SIGMA_IMPLIED # Estimation SVD de la matrice de covariance entre les indicatrices
-
-
-      # Calcul des distances quadratiques aux vrais Sigma
-      sigma_hat[1, b] <- d_LS(S[1:3, 1:3], SIGMA11)
-      sigma_hat[2, b] <- d_LS(S[4:6, 4:6], SIGMA22)
-      sigma_hat[3, b] <- d_LS(S[7:9, 7:9], SIGMA33)
-      sigma_hat[4, b] <- d_LS(S[10:12, 10:12], SIGMA44)
-
-
-      # Flatten et calculer les coeffs pour l'iteration b
-      lambda_hat_svd[, b] <- Reduce("c", fit.svd$lambda)
-      omega_hat_svd[, b] <- Reduce("c", fit.svd$omega)
-      rho_hat_svd[, b] <- R_LVM_SVD[as.vector(upper.tri(R_LVM_SVD))]
-      beta_hat_svd[, b] <- fit.svd$beta[fit.svd$beta != 0]
-      gamma_hat_svd[, b] <- c(fit.svd$gamma[1, 1:2], fit.svd$gamma[2, 3:4])
-      r2_hat_svd[, b] <- fit.svd$R2
-      psi_hat_svd[, b] <- fit.svd$psi[upper.tri(fit.svd$psi, diag = TRUE)]
-      var_hat_svd[, b] <- c(
-        apply(Y[[5]], 2, var) - fit.svd$lambda[[5]]^2,
-        apply(Y[[6]], 2, var) - fit.svd$lambda[[6]]^2
-      )
-
-      #   sol_svd[, b] <- init_ml_with_S <-
-      #     as.vector(c(
-      #       Reduce("c", fit.svd$lambda),
-      #       R_LVM_SVD[1:4, 1:4][upper.tri(R_LVM_SVD[1:4, 1:4])],
-      #       fit.svd$gamma[1, 1:2], fit.svd$gamma[2, 3:4],
-      #       fit.svd$beta[1, 2], fit.svd$beta[2, 1],
-      #       R_LVM_SVD[5, 6],
-      #       S[1:3, 1:3][upper.tri(S[1:3, 1:3], diag = TRUE)],
-      #       S[4:6, 4:6][upper.tri(S[4:6, 4:6], diag = TRUE)],
-      #       S[7:9, 7:9][upper.tri(S[7:9, 7:9], diag = TRUE)],
-      #       S[10:12, 10:12][upper.tri(S[10:12, 10:12], diag = TRUE)],
-      #       apply(X[, 13:15], 2, var) - fit.svd$lambda[[5]]^2,
-      #       apply(X[, 16:18], 2, var) - fit.svd$lambda[[6]]^2
-      #     ))
-
-      #   # Minimiser la likelihood par quasi newton a gradient calcule auto. F1 est la likelhood pour ce modele precis
-      #   fit.ml <- solnp(
-      #     pars = init_ml_with_S,
-      #     fun = F1, eqfun = heq1, # aucune contrainte en plus
-      #     eqB = rep(0, 4), S = S,
-      #     control = list(trace = 0, tol = 1e-8)
-      #   )
-
-      #   # ML output
-      #   x <- fit.ml$pars
-
-
-      #   # Likelihood Ratio Test
-      #   fit.ml0 <- solnp(
-      #     pars = init_ml_with_S,
-      #     fun = F1, eqfun = heq0, # on a contrainte une egalite entre gamme_12 et gamma_23
-      #     eqB = rep(0, 5), S = S,
-      #     control = list(trace = 0, tol = 1e-8)
-      #   )
-
-      #   # ML output
-      #   x0 <- fit.ml0$pars
-
-      #   lrt_pval[b] <- pchisq((N - 1) * (F1(x0, S) - F1(x, S)),
-      #     1,
-      #     lower.tail = F
-      #   )
-
-
-      #   # asymptotic test based on the CAN properties of ML
-      #   # -> asymptotic covariance matrix of theta
-
-      #   # Jacobian and hessian comutation
-
-      #   # Jacobienne de vech(Sigma)
-      #   JAC <- numDeriv::jacobian(s_implied, x = x, S = S, jac = TRUE)
-      #   # On reordonne la jacobienne en une liste de matrice dSigma/dtheta_i (indice de liste i)
-      #   full_jac <- sapply(1:NCOL(JAC),
-      #     function(x) {
-      #       ds_dt <- matrix(0, NCOL(S), NCOL(S))
-      #       ds_dt[upper.tri(ds_dt, diag = T)] <- JAC[, x]
-      #       ds_dt <- ds_dt + t(ds_dt) - diag(diag(ds_dt))
-      #     },
-      #     simplify = FALSE
-      #   )
-
-      #   nb_param <- length(x)
-      #   B <- matrix(0, nb_param, nb_param)
-      #   Sinv <- solve(s_implied(x, S, jac = F)) # S_implied inversee
-      #   for (i in 1:61) {
-      #     for (j in i:61) {
-      #       B[i, j] <- 0.5 * sum(diag(Sinv %*% full_jac[[i]] %*% Sinv %*% full_jac[[j]])) # information de Fischer (eq 38)
-      #     }
-      #   }
-
-      #   B <- B + t(B) - diag(diag(B))
-
-      #   # Calcule la matrice H (juste en dessous de l'eq 38: contraintes sur blocs formatifs)
-      #   H <- sapply(
-      #     1:4,
-      #     function(b) {
-      #       numDeriv::jacobian(h_theta, x = x, block = b) # calcul de la b-ieme colonne de H
-      #     }
-      #   )
-
-      #   P <- solve(rbind(
-      #     cbind(B + H %*% t(H), H),
-      #     cbind(t(H), matrix(0, 4, 4))
-      #   ))[1:61, 1:61] # Matrice P de l'equationn 39. Attention ici B est le I_theta: information de Fischer
-
-      #   VCOV <- P / N # Estimation de la covariance de l'estimateur Theta
-      #   SD <- sqrt(diag(VCOV)) # Estimation des ecarts types de chaque estimation de Theta
-
-      #   z <- abs(diff(x[26:27])) / sqrt(VCOV[26, 26] + VCOV[27, 27] - 2 * VCOV[26, 27])
-      #   vcov_pval[b] <- 2 * pnorm(z, lower.tail = F) # test de significativite des coefficients presente page 249 avec la methode de calcul des ecarts types en ML
-
-      #   P_EXO <- matrix(c(
-      #     1, x[19], x[20], x[22],
-      #     x[19], 1, x[21], x[23],
-      #     x[20], x[21], 1, x[24],
-      #     x[22], x[23], x[24], 1
-      #   ), 4, 4) # Estimation ML de la corrrelation entre latentes exogenes
-
-      #   P_ENDO <- matrix(c(
-      #     1, x[31],
-      #     x[31], 1
-      #   ), 2, 2) # Estimation ML de la corrrelation entre latentes endogenes
-
-      #   # path coefficients
-      #   G <- matrix(c(
-      #     x[25], x[26], 0, 0,
-      #     0, 0, x[27], x[28]
-      #   ), 2, 4, byrow = TRUE) # Estimation ML de Gamma
-
-      #   # path coefficients
-      #   B <- matrix(c(
-      #     0, x[29],
-      #     x[30], 0
-      #   ), 2, 2, byrow = TRUE) # Estimation ML de B
-
-      #   R_LVM_ML <- rbind(
-      #     cbind(P_EXO, P_EXO %*% t(G) %*% t(solve(diag(2) - B))),
-      #     cbind(solve(diag(2) - B) %*% G %*% P_EXO, P_ENDO)
-      #   ) # Estimation ML de la matrice de correlation entre toutes les latentes
-
-      #   I_B_ML <- diag(2) - B
-
-      #   PSI_ML <- I_B_ML %*% P_ENDO %*% t(I_B_ML) - G %*% P_EXO %*% t(G) # Estimatuib ML de PSI
-
-      #   r2_1_ML <- 1 - PSI_ML[1, 1] # R^2 de la premiere latente endogene
-      #   r2_2_ML <- 1 - PSI_ML[2, 2] # R^2 de la deuxieme latente endogene
-
-      #   # Omega
-      #   # cov between MVs
-      #   S1 <- matrix(c(
-      #     x[32], x[33], x[35],
-      #     x[33], x[34], x[36],
-      #     x[35], x[36], x[37]
-      #   ), 3, 3) # Cov entre les indicatrices du premier bloc formatif
-
-      #   # cov between MVs
-
-      #   S2 <- matrix(c(
-      #     x[38], x[39], x[41],
-      #     x[39], x[40], x[42],
-      #     x[41], x[42], x[43]
-      #   ), 3, 3) # Cov entre les indicatrices du deuxieme bloc formatif etc...
-
-      #   # cov between MVs
-      #   S3 <- matrix(c(
-      #     x[44], x[45], x[47],
-      #     x[45], x[46], x[48],
-      #     x[47], x[48], x[49]
-      #   ), 3, 3)
-      #   # cov between MVs
-      #   S4 <- matrix(c(
-      #     x[50], x[51], x[53],
-      #     x[51], x[52], x[54],
-      #     x[53], x[54], x[55]
-      #   ), 3, 3)
-
-      #   LAMBDA_ML <- bdiag(split(x[1:18], f = rep(1:6, each = 3))) # (bloc diagonale des lambda: exactement Lambda dans l'article nouveau)
-      #   RESID_VAR_ML <- apply(X, 2, var) - x[1:18]^2 # variance residuelle (surtout valable pour les blocs reflectifs). Attention ce n'est peut-etre pas la solution ML (meme si normalement oui...)
-      #   SIGMA_ML <- LAMBDA_ML %*% R_LVM_ML %*% t(LAMBDA_ML) + diag(RESID_VAR_ML) # Sigma implied
-
-      #   # corriger ce sigma pour blocs formatifs (ou RESID_VAR_ML etait inapplicable)
-      #   SIGMA_ML[1:3, 1:3] <- S1 # S[1:3, 1:3]
-      #   SIGMA_ML[4:6, 4:6] <- S2 # S[4:6, 4:6]
-      #   SIGMA_ML[7:9, 7:9] <- S3 # S[7:9, 7:9]
-      #   SIGMA_ML[10:12, 10:12] <- S4 # S[10:12, 10:12]
-
-      #   S_1 <- solve(S1)
-      #   S_2 <- solve(S2)
-      #   S_3 <- solve(S3)
-      #   S_4 <- solve(S4)
-
-      #   # Calcul des scores w
-      #   omega_ML <- c(
-      #     S_1 %*% x[1:3] / drop(sqrt(x[1:3] %*% S_1 %*% x[1:3])),
-      #     S_2 %*% x[4:6] / drop(sqrt(x[4:6] %*% S_2 %*% x[4:6])),
-      #     S_3 %*% x[7:9] / drop(sqrt(x[7:9] %*% S_3 %*% x[7:9])),
-      #     S_4 %*% x[10:12] / drop(sqrt(x[10:12] %*% S_4 %*% x[10:12]))
-      #   )
-
-      #   # Enregistrer les resultats
-      #   lambda_hat_ml[, b] <- x[1:18]
-      #   omega_hat_ml[, b] <- omega_ML
-      #   rho_hat_ml[, b] <- R_LVM_ML[upper.tri(R_LVM_ML)]
-      #   beta_hat_ml[, b] <- x[30:29]
-      #   gamma_hat_ml[, b] <- x[25:28]
-      #   r2_hat_ml[, b] <- c(r2_1_ML, r2_2_ML)
-      #   psi_hat_ml[, b] <- PSI_ML[upper.tri(PSI_ML, diag = TRUE)]
-      #   var_hat_ml[, b] <- c(
-      #     apply(Y[[5]], 2, var) - x[13:15]^2,
-      #     apply(Y[[6]], 2, var) - x[16:18]^2
-      #   )
-      #   std_err_ml[, b] <- SD
-
-      #   # Calcul des erreurs quadratiques entre les matrices de covariance estimees et la vraie matrice de covariance pour les blocs formatifs (vs TRUE et vs SVD = empirique)
-      #   sigma_hat[5, b] <- d_LS(S1, SIGMA11)
-      #   sigma_hat[6, b] <- d_LS(S2, SIGMA22)
-      #   sigma_hat[7, b] <- d_LS(S3, SIGMA33)
-      #   sigma_hat[8, b] <- d_LS(S4, SIGMA44)
-      #   sigma_hat[9, b] <- d_LS(S1, S[1:3, 1:3])
-      #   sigma_hat[10, b] <- d_LS(S2, S[4:6, 4:6])
-      #   sigma_hat[11, b] <- d_LS(S3, S[7:9, 7:9])
-      #   sigma_hat[12, b] <- d_LS(S4, S[10:12, 10:12])
-
-      #   # goodness of fit
-      #   gof[1, b] <- d_LS(SIGMA_SVD, SIGMA)
-      #   gof[2, b] <- d_LS(SIGMA_ML, SIGMA)
-
-      #   # param eigen
-      #   param_svd[, b] <- init_ml_with_S
-
-      #   # param ml
-      #   param_ml[, b] <- x
-
-      #   # F_ml
-      #   f_ml[b] <- F1(x, S)
-
-      #   # F_svd
-      #   f_svd[b] <- F1(init_ml_with_S, S)
-    },
-    silent = TRUE
+  Y <- list(
+    X1 = X[, 1:3], X2 = X[, 4:6], X3 = X[, 7:9],
+    X4 = X[, 10:12], X5 = X[, 13:15], X6 = X[, 16:18]
   )
-}
-print("poids lambda SVD")
-print(lambda_hat_svd)
-print("erreurs de fit SVD en proportion de la norme de Frobenius de chaque bloc")
-vec_norm_frob <- c(norm(SIGMA11, type = "F"), norm(SIGMA22, type = "F"), norm(SIGMA33, type = "F"), norm(SIGMA44, type = "F"))
-print(sigma_hat[1:4, ] / vec_norm_frob)
 
+
+  C <- matrix(c(
+    0, 0, 0, 0, 1, 0,
+    0, 0, 0, 0, 1, 0,
+    0, 0, 0, 0, 0, 1,
+    0, 0, 0, 0, 0, 1,
+    0, 0, 0, 0, 0, 1,
+    0, 0, 0, 0, 1, 0
+  ), 6, 6, byrow = TRUE)
+
+  colnames(C) <- rownames(C) <- names(Y)
+
+  li_C <- lapply(1:R_try, function(x) C)
+
+  # fit.svd <- svdSEM(Y, C,
+  #   scale = FALSE,
+  #   mode = c(
+  #     rep("formative", 4),
+  #     rep("reflective", 2)
+  #   ),
+  #   bias = FALSE
+  # )
+
+  fit.svd <- svdSEM_multi(Y, li_C,
+    scale = FALSE,
+    mode = rep("reflective", 6),
+    bias = FALSE
+  )
+
+  Sigma_SVD <- fit.svd$SIGMA_IMPLIED
+
+  erreur_abs <- d_LS(Sigma_SVD, SIGMA)
+  ratio_error_SVD <- erreur_abs / sum(diag(as.matrix(SIGMA^2)))
+  print(paste("Ratio of absolute error full model:", round(ratio_error_SVD, 4)))
+
+
+  stop("done")
+
+  # # TEST de significativité
+  # boot_out <- svdSEM_infer(fit.svd, B = 1000, verbose = TRUE)
+  # z[b] <- diff(boot_out$gamma[2:3, 1]) / sd(diff(t(boot_out$out[[4]][, 2:3]))) # meme test de significativite gaussian par bootstrap qu'ailleurs
+  # svd_pval[b] <- 2 * pnorm(abs(z[b]), lower.tail = FALSE)
+
+  #################
+  # Sigma_implied #
+  #################
+
+  R_LVM_SVD <- fit.svd$P_IMPLIED # Estimation SVD de la matrice de correlation entre les variables latentes
+  SIGMA_SVD <- fit.svd$SIGMA_IMPLIED # Estimation SVD de la matrice de covariance entre les indicatrices
+
+
+  # Calcul des distances quadratiques aux vrais Sigma
+  sigma_hat[1, b] <- d_LS(S[1:3, 1:3], SIGMA11)
+  sigma_hat[2, b] <- d_LS(S[4:6, 4:6], SIGMA22)
+  sigma_hat[3, b] <- d_LS(S[7:9, 7:9], SIGMA33)
+  sigma_hat[4, b] <- d_LS(S[10:12, 10:12], SIGMA44)
+
+
+  # Flatten et calculer les coeffs pour l'iteration b
+  lambda_hat_svd[, b] <- Reduce("c", fit.svd$lambda)
+  omega_hat_svd[, b] <- Reduce("c", fit.svd$omega)
+  rho_hat_svd[, b] <- R_LVM_SVD[as.vector(upper.tri(R_LVM_SVD))]
+  beta_hat_svd[, b] <- fit.svd$beta[fit.svd$beta != 0]
+  gamma_hat_svd[, b] <- c(fit.svd$gamma[1, 1:2], fit.svd$gamma[2, 3:4])
+  r2_hat_svd[, b] <- fit.svd$R2
+  psi_hat_svd[, b] <- fit.svd$psi[upper.tri(fit.svd$psi, diag = TRUE)]
+  var_hat_svd[, b] <- c(
+    apply(Y[[5]], 2, var) - fit.svd$lambda[[5]]^2,
+    apply(Y[[6]], 2, var) - fit.svd$lambda[[6]]^2
+  )
+
+  erreur_abs <- d_LS(SIGMA_SVD, SIGMA)
+  ratio_error_SVD[b] <- erreur_abs / norm(SIGMA, type = "F")
+
+
+  #   sol_svd[, b] <- init_ml_with_S <-
+  #     as.vector(c(
+  #       Reduce("c", fit.svd$lambda),
+  #       R_LVM_SVD[1:4, 1:4][upper.tri(R_LVM_SVD[1:4, 1:4])],
+  #       fit.svd$gamma[1, 1:2], fit.svd$gamma[2, 3:4],
+  #       fit.svd$beta[1, 2], fit.svd$beta[2, 1],
+  #       R_LVM_SVD[5, 6],
+  #       S[1:3, 1:3][upper.tri(S[1:3, 1:3], diag = TRUE)],
+  #       S[4:6, 4:6][upper.tri(S[4:6, 4:6], diag = TRUE)],
+  #       S[7:9, 7:9][upper.tri(S[7:9, 7:9], diag = TRUE)],
+  #       S[10:12, 10:12][upper.tri(S[10:12, 10:12], diag = TRUE)],
+  #       apply(X[, 13:15], 2, var) - fit.svd$lambda[[5]]^2,
+  #       apply(X[, 16:18], 2, var) - fit.svd$lambda[[6]]^2
+  #     ))
+
+  #   # Minimiser la likelihood par quasi newton a gradient calcule auto. F1 est la likelhood pour ce modele precis
+  #   fit.ml <- solnp(
+  #     pars = init_ml_with_S,
+  #     fun = F1, eqfun = heq1, # aucune contrainte en plus
+  #     eqB = rep(0, 4), S = S,
+  #     control = list(trace = 0, tol = 1e-8)
+  #   )
+
+  #   # ML output
+  #   x <- fit.ml$pars
+
+
+  #   # Likelihood Ratio Test
+  #   fit.ml0 <- solnp(
+  #     pars = init_ml_with_S,
+  #     fun = F1, eqfun = heq0, # on a contrainte une egalite entre gamme_12 et gamma_23
+  #     eqB = rep(0, 5), S = S,
+  #     control = list(trace = 0, tol = 1e-8)
+  #   )
+
+  #   # ML output
+  #   x0 <- fit.ml0$pars
+
+  #   lrt_pval[b] <- pchisq((N - 1) * (F1(x0, S) - F1(x, S)),
+  #     1,
+  #     lower.tail = F
+  #   )
+
+
+  #   # asymptotic test based on the CAN properties of ML
+  #   # -> asymptotic covariance matrix of theta
+
+  #   # Jacobian and hessian comutation
+
+  #   # Jacobienne de vech(Sigma)
+  #   JAC <- numDeriv::jacobian(s_implied, x = x, S = S, jac = TRUE)
+  #   # On reordonne la jacobienne en une liste de matrice dSigma/dtheta_i (indice de liste i)
+  #   full_jac <- sapply(1:NCOL(JAC),
+  #     function(x) {
+  #       ds_dt <- matrix(0, NCOL(S), NCOL(S))
+  #       ds_dt[upper.tri(ds_dt, diag = T)] <- JAC[, x]
+  #       ds_dt <- ds_dt + t(ds_dt) - diag(diag(ds_dt))
+  #     },
+  #     simplify = FALSE
+  #   )
+
+  #   nb_param <- length(x)
+  #   B <- matrix(0, nb_param, nb_param)
+  #   Sinv <- solve(s_implied(x, S, jac = F)) # S_implied inversee
+  #   for (i in 1:61) {
+  #     for (j in i:61) {
+  #       B[i, j] <- 0.5 * sum(diag(Sinv %*% full_jac[[i]] %*% Sinv %*% full_jac[[j]])) # information de Fischer (eq 38)
+  #     }
+  #   }
+
+  #   B <- B + t(B) - diag(diag(B))
+
+  #   # Calcule la matrice H (juste en dessous de l'eq 38: contraintes sur blocs formatifs)
+  #   H <- sapply(
+  #     1:4,
+  #     function(b) {
+  #       numDeriv::jacobian(h_theta, x = x, block = b) # calcul de la b-ieme colonne de H
+  #     }
+  #   )
+
+  #   P <- solve(rbind(
+  #     cbind(B + H %*% t(H), H),
+  #     cbind(t(H), matrix(0, 4, 4))
+  #   ))[1:61, 1:61] # Matrice P de l'equationn 39. Attention ici B est le I_theta: information de Fischer
+
+  #   VCOV <- P / N # Estimation de la covariance de l'estimateur Theta
+  #   SD <- sqrt(diag(VCOV)) # Estimation des ecarts types de chaque estimation de Theta
+
+  #   z <- abs(diff(x[26:27])) / sqrt(VCOV[26, 26] + VCOV[27, 27] - 2 * VCOV[26, 27])
+  #   vcov_pval[b] <- 2 * pnorm(z, lower.tail = F) # test de significativite des coefficients presente page 249 avec la methode de calcul des ecarts types en ML
+
+  #   P_EXO <- matrix(c(
+  #     1, x[19], x[20], x[22],
+  #     x[19], 1, x[21], x[23],
+  #     x[20], x[21], 1, x[24],
+  #     x[22], x[23], x[24], 1
+  #   ), 4, 4) # Estimation ML de la corrrelation entre latentes exogenes
+
+  #   P_ENDO <- matrix(c(
+  #     1, x[31],
+  #     x[31], 1
+  #   ), 2, 2) # Estimation ML de la corrrelation entre latentes endogenes
+
+  #   # path coefficients
+  #   G <- matrix(c(
+  #     x[25], x[26], 0, 0,
+  #     0, 0, x[27], x[28]
+  #   ), 2, 4, byrow = TRUE) # Estimation ML de Gamma
+
+  #   # path coefficients
+  #   B <- matrix(c(
+  #     0, x[29],
+  #     x[30], 0
+  #   ), 2, 2, byrow = TRUE) # Estimation ML de B
+
+  #   R_LVM_ML <- rbind(
+  #     cbind(P_EXO, P_EXO %*% t(G) %*% t(solve(diag(2) - B))),
+  #     cbind(solve(diag(2) - B) %*% G %*% P_EXO, P_ENDO)
+  #   ) # Estimation ML de la matrice de correlation entre toutes les latentes
+
+  #   I_B_ML <- diag(2) - B
+
+  #   PSI_ML <- I_B_ML %*% P_ENDO %*% t(I_B_ML) - G %*% P_EXO %*% t(G) # Estimatuib ML de PSI
+
+  #   r2_1_ML <- 1 - PSI_ML[1, 1] # R^2 de la premiere latente endogene
+  #   r2_2_ML <- 1 - PSI_ML[2, 2] # R^2 de la deuxieme latente endogene
+
+  #   # Omega
+  #   # cov between MVs
+  #   S1 <- matrix(c(
+  #     x[32], x[33], x[35],
+  #     x[33], x[34], x[36],
+  #     x[35], x[36], x[37]
+  #   ), 3, 3) # Cov entre les indicatrices du premier bloc formatif
+
+  #   # cov between MVs
+
+  #   S2 <- matrix(c(
+  #     x[38], x[39], x[41],
+  #     x[39], x[40], x[42],
+  #     x[41], x[42], x[43]
+  #   ), 3, 3) # Cov entre les indicatrices du deuxieme bloc formatif etc...
+
+  #   # cov between MVs
+  #   S3 <- matrix(c(
+  #     x[44], x[45], x[47],
+  #     x[45], x[46], x[48],
+  #     x[47], x[48], x[49]
+  #   ), 3, 3)
+  #   # cov between MVs
+  #   S4 <- matrix(c(
+  #     x[50], x[51], x[53],
+  #     x[51], x[52], x[54],
+  #     x[53], x[54], x[55]
+  #   ), 3, 3)
+
+  #   LAMBDA_ML <- bdiag(split(x[1:18], f = rep(1:6, each = 3))) # (bloc diagonale des lambda: exactement Lambda dans l'article nouveau)
+  #   RESID_VAR_ML <- apply(X, 2, var) - x[1:18]^2 # variance residuelle (surtout valable pour les blocs reflectifs). Attention ce n'est peut-etre pas la solution ML (meme si normalement oui...)
+  #   SIGMA_ML <- LAMBDA_ML %*% R_LVM_ML %*% t(LAMBDA_ML) + diag(RESID_VAR_ML) # Sigma implied
+
+  #   # corriger ce sigma pour blocs formatifs (ou RESID_VAR_ML etait inapplicable)
+  #   SIGMA_ML[1:3, 1:3] <- S1 # S[1:3, 1:3]
+  #   SIGMA_ML[4:6, 4:6] <- S2 # S[4:6, 4:6]
+  #   SIGMA_ML[7:9, 7:9] <- S3 # S[7:9, 7:9]
+  #   SIGMA_ML[10:12, 10:12] <- S4 # S[10:12, 10:12]
+
+  #   S_1 <- solve(S1)
+  #   S_2 <- solve(S2)
+  #   S_3 <- solve(S3)
+  #   S_4 <- solve(S4)
+
+  #   # Calcul des scores w
+  #   omega_ML <- c(
+  #     S_1 %*% x[1:3] / drop(sqrt(x[1:3] %*% S_1 %*% x[1:3])),
+  #     S_2 %*% x[4:6] / drop(sqrt(x[4:6] %*% S_2 %*% x[4:6])),
+  #     S_3 %*% x[7:9] / drop(sqrt(x[7:9] %*% S_3 %*% x[7:9])),
+  #     S_4 %*% x[10:12] / drop(sqrt(x[10:12] %*% S_4 %*% x[10:12]))
+  #   )
+
+  #   # Enregistrer les resultats
+  #   lambda_hat_ml[, b] <- x[1:18]
+  #   omega_hat_ml[, b] <- omega_ML
+  #   rho_hat_ml[, b] <- R_LVM_ML[upper.tri(R_LVM_ML)]
+  #   beta_hat_ml[, b] <- x[30:29]
+  #   gamma_hat_ml[, b] <- x[25:28]
+  #   r2_hat_ml[, b] <- c(r2_1_ML, r2_2_ML)
+  #   psi_hat_ml[, b] <- PSI_ML[upper.tri(PSI_ML, diag = TRUE)]
+  #   var_hat_ml[, b] <- c(
+  #     apply(Y[[5]], 2, var) - x[13:15]^2,
+  #     apply(Y[[6]], 2, var) - x[16:18]^2
+  #   )
+  #   std_err_ml[, b] <- SD
+
+  #   # Calcul des erreurs quadratiques entre les matrices de covariance estimees et la vraie matrice de covariance pour les blocs formatifs (vs TRUE et vs SVD = empirique)
+  #   sigma_hat[5, b] <- d_LS(S1, SIGMA11)
+  #   sigma_hat[6, b] <- d_LS(S2, SIGMA22)
+  #   sigma_hat[7, b] <- d_LS(S3, SIGMA33)
+  #   sigma_hat[8, b] <- d_LS(S4, SIGMA44)
+  #   sigma_hat[9, b] <- d_LS(S1, S[1:3, 1:3])
+  #   sigma_hat[10, b] <- d_LS(S2, S[4:6, 4:6])
+  #   sigma_hat[11, b] <- d_LS(S3, S[7:9, 7:9])
+  #   sigma_hat[12, b] <- d_LS(S4, S[10:12, 10:12])
+
+  #   # goodness of fit
+  #   gof[1, b] <- d_LS(SIGMA_SVD, SIGMA)
+  #   gof[2, b] <- d_LS(SIGMA_ML, SIGMA)
+
+  #   # param eigen
+  #   param_svd[, b] <- init_ml_with_S
+
+  #   # param ml
+  #   param_ml[, b] <- x
+
+  #   # F_ml
+  #   f_ml[b] <- F1(x, S)
+
+  #   # F_svd
+  #   f_svd[b] <- F1(init_ml_with_S, S)
+  #   },
+  #   silent = TRUE
+  # )
+}
+# print("poids lambda SVD")
+# print(lambda_hat_svd)
+# print("erreurs de fit SVD en proportion de la norme de Frobenius de chaque bloc")
+# vec_norm_frob <- c(norm(SIGMA11, type = "F"), norm(SIGMA22, type = "F"), norm(SIGMA33, type = "F"), norm(SIGMA44, type = "F"))
+# print(sigma_hat[1:4, ] / vec_norm_frob)
+
+print("en moyenne sur le total")
+print(mean(ratio_error_SVD))
 stop("On est au bout")
 
 
