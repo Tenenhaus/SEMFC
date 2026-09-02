@@ -31,7 +31,7 @@
 #' ), 5, 5, byrow = FALSE)
 #'
 #' fit <- svdSEM(A, C,
-#'     scale = FALSE,
+#'     scale = FALSE,v2
 #'     mode = rep("reflective", length(A)),
 #'     bias = FALSE
 #' )
@@ -46,6 +46,32 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     pjs <- sapply(A, NCOL)
     nb_row <- NROW(A[[1]])
 
+    li_Lambda <- list()
+    nb_ind <- NROW(A[[1]])
+    J <- length(A)
+    R_try <- length(li_C)
+
+    cumsum_pjs <- cumsum(c(0, pjs))
+
+
+    # li_S <- lapply(A, function(x){
+    #         lapply(A, function(y) cov2(x, y, bias = bias)) 
+    #      })
+
+    # On triche: SIGMA connu
+    li_S <- lapply(1:J, function(j) {
+        lapply(1:J, function(k) {
+            S_jk <- as.matrix(SIGMA_TRUE[(cumsum_pjs[j] + 1):(cumsum_pjs[j + 1]), (cumsum_pjs[k] + 1):(cumsum_pjs[k + 1])])
+        })
+    })
+
+    S_full <- matrix(0, nrow = sum(pjs), ncol = sum(pjs))
+    for (i in 1:J) {
+        for (j in 1:J) {
+            S_full[(cumsum_pjs[i] + 1):(cumsum_pjs[i + 1]), (cumsum_pjs[j] + 1):(cumsum_pjs[j + 1])] <- li_S[[i]][[j]]
+        }
+    }
+
     #-------------------------------------------------------
     blocks <- A
     if (scale) {
@@ -55,10 +81,6 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     }
 
 
-    li_Lambda <- list()
-    nb_ind <- NROW(A[[1]])
-    J <- length(A)
-    R_try <- length(li_C)
 
 
     # Extract first singular vector for each block. Nouvelle methode: celle du papier
@@ -66,7 +88,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
         1:J,
         function(j) {
             li_sigma_jk <- lapply(1:J, function(k) {
-                Sigma_jk <- t(A[[j]]) %*% A[[k]] / nb_ind
+                Sigma_jk <- li_S[[j]][[k]]
                 if (j == k) {
                     Sigma_jk <- matrix(0, nrow = pjs[j], ncol = pjs[k])
                 }
@@ -102,7 +124,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
             pj <- pjs[j]
 
             # Within-block covariance matrix
-            Sjj <- cov2(A[[j]], A[[j]], bias = bias)
+            Sjj <- li_S[[j]][[j]]
 
             # Masking matrix Mj
             Mj <- matrix(1, nrow = pj, ncol = pj)
@@ -208,8 +230,9 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
             } else {
                 D_i_inv <- diag(1 / li_vec_norm_and_Cjj[[i]]$vec_norm, nrow = R_try, ncol = R_try)
                 D_j_inv <- diag(1 / li_vec_norm_and_Cjj[[j]]$vec_norm, nrow = R_try, ncol = R_try)
-                S_ij <- cov2(A[[i]], A[[j]], bias = bias)
+                S_ij <- li_S[[i]][[j]]
                 P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- D_i_inv %*% t(li_Lambda_star[[i]]) %*% S_ij %*% li_Lambda_star[[j]] %*% D_j_inv
+                # print(t(li_Lambda_star[[i]]) %*% S_ij %*% li_Lambda_star[[j]])
             }
         }
     }
@@ -221,16 +244,18 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
 
     Estim_Sigma <- Lambda_mat %*% P_tilde %*% t(Lambda_mat)
-    diag(Estim_Sigma) <- diag(cov2(Reduce("cbind", A), bias = bias))
+
+    diag(Estim_Sigma) <-  diag(S_full)
 
 
-    erreur_abs <- d_LS(Estim_Sigma, SIGMA)
-    ratio_error_SVD <- erreur_abs / sum(diag(as.matrix(SIGMA^2)))
+
+    erreur_abs <- d_LS(Estim_Sigma, SIGMA_TRUE)
+    ratio_error_SVD <- erreur_abs / sum(diag(as.matrix(SIGMA_TRUE^2)))
     print(paste("Ratio of absolute error measurement model:", round(ratio_error_SVD, 4)))
 
     ## fin check estim
 
-    var_MVs <- lapply(A, function(x) diag(cov2(x, bias = bias)))
+    var_MVs <- lapply(1:J, function(j) diag(li_S[[j]][[j]]))
     lv <- lvm(P_tilde, li_C)
     P_induced <- lv$P_induced
     SIGMA_IMPLIED_no_diag <- Lambda_mat %*% P_induced %*% t(Lambda_mat)
@@ -247,10 +272,11 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     })
 
     # Measure of goodness-of(fit)
-    T_LS <- d_LS(cov2(Reduce("cbind", A), bias = bias), SIGMA_IMPLIED) # ecart quadratique entre la matrice de covariance empirique et la matrice de covariance impliquee par le modele
 
-    print(P_tilde)
-    print(P_induced)
+    T_LS <- d_LS(S_full, SIGMA_IMPLIED) # ecart quadratique entre la matrice de covariance empirique et la matrice de covariance impliquee par le modele
+
+    # print(P_tilde)
+    # print(P_induced)
 
 
     out <- list(

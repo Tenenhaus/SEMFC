@@ -82,7 +82,7 @@ for (b in seq_len(n_simu)) {
   if (b %% 10 == 0) print(b)
   # try(
   #   {
-  X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = FALSE)
+  X <- mvrnorm(N, rep(0, 18), SIGMA_TRUE, empirical = FALSE)
   colnames(X) <- paste("X", rep(1:6, each = 3), rep(1:3, 6), sep = "")
   S <- cov(X)
 
@@ -122,8 +122,9 @@ for (b in seq_len(n_simu)) {
 
   Sigma_SVD <- fit.svd$SIGMA_IMPLIED
 
-  erreur_abs <- d_LS(Sigma_SVD, SIGMA)
-  ratio_error_SVD <- erreur_abs / sum(diag(as.matrix(SIGMA^2)))
+
+  erreur_abs <- d_LS(Sigma_SVD, SIGMA_TRUE)
+  ratio_error_SVD <- erreur_abs / sum(diag(as.matrix(SIGMA_TRUE^2)))
   print(paste("Ratio of absolute error full model:", round(ratio_error_SVD, 4)))
 
 

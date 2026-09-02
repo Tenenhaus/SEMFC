@@ -7,28 +7,27 @@ library(Matrix)
 R_true <- 2
 do_composite <- FALSE
 
-li_BETA <- lapply(1:R_true, function(r) {
-      (0.95)^(r - 1) * matrix(c(
+li_BETA_TRUE <- lapply(1:R_true, function(r) {
+      matrix(c(
             0, 0.25,
             0.5, 0
       ), 2, 2, byrow = TRUE)
 })
 
 
-li_GAMMA <- lapply(1:R_true, function(r) {
-      (0.95)^(r - 1) * matrix(c(
+li_GAMMA_TRUE <- lapply(1:R_true, function(r) {
+      matrix(c(
             -0.30, 0.5, 0, 0,
             0, 0, 0.5, 0.25
       ), 2, 4, byrow = TRUE)
 })
 
 
-
-li_R22 <- lapply(1:R_true, function(r) {
+li_R22_TRUE <- lapply(1:R_true, function(r) {
       matrix(c(1, sqrt(1 / 2), sqrt(1 / 2), 1), 2, 2) # Phi endo
 })
 
-li_PHI <- lapply(1:R_true, function(r) {
+li_PHI_TRUE <- lapply(1:R_true, function(r) {
       matrix(c(
             1, .5, .5, .5,
             .5, 1, .5, .5,
@@ -37,38 +36,39 @@ li_PHI <- lapply(1:R_true, function(r) {
       ), 4, 4, byrow = TRUE) # Phi_exo
 })
 
-li_PSI <- lapply(1:R_true, function(r) {
-      (diag(2) - li_BETA[[r]]) %*% li_R22[[r]] %*% t(diag(2) - li_BETA[[r]]) - li_GAMMA[[r]] %*% li_PHI[[r]] %*% t(li_GAMMA[[r]])
+li_PSI_TRUE <- lapply(1:R_true, function(r) {
+      Psi_loc <- (diag(2) - li_BETA_TRUE[[r]]) %*% li_R22_TRUE[[r]] %*% t(diag(2) - li_BETA_TRUE[[r]]) - li_GAMMA_TRUE[[r]] %*% li_PHI_TRUE[[r]] %*% t(li_GAMMA_TRUE[[r]])
+      return(Psi_loc)
 })
 
-li_Phi_full_diag <- lapply(1:R_true, function(r) {
+li_Phi_full_diag_TRUE <- lapply(1:R_true, function(r) {
       Phi_r <- rbind(
-            cbind(li_PHI[[r]], li_PHI[[r]] %*% t(li_GAMMA[[r]]) %*% t(solve(diag(NROW(li_BETA[[r]])) - li_BETA[[r]]))),
+            cbind(li_PHI_TRUE[[r]], li_PHI_TRUE[[r]] %*% t(li_GAMMA_TRUE[[r]]) %*% t(solve(diag(NROW(li_BETA_TRUE[[r]])) - li_BETA_TRUE[[r]]))),
             cbind(
-                  solve(diag(NROW(li_BETA[[r]])) - li_BETA[[r]]) %*% li_GAMMA[[r]] %*% li_PHI[[r]],
-                  li_R22[[r]]
+                  solve(diag(NROW(li_BETA_TRUE[[r]])) - li_BETA_TRUE[[r]]) %*% li_GAMMA_TRUE[[r]] %*% li_PHI_TRUE[[r]],
+                  li_R22_TRUE[[r]]
             )
       )
       return(Phi_r)
 }) # R devient Phi_full
 
-P <- matrix(0, nrow = 6 * R_true, ncol = 6 * R_true)
+P_TRUE <- matrix(0, nrow = 6 * R_true, ncol = 6 * R_true)
 
 # On remplit les blocs non diagonaux
 for (r in 1:R_true) {
       for (i in 1:6) {
             for (j in 1:6) {
                   if (i != j) {
-                        P[R_true * (i - 1) + r, R_true * (j - 1) + r] <- li_Phi_full_diag[[r]][i, j]
+                        P_TRUE[R_true * (i - 1) + r, R_true * (j - 1) + r] <- li_Phi_full_diag_TRUE[[r]][i, j]
                   } else {
-                        P[R_true * (i - 1) + r, R_true * (j - 1) + r] <- 1
-                        # P[R_true * (i - 1) + r, R_true * (j - 1) + r] <- li_Phi_full_diag[[r]][i, j]
+                        P_TRUE[R_true * (i - 1) + r, R_true * (j - 1) + r] <- 1
+                        # P_TRUE[R_true * (i - 1) + r, R_true * (j - 1) + r] <- li_Phi_full_diag_TRUE[[r]][i, j]
                   }
             }
       }
 }
 
-least_val_propre <- min(eigen(P, only.values = TRUE, symmetric = TRUE)$values) * 0.7
+least_val_propre <- min(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values) * 0.7
 if (least_val_propre <= 0) {
       print(paste("La plus petite valeur propre de la matrice de correlation est :", least_val_propre))
       stop("La matrice de correlation entre les variables latentes n'est pas positive definie. Il faut revoir la definition des parametres du modele.")
@@ -76,14 +76,14 @@ if (least_val_propre <= 0) {
 
 # On complexifie les blocs diagonaux pour ne pas avoir indépendance entre variables latentes d'un meme bloc (tout en gardant la positivité de la matrice)
 
-bloc_perturbation <- matrix(least_val_propre, nrow = R_true, ncol = R_true, byrow = TRUE)
-diag(bloc_perturbation) <- 0
-perturbation <- Matrix::bdiag(lapply(1:6, function(i) bloc_perturbation))
+bloc_perturbation_TRUE <- matrix(least_val_propre, nrow = R_true, ncol = R_true, byrow = TRUE)
+diag(bloc_perturbation_TRUE) <- 0
+perturbation <- Matrix::bdiag(lapply(1:6, function(i) bloc_perturbation_TRUE)) # 6 blocs identiques pour lambda
 
 
-P <- P + perturbation # On ajoute une petite perturbation pour que la matrice soit positive definie
+P_TRUE <- P_TRUE + perturbation # On ajoute une petite perturbation pour que la matrice soit positive definie
 
-least_val_propre <- min(eigen(P, only.values = TRUE, symmetric = TRUE)$values) * 0.7
+least_val_propre <- min(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values) * 0.7
 if (least_val_propre <= 0) {
       print(paste("La plus petite valeur propre apres perturbation de la matrice de correlation est :", least_val_propre))
       stop("La matrice de correlation entre les variables latentes n'est pas positive definie. Il faut revoir la definition des parametres du modele.")
@@ -95,14 +95,12 @@ if (least_val_propre <= 0) {
 # Matrice de corr quelconque identique pour chaque var latente
 
 
-
-
-li_R2_1 <- lapply(1:R_true, function(r) 1 - li_PSI[[r]][1, 1])
-li_R2_2 <- lapply(1:R_true, function(r) 1 - li_PSI[[r]][2, 2])
-li_R2 <- lapply(1:R_true, function(r) c(li_R2_1[[r]], li_R2_2[[r]])) # coeff R^2 for each endogenous latent variable
+li_R2_1_TRUE <- lapply(1:R_true, function(r) 1 - li_PSI_TRUE[[r]][1, 1])
+li_R2_2_TRUE <- lapply(1:R_true, function(r) 1 - li_PSI_TRUE[[r]][2, 2])
+li_R2_TRUE <- lapply(1:R_true, function(r) c(li_R2_1_TRUE[[r]], li_R2_2_TRUE[[r]])) # coeff R^2 for each endogenous latent variable
 
 if (do_composite) {
-      SIGMA11 <- SIGMA22 <- SIGMA33 <- SIGMA44 <- matrix(c(
+      SIGMA11_TRUE <- SIGMA22_TRUE <- SIGMA33_TRUE <- SIGMA44_TRUE <- matrix(c(
             1, .3, .4,
             .3, 1, .5,
             .4, .5, 1
@@ -119,41 +117,42 @@ if (do_composite) {
 
       omega <- list(w_exo_1, w_exo_2, w_exo_3, w_exo_4)
 } else {
-      first_lambda <- rep(.7, 3)
+      first_lambda_TRUE <- rep(.7, 3)
       # construire une matrice de R_true colonnes contenant en premier vcetur bloc_lambda puis que des vecteurs orthogonaux a bloc lambda de norme comparable a bloc_lambda
-      norme_cible <- sqrt(sum(first_lambda^2))
-      A <- matrix(rnorm(length(first_lambda) * R_true), nrow = length(first_lambda), ncol = R_true)
-      A[, 1] <- first_lambda
+      norme_cible_TRUE <- sqrt(sum(first_lambda_TRUE^2))
+      A <- matrix(rnorm(length(first_lambda_TRUE) * R_true), nrow = length(first_lambda_TRUE), ncol = R_true)
+      A[, 1] <- first_lambda_TRUE
       Q <- qr.Q(qr(A))
-      Q[, 1] <- first_lambda / norme_cible
+      Q[, 1] <- first_lambda_TRUE / norme_cible_TRUE
 
       # Normes des autres colonnes : proches de la premiere,
       # avec une petite perturbation aléatoire
       epsilon <- 0.05
-      normes <- abs(norme_cible * (1 + rnorm(R_true - 1, 0, epsilon)))
+      normes <- abs(norme_cible_TRUE * (1 + rnorm(R_true - 1, 0, epsilon)))
 
       # Construire la matrice finale
-      bloc_lambda <- Q
-      bloc_lambda[, -1] <- sweep(Q[, -1, drop = FALSE], 2, normes, "*")
+      bloc_lambda_TRUE <- Q
+      bloc_lambda_TRUE[, -1] <- sweep(Q[, -1, drop = FALSE], 2, normes, "*")
       # Remplacer la premiere colonne par sa valeur originale
-      bloc_lambda[, 1] <- first_lambda
+      bloc_lambda_TRUE[, 1] <- first_lambda_TRUE
 
-      Lambda <- Matrix::bdiag(lapply(1:6, function(i) bloc_lambda)) # 6 blocs identiques pour lambda
+      Lambda_TRUE <- Matrix::bdiag(lapply(1:6, function(i) bloc_lambda_TRUE)) # 6 blocs identiques pour lambda
 }
 
 
-Sigma_no_perturbation <- Lambda %*% P %*% t(Lambda) # covariance imlpied by the model
-Theta <- abs(0.1 + rnorm(1, mean = 0, sd = 0.01)) * diag(Sigma_no_perturbation) # variance residuelle des indicateurs
-SIGMA <- Sigma_no_perturbation + diag(Theta) # covariance imlpied by the model avec variance residuelle
 
-SIGMA11 <- SIGMA[1:3, 1:3]
-SIGMA22 <- SIGMA[4:6, 4:6]
-SIGMA33 <- SIGMA[7:9, 7:9]
-SIGMA44 <- SIGMA[10:12, 10:12]
-SIGMA55 <- SIGMA[13:15, 13:15]
-SIGMA66 <- SIGMA[16:18, 16:18]
+Sigma_no_perturbation_TRUE <- Lambda_TRUE %*% P_TRUE %*% t(Lambda_TRUE) # covariance imlpied by the model
+Theta_TRUE <- abs(0.1 + rnorm(1, mean = 0, sd = 0.01)) * diag(Sigma_no_perturbation_TRUE) # variance residuelle des indicateurs
+SIGMA_TRUE <- Sigma_no_perturbation_TRUE + diag(Theta_TRUE) # covariance imlpied by the model avec variance residuelle
 
-li_lambda <- lapply(1:6, function(i) bloc_lambda)
+SIGMA11_TRUE <- SIGMA_TRUE[1:3, 1:3]
+SIGMA22_TRUE <- SIGMA_TRUE[4:6, 4:6]
+SIGMA33_TRUE <- SIGMA_TRUE[7:9, 7:9]
+SIGMA44_TRUE <- SIGMA_TRUE[10:12, 10:12]
+SIGMA55_TRUE <- SIGMA_TRUE[13:15, 13:15]
+SIGMA66_TRUE <- SIGMA_TRUE[16:18, 16:18]
+
+li_lambda_TRUE <- lapply(1:6, function(i) bloc_lambda_TRUE)
 
 
 # Pour uncomment la suite il faudra augmenter les dimensions!

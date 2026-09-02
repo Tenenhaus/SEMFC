@@ -1,4 +1,6 @@
 lvm <- function(R, li_C) {
+  print(R[1:3, 1:3])
+  print(P_TRUE[1:3, 1:3])
   li_gr <- lapply(li_C, function(C) igraph::graph_from_adjacency_matrix(C))
   li_which_exo_endo <- lapply(li_C, function(C) {
     out <- ind_exo_endo(C)
@@ -160,6 +162,7 @@ lvm <- function(R, li_C) {
         GAMMA %*% P_r[H, H] %*% t(GAMMA)
     }
 
+
     R2 <- 1 - diag(PSI)
 
     PI <- solve(diag(NROW(BETA)) - BETA) # (I - B)^-1
@@ -168,6 +171,9 @@ lvm <- function(R, li_C) {
 
     if (!igraph::is_dag(gr)) {
       R_LVM[H, H] <- R[H, H]
+      # print(R[H, H])
+      # print("vs")
+      # print(li_PHI_TRUE[[r]])
       R_LVM[J, J] <- R[J, J]
       R_LVM[H, J] <- R[H, H] %*% t(GAMMA) %*% t(PI)
       R_LVM[J, H] <- PI %*% GAMMA %*% R[H, H]
@@ -193,6 +199,11 @@ lvm <- function(R, li_C) {
       }
     }
   }
+
+  ecart_created <- d_LS(P_induced, R)
+  ecart_relat <- ecart_created / norm(R, "F")
+  print(paste("Ration modif P:", round(ecart_relat, 4)))
+
 
   return(list(
     li_gr = li_gr,
