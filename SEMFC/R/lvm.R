@@ -1,6 +1,5 @@
 lvm <- function(R, li_C) {
-  print(R[1:3, 1:3])
-  print(P_TRUE[1:3, 1:3])
+  # print(R < -1e-5)
   li_gr <- lapply(li_C, function(C) igraph::graph_from_adjacency_matrix(C))
   li_which_exo_endo <- lapply(li_C, function(C) {
     out <- ind_exo_endo(C)
@@ -169,19 +168,17 @@ lvm <- function(R, li_C) {
 
     R_LVM <- matrix(0, NCOL(C), NCOL(C))
 
+
     if (!igraph::is_dag(gr)) {
-      R_LVM[H, H] <- R[H, H]
-      # print(R[H, H])
-      # print("vs")
-      # print(li_PHI_TRUE[[r]])
-      R_LVM[J, J] <- R[J, J]
-      R_LVM[H, J] <- R[H, H] %*% t(GAMMA) %*% t(PI)
-      R_LVM[J, H] <- PI %*% GAMMA %*% R[H, H]
+      R_LVM[H, H] <- P_r[H, H]
+      R_LVM[J, J] <- P_r[J, J]
+      R_LVM[H, J] <- P_r[H, H] %*% t(GAMMA) %*% t(PI)
+      R_LVM[J, H] <- PI %*% GAMMA %*% P_r[H, H]
     } else {
-      R_LVM[H, H] <- R[H, H]
-      R_LVM[H, J] <- R[H, H] %*% t(GAMMA) %*% t(PI)
-      R_LVM[J, H] <- PI %*% GAMMA %*% R[H, H]
-      R_LVM[J, J] <- PI %*% (GAMMA %*% R[H, H] %*% t(GAMMA) + PSI) %*% t(PI)
+      R_LVM[H, H] <- P_r[H, H]
+      R_LVM[H, J] <- P_r[H, H] %*% t(GAMMA) %*% t(PI)
+      R_LVM[J, H] <- PI %*% GAMMA %*% P_r[H, H]
+      R_LVM[J, J] <- PI %*% (GAMMA %*% P_r[H, H] %*% t(GAMMA) + PSI) %*% t(PI)
     }
 
     li_BETA[[r]] <- BETA
@@ -189,16 +186,26 @@ lvm <- function(R, li_C) {
     li_PSI[[r]] <- PSI
     li_R2[[r]] <- R2
     li_P_induced[[r]] <- R_LVM
+
+
+    # print(abs(li_Phi_full_diag_TRUE[[r]] - R_LVM) > 1e-8)
   }
 
   P_induced <- matrix(0, nrow = NCOL(R), ncol = NCOL(R))
-  for (r in 1:R_try) {
-    for (i in 1:NCOL(li_P_induced[[r]])) {
-      for (j in 1:NCOL(li_P_induced[[r]])) {
-        P_induced[(i - 1) * R_try + r, (j - 1) * R_try + r] <- li_P_induced[[r]][i, j]
+
+  for (i in 1:NCOL(li_P_induced[[r]])) {
+    for (j in 1:NCOL(li_P_induced[[r]])) {
+      if (i != j) {
+        for (r in 1:R_try) {
+          P_induced[(i - 1) * R_try + r, (j - 1) * R_try + r] <- li_P_induced[[r]][i, j]
+        }
+      } else {
+        P_induced[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- R[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)]
       }
     }
   }
+
+  # print(abs(P_induced - R) > 1e-8)
 
   ecart_created <- d_LS(P_induced, R)
   ecart_relat <- ecart_created / norm(R, "F")

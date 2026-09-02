@@ -54,16 +54,16 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     cumsum_pjs <- cumsum(c(0, pjs))
 
 
-    # li_S <- lapply(A, function(x){
-    #         lapply(A, function(y) cov2(x, y, bias = bias)) 
-    #      })
+    li_S <- lapply(A, function(x){
+            lapply(A, function(y) cov2(x, y, bias = bias)) 
+         })
 
     # On triche: SIGMA connu
-    li_S <- lapply(1:J, function(j) {
-        lapply(1:J, function(k) {
-            S_jk <- as.matrix(SIGMA_TRUE[(cumsum_pjs[j] + 1):(cumsum_pjs[j + 1]), (cumsum_pjs[k] + 1):(cumsum_pjs[k + 1])])
-        })
-    })
+    # li_S <- lapply(1:J, function(j) {
+    #     lapply(1:J, function(k) {
+    #         S_jk <- as.matrix(SIGMA_TRUE[(cumsum_pjs[j] + 1):(cumsum_pjs[j + 1]), (cumsum_pjs[k] + 1):(cumsum_pjs[k + 1])])
+    #     })
+    # })
 
     S_full <- matrix(0, nrow = sum(pjs), ncol = sum(pjs))
     for (i in 1:J) {
@@ -108,7 +108,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     # check for sign inversion
     li_Lambda_star <- lapply(li_Lambda_star, function(Lambda_star) {
         for (r in 1:R_try) {
-            if (Lambda_star[1, r] < 0) {
+            if (Lambda_star[1, r] < 0 ) {
                 Lambda_star[, r] <- -Lambda_star[, r]
             }
         }
@@ -250,6 +250,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
 
     erreur_abs <- d_LS(Estim_Sigma, SIGMA_TRUE)
+    
     ratio_error_SVD <- erreur_abs / sum(diag(as.matrix(SIGMA_TRUE^2)))
     print(paste("Ratio of absolute error measurement model:", round(ratio_error_SVD, 4)))
 

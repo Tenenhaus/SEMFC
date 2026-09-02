@@ -136,6 +136,12 @@ if (do_composite) {
       # Remplacer la premiere colonne par sa valeur originale
       bloc_lambda_TRUE[, 1] <- first_lambda_TRUE
 
+      for (i in 1:ncol(bloc_lambda_TRUE)) {
+            if (bloc_lambda_TRUE[1, i] < 0) {
+                  bloc_lambda_TRUE[, i] <- -bloc_lambda_TRUE[, i]
+            }
+      }
+
       Lambda_TRUE <- Matrix::bdiag(lapply(1:6, function(i) bloc_lambda_TRUE)) # 6 blocs identiques pour lambda
 }
 

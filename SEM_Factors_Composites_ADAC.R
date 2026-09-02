@@ -37,9 +37,9 @@ source("functions/h_constraints.R")
 #############################################
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
-set.seed(150401) # my date of birth
+set.seed(15) # my date of birth
 n_simu <- 1
-N <- 300
+N <- 10000
 sol_svd <- matrix(0, 61, n_simu)
 sol_ml <- matrix(0, 61, n_simu)
 
