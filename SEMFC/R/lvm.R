@@ -1,5 +1,9 @@
 lvm <- function(R, li_C) {
-  # print(R < -1e-5)
+  # print(round(R - P_TRUE, 4))
+  # print(round(R, 4))
+  # print(P_TRUE)
+
+
   li_gr <- lapply(li_C, function(C) igraph::graph_from_adjacency_matrix(C))
   li_which_exo_endo <- lapply(li_C, function(C) {
     out <- ind_exo_endo(C)
@@ -66,8 +70,37 @@ lvm <- function(R, li_C) {
         xx[(l_j + 1):l, (l_j + 1):l] <- P_r[Hi, Hi]
 
         xy <- c(P_r[Ji, H] %*% solve(P_r[H, H]) %*% P_r[H, J[[i]]], P_r[Hi, J[[i]]])
-        bg[[i]] <- solve(xx) %*% xy # on applique la formule 22: regression lineaire
+        # print(xx)
+        r_xx <- qr(xx)$rank
+
+        bg[[i]] <- tryCatch(
+          {
+            bg_i <- solve(xx) %*% xy
+            # print(bg_i)
+            bg_i
+          },
+          error = function(msg) {
+            message(paste("Error for list member:", i))
+
+            print(paste("used pseudo inv big matrix of rank", r, "for the ", i, "th line", sep = " "))
+            print(qr(P_r[H, H])$rank / ncol(P_r[H, H]))
+            print("phi endo")
+
+            good_xy <- P_r[H, J[[i]]]
+            Phi_exo_i <- P_r[H, Hi]
+            Phi_exo_endo_i <- P_r[H, J[[i]]]
+            to_inv <- cbind(Phi_exo_endo_i, Phi_exo_i)
+            bg_i <- MASS::ginv(to_inv) %*% good_xy
+
+            error <- sum((xy - xx %*% bg_i)^2)
+            print("error")
+            print(error)
+
+            bg_i
+          }
+        )
       }
+      # print(bg[[i]])
 
       if (!igraph::is_dag(gr) & config2) {
         xx <- P_r[Ji, H] %*% solve(P_r[H, H]) %*% P_r[H, Ji]
@@ -164,6 +197,7 @@ lvm <- function(R, li_C) {
 
     R2 <- 1 - diag(PSI)
 
+    # print(diag(NROW(BETA)) - BETA)
     PI <- solve(diag(NROW(BETA)) - BETA) # (I - B)^-1
 
     R_LVM <- matrix(0, NCOL(C), NCOL(C))
@@ -186,6 +220,9 @@ lvm <- function(R, li_C) {
     li_PSI[[r]] <- PSI
     li_R2[[r]] <- R2
     li_P_induced[[r]] <- R_LVM
+    # print(round(li_Phi_full_diag_TRUE[[r]], 4))
+    # print("vs")
+    # print(round(R_LVM, 4))
 
 
     # print(abs(li_Phi_full_diag_TRUE[[r]] - R_LVM) > 1e-8)
@@ -207,9 +244,9 @@ lvm <- function(R, li_C) {
 
   # print(abs(P_induced - R) > 1e-8)
 
-  ecart_created <- d_LS(P_induced, R)
+  ecart_created <- norm((P_induced - R), "F")
   ecart_relat <- ecart_created / norm(R, "F")
-  print(paste("Ration modif P:", round(ecart_relat, 4)))
+  print(paste("Ratio modif P:", round(ecart_relat, 4)))
 
 
   return(list(

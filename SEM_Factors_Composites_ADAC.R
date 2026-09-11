@@ -37,9 +37,12 @@ source("functions/h_constraints.R")
 #############################################
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
-set.seed(15) # my date of birth
+set.seed(1500) # my date of birth
 n_simu <- 1
 N <- 10000
+ancien_P <- FALSE
+triche <- FALSE
+R_try <- 2
 sol_svd <- matrix(0, 61, n_simu)
 sol_ml <- matrix(0, 61, n_simu)
 
@@ -57,7 +60,6 @@ param_svd <- matrix(0, 61, n_simu)
 z <- rep(NA, n_simu)
 svd_pval <- rep(NA, n_simu)
 ratio_error_SVD <- rep(NA, n_simu)
-R_try <- 2
 
 # Maximum likelihood
 lambda_hat_ml <- matrix(0, 18, n_simu) # les correlations entre facteurs et y
@@ -82,28 +84,41 @@ for (b in seq_len(n_simu)) {
   if (b %% 10 == 0) print(b)
   # try(
   #   {
-  X <- mvrnorm(N, rep(0, 18), SIGMA_TRUE, empirical = FALSE)
-  colnames(X) <- paste("X", rep(1:6, each = 3), rep(1:3, 6), sep = "")
+
+  # print(dim(SIGMA_TRUE))
+  # print(sum(vec_indicators_per_bloc))
+  X <- mvrnorm(N, rep(0, sum(vec_indicators_per_bloc)), SIGMA_TRUE, empirical = FALSE)
   S <- cov(X)
 
-  Y <- list(
-    X1 = X[, 1:3], X2 = X[, 4:6], X3 = X[, 7:9],
-    X4 = X[, 10:12], X5 = X[, 13:15], X6 = X[, 16:18]
+  indicator_blocks <- split(
+    seq_len(ncol(X)),
+    rep(seq_along(vec_indicators_per_bloc), vec_indicators_per_bloc)
+  )
+  Y <- setNames(
+    lapply(indicator_blocks, function(indices) X[, indices, drop = FALSE]),
+    paste0("X", seq_along(indicator_blocks))
   )
 
+  # C <- matrix(c(
+  #   0, 0, 0, 0, 1, 0,
+  #   0, 0, 0, 0, 1, 0,
+  #   0, 0, 0, 0, 0, 1,
+  #   0, 0, 0, 0, 0, 1,
+  #   0, 0, 0, 0, 0, 1,
+  #   0, 0, 0, 0, 1, 0
+  # ), 6, 6, byrow = TRUE)
 
-  C <- matrix(c(
-    0, 0, 0, 0, 1, 0,
-    0, 0, 0, 0, 1, 0,
-    0, 0, 0, 0, 0, 1,
-    0, 0, 0, 0, 0, 1,
-    0, 0, 0, 0, 0, 1,
-    0, 0, 0, 0, 1, 0
-  ), 6, 6, byrow = TRUE)
+  # colnames(C) <- rownames(C) <- names(Y)
 
-  colnames(C) <- rownames(C) <- names(Y)
+  # li_C <- lapply(1:R_try, function(x) C)
 
-  li_C <- lapply(1:R_try, function(x) C)
+  li_C <- lapply(1:R_try, function(r) {
+    if (r <= R_true) {
+      C <- li_C_TRUE[[r]]
+    } else {
+      C <- li_C_TRUE[[R_true]]
+    }
+  })
 
   # fit.svd <- svdSEM(Y, C,
   #   scale = FALSE,
@@ -116,19 +131,19 @@ for (b in seq_len(n_simu)) {
 
   fit.svd <- svdSEM_multi(Y, li_C,
     scale = FALSE,
-    mode = rep("reflective", 6),
+    mode = rep("reflective", n_blocs),
     bias = FALSE
   )
 
   Sigma_SVD <- fit.svd$SIGMA_IMPLIED
 
+  # print(SIGMA_TRUE[1:5, 1:5])
+  # print(Sigma_SVD[1:5, 1:5])
 
-  erreur_abs <- d_LS(Sigma_SVD, SIGMA_TRUE)
-  ratio_error_SVD <- erreur_abs / sum(diag(as.matrix(SIGMA_TRUE^2)))
-  print(paste("Ratio of absolute error full model:", round(ratio_error_SVD, 4)))
+  erreur_abs <- norm(as.matrix(Sigma_SVD) - as.matrix(SIGMA_TRUE), "F")
+  ratio_error_SVD[b] <- erreur_abs / norm(as.matrix(SIGMA_TRUE), "F")
+  # print(paste("Ratio of absolute error full model:", round(ratio_error_SVD[b], 4)))
 
-
-  stop("done")
 
   # # TEST de significativité
   # boot_out <- svdSEM_infer(fit.svd, B = 1000, verbose = TRUE)
@@ -139,32 +154,32 @@ for (b in seq_len(n_simu)) {
   # Sigma_implied #
   #################
 
-  R_LVM_SVD <- fit.svd$P_IMPLIED # Estimation SVD de la matrice de correlation entre les variables latentes
-  SIGMA_SVD <- fit.svd$SIGMA_IMPLIED # Estimation SVD de la matrice de covariance entre les indicatrices
+  # R_LVM_SVD <- fit.svd$P_IMPLIED # Estimation SVD de la matrice de correlation entre les variables latentes
+  # SIGMA_SVD <- fit.svd$SIGMA_IMPLIED # Estimation SVD de la matrice de covariance entre les indicatrices
 
 
-  # Calcul des distances quadratiques aux vrais Sigma
-  sigma_hat[1, b] <- d_LS(S[1:3, 1:3], SIGMA11)
-  sigma_hat[2, b] <- d_LS(S[4:6, 4:6], SIGMA22)
-  sigma_hat[3, b] <- d_LS(S[7:9, 7:9], SIGMA33)
-  sigma_hat[4, b] <- d_LS(S[10:12, 10:12], SIGMA44)
+  # # Calcul des distances quadratiques aux vrais Sigma
+  # sigma_hat[1, b] <- d_LS(S[1:3, 1:3], SIGMA11)
+  # sigma_hat[2, b] <- d_LS(S[4:6, 4:6], SIGMA22)
+  # sigma_hat[3, b] <- d_LS(S[7:9, 7:9], SIGMA33)
+  # sigma_hat[4, b] <- d_LS(S[10:12, 10:12], SIGMA44)
 
 
-  # Flatten et calculer les coeffs pour l'iteration b
-  lambda_hat_svd[, b] <- Reduce("c", fit.svd$lambda)
-  omega_hat_svd[, b] <- Reduce("c", fit.svd$omega)
-  rho_hat_svd[, b] <- R_LVM_SVD[as.vector(upper.tri(R_LVM_SVD))]
-  beta_hat_svd[, b] <- fit.svd$beta[fit.svd$beta != 0]
-  gamma_hat_svd[, b] <- c(fit.svd$gamma[1, 1:2], fit.svd$gamma[2, 3:4])
-  r2_hat_svd[, b] <- fit.svd$R2
-  psi_hat_svd[, b] <- fit.svd$psi[upper.tri(fit.svd$psi, diag = TRUE)]
-  var_hat_svd[, b] <- c(
-    apply(Y[[5]], 2, var) - fit.svd$lambda[[5]]^2,
-    apply(Y[[6]], 2, var) - fit.svd$lambda[[6]]^2
-  )
+  # # Flatten et calculer les coeffs pour l'iteration b
+  # lambda_hat_svd[, b] <- Reduce("c", fit.svd$lambda)
+  # omega_hat_svd[, b] <- Reduce("c", fit.svd$omega)
+  # rho_hat_svd[, b] <- R_LVM_SVD[as.vector(upper.tri(R_LVM_SVD))]
+  # beta_hat_svd[, b] <- fit.svd$beta[fit.svd$beta != 0]
+  # gamma_hat_svd[, b] <- c(fit.svd$gamma[1, 1:2], fit.svd$gamma[2, 3:4])
+  # r2_hat_svd[, b] <- fit.svd$R2
+  # psi_hat_svd[, b] <- fit.svd$psi[upper.tri(fit.svd$psi, diag = TRUE)]
+  # var_hat_svd[, b] <- c(
+  #   apply(Y[[5]], 2, var) - fit.svd$lambda[[5]]^2,
+  #   apply(Y[[6]], 2, var) - fit.svd$lambda[[6]]^2
+  # )
 
-  erreur_abs <- d_LS(SIGMA_SVD, SIGMA)
-  ratio_error_SVD[b] <- erreur_abs / norm(SIGMA, type = "F")
+  # erreur_abs <- d_LS(SIGMA_SVD, SIGMA)
+  # ratio_error_SVD[b] <- erreur_abs / norm(SIGMA, type = "F")
 
 
   #   sol_svd[, b] <- init_ml_with_S <-

@@ -1,0 +1,8 @@
+1) Etendre la simulation à davantage de dimensions.
+
+2) Réfléchir à l'identifiabilité à n dimensions
+
+3) Proposer une méthode pour le choix des diagrammes internes ( = pas mal de lecture). Chercher de préférence avec un lien avec SVD...
+
+
+ATTENTION LE REORDERING PEUT CHOISIR PLUSIEURS FOIS LE MEME INDICE... il faut checker chaque cas incertain à l'oeuil nu. Gerable  a base de non diags mais pas obvious. Faire par discrepance sinon 

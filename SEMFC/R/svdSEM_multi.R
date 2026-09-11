@@ -53,17 +53,23 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
     cumsum_pjs <- cumsum(c(0, pjs))
 
+    if(!triche){
+        li_S <- lapply(A, function(x){
+                lapply(A, function(y) cov2(x, y, bias = bias)) 
+            })
+        } else{
 
-    li_S <- lapply(A, function(x){
-            lapply(A, function(y) cov2(x, y, bias = bias)) 
-         })
+        
 
-    # On triche: SIGMA connu
-    # li_S <- lapply(1:J, function(j) {
-    #     lapply(1:J, function(k) {
-    #         S_jk <- as.matrix(SIGMA_TRUE[(cumsum_pjs[j] + 1):(cumsum_pjs[j + 1]), (cumsum_pjs[k] + 1):(cumsum_pjs[k + 1])])
-    #     })
-    # })
+        ### On triche: SIGMA connu
+
+        li_S <- lapply(1:J, function(j) {
+            lapply(1:J, function(k) {
+                S_jk <- as.matrix(SIGMA_TRUE[(cumsum_pjs[j] + 1):(cumsum_pjs[j + 1]), (cumsum_pjs[k] + 1):(cumsum_pjs[k + 1])])
+            })
+        })
+    }
+
 
     S_full <- matrix(0, nrow = sum(pjs), ncol = sum(pjs))
     for (i in 1:J) {
@@ -210,29 +216,100 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     )
 
     li_vec_norm <- lapply(li_vec_norm_and_Cjj, function(x) x$vec_norm)
+    li_C_jj_hat <- lapply(li_vec_norm_and_Cjj, function(x) x$Cjj_hat)
+
 
     li_Lambda <- lapply(
         1:J,
         function(j) {
             Lambda_star <- li_Lambda_star[[j]]
-            vec_norm <- li_vec_norm_and_Cjj[[j]]$vec_norm
+            vec_norm <- li_vec_norm[[j]]
             Lambda <- sweep(Lambda_star, 2, vec_norm, FUN = "*")
             return(Lambda)
         }
     )
 
+
+    # Reordonner les Lambda a partir du premier...
+    if(R_try > 1){
+        for(j in 2:J){  
+            Sigma_1j <- li_S[[1]][[j]]
+            svd_fit <- svd(Sigma_1j, nu = R_try, nv = R_try)
+
+            left <- svd_fit$u
+            right <- svd_fit$v
+            Lambda_1_star <- li_Lambda_star[[1]]
+            # retrouver les colonnes colineaires entre elles
+            mat_ps <- t(t(left) %*% Lambda_1_star)
+            where_one <- abs(mat_ps) > 0.5
+            # print(mat_ps)
+            sum_per_col <- apply(where_one, 1, sum)
+            if(any(sum_per_col != 1)){
+                print(paste("Pb reordering 1 bloc", j))
+                print("values svd")
+                print(svd_fit$d)
+                print("mat ps")
+                print(mat_ps)
+            }
+            
+
+            #vec_reorder_1 <- apply(mat_ps, 1, function(x) which.max(abs(x))[1])
+            vec_reorder_1 <- as.integer(clue::solve_LSAP(abs(mat_ps), maximum = TRUE))  # deja un vecteur d'entiers, plus besoin de as.integer si vous castez apres
+            good_right <- right[, vec_reorder_1]
+            #print(left[, vec_reorder_1])
+            # Lambda_j dans le bon ordre mais un peu mal estimed
+
+            mat_ps <- t(t(li_Lambda_star[[j]]) %*% good_right) # POURQUOI CELA MARCHE?
+            where_one <- abs(mat_ps) > 0.5
+            sum_per_col <- apply(where_one, 1, sum)
+            # print(mat_ps)
+            if(any(sum_per_col != 1)){
+                print(paste("Pb reordering 2 bloc", j))
+                print("values svd")
+                print(svd_fit$d)
+                print("mat ps")
+                print(mat_ps)
+                
+            }
+
+            #vec_reorder_2  <- apply(mat_ps, 1, function(x) which.max(abs(x))[1])
+            vec_reorder_2 <- as.integer(clue::solve_LSAP(abs(mat_ps), maximum = TRUE))
+
+            if(any(duplicated(vec_reorder_1)) | any(duplicated(vec_reorder_2))){
+                stop("Duplicated elements in vec_reorder_1 or vec_reorder_2")
+            }
+            li_Lambda_star[[j]] <- li_Lambda_star[[j]][, vec_reorder_2]
+            li_Lambda[[j]] <- li_Lambda[[j]][, vec_reorder_2]
+            li_vec_norm[[j]] <- li_vec_norm[[j]][vec_reorder_2]
+            li_C_jj_hat[[j]] <- li_C_jj_hat[[j]][vec_reorder_2, vec_reorder_2]
+
+            # print(round(t(li_lambda_TRUE[[j]]) %*% li_Lambda[[j]]), 4)
+        }
+    }
+    #print(li_Lambda[[3]])
+
+
+
+
+
     P_tilde <- matrix(0, nrow = R_try * J, ncol = R_try * J)
     for (i in 1:J) {
-        for (j in 1:J) {
+        for (j in i:J) {
             if (i == j) {
-                D_j_inv <- diag(1 / li_vec_norm_and_Cjj[[j]]$vec_norm, nrow = R_try, ncol = R_try)
-                P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- D_j_inv %*% li_vec_norm_and_Cjj[[j]]$Cjj_hat %*% D_j_inv
+                D_j_inv <- diag(1 / li_vec_norm[[j]], nrow = R_try, ncol = R_try)
+                P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- D_j_inv %*% li_C_jj_hat[[j]] %*% D_j_inv
             } else {
-                D_i_inv <- diag(1 / li_vec_norm_and_Cjj[[i]]$vec_norm, nrow = R_try, ncol = R_try)
-                D_j_inv <- diag(1 / li_vec_norm_and_Cjj[[j]]$vec_norm, nrow = R_try, ncol = R_try)
+                D_i_inv <- diag(1 / li_vec_norm[[i]], nrow = R_try, ncol = R_try)
+                D_j_inv <- diag(1 / li_vec_norm[[j]], nrow = R_try, ncol = R_try)
                 S_ij <- li_S[[i]][[j]]
-                P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- D_i_inv %*% t(li_Lambda_star[[i]]) %*% S_ij %*% li_Lambda_star[[j]] %*% D_j_inv
-                # print(t(li_Lambda_star[[i]]) %*% S_ij %*% li_Lambda_star[[j]])
+                if(ancien_P){
+                    P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- D_i_inv %*% t(li_Lambda_star[[i]]) %*% S_ij %*% li_Lambda_star[[j]] %*% D_j_inv
+                } else{
+                    P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- calc_P_ij_tilde(S_ij, li_Lambda_star, li_Lambda, li_vec_norm, i, j, R_try)
+                    P_tilde[((j - 1) * R_try + 1):(j * R_try), ((i - 1) * R_try + 1):(i * R_try)] <- t(P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)]) #symmetrize
+                }
+
+
             }
         }
     }
@@ -249,16 +326,20 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
 
 
-    erreur_abs <- d_LS(Estim_Sigma, SIGMA_TRUE)
+
+    erreur_abs <- norm(Estim_Sigma - as.matrix(SIGMA_TRUE), "F")
     
-    ratio_error_SVD <- erreur_abs / sum(diag(as.matrix(SIGMA_TRUE^2)))
+    ratio_error_SVD <- erreur_abs / norm(as.matrix(SIGMA_TRUE), "F")
     print(paste("Ratio of absolute error measurement model:", round(ratio_error_SVD, 4)))
+    print(P_tilde)
+
 
     ## fin check estim
 
     var_MVs <- lapply(1:J, function(j) diag(li_S[[j]][[j]]))
     lv <- lvm(P_tilde, li_C)
     P_induced <- lv$P_induced
+    # print(P_induced)
     SIGMA_IMPLIED_no_diag <- Lambda_mat %*% P_induced %*% t(Lambda_mat)
     SIGMA_IMPLIED <- SIGMA_IMPLIED_no_diag
     diag(SIGMA_IMPLIED) <- Reduce("cbind", var_MVs)
@@ -275,9 +356,12 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     # Measure of goodness-of(fit)
 
     T_LS <- d_LS(S_full, SIGMA_IMPLIED) # ecart quadratique entre la matrice de covariance empirique et la matrice de covariance impliquee par le modele
+    # print(Lambda_mat)
 
     # print(P_tilde)
     # print(P_induced)
+
+
 
 
     out <- list(
