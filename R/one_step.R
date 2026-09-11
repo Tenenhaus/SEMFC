@@ -44,7 +44,10 @@ one_step_estimator <- function(init_estimate, model, data){
   theta_os <- theta_init - solve(ktt_mat, ktt_vec)[seq_along(theta_init)]
 
   loadings_normalised_formative <- normalization_os(theta_os, model)
-  theta_os[seq_along(loadings_normalised_formative)] <- loadings_normalised_formative
+  loadings_os <- get_loadings(theta_os, block_sizes)
+  loadings_os[mode == "formative"] <- loadings_normalised_formative
+
+  theta_os[seq_along(unlist(lambda))] <- unlist(loadings_os)
 
   return(theta_os)
 
@@ -68,7 +71,7 @@ normalization_os <- function(theta_os, model) {
 
   }, loadings_os, S_composites_os)
 
-  return(unlist(loadings_final))
+  return(loadings_final)
 
 
 }

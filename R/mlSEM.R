@@ -50,7 +50,8 @@ mlSEM <- function (init, S, model, tol = 1e-08){
       eval_g_eq = h_eq,
       eval_jac_g_eq = grad_h_eq,
       opts = list("algorithm"="NLOPT_LD_SLSQP",
-                  'xtol_rel' = tol)
+                  'xtol_rel' = tol,
+                  'maxeval' = 500)
     )
     x <- result$solution
   }
