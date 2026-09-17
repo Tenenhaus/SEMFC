@@ -4,7 +4,7 @@
 \alias{svdsem_infer}
 \title{Statistical Inference and Goodness-of-Fit for SVD-Estimated Models}
 \usage{
-svdsem_infer(fit, B, verbose = TRUE)
+svdsem_infer(fit, B, verbose = TRUE, seed = NULL)
 }
 \arguments{
 \item{fit}{A svdSEM fit object containing the fitted model information, including
@@ -14,6 +14,8 @@ parameter estimates and model-implied covariance matrix.}
 
 \item{verbose}{Logical indicating whether to display a progress bar during
 bootstrap resampling (default: \code{TRUE}).}
+
+\item{seed}{Optional integer for reproducibility of bootstrap results. If \code{NULL}, no seed is set (default: \code{NULL}).}
 }
 \value{
 A list containing two main components:

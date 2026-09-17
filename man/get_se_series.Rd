@@ -4,7 +4,15 @@
 \alias{get_se_series}
 \title{Extract Standard Errors for Model Parameters}
 \usage{
-get_se_series(SD, mode, lengths_parameter, block_sizes, vcov_effect)
+get_se_series(
+  SD,
+  mode,
+  lengths_parameter,
+  block_sizes,
+  vcov_effect,
+  vcov_omegas,
+  vcov_psi
+)
 }
 \arguments{
 \item{SD}{Numeric vector of standard deviations for all model parameters.}
@@ -23,6 +31,10 @@ get_se_series(SD, mode, lengths_parameter, block_sizes, vcov_effect)
 \item \code{vcov_exo_indirect}: Variance-covariance matrix for indirect effects on exogenous variables.
 \item \code{vcov_endo_indirect}: Variance-covariance matrix for indirect effects on endogenous variables.
 }}
+
+\item{vcov_omegas}{List of variance-covariance matrices for composite weights of formative blocks.}
+
+\item{vcov_psi}{Variance-covariance matrix for the covariance of structural disturbances (PSI).}
 }
 \value{
 List containing standard errors for each parameter type:
@@ -32,6 +44,8 @@ List containing standard errors for each parameter type:
 \item{sd_total_effects}{Standard errors for total effects.}
 \item{sd_indirect_effects}{Standard errors for indirect effects.}
 \item{sd_residual_variance}{Standard errors for residual variances (reflective blocks only).}
+\item{sd_omega}{Standard errors for composite weights of formative blocks.}
+\item{sd_psi}{Standard errors for the covariance of structural disturbances (PSI).}
 }
 \description{
 Extracts and organizes standard errors for different parameter types from the

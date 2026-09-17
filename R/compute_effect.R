@@ -78,7 +78,6 @@ compute_effect  <- function(BETA, GAMMA) {
 #' @details
 #' The function works as follows:
 #' - It creates an index matrix for \( M \) to identify the positions of non-zero elements.
-#' - It matches the row-wise ordering of indices to the parameter vector indices.
 #' - It constructs the filtering matrix \( V \) with 1s at the mapped positions.
 #'
 #'
@@ -90,9 +89,8 @@ filtering_matrix_effect <- function(M, s, start_index) {
   mat_index <- matrix(1:(m * n), m, n)
   # Creation of V matrix
   idx_row <- mat_index[M != 0]
-  idx_in_theta <- t(mat_index)[t(M) != 0]
-  # the ordering of idx_in_theta is by row, we need to match the ordering of idx_row
-  idx_col <- start_index + match(idx_row, idx_in_theta)
+  idx_col <- start_index + seq_along(idx_row)
+
   V <- matrix(0, m * n, s)
   V[cbind(idx_row, idx_col)] <- 1
   return(V)

@@ -27,7 +27,9 @@ such as loadings, path coefficients, and residual variances.}
 List containing:
 \item{estimate}{List of data frames with parameter estimates and inference statistics.}
 \item{VCOV}{Variance-covariance matrix of parameter estimates.}
-\item{SD}{Vector of standard errors for all parameters.}
+\item{vcov_effect}{List of variance-covariance matrices for effects.}
+\item{vcov_omegas}{List of variance-covariance matrices for composite weights of formative blocks.}
+\item{vcov_psi}{Variance-covariance matrix for the covariance of structural disturbances (PSI).}
 }
 \description{
 Performs statistical inference for maximum likelihood structural equation models,

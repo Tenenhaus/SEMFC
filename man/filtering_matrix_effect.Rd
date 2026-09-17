@@ -31,7 +31,6 @@ of partial derivatives of effects in structural equation modeling.
 The function works as follows:
 \itemize{
 \item It creates an index matrix for \( M \) to identify the positions of non-zero elements.
-\item It matches the row-wise ordering of indices to the parameter vector indices.
 \item It constructs the filtering matrix \( V \) with 1s at the mapped positions.
 }
 }

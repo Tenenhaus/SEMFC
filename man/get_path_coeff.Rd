@@ -4,21 +4,16 @@
 \alias{get_path_coeff}
 \title{Construct Path Coefficient Matrix from Parameter Vector}
 \usage{
-get_path_coeff(
-  x,
-  list_linked_exo_endo,
-  exo_or_endo_variable,
-  initial_start_index
-)
+get_path_coeff(x, row_exo_endo, col_exo_endo, C, initial_start_index)
 }
 \arguments{
 \item{x}{A numeric vector of parameters. Contains path coefficient values to be extracted.}
 
-\item{list_linked_exo_endo}{A list where each element represents the linked exogenous or
-endogenous variables for each endogenous variable. Keys correspond to variable names.}
+\item{row_exo_endo}{A named numeric vector representing the row indices (endogenous variables).}
 
-\item{exo_or_endo_variable}{A named numeric vector representing the exogenous or endogenous
-variables. Used to define the structure of the path coefficient matrix.}
+\item{col_exo_endo}{A named numeric vector representing the column indices (exogenous or endogenous variables).}
+
+\item{C}{A matrix defining the relationships between variables (1 indicates a relationship exists).}
 
 \item{initial_start_index}{An integer specifying the index in \code{x} where the path coefficient
 parameters start.}
@@ -34,9 +29,15 @@ based on the parameter vector \code{x} and the provided relationships between va
 \examples{
 \dontrun{
 x <- c(0.8, 0.5, 0.3, 0.7, 0.8, 0.4)
-list_linked_exo_endo <- list(c(X1 = 1, X2 = 2), c(X3 = 3, X4 = 4))
-exo_or_endo_variable <- c(X1 = 1, X2 = 2, X3 = 3, X4 = 4)
+row_exo_endo <- c(X5 = 5, X6 = 6)
+col_exo_endo <- c(X1 = 1, X2 = 2, X3 = 3, X4 = 4)
 initial_start_index <- 1
-get_path_coeff(x, list_linked_exo_endo, exo_or_endo_variable, initial_start_index)}
+C <- matrix(c(0, 0, 0, 0, 1, 0,
+            0, 0, 0, 0, 1, 0,
+            0, 0, 0, 0, 0, 1,
+            0, 0, 0, 0, 0, 1,
+            0, 0, 0, 0, 0, 1,
+            0, 0, 0, 0, 1, 0), 6, 6, byrow = TRUE)
+get_path_coeff(x, row_exo_endo, col_exo_endo, C, initial_start_index)}
 }
 \keyword{internal}

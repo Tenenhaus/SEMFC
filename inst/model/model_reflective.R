@@ -41,19 +41,19 @@ Y_2 <- list(LV1 = X_2[, 1:3], LV2 = X_2[, 4:6], LV3 = X_2[, 7:9],
 
 sem.model <-  '
 # latent variable definitions
-eta1 =~ X11+X12+X13
-eta2 =~ X21+X22+X23
-eta3 =~ X31+X32+X33
-eta4 =~ X41+X42+X43
-eta5 =~ X51+X52+X53
-eta6 =~ X61+X62+X63
+LV1 =~ X11+X12+X13
+LV2 =~ X21+X22+X23
+LV3 =~ X31+X32+X33
+LV4 =~ X41+X42+X43
+LV5 =~ X51+X52+X53
+LV6 =~ X61+X62+X63
 
 # Regressions
-eta5 ~ eta1 + eta2 + eta6
-eta6 ~ eta3 + eta4 + eta5
+LV5 ~ LV1 + LV2 + LV6
+LV6 ~ LV3 + LV4 + LV5
 
 # residual covariances
-eta5 ~~ eta6
+LV5 ~~ LV6
 '
 
 

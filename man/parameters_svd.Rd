@@ -48,12 +48,12 @@ Each element is a covariance matrix for a formative block.}
 Unnamed numeric vector containing all free parameters in the following order:
 \enumerate{
 \item Loadings (all blocks concatenated)
-\item Exogenous correlations (upper triangle of P_EXO, excluding diagonal)
-\item Gamma coefficients (non-zero elements, row by row)
-\item Beta coefficients (non-zero elements, row by row)
-\item Endogenous correlations (upper triangle of P_ENDO, excluding diagonal)
+\item Exogenous correlations (lower triangle of P_EXO, excluding diagonal)
+\item Gamma coefficients (non-zero elements, column by column)
+\item Beta coefficients (non-zero elements, column by column)
+\item Endogenous correlations (lower triangle of P_ENDO, excluding diagonal)
 \item Residual variances (reflective blocks) or composite covariances
-(upper triangle with diagonal, formative blocks)
+(lower triangle with diagonal, formative blocks)
 }
 }
 \description{
@@ -62,7 +62,7 @@ a single concatenated parameter vector for optimization or inference. The functi
 handles both reflective and formative measurement models.
 }
 \details{
-For formative blocks, the upper triangular part (including diagonal) of the
+For formative blocks, the lower triangular part (including diagonal) of the
 empirical covariance matrix is included. For reflective blocks, only residual
 variances are included.
 }

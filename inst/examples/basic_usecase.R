@@ -17,22 +17,22 @@ model$fit(infer = T, B = 100)
 model$fit(infer = F)
 model$summary(standardized = T, effect = T, all_measures = T)
 est = model$parameterEstimates(standardized = T)
-print(model$get_estimate('sigma_implied'))
+print(model$get_estimate('psi'))
 
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode)
 modelml$fit(infer=T, tol=1e-04)
 modelml$fit(infer=F, tol=1e-04)
 modelml$summary(standardized = T, effect = T, all_measures = T)
 est = modelml$parameterEstimates(standardized = T)
-
+print(modelml$get_estimate('psi'))
 
 
 
 source('inst/model/model_ecsi.R')
 model_ecsi <- SemFC$new(data=A, relation_matrix = C_ecsi, mode=mode_ecsi, estimator = "ml")
 model_ecsi$fit(infer=T)
-model_ecsi$summary(effect = T)
-
+model_ecsi$summary(standardized = T, effect = F, all_measures = F)
+print(model_ecsi$get_estimate('psi'))
 
 
 fit.csem <- csem(.data = X,
