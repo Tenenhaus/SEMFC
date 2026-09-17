@@ -74,6 +74,11 @@ DATASETS_CONFIG <- list(
     data_source = NULL,
     config_func = "create_model_reflective_config",
     is_generated = TRUE
+  ),
+  "Benitez" = list(
+    data_source = "Benitezetal2020",
+    config_func = "create_benitez_config",
+    is_generated = FALSE
   )
 )
 
