@@ -78,6 +78,10 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
         }
     }
 
+    # print("init diff")
+    # print(round(as.matrix(abs(SIGMA_TRUE)), 3))
+    # print(round((as.matrix(abs(S_full - SIGMA_TRUE)/abs(SIGMA_TRUE + 1e-16))), 3))
+
     #-------------------------------------------------------
     blocks <- A
     if (scale) {
@@ -85,6 +89,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     } else {
         A <- lapply(A, function(x) scale2(x, bias = bias, scale = FALSE))
     }
+
+    
 
 
 
@@ -102,7 +108,9 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
                 return(prod)
             })
             mat_sum <- Reduce("+", li_sigma_jk)
-            Lambda_star <- svd(mat_sum, nu = R_try, nv = 1)$u
+            svd.fit <- svd(mat_sum, nu = R_try, nv = 1)
+            Lambda_star <- svd.fit$u
+            # print(svd.fit$d)
             return(Lambda_star)
 
             # svd(t(A[[x]]) %*% Reduce("cbind", A[-x]),
@@ -180,6 +188,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
                 eigenvalues <- eigen(Gjj_cov, only.values = TRUE, symmetric = TRUE)$values
                 max_eigen <- max(eigenvalues)
                 eps <- 1e-8
+                stop("error not unique")
             } else {
                 eps <- 0
                 max_eigen <- 1
@@ -230,63 +239,41 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     )
 
 
-    # Reordonner les Lambda a partir du premier...
+    # Pour le bon ordre : plus simple mais ne change rien after
+    Lambda_1_TRUE <- li_lambda_TRUE[[1]]
+    mat_ps <- t(t(li_Lambda_star[[1]]) %*% Lambda_1_TRUE)
+    vec_reorder <- as.integer(clue::solve_LSAP(abs(mat_ps), maximum = TRUE))
+    li_Lambda_star[[1]] <- li_Lambda_star[[1]][, vec_reorder]
+    li_Lambda[[1]] <- li_Lambda[[1]][, vec_reorder]
+    li_vec_norm[[1]] <- li_vec_norm[[1]][vec_reorder]
+    li_C_jj_hat[[1]] <- li_C_jj_hat[[1]][vec_reorder, vec_reorder]
+
+
+
     if(R_try > 1){
-        for(j in 2:J){  
-            Sigma_1j <- li_S[[1]][[j]]
-            svd_fit <- svd(Sigma_1j, nu = R_try, nv = R_try)
-
-            left <- svd_fit$u
-            right <- svd_fit$v
-            Lambda_1_star <- li_Lambda_star[[1]]
-            # retrouver les colonnes colineaires entre elles
-            mat_ps <- t(t(left) %*% Lambda_1_star)
-            where_one <- abs(mat_ps) > 0.5
-            # print(mat_ps)
-            sum_per_col <- apply(where_one, 1, sum)
-            if(any(sum_per_col != 1)){
-                print(paste("Pb reordering 1 bloc", j))
-                print("values svd")
-                print(svd_fit$d)
-                print("mat ps")
-                print(mat_ps)
-            }
-            
-
-            #vec_reorder_1 <- apply(mat_ps, 1, function(x) which.max(abs(x))[1])
-            vec_reorder_1 <- as.integer(clue::solve_LSAP(abs(mat_ps), maximum = TRUE))  # deja un vecteur d'entiers, plus besoin de as.integer si vous castez apres
-            good_right <- right[, vec_reorder_1]
-            #print(left[, vec_reorder_1])
-            # Lambda_j dans le bon ordre mais un peu mal estimed
-
-            mat_ps <- t(t(li_Lambda_star[[j]]) %*% good_right) # POURQUOI CELA MARCHE?
-            where_one <- abs(mat_ps) > 0.5
-            sum_per_col <- apply(where_one, 1, sum)
-            # print(mat_ps)
-            if(any(sum_per_col != 1)){
-                print(paste("Pb reordering 2 bloc", j))
-                print("values svd")
-                print(svd_fit$d)
-                print("mat ps")
-                print(mat_ps)
-                
-            }
-
-            #vec_reorder_2  <- apply(mat_ps, 1, function(x) which.max(abs(x))[1])
-            vec_reorder_2 <- as.integer(clue::solve_LSAP(abs(mat_ps), maximum = TRUE))
-
-            if(any(duplicated(vec_reorder_1)) | any(duplicated(vec_reorder_2))){
-                stop("Duplicated elements in vec_reorder_1 or vec_reorder_2")
-            }
-            li_Lambda_star[[j]] <- li_Lambda_star[[j]][, vec_reorder_2]
-            li_Lambda[[j]] <- li_Lambda[[j]][, vec_reorder_2]
-            li_vec_norm[[j]] <- li_vec_norm[[j]][vec_reorder_2]
-            li_C_jj_hat[[j]] <- li_C_jj_hat[[j]][vec_reorder_2, vec_reorder_2]
-
-            # print(round(t(li_lambda_TRUE[[j]]) %*% li_Lambda[[j]]), 4)
+        if(do_full_reorder){
+            reorder_full_fit <- reorder_full(li_S, li_Lambda_star, li_Lambda, li_vec_norm, li_C_jj_hat, R_try, J)
+            li_Lambda_star <- reorder_full_fit$li_Lambda_star
+            li_Lambda <- reorder_full_fit$li_Lambda
+            li_vec_norm <- reorder_full_fit$li_vec_norm
+            li_C_jj_hat <- reorder_full_fit$li_C_jj_hat
+        } else{
+            reorder_vs_one_col_fit <- reorder_vs_one_col(li_S, li_Lambda_star, li_Lambda, li_vec_norm, li_C_jj_hat, R_try, J)
+            li_Lambda_star <- reorder_vs_one_col_fit$li_Lambda_star
+            li_Lambda <- reorder_vs_one_col_fit$li_Lambda
+            li_vec_norm <- reorder_vs_one_col_fit$li_vec_norm
+            li_C_jj_hat <- reorder_vs_one_col_fit$li_C_jj_hat
         }
     }
-    #print(li_Lambda[[3]])
+
+
+
+    # print(li_Lambda)
+    # print("oui")
+    # print(li_lambda_TRUE)
+
+    # print(lapply(1:J, function(j) round(li_Lambda[[j]] - li_lambda_TRUE[[j]], 4)))
+
 
 
 
@@ -306,15 +293,25 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
                     P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- D_i_inv %*% t(li_Lambda_star[[i]]) %*% S_ij %*% li_Lambda_star[[j]] %*% D_j_inv
                 } else{
                     P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- calc_P_ij_tilde(S_ij, li_Lambda_star, li_Lambda, li_vec_norm, i, j, R_try)
-                    P_tilde[((j - 1) * R_try + 1):(j * R_try), ((i - 1) * R_try + 1):(i * R_try)] <- t(P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)]) #symmetrize
+                    # P_tilde[((j - 1) * R_try + 1):(j * R_try), ((i - 1) * R_try + 1):(i * R_try)] <- t(P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)]) #symmetrize
                 }
-
-
             }
         }
     }
 
-    P_tilde <- (P_tilde + t(P_tilde)) / 2 # Ensure symmetry
+    # P_tilde <- (P_tilde + t(P_tilde)) / 2 # Ensure symmetry
+
+    # symmetrize
+    for(i in 1:J){
+        for(j in 1:J){
+            if(i != j){
+                if(j < i){
+                    P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- t(P_tilde[((j - 1) * R_try + 1):(j * R_try), ((i - 1) * R_try + 1):(i * R_try)])
+                }
+            }
+        }
+    }
+
     Lambda_mat <- as.matrix(Matrix::bdiag(li_Lambda))
 
     ## Checker l'estimation at that stage
@@ -327,11 +324,17 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
 
 
-    erreur_abs <- norm(Estim_Sigma - as.matrix(SIGMA_TRUE), "F")
+    # print("error sur P")
+    # print(round(abs(as.matrix(P_tilde - P_TRUE)), 2))
+    # print(round(as.matrix(P_TRUE), 2))
+    # print(round(as.matrix(P_tilde), 2))
+
     
-    ratio_error_SVD <- erreur_abs / norm(as.matrix(SIGMA_TRUE), "F")
-    print(paste("Ratio of absolute error measurement model:", round(ratio_error_SVD, 4)))
-    print(P_tilde)
+    # erreur_abs <- norm(Estim_Sigma - as.matrix(SIGMA_TRUE), "F")
+    # error_SVD <- erreur_abs 
+    # print(paste("Absolute error measurement model:", round(error_SVD, 4)))
+    # print(li_Lambda)
+    # print(li_lambda_TRUE)
 
 
     ## fin check estim
@@ -345,13 +348,27 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     diag(SIGMA_IMPLIED) <- Reduce("cbind", var_MVs)
     Theta <- diag(SIGMA_IMPLIED) - diag(SIGMA_IMPLIED_no_diag)
 
+    li_theta <- lapply(1:J, function(j) {
+        theta_j <- Theta[(cumsum_pjs[j] + 1):(cumsum_pjs[j + 1])]
+        #print(theta_j)
+        return(theta_j)
+    })
+
 
     # standardized loadings
     # Expected value : -1 <= cor(y_jh, eta_j) <=1
+    if(R_try >1){
     li_std_Lambda <- lapply(1:J, function(j) {
         std_Lambda_j <- sweep(li_Lambda[[j]], 1, sqrt(var_MVs[[j]]), FUN = "/")
         return(std_Lambda_j)
     })
+    } else{
+        li_std_Lambda <- lapply(1:J, function(j) {
+            std_Lambda_j <- li_Lambda[[j]] / sqrt(var_MVs[[j]])
+            return(std_Lambda_j)
+        })
+    }
+
 
     # Measure of goodness-of(fit)
 
@@ -383,7 +400,10 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
         mode = mode,
         bias = bias,
         scale = scale,
-        blocks = blocks
+        blocks = blocks,
+        li_theta = li_theta,
+        li_phi_endo = lv$li_phi_endo,
+        li_phi_exo = lv$li_phi_exo
     )
 
     return(out)

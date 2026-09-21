@@ -6,9 +6,9 @@ library(Matrix)
 
 R_true <- 2
 
-is_endogenes <- c(rep(FALSE, 3), rep(TRUE, 2)) # 4 blocs exogenes et 2 endogenes
+is_endogenes <- c(rep(FALSE, 4), rep(TRUE, 2)) # 4 blocs exogenes et 2 endogenes
 n_blocs <- length(is_endogenes)
-vec_indicators_per_bloc <- rep(3, n_blocs) # 7 indicateurs par bloc
+vec_indicators_per_bloc <- rep(4, n_blocs) # 7 indicateurs par bloc
 
 
 
@@ -36,12 +36,11 @@ index_of_exo <- which(!is_endogenes)
 
 li_BETA_TRUE <- lapply(1:R_true, function(r) {
       vec_weights <- sapply(1:(n_endogenes^2), function(x) {
-            # if (x %% 3 == 0) {
-            #       return(0.7)
-            # } else {
-            #       return(0)
-            # }
-            val <- (-1)^(x) * 0.5
+            if (r == 1) {
+                  val <- (-1)^(x + 1) * 0.2 / sqrt((r + 1) %/% 2)
+            } else {
+                  val <- (-1)^(x) * 0.2 / sqrt((r + 1) %/% 2)
+            }
             return(val)
       })
       annulations <- seq_len(n_endogenes^2)[(seq_len(n_endogenes^2) %% (4)) %in% 1]
@@ -54,13 +53,16 @@ li_BETA_TRUE <- lapply(1:R_true, function(r) {
 
 
 li_GAMMA_TRUE <- lapply(1:R_true, function(r) {
-      vec_weights <- rep(0.2, n_endogenes * n_exogenes)
-      annulations <- seq_len(n_endogenes * n_exogenes)[seq_len(n_endogenes * n_exogenes) %% (4) %in% 1]
-      vec_weights[annulations] <- 0
+      if (r == 1) {
+            vec_weights <- 0.7 * c(0.5, -0.5, 0, 0, 0, 0, 1, -1) / sqrt((r + 1) %/% 2)
+      } else {
+            vec_weights <- 0.7 * c(0, 0, -0.5, 0.5, -1, 1, 0, 0) / sqrt((r + 1) %/% 2)
+      }
       # print(vec_weights)
       Gamma_loc <- matrix(vec_weights, nrow = n_endogenes, ncol = n_exogenes, byrow = TRUE)
       return(Gamma_loc)
 })
+
 
 li_C_TRUE <- lapply(1:R_true, function(r) {
       Beta_loc <- li_BETA_TRUE[[r]]
@@ -86,7 +88,7 @@ li_C_TRUE <- lapply(1:R_true, function(r) {
 })
 
 
-# print(li_C_TRUE[[1]])
+
 
 li_graphs_TRUE <- lapply(li_C_TRUE, function(C) igraph::graph_from_adjacency_matrix(C))
 vec_dag <- sapply(li_graphs_TRUE, igraph::is_dag)
@@ -95,25 +97,96 @@ if (any(vec_dag)) {
       print(which(vec_dag))
 }
 
-li_R22_TRUE <- lapply(1:R_true, function(r) {
-      vec_values <- rep(1 / sqrt(2), n_endogenes^2)
-      Phi_endo_r <- matrix(vec_values, n_endogenes, n_endogenes, byrow = TRUE)
-      diag(Phi_endo_r) <- 1
-      return(Phi_endo_r) # cov endo
-})
+# li_R22_TRUE <- lapply(1:R_true, function(r) {
+#       if (r == 1) {
+#             vec_values <- c(0, 2, 2, 0) * 0.1 / sqrt((r + 1) %/% 2)
+#       } else {
+#             vec_values <- c(0, 3, 3, 0) * 0.1 / sqrt((r + 1) %/% 2)
+#       }
+#       # vec_values[1:(length(vec_values) %/% 2)] <- 0.1
+#       Phi_endo_r <- matrix(vec_values, n_endogenes, n_endogenes, byrow = TRUE)
+#       diag(Phi_endo_r) <- 1
+#       Phi_endo_r <- (Phi_endo_r + t(Phi_endo_r)) / 2 # symmetrize
+#       return(Phi_endo_r) # cov endo
+# })
+
 
 li_PHI_TRUE <- lapply(1:R_true, function(r) {
-      vec_values <- rep(0.5, n_exogenes^2)
+      if (r == 1) {
+            vec_values <- c(
+                  1, 0.5, 0.8, -0.2,
+                  0.5, 1, 0.8, -0.2,
+                  0.8, 0.8, 1, -0.2,
+                  -0.2, -0.2, -0.2, 1
+            )
+      } else {
+            vec_values <- c(
+                  1, 0.1, -0.2, 0.3,
+                  0.1, 1, 0.3, -0.1,
+                  -0.2, 0.3, 1, 0.15,
+                  0.3, -0.1, 0.15, 1
+            )
+      }
+      # vec_values[1:(length(vec_values) %/% 2)] <- 0.3
       Phi_exo_r <- matrix(vec_values, n_exogenes, n_exogenes, byrow = TRUE) # Phi_exo
       diag(Phi_exo_r) <- 1
+      Phi_exo_r <- (Phi_exo_r + t(Phi_exo_r)) / 2 # symmetrize
       return(Phi_exo_r)
 }) # cov exo
 
-li_PSI_TRUE <- lapply(1:R_true, function(r) {
-      Psi_loc <- (diag(n_endogenes, ncol = n_endogenes, nrow = n_endogenes) - li_BETA_TRUE[[r]]) %*% li_R22_TRUE[[r]] %*% t(diag(n_endogenes, ncol = n_endogenes, nrow = n_endogenes) - li_BETA_TRUE[[r]]) - li_GAMMA_TRUE[[r]] %*% li_PHI_TRUE[[r]] %*% t(li_GAMMA_TRUE[[r]])
-      # print(eigen(Psi_loc, only.values = TRUE, symmetric = TRUE)$values)
-      return(Psi_loc)
+
+# DEBUT AJOUT
+
+# --- Génération "vers l'avant" : B, Gamma, Phi_exo, Psi sont les paramètres
+# imposés. Phi_endo (li_R22_TRUE) est calculé, puis tout est standardisé
+# pour que les variables latentes endogènes aient variance 1.
+
+li_PSI0_TRUE <- lapply(1:R_true, function(r) {
+      # forme raisonnable : disturbances moderement correlees (modele non recursif,
+      # la boucle B12/B21 autorise une correlation hors-diagonale sur Psi)
+      Psi0 <- matrix(0.15, n_endogenes, n_endogenes) / r
+      diag(Psi0) <- 0.6
+      return(Psi0)
 })
+
+li_R22_TRUE <- vector("list", R_true) # redevient Phi_endo, mais calcule (pas fixe)
+li_PSI_TRUE <- vector("list", R_true)
+
+for (r in 1:R_true) {
+      B <- li_BETA_TRUE[[r]]
+      G <- li_GAMMA_TRUE[[r]]
+      Pe <- li_PHI_TRUE[[r]]
+      Psi0 <- li_PSI0_TRUE[[r]]
+
+      IB <- solve(diag(n_endogenes) - B)
+      Phi_endo_raw <- IB %*% (G %*% Pe %*% t(G) + Psi0) %*% t(IB)
+      Phi_endo_raw <- (Phi_endo_raw + t(Phi_endo_raw)) / 2 # nettoie les arrondis
+
+      d <- sqrt(diag(Phi_endo_raw))
+      D <- diag(d, n_endogenes)
+      Dinv <- diag(1 / d, n_endogenes)
+
+      # B, Gamma, Psi sont remplaces par leur version standardisee
+      li_BETA_TRUE[[r]] <- Dinv %*% B %*% D
+      li_GAMMA_TRUE[[r]] <- Dinv %*% G
+      li_PSI_TRUE[[r]] <- Dinv %*% Psi0 %*% Dinv
+
+      Phi_endo_std <- Dinv %*% Phi_endo_raw %*% Dinv
+      diag(Phi_endo_std) <- 1 # doit deja valoir ~1 ; ceci nettoie les residus numeriques
+      li_R22_TRUE[[r]] <- Phi_endo_std
+}
+
+# verification: diag(Psi) doit etre dans (0,1), ni proche de 0 ni de 1
+
+
+# Fin AJOUT
+
+
+# li_PSI_TRUE <- lapply(1:R_true, function(r) {
+#       Psi_loc <- (diag(1, ncol = n_endogenes, nrow = n_endogenes) - li_BETA_TRUE[[r]]) %*% li_R22_TRUE[[r]] %*% t(diag(1, ncol = n_endogenes, nrow = n_endogenes) - li_BETA_TRUE[[r]]) - li_GAMMA_TRUE[[r]] %*% li_PHI_TRUE[[r]] %*% t(li_GAMMA_TRUE[[r]])
+#       # print(eigen(Psi_loc, only.values = TRUE, symmetric = TRUE)$values)
+#       return(Psi_loc)
+# })
 
 li_Phi_full_diag_TRUE <- lapply(1:R_true, function(r) {
       # ATTENTION LES VAR SONT PAS DANS l ORDRE!! C EST ICI dans l ordre exo puis endo: arbitraire
@@ -158,11 +231,12 @@ for (r in 1:R_true) {
 
 # print(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values)
 
-least_val_propre <- min(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values) * 0.7
+least_val_propre <- min(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values) * 0.3
 if (least_val_propre <= 0) {
       print(paste("La plus petite valeur propre de la matrice de correlation est :", least_val_propre))
       stop("La matrice de correlation entre les variables latentes n'est pas positive definie. Il faut revoir la definition des parametres du modele.")
 }
+
 
 # On complexifie les blocs diagonaux pour ne pas avoir indépendance entre variables latentes d'un meme bloc (tout en gardant la positivité de la matrice)
 
@@ -173,11 +247,13 @@ perturbation <- Matrix::bdiag(lapply(1:length(is_endogenes), function(i) bloc_pe
 
 P_TRUE <- P_TRUE + perturbation # On ajoute une petite perturbation pour que la matrice soit positive definie
 
-least_val_propre <- min(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values) * 0.7
+least_val_propre <- min(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values)
 if (least_val_propre <= 0) {
       print(paste("La plus petite valeur propre apres perturbation de la matrice de correlation est :", least_val_propre))
       stop("La matrice de correlation entre les variables latentes n'est pas positive definie. Il faut revoir la definition des parametres du modele.")
 }
+
+print(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values)
 
 
 # Il faut remplir les blocs diagonaux sans perdre la positivité de la matrice.

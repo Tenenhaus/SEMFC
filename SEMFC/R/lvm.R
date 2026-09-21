@@ -28,6 +28,8 @@ lvm <- function(R, li_C) {
   li_PSI <- list()
   li_R2 <- list()
   li_P_induced <- list()
+  li_phi_endo <- list()
+  li_phi_exo <- list()
 
   for (r in 1:R_try) {
     C <- li_C[[r]]
@@ -208,6 +210,12 @@ lvm <- function(R, li_C) {
       R_LVM[J, J] <- P_r[J, J]
       R_LVM[H, J] <- P_r[H, H] %*% t(GAMMA) %*% t(PI)
       R_LVM[J, H] <- PI %*% GAMMA %*% P_r[H, H]
+      # print(R_LVM)
+      # print(P_r[H, J])
+      # print(R_LVM[H, J])
+
+      # print(BETA)
+      # print(li_C[[r]])
     } else {
       R_LVM[H, H] <- P_r[H, H]
       R_LVM[H, J] <- P_r[H, H] %*% t(GAMMA) %*% t(PI)
@@ -219,6 +227,9 @@ lvm <- function(R, li_C) {
     li_GAMMA[[r]] <- GAMMA
     li_PSI[[r]] <- PSI
     li_R2[[r]] <- R2
+    li_phi_endo[[r]] <- P_r[J, J]
+    li_phi_exo[[r]] <- P_r[H, H]
+
     li_P_induced[[r]] <- R_LVM
     # print(round(li_Phi_full_diag_TRUE[[r]], 4))
     # print("vs")
@@ -230,8 +241,8 @@ lvm <- function(R, li_C) {
 
   P_induced <- matrix(0, nrow = NCOL(R), ncol = NCOL(R))
 
-  for (i in 1:NCOL(li_P_induced[[r]])) {
-    for (j in 1:NCOL(li_P_induced[[r]])) {
+  for (i in 1:NCOL(li_P_induced[[1]])) {
+    for (j in 1:NCOL(li_P_induced[[1]])) {
       if (i != j) {
         for (r in 1:R_try) {
           P_induced[(i - 1) * R_try + r, (j - 1) * R_try + r] <- li_P_induced[[r]][i, j]
@@ -246,7 +257,7 @@ lvm <- function(R, li_C) {
 
   ecart_created <- norm((P_induced - R), "F")
   ecart_relat <- ecart_created / norm(R, "F")
-  print(paste("Ratio modif P:", round(ecart_relat, 4)))
+  # print(paste("Ratio modif P:", round(ecart_relat, 4)))
 
 
   return(list(
@@ -256,6 +267,8 @@ lvm <- function(R, li_C) {
     li_PSI = li_PSI,
     li_R2 = li_R2,
     li_P_induced = li_P_induced,
-    P_induced = P_induced
+    P_induced = P_induced,
+    li_phi_endo = li_phi_endo,
+    li_phi_exo = li_phi_exo
   ))
 }

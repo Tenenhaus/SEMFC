@@ -38,8 +38,9 @@ source("functions/h_constraints.R")
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
 set.seed(1500) # my date of birth
-n_simu <- 1
+n_simu <- 100
 N <- 10000
+do_full_reorder <- TRUE
 ancien_P <- FALSE
 triche <- FALSE
 R_try <- 2
@@ -47,19 +48,34 @@ sol_svd <- matrix(0, 61, n_simu)
 sol_ml <- matrix(0, 61, n_simu)
 
 # eigen
-lambda_hat_svd <- matrix(0, 18, n_simu)
-omega_hat_svd <- matrix(0, 12, n_simu)
-rho_hat_svd <- matrix(0, 15, n_simu)
-beta_hat_svd <- matrix(0, 2, n_simu)
-gamma_hat_svd <- matrix(0, 4, n_simu)
-r2_hat_svd <- matrix(0, 2, n_simu)
-psi_hat_svd <- matrix(0, 3, n_simu)
-var_hat_svd <- matrix(0, 6, n_simu)
-f_svd <- rep(0, n_simu)
-param_svd <- matrix(0, 61, n_simu)
-z <- rep(NA, n_simu)
-svd_pval <- rep(NA, n_simu)
-ratio_error_SVD <- rep(NA, n_simu)
+
+# lambda_hat_svd <- matrix(0, 18, n_simu)
+# omega_hat_svd <- matrix(0, 12, n_simu)
+# rho_hat_svd <- matrix(0, 15, n_simu)
+# beta_hat_svd <- matrix(0, 2, n_simu)
+# gamma_hat_svd <- matrix(0, 4, n_simu)
+# r2_hat_svd <- matrix(0, 2, n_simu)
+# psi_hat_svd <- matrix(0, 3, n_simu)
+# var_hat_svd <- matrix(0, 6, n_simu)
+# f_svd <- rep(0, n_simu)
+# param_svd <- matrix(0, 61, n_simu)
+# z <- rep(NA, n_simu)
+# svd_pval <- rep(NA, n_simu)
+lili_lambda_svd <- list()
+lili_beta_svd <- list()
+lili_gamma_svd <- list()
+lili_psi_svd <- list()
+lili_beta_svd <- list()
+lili_gamma_svd <- list()
+li_P_svd <- list()
+lili_psi_svd <- list()
+error_SVD <- rep(NA, n_simu)
+ecart_true_empirique <- rep(NA, n_simu)
+ecart_empirique_svd <- rep(NA, n_simu)
+ecarts_sigma_per_bloc <- matrix(NA, length(is_endogenes), n_simu)
+lili_theta_svd <- list()
+lili_phi_endo_svd <- list()
+lili_phi_exo_svd <- list()
 
 # Maximum likelihood
 lambda_hat_ml <- matrix(0, 18, n_simu) # les correlations entre facteurs et y
@@ -80,6 +96,8 @@ vcov_pval <- rep(NA, n_simu)
 # Goodness of fit
 gof <- matrix(NA, 2, n_simu)
 
+J <- length(is_endogenes)
+
 for (b in seq_len(n_simu)) {
   if (b %% 10 == 0) print(b)
   # try(
@@ -89,6 +107,7 @@ for (b in seq_len(n_simu)) {
   # print(sum(vec_indicators_per_bloc))
   X <- mvrnorm(N, rep(0, sum(vec_indicators_per_bloc)), SIGMA_TRUE, empirical = FALSE)
   S <- cov(X)
+  ecart_true_empirique[b] <- norm(as.matrix(S) - as.matrix(SIGMA_TRUE), "F")
 
   indicator_blocks <- split(
     seq_len(ncol(X)),
@@ -99,18 +118,6 @@ for (b in seq_len(n_simu)) {
     paste0("X", seq_along(indicator_blocks))
   )
 
-  # C <- matrix(c(
-  #   0, 0, 0, 0, 1, 0,
-  #   0, 0, 0, 0, 1, 0,
-  #   0, 0, 0, 0, 0, 1,
-  #   0, 0, 0, 0, 0, 1,
-  #   0, 0, 0, 0, 0, 1,
-  #   0, 0, 0, 0, 1, 0
-  # ), 6, 6, byrow = TRUE)
-
-  # colnames(C) <- rownames(C) <- names(Y)
-
-  # li_C <- lapply(1:R_try, function(x) C)
 
   li_C <- lapply(1:R_try, function(r) {
     if (r <= R_true) {
@@ -120,29 +127,46 @@ for (b in seq_len(n_simu)) {
     }
   })
 
-  # fit.svd <- svdSEM(Y, C,
-  #   scale = FALSE,
-  #   mode = c(
-  #     rep("formative", 4),
-  #     rep("reflective", 2)
-  #   ),
-  #   bias = FALSE
-  # )
 
-  fit.svd <- svdSEM_multi(Y, li_C,
-    scale = FALSE,
-    mode = rep("reflective", n_blocs),
-    bias = FALSE
+  tryCatch(
+    {
+      fit.svd <- svdSEM_multi(Y, li_C,
+        scale = FALSE,
+        mode = rep("reflective", n_blocs),
+        bias = FALSE
+      )
+
+      lili_lambda_svd[[b]] <- fit.svd$li_Lambda
+      lili_beta_svd[[b]] <- fit.svd$li_beta
+      lili_gamma_svd[[b]] <- fit.svd$li_gamma
+      lili_psi_svd[[b]] <- fit.svd$li_psi
+      lili_theta_svd[[b]] <- fit.svd$li_theta
+      li_P_svd[[b]] <- fit.svd$P_IMPLIED
+      lili_beta_svd[[b]] <- fit.svd$li_beta
+      lili_gamma_svd[[b]] <- fit.svd$li_gamma
+      lili_psi_svd[[b]] <- fit.svd$li_PSI
+      lili_phi_endo_svd[[b]] <- fit.svd$li_phi_endo
+      lili_phi_exo_svd[[b]] <- fit.svd$li_phi_exo
+
+      Sigma_SVD <- fit.svd$SIGMA_IMPLIED
+
+
+      erreur_abs <- norm(as.matrix(Sigma_SVD) - as.matrix(SIGMA_TRUE), "F")
+      error_SVD[b] <- erreur_abs
+      ecart_empirique_svd[b] <- norm(as.matrix(Sigma_SVD) - as.matrix(S), "F")
+    },
+    error = function(e) {
+      message("Erreur dans svd à l'itération ", b)
+    }
   )
 
-  Sigma_SVD <- fit.svd$SIGMA_IMPLIED
 
-  # print(SIGMA_TRUE[1:5, 1:5])
-  # print(Sigma_SVD[1:5, 1:5])
-
-  erreur_abs <- norm(as.matrix(Sigma_SVD) - as.matrix(SIGMA_TRUE), "F")
-  ratio_error_SVD[b] <- erreur_abs / norm(as.matrix(SIGMA_TRUE), "F")
-  # print(paste("Ratio of absolute error full model:", round(ratio_error_SVD[b], 4)))
+  for (j in 1:J) {
+    Sigma_svd_ii <- fit.svd$SIGMA_IMPLIED[sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j], sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j]]
+    Sigma_true_ii <- SIGMA_TRUE[sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j], sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j]]
+    ecart_ii <- norm(as.matrix(Sigma_svd_ii) - as.matrix(Sigma_true_ii), "F")
+    ecarts_sigma_per_bloc[j, b] <- ecart_ii
+  }
 
 
   # # TEST de significativité
@@ -179,7 +203,6 @@ for (b in seq_len(n_simu)) {
   # )
 
   # erreur_abs <- d_LS(SIGMA_SVD, SIGMA)
-  # ratio_error_SVD[b] <- erreur_abs / norm(SIGMA, type = "F")
 
 
   #   sol_svd[, b] <- init_ml_with_S <-
@@ -410,9 +433,184 @@ for (b in seq_len(n_simu)) {
 # vec_norm_frob <- c(norm(SIGMA11, type = "F"), norm(SIGMA22, type = "F"), norm(SIGMA33, type = "F"), norm(SIGMA44, type = "F"))
 # print(sigma_hat[1:4, ] / vec_norm_frob)
 
-print("en moyenne sur le total")
-print(mean(ratio_error_SVD))
+# lili_lambda_star_svd[[b]] <- fit.svd$li_Lambda
+# lili_beta_svd[[b]] <- fit.svd$li_beta
+# lili_gamma_svd[[b]] <- fit.svd$li_gamma
+# lili_psi_svd[[b]] <- fit.svd$li_psi
+# li_P_svd[[b]] <- fit.svd$P_IMPLIED
+
+li_P_svd_non_null <- li_P_svd[!sapply(li_P_svd, is.null)]
+P_tridim <- simplify2array(li_P_svd_non_null)
+P_sd <- apply(P_tridim, c(1, 2), sd, na.rm = TRUE)
+P_mean <- apply(P_tridim, c(1, 2), mean, na.rm = TRUE)
+
+lili_Lambda_agrregate <- lapply(1:J, function(j) {
+  li_Lambda_j <- lapply(lili_lambda_svd, function(x) x[[j]])
+  li_Lambda_j_non_null <- li_Lambda_j[!sapply(li_Lambda_j, is.null)]
+  li_Lambda_j_tridim <- simplify2array(li_Lambda_j_non_null)
+  Lambda_j_sd <- round(apply(li_Lambda_j_tridim, c(1, 2), sd, na.rm = TRUE), 3)
+  Lambda_j_mean <- round(apply(li_Lambda_j_tridim, c(1, 2), mean, na.rm = TRUE), 3)
+  return(list(Lambda_j_sd = Lambda_j_sd, Lambda_j_mean = Lambda_j_mean))
+})
+
+lili_gamma_aggregate <- lapply(1:R_try, function(r) {
+  li_gamma_j <- lapply(lili_gamma_svd, function(x) x[[r]])
+  li_gamma_j_non_null <- li_gamma_j[!sapply(li_gamma_j, is.null)]
+  li_gamma_j_tridim <- simplify2array(li_gamma_j_non_null)
+  gamma_j_sd <- round(apply(li_gamma_j_tridim, c(1, 2), sd, na.rm = TRUE), 3)
+  gamma_j_mean <- round(apply(li_gamma_j_tridim, c(1, 2), mean, na.rm = TRUE), 3)
+  return(list(gamma_j_sd = gamma_j_sd, gamma_j_mean = gamma_j_mean))
+})
+
+lili_beta_aggregate <- lapply(1:R_try, function(r) {
+  li_beta_j <- lapply(lili_beta_svd, function(x) x[[r]])
+  li_beta_j_non_null <- li_beta_j[!sapply(li_beta_j, is.null)]
+  li_beta_j_tridim <- simplify2array(li_beta_j_non_null)
+  beta_j_sd <- round(apply(li_beta_j_tridim, c(1, 2), sd, na.rm = TRUE), 3)
+  beta_j_mean <- round(apply(li_beta_j_tridim, c(1, 2), mean, na.rm = TRUE), 3)
+  return(list(beta_j_sd = beta_j_sd, beta_j_mean = beta_j_mean))
+})
+
+lili_psi_aggregate <- lapply(1:R_try, function(r) {
+  li_psi_j <- lapply(lili_psi_svd, function(x) x[[r]])
+  li_psi_j_non_null <- li_psi_j[!sapply(li_psi_j, is.null)]
+  li_psi_j_tridim <- simplify2array(li_psi_j_non_null)
+  psi_j_sd <- round(apply(li_psi_j_tridim, c(1, 2), sd, na.rm = TRUE), 3)
+  psi_j_mean <- round(apply(li_psi_j_tridim, c(1, 2), mean, na.rm = TRUE), 3)
+  return(list(psi_j_sd = psi_j_sd, psi_j_mean = psi_j_mean))
+})
+
+lili_endo_aggregate <- lapply(1:R_try, function(r) {
+  li_endo_j <- lapply(lili_phi_endo_svd, function(x) x[[r]])
+  li_endo_j_non_null <- li_endo_j[!sapply(li_endo_j, is.null)]
+  li_endo_j_tridim <- simplify2array(li_endo_j_non_null)
+  endo_j_sd <- round(apply(li_endo_j_tridim, c(1, 2), sd, na.rm = TRUE), 3)
+  endo_j_mean <- round(apply(li_endo_j_tridim, c(1, 2), mean, na.rm = TRUE), 3)
+  return(list(endo_j_sd = endo_j_sd, endo_j_mean = endo_j_mean))
+})
+
+lili_exo_aggregate <- lapply(1:R_try, function(r) {
+  li_exo_j <- lapply(lili_phi_exo_svd, function(x) x[[r]])
+  li_exo_j_non_null <- li_exo_j[!sapply(li_exo_j, is.null)]
+  li_exo_j_tridim <- simplify2array(li_exo_j_non_null)
+  exo_j_sd <- round(apply(li_exo_j_tridim, c(1, 2), sd, na.rm = TRUE), 3)
+  exo_j_mean <- round(apply(li_exo_j_tridim, c(1, 2), mean, na.rm = TRUE), 3)
+  return(list(exo_j_sd = exo_j_sd, exo_j_mean = exo_j_mean))
+})
+
+
+
+li_Lambda_star_2 <- lapply(lili_lambda_svd, function(x) x[[2]] / sum(x[[2]]^2)^0.5)
+li_lambda_star_2_non_null <- li_Lambda_star_2[!sapply(li_Lambda_star_2, is.null)]
+li_lambda_star_2_tridim <- simplify2array(li_lambda_star_2_non_null)
+Lambda_star_2_sd <- apply(li_lambda_star_2_tridim, c(1, 2), sd, na.rm = TRUE)
+Lambda_star_2_mean <- apply(li_lambda_star_2_tridim, c(1, 2), mean, na.rm = TRUE)
+
+li_beta_1 <- lapply(lili_beta_svd, function(x) x[[1]])
+li_beta_1_non_null <- li_beta_1[!sapply(li_beta_1, is.null)]
+li_beta_1_tridim <- simplify2array(li_beta_1_non_null)
+beta_1_sd <- apply(li_beta_1_tridim, c(1, 2), sd, na.rm = TRUE)
+beta_1_mean <- apply(li_beta_1_tridim, c(1, 2), mean, na.rm = TRUE)
+
+li_gamma_1 <- lapply(lili_gamma_svd, function(x) x[[1]])
+li_gamma_1_non_null <- li_gamma_1[!sapply(li_gamma_1, is.null)]
+li_gamma_1_tridim <- simplify2array(li_gamma_1_non_null)
+gamma_1_sd <- apply(li_gamma_1_tridim, c(1, 2), sd, na.rm = TRUE)
+gamma_1_mean <- apply(li_gamma_1_tridim, c(1, 2), mean, na.rm = TRUE)
+
+li_theta_svd <- lapply(1:J, function(j) {
+  li_theta_j <- lapply(lili_theta_svd, function(x) x[[j]])
+  li_theta_j_non_null <- li_theta_j[!sapply(li_theta_j, is.null)]
+  li_theta_j_bidim <- simplify2array(li_theta_j_non_null)
+  theta_j_sd <- round(apply(li_theta_j_bidim, c(1), sd, na.rm = TRUE), 3)
+  theta_j_mean <- round(apply(li_theta_j_bidim, c(1), mean, na.rm = TRUE), 3)
+  return(list(theta_j_sd = theta_j_sd, theta_j_mean = theta_j_mean))
+})
+
+
+print("ground truth endo")
+print(li_R22_TRUE)
+
+print("ground truth exo")
+print(li_PHI_TRUE)
+
+print("endo svd")
+print(lili_endo_aggregate)
+
+print("exo svd")
+print(lili_exo_aggregate)
+
+
+print("ground truth Beta Gamma")
+
+print(li_BETA_TRUE)
+
+print("sep")
+
+print(li_GAMMA_TRUE)
+
+print("Beta Gamma estimated svd")
+print(lili_beta_aggregate)
+print("sep")
+print(lili_gamma_aggregate)
+
+print("ground truth psi")
+print(li_PSI_TRUE)
+
+print("psi svd estimated")
+print(lili_psi_aggregate)
+
+
+# print("truth Theta")
+# print(round(Theta_TRUE, 3))
+
+# print("estimated theta via svd")
+# print(li_theta_svd)
+
+
+# print(round(abs(gamma_1_mean), 4))
+# print(round(gamma_1_sd, 4))
+
+# print(round(abs(beta_1_mean), 4))
+# print(round(beta_1_sd, 4))
+
+# print("ground_truth")
+
+# print(li_lambda_TRUE)
+
+# print("estimated with mean and sd")
+
+# print(lili_Lambda_agrregate)
+
+
+# print(round(abs(Lambda_star_2_mean), 4))
+# print(round(Lambda_star_2_sd , 4))
+# print("P_true")
+
+# print(round(as.matrix(P_TRUE), 3))
+
+# print("P estim")
+
+# print(round(as.matrix(P_mean), 3))
+
+# print(round(abs(as.matrix(P_mean) - as.matrix(P_TRUE)), 3))
+# # print(round(P_sd, 4))
+
+print("svd vs true")
+print(mean(error_SVD, na.rm = TRUE))
+
+
+# print("svd vs empirique")
+# print(mean(ecart_empirique_svd, na.rm = TRUE))
+# print("empirique vs true")
+# print(mean(ecart_true_empirique, na.rm = TRUE))
+
+# print("moyennes ecarts per blocs")
+# vec_ecarts <- apply(ecarts_sigma_per_bloc, 1, mean, na.rm = TRUE)
+# print(round(vec_ecarts, 3))
+
 stop("On est au bout")
+
 
 
 ##################################################
