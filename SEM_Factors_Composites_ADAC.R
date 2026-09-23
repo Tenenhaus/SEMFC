@@ -37,13 +37,19 @@ source("functions/h_constraints.R")
 #############################################
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
-set.seed(1500) # my date of birth
-n_simu <- 100
-N <- 10000
+set.seed(1501)
+n_simu <- 1
+N <- 1000
 do_full_reorder <- TRUE
 ancien_P <- FALSE
-triche <- FALSE
+triche <- TRUE
+show <- TRUE
+show_norme <- FALSE
 R_try <- 2
+
+
+
+
 sol_svd <- matrix(0, 61, n_simu)
 sol_ml <- matrix(0, 61, n_simu)
 
@@ -76,6 +82,7 @@ ecarts_sigma_per_bloc <- matrix(NA, length(is_endogenes), n_simu)
 lili_theta_svd <- list()
 lili_phi_endo_svd <- list()
 lili_phi_exo_svd <- list()
+lili_S <- list()
 
 # Maximum likelihood
 lambda_hat_ml <- matrix(0, 18, n_simu) # les correlations entre facteurs et y
@@ -92,6 +99,8 @@ f_ml <- rep(0, n_simu) # goodness of fit?
 param_ml <- matrix(0, 61, n_simu)
 lrt_pval <- rep(NA, n_simu)
 vcov_pval <- rep(NA, n_simu)
+
+
 
 # Goodness of fit
 gof <- matrix(NA, 2, n_simu)
@@ -147,6 +156,7 @@ for (b in seq_len(n_simu)) {
       lili_psi_svd[[b]] <- fit.svd$li_PSI
       lili_phi_endo_svd[[b]] <- fit.svd$li_phi_endo
       lili_phi_exo_svd[[b]] <- fit.svd$li_phi_exo
+      lili_S[[b]] <- fit.svd$li_S
 
       Sigma_SVD <- fit.svd$SIGMA_IMPLIED
 
@@ -175,34 +185,30 @@ for (b in seq_len(n_simu)) {
   # svd_pval[b] <- 2 * pnorm(abs(z[b]), lower.tail = FALSE)
 
   #################
-  # Sigma_implied #
+  # flatten la solution svd avec seulement les paramètres décisifs pour l'estimation
   #################
 
-  # R_LVM_SVD <- fit.svd$P_IMPLIED # Estimation SVD de la matrice de correlation entre les variables latentes
-  # SIGMA_SVD <- fit.svd$SIGMA_IMPLIED # Estimation SVD de la matrice de covariance entre les indicatrices
+  # à mettre dans le try d'avant: au cas où ça marche pas ATTENTION
 
+  big_mat_Lambda <- do.call(cbind, fit.svd$li_Lambda)
+  big_vec_Lambda <- as.vector(big_mat_Lambda) # colonne par colonne : ordre lexico j puis r
+  li_vec_phi_exo <- lapply(1:R_try, function(r) {
+    phi_exo <- fit.svd$li_phi_exo[[r]]
+    upper_tri <- phi_exo[upper.tri(phi_exo, diag = FALSE)]
+    return(upper_tri)
+  })
+  big_vec_phi_exo <- do.call(c, li_vec_phi_exo)
+  li_vec_phi_endo <- lapply(1:R_try, function(r) {
+    phi_endo <- fit.svd$li_phi_endo[[r]]
+    upper_tri <- phi_endo[upper.tri(phi_endo, diag = FALSE)]
+    return(upper_tri)
+  })
+  big_vec_phi_endo <- do.call(c, li_vec_phi_endo)
+  theta <- do.call(c, fit.svd$li_theta)
+  init_ml_with_S <- c(big_vec_Lambda, big_vec_phi_exo, big_vec_phi_endo, theta)
 
-  # # Calcul des distances quadratiques aux vrais Sigma
-  # sigma_hat[1, b] <- d_LS(S[1:3, 1:3], SIGMA11)
-  # sigma_hat[2, b] <- d_LS(S[4:6, 4:6], SIGMA22)
-  # sigma_hat[3, b] <- d_LS(S[7:9, 7:9], SIGMA33)
-  # sigma_hat[4, b] <- d_LS(S[10:12, 10:12], SIGMA44)
-
-
-  # # Flatten et calculer les coeffs pour l'iteration b
-  # lambda_hat_svd[, b] <- Reduce("c", fit.svd$lambda)
-  # omega_hat_svd[, b] <- Reduce("c", fit.svd$omega)
-  # rho_hat_svd[, b] <- R_LVM_SVD[as.vector(upper.tri(R_LVM_SVD))]
-  # beta_hat_svd[, b] <- fit.svd$beta[fit.svd$beta != 0]
-  # gamma_hat_svd[, b] <- c(fit.svd$gamma[1, 1:2], fit.svd$gamma[2, 3:4])
-  # r2_hat_svd[, b] <- fit.svd$R2
-  # psi_hat_svd[, b] <- fit.svd$psi[upper.tri(fit.svd$psi, diag = TRUE)]
-  # var_hat_svd[, b] <- c(
-  #   apply(Y[[5]], 2, var) - fit.svd$lambda[[5]]^2,
-  #   apply(Y[[6]], 2, var) - fit.svd$lambda[[6]]^2
-  # )
-
-  # erreur_abs <- d_LS(SIGMA_SVD, SIGMA)
+  F1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc)
+  stop("done F1")
 
 
   #   sol_svd[, b] <- init_ml_with_S <-
@@ -444,7 +450,7 @@ P_tridim <- simplify2array(li_P_svd_non_null)
 P_sd <- apply(P_tridim, c(1, 2), sd, na.rm = TRUE)
 P_mean <- apply(P_tridim, c(1, 2), mean, na.rm = TRUE)
 
-lili_Lambda_agrregate <- lapply(1:J, function(j) {
+lili_Lambda_aggregate <- lapply(1:J, function(j) {
   li_Lambda_j <- lapply(lili_lambda_svd, function(x) x[[j]])
   li_Lambda_j_non_null <- li_Lambda_j[!sapply(li_Lambda_j, is.null)]
   li_Lambda_j_tridim <- simplify2array(li_Lambda_j_non_null)
@@ -452,6 +458,34 @@ lili_Lambda_agrregate <- lapply(1:J, function(j) {
   Lambda_j_mean <- round(apply(li_Lambda_j_tridim, c(1, 2), mean, na.rm = TRUE), 3)
   return(list(Lambda_j_sd = Lambda_j_sd, Lambda_j_mean = Lambda_j_mean))
 })
+
+li_lambda_norm_TRUE <- lapply(li_lambda_TRUE, function(mat) {
+  vec_norm <- apply(mat, 2, function(x) sqrt(sum(x^2)))
+  return(vec_norm)
+})
+
+lili_norm_lambda_aggregate <- lapply(lili_Lambda_aggregate, function(mat) {
+  vec_norm <- apply(mat$Lambda_j_mean, 2, function(x) sqrt(sum(x^2)))
+  return(vec_norm)
+})
+
+lili_S_aggregate <- lapply(1:J, function(i) {
+  lapply(1:J, function(j) {
+    mats <- lapply(lili_S, function(x) x[[i]][[j]])
+    mats <- mats[!sapply(mats, is.null)]
+    arr <- simplify2array(mats)
+    list(
+      mean = apply(arr, c(1, 2), mean, na.rm = TRUE),
+      sd   = apply(arr, c(1, 2), sd, na.rm = TRUE)
+    )
+  })
+})
+
+# print(lili_S_aggregate[[5]][[5]]$sd)
+# print(lili_S_aggregate[[5]][[5]]$mean)
+# print(SIGMA_TRUE[17:20, 17:20])
+# print(mean(lili_S_aggregate[[5]][[5]]$mean - as.matrix(SIGMA_TRUE[17:20, 17:20])))
+# stop()
 
 lili_gamma_aggregate <- lapply(1:R_try, function(r) {
   li_gamma_j <- lapply(lili_gamma_svd, function(x) x[[r]])
@@ -527,38 +561,47 @@ li_theta_svd <- lapply(1:J, function(j) {
   return(list(theta_j_sd = theta_j_sd, theta_j_mean = theta_j_mean))
 })
 
+if (show) {
+  print("ground truth endo")
+  print(li_R22_TRUE)
 
-print("ground truth endo")
-print(li_R22_TRUE)
+  print("ground truth exo")
+  print(li_PHI_TRUE)
 
-print("ground truth exo")
-print(li_PHI_TRUE)
+  print("endo svd")
+  print(lili_endo_aggregate)
 
-print("endo svd")
-print(lili_endo_aggregate)
-
-print("exo svd")
-print(lili_exo_aggregate)
+  print("exo svd")
+  print(lili_exo_aggregate)
 
 
-print("ground truth Beta Gamma")
+  print("ground truth Beta Gamma")
 
-print(li_BETA_TRUE)
+  print(li_BETA_TRUE)
 
-print("sep")
+  print("sep")
 
-print(li_GAMMA_TRUE)
+  print(li_GAMMA_TRUE)
 
-print("Beta Gamma estimated svd")
-print(lili_beta_aggregate)
-print("sep")
-print(lili_gamma_aggregate)
+  print("Beta Gamma estimated svd")
+  print(lili_beta_aggregate)
+  print("sep")
+  print(lili_gamma_aggregate)
 
-print("ground truth psi")
-print(li_PSI_TRUE)
+  print("ground truth psi")
+  print(li_PSI_TRUE)
 
-print("psi svd estimated")
-print(lili_psi_aggregate)
+  print("psi svd estimated")
+  print(lili_psi_aggregate)
+
+
+  print("normes Lambda ground truth")
+  print(li_lambda_norm_TRUE)
+
+  print("estimate svd")
+
+  print(lili_norm_lambda_aggregate)
+}
 
 
 # print("truth Theta")
@@ -580,7 +623,7 @@ print(lili_psi_aggregate)
 
 # print("estimated with mean and sd")
 
-# print(lili_Lambda_agrregate)
+# print(lili_Lambda_aggregate)
 
 
 # print(round(abs(Lambda_star_2_mean), 4))

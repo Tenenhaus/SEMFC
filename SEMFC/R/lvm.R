@@ -47,6 +47,16 @@ lvm <- function(R, li_C) {
     H <- which_exo_endo$ind_exo
     J <- which_exo_endo$ind_endo
 
+    if (show_norme) {
+      mat_inv_square <- solve(P_r[H, H])^2
+      spec_norm <- max(abs(svd(mat_inv_square)$d))
+      print(paste("spec norm of the inverse of the covariance matrix of the explicatives for the rank", r, sep = " "))
+      print(spec_norm)
+      max_eigen <- max(abs(eigen(P_r[H, H])$values))
+      print(paste("max eigenvalue of the covariance matrix of the explicatives for the rank", r, sep = " "))
+      print(max_eigen)
+    }
+
     BETA <- as.matrix(tC[J, J, drop = F])
     GAMMA <- as.matrix(tC[J, H, drop = F])
     PSI <- matrix(0, NCOL(BETA), NCOL(BETA))
@@ -74,6 +84,16 @@ lvm <- function(R, li_C) {
         xy <- c(P_r[Ji, H] %*% solve(P_r[H, H]) %*% P_r[H, J[[i]]], P_r[Hi, J[[i]]])
         # print(xx)
         r_xx <- qr(xx)$rank
+
+        if (show_norme) {
+          mat_inv_square <- solve(xx)^2
+          spec_norm <- max(abs(svd(mat_inv_square)$d))
+          print(paste("spec norm of the inverse of the covariance matrix of the explicatives for the rank", r, "and", i, "th endogeneous variable", sep = " "))
+          print(spec_norm)
+          print(paste("max eigenvalue of the covariance matrix of the explicatives for the rank", r, "and", i, "th endogeneous variable", sep = " "))
+          max_eigen <- max(abs(eigen(xx)$values))
+          print(max_eigen)
+        }
 
         bg[[i]] <- tryCatch(
           {

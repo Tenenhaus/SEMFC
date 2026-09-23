@@ -110,7 +110,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
             mat_sum <- Reduce("+", li_sigma_jk)
             svd.fit <- svd(mat_sum, nu = R_try, nv = 1)
             Lambda_star <- svd.fit$u
-            # print(svd.fit$d)
+            print(svd.fit$d)
             return(Lambda_star)
 
             # svd(t(A[[x]]) %*% Reduce("cbind", A[-x]),
@@ -403,7 +403,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
         blocks = blocks,
         li_theta = li_theta,
         li_phi_endo = lv$li_phi_endo,
-        li_phi_exo = lv$li_phi_exo
+        li_phi_exo = lv$li_phi_exo,
+        li_S = li_S
     )
 
     return(out)
