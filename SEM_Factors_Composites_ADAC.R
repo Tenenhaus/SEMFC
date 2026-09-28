@@ -33,6 +33,7 @@ source("functions/F1.R")
 source("functions/h_theta.R")
 source("functions/s_implied.R")
 source("functions/h_constraints.R")
+source("functions/reconstruct_blocs.R")
 
 #############################################
 ########## MONTE-CARLO SIMULATION ###########
@@ -192,22 +193,71 @@ for (b in seq_len(n_simu)) {
 
   big_mat_Lambda <- do.call(cbind, fit.svd$li_Lambda)
   big_vec_Lambda <- as.vector(big_mat_Lambda) # colonne par colonne : ordre lexico j puis r
+
   li_vec_phi_exo <- lapply(1:R_try, function(r) {
     phi_exo <- fit.svd$li_phi_exo[[r]]
     upper_tri <- phi_exo[upper.tri(phi_exo, diag = FALSE)]
     return(upper_tri)
   })
+
   big_vec_phi_exo <- do.call(c, li_vec_phi_exo)
   li_vec_phi_endo <- lapply(1:R_try, function(r) {
     phi_endo <- fit.svd$li_phi_endo[[r]]
     upper_tri <- phi_endo[upper.tri(phi_endo, diag = FALSE)]
+    gr <- fit.svd$li_gr[[r]]
+    if (!igraph::is_dag(gr)) {
+      return(upper_tri)
+    } else {
+      return(c())
+    }
     return(upper_tri)
   })
-  big_vec_phi_endo <- do.call(c, li_vec_phi_endo)
-  theta <- do.call(c, fit.svd$li_theta)
-  init_ml_with_S <- c(big_vec_Lambda, big_vec_phi_exo, big_vec_phi_endo, theta)
 
-  F1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc)
+  big_vec_phi_endo <- do.call(c, li_vec_phi_endo)
+
+  theta <- do.call(c, fit.svd$li_theta)
+
+  li_beta <- fit.svd$li_beta
+  li_gamma <- fit.svd$li_gamma
+
+  li_non_null_beta_gamma <- lapply(1:R_try, function(r) {
+    # non_null_beta <- matrix(0, nrow = nrow(li_beta[[r]]), ncol = ncol(li_beta[[r]]))
+    # non_null_gamma <- matrix(0, nrow = nrow(li_gamma[[r]]), ncol = ncol(li_gamma[[r]]))
+    C <- li_C[[r]]
+    exo_endo <- ind_exo_endo(C)
+    ind_exo <- exo_endo$ind_exo
+    ind_endo <- exo_endo$ind_endo
+    C_endo <- C[ind_endo, ind_endo]
+    C_exo_to_endo <- C[ind_exo, ind_endo]
+    non_null_gamma <- t(C_exo_to_endo)
+    non_null_beta <- t(C_endo)
+    return(list(non_null_gamma = non_null_gamma, non_null_beta = non_null_beta))
+  })
+
+  li_vec_beta <- lapply(1:R_try, function(r) {
+    non_null_beta <- li_non_null_beta_gamma[[r]]$non_null_beta
+    beta_r <- li_beta[[r]]
+    beta_r[non_null_beta == 0] <- NA
+    vec_beta_r <- as.vector(beta_r)
+    vec_beta_r <- vec_beta_r[!is.na(vec_beta_r)]
+    return(vec_beta_r)
+  })
+  vec_beta <- do.call(c, li_vec_beta)
+
+  li_vec_gamma <- lapply(1:R_try, function(r) {
+    non_null_gamma <- li_non_null_beta_gamma[[r]]$non_null_gamma
+    gamma_r <- li_gamma[[r]]
+    gamma_r[non_null_gamma == 0] <- NA
+    vec_gamma_r <- as.vector(gamma_r)
+    vec_gamma_r <- vec_gamma_r[!is.na(vec_gamma_r)]
+    return(vec_gamma_r)
+  })
+  vec_gamma <- do.call(c, li_vec_gamma)
+
+
+  init_ml_with_S <- c(big_vec_Lambda, big_vec_phi_exo, big_vec_phi_endo, theta, vec_gamma, vec_beta)
+
+  F1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma)
   stop("done F1")
 
 

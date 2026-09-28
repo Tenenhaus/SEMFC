@@ -199,6 +199,8 @@ lvm <- function(R, li_C) {
           )
         }
       )
+
+
       # remplir les lignes qui viennent d'etre calculees dans les matrices B et GAMMA
       # print(paste("i", i))
       # print(length(b))
