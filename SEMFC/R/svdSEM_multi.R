@@ -240,13 +240,15 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
 
     # Pour le bon ordre : plus simple mais ne change rien after
-    Lambda_1_TRUE <- li_lambda_TRUE[[1]]
-    mat_ps <- t(t(li_Lambda_star[[1]]) %*% Lambda_1_TRUE)
-    vec_reorder <- as.integer(clue::solve_LSAP(abs(mat_ps), maximum = TRUE))
-    li_Lambda_star[[1]] <- li_Lambda_star[[1]][, vec_reorder]
-    li_Lambda[[1]] <- li_Lambda[[1]][, vec_reorder]
-    li_vec_norm[[1]] <- li_vec_norm[[1]][vec_reorder]
-    li_C_jj_hat[[1]] <- li_C_jj_hat[[1]][vec_reorder, vec_reorder]
+    if(R_try > 1){
+        Lambda_1_TRUE <- li_lambda_TRUE[[1]]
+        mat_ps <- t(t(li_Lambda_star[[1]]) %*% Lambda_1_TRUE)
+        vec_reorder <- as.integer(clue::solve_LSAP(abs(mat_ps), maximum = TRUE))
+        li_Lambda_star[[1]] <- li_Lambda_star[[1]][, vec_reorder]
+        li_Lambda[[1]] <- li_Lambda[[1]][, vec_reorder]
+        li_vec_norm[[1]] <- li_vec_norm[[1]][vec_reorder]
+        li_C_jj_hat[[1]] <- li_C_jj_hat[[1]][vec_reorder, vec_reorder]
+    }
 
 
 
@@ -269,8 +271,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
 
     # print(li_Lambda)
-    # print("oui")
-    # print(li_lambda_TRUE)
+    # # print("oui")
+    #  print(li_lambda_TRUE)
 
     # print(lapply(1:J, function(j) round(li_Lambda[[j]] - li_lambda_TRUE[[j]], 4)))
 

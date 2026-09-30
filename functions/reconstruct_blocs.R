@@ -90,6 +90,16 @@ reconstruct_blocs <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li
         return(beta)
     })
 
+    end_previous <- end_previous + cumsum_beta[R_try + 1]
 
-    return(list(li_Lambda = li_Lambda, li_phi_exo = li_phi_exo, li_phi_endo = li_phi_endo, vec_theta = vec_theta, li_gamma = li_gamma, li_beta = li_beta, is_dag = is_dag))
+    li_correl_same_diag <- lapply(1:J, function(j) {
+        index_low <- 1 + end_previous + (j - 1) * R_try^2
+        index_high <- index_low + R_try^2 - 1
+        x_usefull <- x[index_low:index_high]
+        mat_correl_same_diag <- matrix(x_usefull, nrow = R_try, ncol = R_try)
+        return(mat_correl_same_diag)
+    })
+
+
+    return(list(li_Lambda = li_Lambda, li_phi_exo = li_phi_exo, li_phi_endo = li_phi_endo, vec_theta = vec_theta, li_gamma = li_gamma, li_beta = li_beta, is_dag = is_dag, li_correl_same_diag = li_correl_same_diag))
 }

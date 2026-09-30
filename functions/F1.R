@@ -15,6 +15,7 @@ F1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_
   li_gamma <- reconstructed$li_gamma
   li_beta <- reconstructed$li_beta
   is_dag <- reconstructed$is_dag
+  li_correl_same_diag <- reconstructed$li_correl_same_diag
 
   li_which_exo_endo <- lapply(li_C, function(C) {
     out <- ind_exo_endo(C)
@@ -88,12 +89,46 @@ F1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_
           P_induced[(i - 1) * R_try + r, (j - 1) * R_try + r] <- li_P[[r]][i, j]
         }
       } else {
-        P_induced[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- R[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)]
+        P_induced[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- li_correl_same_diag[[i]]
       }
     }
   }
 
-  stop("done")
+
+  Lambda_diag <- Matrix::bdiag(li_Lambda)
+  Sigma_implied <- Lambda_diag %*% P_induced %*% t(Lambda_diag)
+  diag(Sigma_implied) <- diag(Sigma_implied) + vec_theta
+
+
+  # print(min(eigen(Sigma_implied)$values, symmetric = TRUE))
+
+  log_vrais <- log(abs(det(Sigma_implied))) + sum(diag(solve(Sigma_implied) %*% S)) -
+    log(det(S)) -
+    NCOL(S)
+
+  print(log_vrais)
+
+  if (is.nan(log_vrais)) {
+    print("ouille")
+    print(eigen(Sigma_implied)$values, symmetric = TRUE)
+    stop()
+  }
+
+  # print(li_Lambda[[1]])
+  # print(paste("log_vrais", log_vrais))
+  # if (log_vrais < -1e6) {
+  #   print("log_vrais < -1e6")
+  #   #stop("erreur")
+  # }
+
+  # print(round(Lambda_TRUE %*% as.matrix(P_TRUE), 3))
+
+  # print(sum(diag(solve(Sigma_implied) %*% S)))
+  # print(ncol(S))
+
+  # print(round(Sigma_implied - S, 3))
+
+  # print(paste("log_vrais", log_vrais))
 
 
   #   l1 <- x[1:3]
@@ -173,9 +208,5 @@ F1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_
   #     ))
 
 
-  sum(diag(S %*% solve(implied_S))) -
-    log(det(S)) -
-    NCOL(S)
-
-  return(opt)
+  return(log_vrais)
 }

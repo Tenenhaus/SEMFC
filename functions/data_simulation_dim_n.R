@@ -11,8 +11,6 @@ n_blocs <- length(is_endogenes)
 vec_indicators_per_bloc <- rep(4, n_blocs) # 7 indicateurs par bloc
 
 
-
-
 n_endogenes <- sum(is_endogenes)
 n_exogenes <- sum(!is_endogenes)
 do_composite <- FALSE
@@ -85,8 +83,6 @@ li_C_TRUE <- lapply(1:R_true, function(r) {
       # print(C_loc)
       return(C_loc)
 })
-
-
 
 
 li_graphs_TRUE <- lapply(li_C_TRUE, function(C) igraph::graph_from_adjacency_matrix(C))
@@ -320,8 +316,6 @@ if (do_composite) {
 
       Lambda_TRUE <- Matrix::bdiag(li_lambda_TRUE)
 }
-
-
 
 
 Sigma_no_perturbation_TRUE <- Lambda_TRUE %*% P_TRUE %*% t(Lambda_TRUE) # covariance imlpied by the model

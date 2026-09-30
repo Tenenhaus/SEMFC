@@ -40,10 +40,10 @@ source("functions/reconstruct_blocs.R")
 #############################################
 set.seed(1501)
 n_simu <- 1
-N <- 1000
+N <- 10000
 do_full_reorder <- TRUE
 ancien_P <- FALSE
-triche <- TRUE
+triche <- FALSE
 show <- TRUE
 show_norme <- FALSE
 R_try <- 2
@@ -117,6 +117,9 @@ for (b in seq_len(n_simu)) {
   # print(sum(vec_indicators_per_bloc))
   X <- mvrnorm(N, rep(0, sum(vec_indicators_per_bloc)), SIGMA_TRUE, empirical = FALSE)
   S <- cov(X)
+  if (triche) {
+    S <- SIGMA_TRUE
+  }
   ecart_true_empirique[b] <- norm(as.matrix(S) - as.matrix(SIGMA_TRUE), "F")
 
   indicator_blocks <- split(
@@ -170,6 +173,7 @@ for (b in seq_len(n_simu)) {
       message("Erreur dans svd à l'itération ", b)
     }
   )
+  print(paste("erreur Sigma SVD", erreur_abs))
 
 
   for (j in 1:J) {
@@ -254,11 +258,68 @@ for (b in seq_len(n_simu)) {
   })
   vec_gamma <- do.call(c, li_vec_gamma)
 
+  P_IMPLIED <- fit.svd$P_IMPLIED
+  li_correl_same_diag <- lapply(1:J, function(j) {
+    index_low <- R_try * (j - 1) + 1
+    index_high <- R_try * j
+    diag_bloc <- P_IMPLIED[index_low:index_high, index_low:index_high]
+    diag_vec <- as.vector(diag_bloc)
+    return(diag_vec)
+  })
 
-  init_ml_with_S <- c(big_vec_Lambda, big_vec_phi_exo, big_vec_phi_endo, theta, vec_gamma, vec_beta)
+  vec_correl_same_diag <- do.call(c, li_correl_same_diag)
 
-  F1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma)
-  stop("done F1")
+
+  init_ml_with_S <- c(big_vec_Lambda, big_vec_phi_exo, big_vec_phi_endo, theta, vec_gamma, vec_beta, vec_correl_same_diag)
+
+  vrais_at_opt_SVD <- F1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma)
+  print(paste("vrais_at_opt SVD", vrais_at_opt_SVD))
+
+  # stop("F1")
+
+
+  n_zeros_eq <- J * R_try * (R_try - 1) / 2
+  n_zeros_ineq <- sum(vec_indicators_per_bloc)
+
+  fit.ml <- solnp(
+    pars = init_ml_with_S,
+    fun = F1, eqfun = heq1, # aucune contrainte en plus
+    eqB = rep(0, n_zeros_eq),
+    ineqfun = ineqfun,
+    ineqLB = rep(0, n_zeros_ineq),
+    ineq_UB <- rep(100, n_zeros_ineq),
+    S = S, J = J, R_try = R_try, vec_indicators_per_bloc = vec_indicators_per_bloc, li_gr = fit.svd$li_gr, li_non_null_beta_gamma = li_non_null_beta_gamma,
+    control = list(trace = 0, tol = 1e-8, delta = 1e-7)
+  )
+
+  convergence <- fit.ml$convergence
+  if (convergence != 0) {
+    warning(paste("Convergence issue at iteration", b, "with convergence code:", convergence))
+  }
+  opt_param <- fit.ml$pars
+  opt_vrais <- fit.ml$values[length(fit.ml$values)]
+
+  reconstructed_params <- reconstruct_blocs(opt_param, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma)
+  li_Lambda <- reconstructed_params$li_Lambda
+  li_phi_exo <- reconstructed_params$li_phi_exo
+  li_phi_endo <- reconstructed_params$li_phi_endo
+  vec_theta <- reconstructed_params$vec_theta
+  li_gamma <- reconstructed_params$li_gamma
+  li_beta <- reconstructed_params$li_beta
+  is_dag <- reconstructed_params$is_dag
+  li_correl_same_diag <- reconstructed_params$li_correl_same_diag
+
+  if (any(vec_theta > 99)) {
+    print("augmenter upper bound sur theta car atteinte")
+  }
+
+  print(paste("opt_vrais", opt_vrais))
+
+  print(li_Lambda)
+
+  # print(t(li_Lambda[[1]]) %*% li_Lambda[[1]])
+
+  stop("done ML")
 
 
   #   sol_svd[, b] <- init_ml_with_S <-
