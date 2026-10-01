@@ -1,6 +1,6 @@
 # restrictions for the minimization of the Loglikelihood function
-heq1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma) {
-  reconstructed <- reconstruct_blocs(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma)
+heq1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma, li_C) {
+  reconstructed <- reconstruct_blocs(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma, li_C)
   li_Lambda <- reconstructed$li_Lambda
   li_orthogonalities <- lapply(1:J, function(j) {
     mat_diag <- t(li_Lambda[[j]]) %*% li_Lambda[[j]]
@@ -93,9 +93,20 @@ heq1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_bet
   return(h)
 }
 
-ineqfun <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma) {
-  reconstructed <- reconstruct_blocs(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma)
+ineqfun <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma, li_C) {
+  reconstructed <- reconstruct_blocs(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma, li_C)
+  li_Lambda <- reconstructed$li_Lambda
+  li_phi_exo <- reconstructed$li_phi_exo
+  li_phi_endo <- reconstructed$li_phi_endo
   vec_theta <- reconstructed$vec_theta
+  li_gamma <- reconstructed$li_gamma
+  li_beta <- reconstructed$li_beta
+  is_dag <- reconstructed$is_dag
+  li_correl_same_diag <- reconstructed$li_correl_same_diag
+
+  # calculated <- calculate_Sigma(J, R_try, li_Lambda, li_phi_exo, li_phi_endo, vec_theta, li_gamma, li_beta, is_dag, li_correl_same_diag, li_C)
+  # Sigma_implied <- calculated$Sigma_implied
+  # min_values <- min(eigen(Sigma_implied, symmetric = TRUE)$values)
   h <- c(vec_theta)
   return(h)
 }

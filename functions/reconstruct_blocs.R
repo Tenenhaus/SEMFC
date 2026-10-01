@@ -1,4 +1,4 @@
-reconstruct_blocs <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma) {
+reconstruct_blocs <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma, li_C) {
     cumsum_indicators <- cumsum(c(0, vec_indicators_per_bloc))
     li_Lambda <- lapply(1:J, function(j) {
         index_low <- (cumsum_indicators[j] * R_try) + 1
@@ -9,16 +9,28 @@ reconstruct_blocs <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li
 
     end_previous <- cumsum_indicators[J + 1] * R_try
 
+    x_cholesky_P <- x[(end_previous + 1):(end_previous + R_try * (R_try + 1) / 2)]
+    cholesky_P <- matrix(0, nrow = R_try, ncol = R_try)
+    cholesky_P[upper.tri(cholesky_P, diag = TRUE)] <- x_cholesky_P
+    P_IMPLIED <- t(cholesky_P) %*% cholesky_P
+
     n_exogenes <- sum(!is_endogenes)
+    li_which_exo_endo <- lapply(li_C, function(C) {
+        out <- ind_exo_endo(C)
+        return(out)
+    })
 
     li_phi_exo <- lapply(1:R_try, function(r) {
-        index_low <- 1 + end_previous + (r - 1) * (n_exogenes * (n_exogenes - 1)) %/% 2
-        index_high <- index_low + (n_exogenes * (n_exogenes - 1)) %/% 2 - 1
-        x_usefull <- x[index_low:index_high]
         phi_exo_r <- matrix(0, nrow = n_exogenes, ncol = n_exogenes)
-        phi_exo_r[upper.tri(phi_exo_r)] <- x_usefull
-        phi_exo_r <- phi_exo_r + t(phi_exo_r)
-        diag(phi_exo_r) <- 1
+        for (j in 1:n_exogenes) {
+            for (i in 1:n_exogenes) {
+                i_exo <- li_which_exo_endo[[r]]$ind_exo[i]
+                j_exo <- li_which_exo_endo[[r]]$ind_exo[j]
+                index_i <- (i_exo - 1) * R_try + r
+                index_j <- (j_exo - 1) * R_try + r
+                phi_exo_r[i, j] <- P_IMPLIED[index_i, index_j]
+            }
+        }
         return(phi_exo_r)
     })
 

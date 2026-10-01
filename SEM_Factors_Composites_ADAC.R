@@ -34,13 +34,14 @@ source("functions/h_theta.R")
 source("functions/s_implied.R")
 source("functions/h_constraints.R")
 source("functions/reconstruct_blocs.R")
+source("functions/calculate_Sigma.R")
 
 #############################################
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
-set.seed(1501)
+set.seed(1500)
 n_simu <- 1
-N <- 10000
+N <- 1000
 do_full_reorder <- TRUE
 ancien_P <- FALSE
 triche <- FALSE
@@ -259,27 +260,29 @@ for (b in seq_len(n_simu)) {
   vec_gamma <- do.call(c, li_vec_gamma)
 
   P_IMPLIED <- fit.svd$P_IMPLIED
-  li_correl_same_diag <- lapply(1:J, function(j) {
-    index_low <- R_try * (j - 1) + 1
-    index_high <- R_try * j
-    diag_bloc <- P_IMPLIED[index_low:index_high, index_low:index_high]
-    diag_vec <- as.vector(diag_bloc)
-    return(diag_vec)
-  })
+  # li_correl_same_diag <- lapply(1:J, function(j) {
+  #   index_low <- R_try * (j - 1) + 1
+  #   index_high <- R_try * j
+  #   diag_bloc <- P_IMPLIED[index_low:index_high, index_low:index_high]
+  #   diag_vec <- as.vector(diag_bloc)
+  #   return(diag_vec)
+  # })
 
-  vec_correl_same_diag <- do.call(c, li_correl_same_diag)
+  # vec_correl_same_diag <- do.call(c, li_correl_same_diag)
 
+  cholesky_P <- chol(P_IMPLIED)
+  vec_cholesky_P <- as.vector(cholesky_P[upper.tri(cholesky_P, diag = TRUE)])
 
-  init_ml_with_S <- c(big_vec_Lambda, big_vec_phi_exo, big_vec_phi_endo, theta, vec_gamma, vec_beta, vec_correl_same_diag)
+  init_ml_with_S <- c(big_vec_Lambda, vec_cholesky_P, theta, vec_gamma, vec_beta)
 
-  vrais_at_opt_SVD <- F1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma)
+  vrais_at_opt_SVD <- F1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma, li_C)
   print(paste("vrais_at_opt SVD", vrais_at_opt_SVD))
 
   # stop("F1")
 
-
   n_zeros_eq <- J * R_try * (R_try - 1) / 2
   n_zeros_ineq <- sum(vec_indicators_per_bloc)
+
 
   fit.ml <- solnp(
     pars = init_ml_with_S,
@@ -287,9 +290,9 @@ for (b in seq_len(n_simu)) {
     eqB = rep(0, n_zeros_eq),
     ineqfun = ineqfun,
     ineqLB = rep(0, n_zeros_ineq),
-    ineq_UB <- rep(100, n_zeros_ineq),
-    S = S, J = J, R_try = R_try, vec_indicators_per_bloc = vec_indicators_per_bloc, li_gr = fit.svd$li_gr, li_non_null_beta_gamma = li_non_null_beta_gamma,
-    control = list(trace = 0, tol = 1e-8, delta = 1e-7)
+    ineqUB = rep(100, n_zeros_ineq),
+    S = S, J = J, R_try = R_try, vec_indicators_per_bloc = vec_indicators_per_bloc, li_gr = fit.svd$li_gr, li_non_null_beta_gamma = li_non_null_beta_gamma, li_C = li_C,
+    control = list(trace = 0, tol = 1e-8, delta = 1e-7, rho = 1)
   )
 
   convergence <- fit.ml$convergence
@@ -298,6 +301,12 @@ for (b in seq_len(n_simu)) {
   }
   opt_param <- fit.ml$pars
   opt_vrais <- fit.ml$values[length(fit.ml$values)]
+
+
+  opt_param <- fit.ml$sol
+  opt_vrais <- fit.ml$value
+  convergence <- fit.ml$convergence
+  print("convergence code:", convergence)
 
   reconstructed_params <- reconstruct_blocs(opt_param, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma)
   li_Lambda <- reconstructed_params$li_Lambda
@@ -316,6 +325,8 @@ for (b in seq_len(n_simu)) {
   print(paste("opt_vrais", opt_vrais))
 
   print(li_Lambda)
+  print(fit.svd$li_Lambda)
+  print(li_lambda_TRUE)
 
   # print(t(li_Lambda[[1]]) %*% li_Lambda[[1]])
 
