@@ -15,7 +15,7 @@ source('inst/simulations/data_simulation_mixed.R')
 # ============================================================
 
 n_grid <- c(300, 600, 1200, 2400, 4800)
-n_rep  <- 500
+n_rep  <- 100
 
 # True parameter vector.
 # It must follow exactly the same ordering as the estimators.
@@ -47,6 +47,36 @@ estimates_svd <- array(
 
 estimates_os <- estimates_svd
 estimates_rml <- estimates_svd
+
+
+Vhat_os <- array(
+  NA_real_,
+  dim = c(length(n_grid), n_rep, d, d),
+  dimnames = list(
+    n = as.character(n_grid),
+    replication = seq_len(n_rep),
+    row_parameter = names(theta_true),
+    col_parameter = names(theta_true)
+  )
+)
+
+Vhat_rml <- Vhat_os
+
+
+variance_mc_error_os  <- numeric(length(n_grid))
+variance_mc_error_rml <- numeric(length(n_grid))
+
+V_mc_os <- array(
+  NA_real_,
+  dim = c(length(n_grid), d, d),
+  dimnames = list(
+    n = as.character(n_grid),
+    row_parameter = names(theta_true),
+    col_parameter = names(theta_true)
+  )
+)
+V_mc_rml <- V_mc_os
+norm_V0 <- norm(V_0, type = "F")
 
 # ============================================================
 # 5. Monte-Carlo loop
@@ -134,6 +164,20 @@ for (n_index in seq_along(n_grid)) {
       estimates_rml[n_index, rep_id, ] <- fit_rml$theta
     }
 
+    # --------------------------------------------------------
+    # Store complete Covariance matrices
+    # --------------------------------------------------------
+
+
+
+    if (fit_os$success) {
+      Vhat_os[n_index, rep_id, , ] <- as.matrix(fit_os$V)
+    }
+
+    if (fit_rml$success) {
+      Vhat_rml[n_index, rep_id, , ] <-  as.matrix(fit_rml$V)
+    }
+
 
     # --------------------------------------------------------
     # Individual estimator metrics
@@ -171,6 +215,19 @@ for (n_index in seq_along(n_grid)) {
 
     rml_constraint <- if (fit_rml$success) {
       constraint_residual(fit_rml$theta, constraint_fun)
+    } else {
+      NA_real_
+    }
+
+
+    variance_error_os <- if (fit_os$success) {
+      variance_plug_in_error(fit_os$V, V_0)
+    } else {
+      NA_real_
+    }
+
+    variance_error_rml <- if (fit_rml$success) {
+      variance_plug_in_error(fit_rml$V, V_0)
     } else {
       NA_real_
     }
@@ -295,6 +352,9 @@ for (n_index in seq_along(n_grid)) {
       relative_svd_rml_distance = relative_distance_svd,
       likelihood_gap_svd = objective_gap_svd,
 
+      variance_error_os = variance_error_os,
+      variance_error_rml = variance_error_rml,
+
 
       svd_time = fit_svd$elapsed_time,
       os_time = fit_os$elapsed_time,
@@ -314,6 +374,29 @@ for (n_index in seq_along(n_grid)) {
 results_mc <- do.call(rbind, results)
 
 rownames(results_mc) <- NULL
+
+
+for (i in seq_along(n_grid)) {
+  n <- n_grid[i]
+  theta_os_i  <- estimates_os[i, , ]
+  theta_rml_i <- estimates_rml[i, , ]
+
+  V_mc_os[i, , ] <- n * cov(
+    theta_os_i,
+    use = "complete.obs"
+  )
+
+  V_mc_rml[i, , ] <- n * cov(
+    theta_rml_i,
+    use = "complete.obs"
+  )
+
+  variance_mc_error_os[i] <-
+    norm(V_mc_os[i, , ] - V_0, type = "F") / norm_V0
+
+  variance_mc_error_rml[i] <-
+    norm(V_mc_rml[i, , ] - V_0, type = "F") / norm_V0
+}
 
 
 
@@ -341,39 +424,83 @@ rownames(summary_by_n) <- NULL
 print(summary_by_n)
 
 
+coverage_table_os <- coverage_table(
+  estimates = estimates_os,
+  Vhat = Vhat_os,
+  theta_true = theta_true,
+  n_grid = n_grid
+)
+
+coverage_table_rml <- coverage_table(
+  estimates = estimates_rml,
+  Vhat = Vhat_rml,
+  theta_true = theta_true,
+  n_grid = n_grid
+)
+
+
+print(coverage_table_os)
+
+
+
+coverage_summary <- bind_rows(
+  OS  = coverage_table_os,
+  RML = coverage_table_rml,
+  .id = "method"
+) %>%
+  group_by(n, method) %>%
+  summarise(
+    median = if (all(is.na(coverage))) NA_real_
+             else median(coverage, na.rm = TRUE),
+
+    min = if (all(is.na(coverage))) NA_real_
+          else min(coverage, na.rm = TRUE),
+
+    max = if (all(is.na(coverage))) NA_real_
+          else max(coverage, na.rm = TRUE),
+
+    .groups = "drop"
+  )
+
 
 
 
 # ============================================================
 # 8. Export
 # ============================================================
-
-write.csv(
-  results_mc,
-  file = "inst/os_experiment/monte_carlo_replications.csv",
-  row.names = FALSE
-)
-
-write.csv(
-  summary_by_n,
-  file = "inst/os_experiment/monte_carlo_summary_by_n.csv",
-  row.names = FALSE
-)
-
-
-
-saveRDS(
-  list(
-    results_mc = results_mc,
-    summary_by_n = summary_by_n,
-
-    estimates_svd = estimates_svd,
-    estimates_os = estimates_os,
-    estimates_rml = estimates_rml,
-
-    theta_true = theta_true,
-    n_grid = n_grid,
-    n_rep = n_rep
-  ),
-  file = "inst/os_experiment/monte_carlo_scaling_n_full.rds"
-)
+#
+# write.csv(
+#   results_mc,
+#   file = "inst/os_experiment/monte_carlo_replications.csv",
+#   row.names = FALSE
+# )
+#
+# write.csv(
+#   summary_by_n,
+#   file = "inst/os_experiment/monte_carlo_summary_by_n.csv",
+#   row.names = FALSE
+# )
+#
+#
+#
+# saveRDS(
+#   list(
+#     results_mc = results_mc,
+#     summary_by_n = summary_by_n,
+#
+#     estimates_svd = estimates_svd,
+#     estimates_os = estimates_os,
+#     estimates_rml = estimates_rml,
+#
+#     V_0 = V_0,
+#     Vhat_os = Vhat_os,
+#     Vhat_rml = Vhat_rml,
+#     variance_mc_error_os = variance_mc_error_os,
+#     variance_mc_error_rml = variance_mc_error_rml,
+#
+#     theta_true = theta_true,
+#     n_grid = n_grid,
+#     n_rep = n_rep
+#   ),
+#   file = "inst/os_experiment/monte_carlo_scaling_n_full.rds"
+# )

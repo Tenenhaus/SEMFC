@@ -7,7 +7,7 @@ library(ggplot2)
 
 x <- readRDS("inst/os_experiment/monte_carlo_scaling_n_full.rds")
 
-results_mc <- if (is.data.frame(x)) x else x$results_mc
+results_mc <- x$results_mc
 
 
 # ============================================================
@@ -38,6 +38,11 @@ summary_n <- results_mc %>%
     rml_constraint =
       max(rml_constraint, na.rm = TRUE),
 
+    # variance_error_os_mean = mean(variance_error_os, na.rm = TRUE),
+    # variance_error_os_sd = sd(variance_error_os, na.rm = TRUE),
+    # variance_error_rml_mean = mean(variance_error_rml, na.rm = TRUE),
+    # variance_error_rml_sd = sd(variance_error_rml, na.rm = TRUE),
+
     svd_failures = sum(!svd_success),
     os_failures  = sum(!os_success),
     rml_failures = sum(!rml_success),
@@ -46,6 +51,14 @@ summary_n <- results_mc %>%
   ) %>%
 
   mutate(
+    # variance_error_os_se = variance_error_os_sd / sqrt(M),
+    # variance_error_os_lower = variance_error_os_mean - 1.96 * variance_error_os_se,
+    # variance_error_os_upper = variance_error_os_mean + 1.96 * variance_error_os_se,
+    #
+    # variance_error_rml_se = variance_error_rml_sd / sqrt(M),
+    # variance_error_rml_lower = variance_error_rml_mean - 1.96 * variance_error_rml_se,
+    # variance_error_rml_upper = variance_error_rml_mean + 1.96 * variance_error_rml_se,
+
     D_os_se = D_os_sd / sqrt(M),
     D_os_lower = D_os_mean - 1.96 * D_os_se,
     D_os_upper = D_os_mean + 1.96 * D_os_se,
@@ -56,6 +69,14 @@ summary_n <- results_mc %>%
   )
 
 
+covariance_mc_summary <- data.frame(
+  n = x$n_grid,
+  variance_mc_error_os = x$variance_mc_error_os,
+  variance_mc_error_rml = x$variance_mc_error_rml
+)
+
+summary_n <- summary_n %>%
+  left_join(covariance_mc_summary, by = "n")
 print(summary_n)
 
 
@@ -70,7 +91,11 @@ table_n <- summary_n %>%
     os_rmse,
     rml_rmse,
     D_os_mean,
-    D_svd_mean
+    D_svd_mean,
+    variance_error_os_mean,
+    variance_error_rml_mean,
+    variance_mc_error_os,
+    variance_mc_error_rml
   )
 
 print(table_n)

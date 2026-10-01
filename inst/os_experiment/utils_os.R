@@ -64,6 +64,13 @@ os_rml_mse <- function(theta_os, theta_rml) {
   mean((theta_os - theta_rml)^2)
 }
 
+
+variance_plug_in_error <- function(Vhat, V_0){
+  norm(Vhat - V_0, type = "F") / norm(V_0, type = "F")
+}
+
+
+
 # ============================================================
 # 3. Utility functions
 # ============================================================
@@ -84,9 +91,13 @@ safe_estimation <- function(model, infer = FALSE, ...) {
 
       theta_hat <- model$get_estimate("theta")
 
+      Vhat <- get_covariance_matrix_plug_in(model$get_estimate('all'),
+                                            model$get_model(), model$get_data())
+
       list(
         model = model,
         theta = theta_hat,
+        V = Vhat,
         success = TRUE,
         elapsed_time =
           proc.time()[["elapsed"]] - start_time,
@@ -97,6 +108,7 @@ safe_estimation <- function(model, infer = FALSE, ...) {
       list(
         model = model,
         theta = NULL,
+        V = NULL,
         success = FALSE,
         elapsed_time =
           proc.time()[["elapsed"]] - start_time,
@@ -134,7 +146,7 @@ safe_estimation_lavaan <- function(
   if (inherits(fit, "error")) {
     return(
       list(
-        success = FALSE,
+        success = fit$optim$converged,
         elapsed_time = elapsed_time,
         fit = NULL,
         error_message = conditionMessage(fit)
@@ -542,4 +554,103 @@ componentwise_metrics_J <- function(
   }
 
   do.call(rbind, output)
+}
+
+
+get_covariance_matrix_plug_in <- function(init_estimate, model, data) {
+
+  lambda <- init_estimate$lambda
+  S_diag_composites <- data$S_diag_composites
+  block_sizes <- model$block_sizes
+  lengths_theta <- model$lengths_theta
+  mode <- model$mode
+  BETA <- init_estimate$beta
+  GAMMA <- init_estimate$gamma
+  sigma_implied <- init_estimate$sigma_implied
+  r <- sum(mode == "formative")
+
+  jac_Sigma_theta <- compute_J_Sigma_theta(block_sizes,
+                                         lengths_theta,
+                                         mode, model$dag,
+                                         init_estimate$p_implied,
+                                         model$relation_matrix,
+                                         lambda, BETA, GAMMA)
+  H <- compute_Hessian(sigma_implied, jac_Sigma_theta)
+  J_h_eq <- compute_gradient_constraint(lambda,
+                                      S_diag_composites,
+                                      block_sizes,
+                                      lengths_theta,
+                                      mode)
+  ktt_mat <- rbind(cbind(H, t(J_h_eq)),
+                   cbind(J_h_eq, matrix(0, r, r)))
+  return (2*(solve(ktt_mat)[1:sum(lengths_theta), 1:sum(lengths_theta)]))
+}
+
+
+
+coverage <- function(estimate, theta_true, se, alpha = 0.05) {
+  lower <- estimate$theta - qnorm(1 - alpha / 2) * sqrt(diag(estimate$V))
+  upper <- estimate$theta + qnorm(1 - alpha / 2) * sqrt(diag(estimate$V))
+  coverage <- (theta_true >= lower) & (theta_true <= upper)
+  return(coverage)
+}
+
+
+coverage_table <- function(estimates, Vhat, theta_true, n_grid) {
+  dims <- dim(estimates)
+  d <- dims[3]
+
+  # Extraire les diagonales des matrices de covariance :
+  # résultat de dimensions (n, réplication, paramètre)
+  var_diag <- array(
+    matrix(Vhat, nrow = dims[1] * dims[2])[
+      , seq.int(1L, d * d, by = d + 1L),
+      drop = FALSE
+    ],
+    dim = dims,
+    dimnames = dimnames(estimates)
+  )
+  # Variances invalides ou nulles : pas d'IC exploitable
+  var_diag[!is.finite(var_diag) | var_diag <= 0] <- NA_real_
+
+  # SE = sqrt(V_jj / n)
+  se <- sqrt(sweep(var_diag, MARGIN = 1, STATS = n_grid, FUN = "/"))
+
+  # Erreurs d'estimation, par rapport au vrai paramètre
+  error <- sweep(
+    estimates,
+    MARGIN = 3,
+    STATS = as.numeric(theta_true),
+    FUN = "-"
+  )
+  error[!is.finite(error)] <- NA_real_
+
+  # TRUE si le vrai paramètre appartient à l'IC à 95 %
+  covered <- abs(error) <= qnorm(0.975) * se
+
+  # Agrégation sur les réplications (dimension 2)
+  n_valid <- apply(!is.na(covered), c(1, 3), sum)
+
+  coverage <- apply(covered, c(1, 3), sum, na.rm = TRUE) /
+    n_valid
+
+  coverage[n_valid == 0] <- NA_real_
+
+  # Erreur-type Monte Carlo du coverage
+  mcse <- sqrt(coverage * (1 - coverage) / n_valid)
+
+  parameter_names <- dimnames(estimates)[[3]]
+
+  if (is.null(parameter_names)) {
+    parameter_names <- paste0("theta_", seq_len(d))
+  }
+
+  coverage_table <- data.frame(
+    n         = rep(n_grid, times = d),
+    parameter = rep(parameter_names, each = length(n_grid)),
+    coverage  = as.vector(coverage),
+    n_valid   = as.vector(n_valid),
+    mcse      = as.vector(mcse)
+  )
+  return(coverage_table)
 }

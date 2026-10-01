@@ -214,7 +214,7 @@ initialize = function(data, relation_matrix,
         private$fit_ml(initialization, tol)
         private$get_gof()
       } else if(estimator == 'one_step'){
-        private$fit_one_step()
+        private$fit_one_step(initialization)
       }
       if (infer){
         if (estimator == 'svd'){
@@ -640,10 +640,16 @@ initialize = function(data, relation_matrix,
 
     },
 
-    fit_one_step = function(){
-      private$fit_svd()
-      private$.estimator <- 'one_step'
-      estimate_svd <- private$.estimate
+    fit_one_step = function(initialization = 'svd') {
+      if (initialization == 'svd'){
+        private$fit_svd()
+        private$.estimator <- 'one_step'
+        estimate_svd <- private$.estimate
+      } else {
+        initialization_retracted <- normalization_os(initialization, private$.model)
+        estimate_svd <- lvm_ml(x = initialization_retracted, model = private$.model, jac = F)
+
+      }
 
       theta_os <- one_step_estimator(estimate_svd, private$.model, private$.data)
       private$.estimate <- lvm_ml(x = theta_os, model = private$.model, jac = F)

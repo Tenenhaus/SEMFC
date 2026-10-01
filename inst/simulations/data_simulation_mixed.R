@@ -129,3 +129,40 @@ true_param_with_S <- c(l1, l2 , l3, l4, l5, l6,
 )
 
 
+
+if (q == 3){
+  JSigma_0 <- compute_J_Sigma_theta(block_sizes = c(LV1 = 3, LV2 = 3, LV3 = 3, LV4 = 3, LV5 = 3, LV6 = 3),
+                                    lengths_theta = c(18,6,4,2,1,30),
+                                    mode = mode, dag = FALSE,
+                                    R,
+                                    rel_matrix = matrix(c(0, 0, 0, 0, 1, 0,
+                                                          0, 0, 0, 0, 1, 0,
+                                                          0, 0, 0, 0, 0, 1,
+                                                          0, 0, 0, 0, 0, 1,
+                                                          0, 0, 0, 0, 0, 1,
+                                                          0, 0, 0, 0, 1, 0), 6, 6, byrow = TRUE),
+                                    lambda = list(LV1 = as.vector(l1), LV2 = as.vector(l2), LV3 = as.vector(l3),
+                                                  LV4 = as.vector(l4), LV5= l5, LV6 = l6) ,
+                                    BETA,
+                                    GAMMA)
+
+
+  H_0 <- compute_Hessian(SIGMA, JSigma_0)
+
+  J_0 <- compute_gradient_constraint(lambda = list(LV1 = as.vector(l1), LV2 = as.vector(l2), LV3 = as.vector(l3),
+                                                   LV4 = as.vector(l4), LV5= l5, LV6 = l6),
+                                     Sigma_cov = list(SIGMA11, SIGMA22, SIGMA33, SIGMA44),
+                                     block_sizes = c(LV1 = 3, LV2 = 3, LV3 = 3, LV4 = 3, LV5 = 3, LV6 = 3),
+                                     lengths_theta = c(18,6,4,2,1,30),
+                                     mode = mode)
+
+  ktt_mat <- rbind(cbind(H_0, t(J_0)),
+                   cbind(J_0, matrix(0, 4, 4)))
+  A_0 <- solve(ktt_mat)[1:61, 1:61]
+  V_0 <- 2 *A_0
+}
+
+
+
+
+
