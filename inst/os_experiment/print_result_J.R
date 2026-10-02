@@ -181,3 +181,27 @@ summary_J %>%
     rml_constraint
   ) %>%
   print()
+
+
+
+
+# RMSE
+rmse_svd_J <- table_rmse_J(
+  estimates_svd, theta_true_list, J_grid
+)
+
+rmse_os_J <- table_rmse_J(
+  estimates_os, theta_true_list, J_grid
+)
+
+rmse_rml_J <- table_rmse_J(
+  estimates_rml, theta_true_list, J_grid
+)
+
+# Temps
+time_svd_J <- table_time_J(results_mc, "svd_time")
+time_os_J  <- table_time_J(results_mc, "os_time")
+time_rml_J <- table_time_J(results_mc, "rml_time")
+
+print(rmse_os_J)
+print(time_os_J)

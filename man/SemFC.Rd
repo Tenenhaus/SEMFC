@@ -307,6 +307,8 @@ all_estimates <- sem_model$get_estimate("all")
 \item \href{#method-SemFC-parameterEstimates}{\code{SemFC$parameterEstimates()}}
 \item \href{#method-SemFC-check_improper}{\code{SemFC$check_improper()}}
 \item \href{#method-SemFC-get_estimate}{\code{SemFC$get_estimate()}}
+\item \href{#method-SemFC-get_model}{\code{SemFC$get_model()}}
+\item \href{#method-SemFC-get_data}{\code{SemFC$get_data()}}
 \item \href{#method-SemFC-clone}{\code{SemFC$clone()}}
 }
 }
@@ -862,6 +864,24 @@ all_estimates <- sem_model$get_estimate("all")
 }
 \if{html}{\out{</div>}}
 
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SemFC-get_model"></a>}}
+\if{latex}{\out{\hypertarget{method-SemFC-get_model}{}}}
+\subsection{Method \code{get_model()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$get_model()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SemFC-get_data"></a>}}
+\if{latex}{\out{\hypertarget{method-SemFC-get_data}{}}}
+\subsection{Method \code{get_data()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$get_data()}\if{html}{\out{</div>}}
 }
 
 }

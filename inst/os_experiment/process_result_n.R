@@ -338,3 +338,153 @@ qqplot_parameter <- function(estimates, theta_true, V0, n_grid,
 
   invisible(summary)
 }
+
+
+table_time <- function(results_mc, column) {
+
+  stopifnot(all(c("n", column) %in% names(results_mc)))
+
+  do.call(rbind, lapply(sort(unique(results_mc$n)), function(n_value) {
+
+    times <- results_mc[[column]][results_mc$n == n_value]
+    valid <- is.finite(times) & times >= 0
+    x <- times[valid]
+
+    quartiles <- if (length(x) > 0L) {
+      quantile(x, probs = c(0.25, 0.50, 0.75), names = FALSE)
+    } else {
+      rep(NA_real_, 3)
+    }
+
+    data.frame(
+      n = n_value,
+      n_valid = length(x),
+      n_invalid = sum(!valid),
+      median = quartiles[2],
+      q25 = quartiles[1],
+      q75 = quartiles[3]
+    )
+  }))
+}
+
+table_coverage <- function(estimates, Vhat, theta_true, n_grid,
+                           ci_level = 0.95, mc_level = 0.95) {
+
+  dims <- dim(estimates)
+  d <- dims[3]
+
+  stopifnot(
+    length(dims) == 3L,
+    dims[1] == length(n_grid),
+    length(theta_true) == d,
+    all(dim(Vhat) == c(dims[1:2], d, d))
+  )
+
+  parameter_names <- dimnames(estimates)[[3]]
+  if (is.null(parameter_names)) {
+    parameter_names <- paste0("theta_", seq_len(d))
+  }
+
+  # Diagonales des covariances : [n, réplication, paramètre]
+  v_diag <- array(
+    matrix(Vhat, nrow = dims[1] * dims[2])[
+      , seq.int(1L, d * d, by = d + 1L),
+      drop = FALSE
+    ],
+    dim = dims
+  )
+
+  v_diag[!is.finite(v_diag) | v_diag <= 0] <- NA_real_
+  se <- sqrt(sweep(v_diag, 1, n_grid, "/"))
+
+  errors <- sweep(estimates, 3, as.numeric(theta_true), "-")
+  errors[!is.finite(errors)] <- NA_real_
+
+  covered <- abs(errors) <= qnorm((1 + ci_level) / 2) * se
+
+  m <- apply(!is.na(covered), c(1, 3), sum)
+  k <- apply(covered, c(1, 3), sum, na.rm = TRUE)
+
+  coverage <- k / m
+  coverage[m == 0] <- NA_real_
+
+  mcse <- sqrt(coverage * (1 - coverage) / m)
+
+  # Intervalle de Wilson
+  z <- qnorm((1 + mc_level) / 2)
+  denominator <- 1 + z^2 / m
+  center <- (coverage + z^2 / (2 * m)) / denominator
+  half_width <- z / denominator *
+    sqrt(coverage * (1 - coverage) / m + z^2 / (4 * m^2))
+
+  data.frame(
+    n = rep(n_grid, times = d),
+    parameter = rep(parameter_names, each = length(n_grid)),
+    n_valid = as.vector(m),
+    n_invalid = as.vector(dims[2] - m),
+    estimate = as.vector(coverage),
+    mcse = as.vector(mcse),
+    lower = as.vector(center - half_width),
+    upper = as.vector(center + half_width)
+  )
+}
+
+
+summary_coverage <- function(coverage_os, coverage_rml,
+                             digits = 1) {
+
+  required <- c("n", "parameter", "estimate")
+
+  stopifnot(
+    all(required %in% names(coverage_os)),
+    all(required %in% names(coverage_rml))
+  )
+
+  # Comparaison sur les mêmes paramètres pour chaque n
+  common <- merge(
+    coverage_os[, required],
+    coverage_rml[, required],
+    by = c("n", "parameter"),
+    suffixes = c("_os", "_rml")
+  )
+
+  ns <- sort(unique(c(coverage_os$n, coverage_rml$n)))
+
+  fmt <- function(x) {
+    sprintf(paste0("%.", digits, "f"), 100 * x)
+  }
+
+  do.call(rbind, lapply(ns, function(n_value) {
+
+    x <- common[
+      common$n == n_value &
+        is.finite(common$estimate_os) &
+        is.finite(common$estimate_rml),
+      ,
+      drop = FALSE
+    ]
+
+    summarize <- function(values) {
+      if (length(values) == 0L) {
+        return(c(median = NA_character_, range = NA_character_))
+      }
+
+      c(
+        median = fmt(median(values)),
+        range = paste0(fmt(min(values)), "–", fmt(max(values)))
+      )
+    }
+
+    os <- summarize(x$estimate_os)
+    rml <- summarize(x$estimate_rml)
+
+    data.frame(
+      n = n_value,
+      n_parameters = nrow(x),
+      OS_median = unname(os["median"]),
+      RML_median = unname(rml["median"]),
+      OS_range = unname(os["range"]),
+      RML_range = unname(rml["range"])
+    )
+  }))
+}

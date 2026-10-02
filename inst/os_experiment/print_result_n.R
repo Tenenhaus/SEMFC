@@ -145,61 +145,6 @@ plot_n$estimator <- factor(
 )
 
 
-# ============================================================
-# Camera-ready figure
-# ============================================================
-
-p <- ggplot(
-  plot_n,
-  aes(
-    x = n,
-    y = mean,
-    linetype = estimator,
-    group = estimator
-  )
-) +
-  geom_line(linewidth = 0.75) +
-  geom_errorbar(
-    aes(ymin = lower, ymax = upper),
-    width = 70,
-    linewidth = 0.45
-  ) +
-  scale_linetype_manual(
-    values = c(
-      "One-Step" = "solid",
-      "SVD" = "dashed"
-    )
-  ) +
-  scale_x_continuous(
-    breaks = sort(unique(plot_n$n))
-  ) +
-  scale_y_continuous(
-    breaks = seq(0, 3, 0.25),
-    limits = c(0, 3)
-  ) +
-  labs(
-    x = "Sample size n",
-    y = expression(D[n]),
-    linetype = NULL
-  ) +
-  theme_bw(base_size = 9) +
-  theme(
-    legend.position = "top",
-    panel.grid.major.x = element_blank(),
-    panel.grid.minor = element_blank()
-  )
-
-print(p)
-
-ggsave(
-  "inst/os_experiment/figure_scaling_n_Dn.pdf",
-  p,
-  device = cairo_pdf,
-  width = 4.6,
-  height = 3.0,
-  units = "in"
-)
-
 
 # ============================================================
 # Useful diagnostics for the text
@@ -216,3 +161,104 @@ summary_n %>%
     rml_failures
   ) %>%
   print()
+
+
+
+# ============================================================
+# 1. RMSE : estimation, MCSE et intervalle Monte Carlo
+# ============================================================
+
+rmse_svd <- table_rmse(estimates_svd, theta_true, n_grid)
+rmse_os  <- table_rmse(estimates_os,  theta_true, n_grid)
+rmse_rml <- table_rmse(estimates_rml, theta_true, n_grid)
+
+
+# ============================================================
+# 2. Distances normalisées : sqrt(n) * ||theta_a - theta_b||
+# Moyenne, MCSE et intervalle Monte Carlo
+# ============================================================
+
+distance_os_rml <- table_distance(
+  estimates_os, estimates_rml, n_grid,
+  scaled = TRUE
+)
+
+distance_svd_rml <- table_distance(
+  estimates_svd, estimates_rml, n_grid,
+  scaled = TRUE
+)
+
+
+# ============================================================
+# 3. Erreurs relatives des covariances plug-in
+# Moyenne, MCSE et intervalle Monte Carlo
+# ============================================================
+
+covariance_plugin_os <- table_covariance_plugin(
+  Vhat_os, V_0, n_grid
+)
+
+covariance_plugin_rml <- table_covariance_plugin(
+  Vhat_rml, V_0, n_grid
+)
+
+
+# ============================================================
+# 4. Covariances Monte Carlo : sans intervalle
+# ============================================================
+
+cov_mc_os <- table_covariance_mc(
+  estimates_os, V_0, n_grid
+)
+
+cov_mc_rml <- table_covariance_mc(
+  estimates_rml, V_0, n_grid
+)
+
+V_mc_os  <- cov_mc_os$V_mc
+V_mc_rml <- cov_mc_rml$V_mc
+
+table_variance_mc <- data.frame(
+  n = n_grid,
+  OS = cov_mc_os$table$variance_mc_error,
+  RML = cov_mc_rml$table$variance_mc_error,
+  n_valid_os = cov_mc_os$table$n_valid,
+  n_valid_rml = cov_mc_rml$table$n_valid
+)
+
+
+# ============================================================
+# 5. Coverage par paramètre
+# Coverage, MCSE et intervalle Monte Carlo de Wilson
+# ============================================================
+
+coverage_os <- table_coverage(
+  estimates_os, Vhat_os, theta_true, n_grid
+)
+
+coverage_rml <- table_coverage(
+  estimates_rml, Vhat_rml, theta_true, n_grid
+)
+
+
+# ============================================================
+# 6. Temps : médiane et quartiles Q25–Q75
+# ============================================================
+
+time_svd <- table_time(results_mc, "svd_time")
+time_os  <- table_time(results_mc, "os_time")
+time_rml <- table_time(results_mc, "rml_time")
+
+
+# ============================================================
+# 7. Écarts de critère
+# Moyenne, MCSE et intervalle Monte Carlo
+# ============================================================
+
+gap_os <- table_scalar(
+  results_mc, "likelihood_gap"
+)
+
+gap_svd <- table_scalar(
+  results_mc, "likelihood_gap_svd"
+)

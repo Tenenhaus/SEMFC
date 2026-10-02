@@ -77,7 +77,7 @@ variance_plug_in_error <- function(Vhat, V_0){
 
 
 
-safe_estimation <- function(model, infer = FALSE, ...) {
+safe_estimation <- function(model, compute_cov = T, infer = FALSE, ...) {
 
   start_time <- proc.time()[["elapsed"]]
 
@@ -88,19 +88,21 @@ safe_estimation <- function(model, infer = FALSE, ...) {
         infer = infer,
         ...
       )
-
+      elapsed_time <- proc.time()[["elapsed"]] - start_time
       theta_hat <- model$get_estimate("theta")
-
-      Vhat <- get_covariance_matrix_plug_in(model$get_estimate('all'),
+      if (compute_cov) {
+        Vhat <- get_covariance_matrix_plug_in(model$get_estimate('all'),
                                             model$get_model(), model$get_data())
+      } else {
+        Vhat <- NULL
+      }
 
       list(
         model = model,
         theta = theta_hat,
         V = Vhat,
         success = TRUE,
-        elapsed_time =
-          proc.time()[["elapsed"]] - start_time,
+        elapsed_time = elapsed_time,
         error_message = NA_character_
       )
     },

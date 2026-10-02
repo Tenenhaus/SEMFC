@@ -27,7 +27,7 @@
 #' identification of the model. The optimization uses a tolerance of 1e-8
 #' with trace output disabled.
 #'
-#' @importFrom Rsolnp solnp
+#' @importFrom nloptr nloptr
 #'
 #' @keywords internal
 mlSEM <- function (init, S, model, tol = 1e-08){
