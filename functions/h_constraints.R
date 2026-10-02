@@ -1,6 +1,9 @@
 # restrictions for the minimization of the Loglikelihood function
 heq1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma, li_C) {
   reconstructed <- reconstruct_blocs(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma, li_C)
+
+
+  # Orthogonalité des lambda_i
   li_Lambda <- reconstructed$li_Lambda
   li_orthogonalities <- lapply(1:J, function(j) {
     mat_diag <- t(li_Lambda[[j]]) %*% li_Lambda[[j]]
@@ -11,84 +14,103 @@ heq1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_bet
 
   h <- c(vec_orthogonalities)
 
+  # Elements nuls de P_implied
 
-  # print(h)
+  P_implied <- reconstructed$P_implied
+  is_zero_P <- matrix(TRUE, nrow = R_try * J, ncol = R_try * J)
+  for (j in 1:J) {
+    for (k in 1:J) {
+      if (j != k) {
+        for (r in 1:R_try) {
+          is_zero_P[(j - 1) * R_try + r, (k - 1) * R_try + r] <- FALSE
+        }
+      }
+      if (j == k) {
+        index_low <- (j - 1) * R_try + 1
+        index_high <- j * R_try
+        is_zero_P[index_low:index_high, index_low:index_high] <- FALSE
+      }
+    }
+  }
 
-  #   #cov between MVs
-  #   S1 = matrix(c(x[32], x[33], x[35],
-  #                 x[33], x[34], x[36],
-  #                 x[35], x[36], x[37]), 3, 3)
-  #   #cov between MVs
-  #   S2 = matrix(c(x[38], x[39], x[41],
-  #                 x[39], x[40], x[42],
-  #                 x[41], x[42], x[43]), 3, 3)
-  #   #cov between MVs
-  #   S3 = matrix(c(x[44], x[45], x[47],
-  #                 x[45], x[46], x[48],
-  #                 x[47], x[48], x[49]), 3, 3)
-  #   #cov between MVs
-  #   S4 = matrix(c(x[50], x[51], x[53],
-  #                 x[51], x[52], x[54],
-  #                 x[53], x[54], x[55]), 3, 3)
 
-  #   l1 = x[1:3] ; l2 = x[4:6] ; l3 = x[7:9]
-  #   l4 = x[10:12]
+  is_zero_P_upper_tri <- is_zero_P[upper.tri(is_zero_P, diag = FALSE)]
+  P_upper_tri <- P_implied[upper.tri(P_implied, diag = FALSE)]
+  h <- c(h, P_upper_tri[is_zero_P_upper_tri])
 
-  #   h <- c(rep(0,4))
-  #   h[1] <- t(l1)%*%solve(S1)%*%l1 - 1
-  #   h[2] <- t(l2)%*%solve(S2)%*%l2 - 1
-  #   h[3] <- t(l3)%*%solve(S3)%*%l3 - 1
-  #   h[4] <- t(l4)%*%solve(S4)%*%l4 - 1
-  #   return(h)
-  # }
+  # diagonale - 1 = 0
+  vec_diag_null <- diag(P_implied) - 1
+  h <- c(h, vec_diag_null)
 
-  # heq0 <- function(x, S) {
+  ## Lien entre Beta, Gamma et P_implied
+  li_beta <- reconstructed$li_beta
+  li_gamma <- reconstructed$li_gamma
 
-  #   #cov between MVs
-  #   S1 = matrix(c(x[32], x[33], x[35],
-  #                 x[33], x[34], x[36],
-  #                 x[35], x[36], x[37]), 3, 3)
-  #   #cov between MVs
-  #   S2 = matrix(c(x[38], x[39], x[41],
-  #                 x[39], x[40], x[42],
-  #                 x[41], x[42], x[43]), 3, 3)
-  #   #cov between MVs
-  #   S3 = matrix(c(x[44], x[45], x[47],
-  #                 x[45], x[46], x[48],
-  #                 x[47], x[48], x[49]), 3, 3)
-  #   #cov between MVs
-  #   S4 = matrix(c(x[50], x[51], x[53],
-  #                 x[51], x[52], x[54],
-  #                 x[53], x[54], x[55]), 3, 3)
+  li_P_r <- lapply(1:R_try, function(r) {
+    P_r <- matrix(0, nrow = J, ncol = J)
+    for (i in 1:J) {
+      for (j in 1:J) {
+        P_r[i, j] <- P_implied[(i - 1) * R_try + r, (j - 1) * R_try + r]
+      }
+    }
+    return(P_r)
+  })
 
-  #   l1 = x[1:3] ; l2 = x[4:6] ; l3 = x[7:9]
-  #   l4 = x[10:12]
+  li_which_exo_endo <- lapply(li_C, function(C) {
+    out <- ind_exo_endo(C)
+    return(out)
+  })
 
-  #   P_EXO = matrix(c(1, x[19], x[20], x[22],
-  #                    x[19], 1, x[21], x[23],
-  #                    x[20], x[21], 1, x[24],
-  #                    x[22], x[23], x[24], 1), 4, 4)
+  li_vec_constraints_non_diag <- lapply(1:R_try, function(r) {
+    beta <- li_beta[[r]]
+    gamma <- li_gamma[[r]]
+    P_r <- li_P_r[[r]]
+    ind_exo <- li_which_exo_endo[[r]]$ind_exo
+    ind_endo <- li_which_exo_endo[[r]]$ind_endo
+    P_r_non_diag <- P_r[ind_exo, ind_endo]
+    delta <- diag(NROW(beta)) - t(beta)
+    non_diag_constraints <- P_r_non_diag - P_r[ind_exo, ind_exo] %*% t(gamma) %*% solve(delta)
+    return(non_diag_constraints)
+  })
 
-  #   P_ENDO = matrix(c(1, x[31],
-  #                     x[31], 1), 2, 2)
+  vec_constraints_non_diag <- do.call("c", li_vec_constraints_non_diag)
+  h <- c(h, vec_constraints_non_diag)
 
-  #   # path coefficients
-  #   G = matrix(c(x[25], x[26], 0, 0,
-  #                0, 0, x[27], x[28]), 2, 4, byrow = TRUE)
+  ## Contrainte sur les dag
 
-  #   # path coefficients
-  #   B = matrix(c(0, x[29],
-  #                x[30], 0), 2, 2, byrow = TRUE)
+  if (any(sapply(li_gr, function(gr) igraph::is_dag(gr)))) {
+    li_vec_constraints_dag <- lapply(1:R_try, function(r) {
+      if (igraph::is_dag(li_gr[[r]])) {
+        beta <- li_beta[[r]]
+        gamma <- li_gamma[[r]]
+        P_r <- li_P_r[[r]]
+        ind_exo <- li_which_exo_endo[[r]]$ind_exo
+        ind_endo <- li_which_exo_endo[[r]]$ind_endo
+        delta <- diag(NROW(beta)) - t(beta)
+        PSI <- matrix(0, NCOL(beta), NCOL(beta))
+        for (i in 1:NCOL(beta)) {
+          bg <- c(beta[i, ], gamma[i, ])
+          PSI[i, i] <- 1 - as.vector(t(bg) %*% P_r[c(ind_endo, ind_exo), c(ind_endo, ind_exo)] %*% bg)
+        }
 
-  #   R = rbind(cbind(P_EXO, P_EXO%*%t(G)%*%t(solve(diag(2) - B))),
-  #             cbind(solve(diag(2) - B)%*%G%*%P_EXO, P_ENDO))
+        constraints_dag <- P_r[ind_endo, ind_endo] - t(delta) %*% (gamma %*% P_r[ind_exo, ind_exo] %*% t(gamma) + PSI) %*% delta
+        return(constraints_dag[upper.tri(constraints_dag, diag = FALSE)])
+      } else {
+        return(c())
+      }
+    })
 
-  #   h <- c(rep(0,5))
-  #   h[1] <- t(l1)%*%solve(S1)%*%l1 - 1
-  #   h[2] <- t(l2)%*%solve(S2)%*%l2 - 1
-  #   h[3] <- t(l3)%*%solve(S3)%*%l3 - 1
-  #   h[4] <- t(l4)%*%solve(S4)%*%l4 - 1
-  #   h[5] <- x[27] - x[26]
+    vec_constraints_dag <- do.call("c", li_vec_constraints_dag)
+    h <- c(h, vec_constraints_dag)
+  }
+  print(paste("eqfun max abs:", max(abs(h))))
+  ecart <- abs(init_ml_with_S - x)
+  # print(paste("eqfun max abs diff:", sum(abs(ecart))))
+  # print(eigen(P_implied, symmetric = TRUE)$values)
+  if (max(abs(h)) > 1) {
+    print("h constraints too large, stopping")
+    stop()
+  }
 
   return(h)
 }
@@ -102,9 +124,9 @@ ineqfun <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_
   li_gamma <- reconstructed$li_gamma
   li_beta <- reconstructed$li_beta
   is_dag <- reconstructed$is_dag
-  li_correl_same_diag <- reconstructed$li_correl_same_diag
+  P_implied <- reconstructed$P_implied
 
-  # calculated <- calculate_Sigma(J, R_try, li_Lambda, li_phi_exo, li_phi_endo, vec_theta, li_gamma, li_beta, is_dag, li_correl_same_diag, li_C)
+  # calculated <- calculate_Sigma(J, R_try, li_Lambda, li_phi_exo, li_phi_endo, vec_theta, li_gamma, li_beta, is_dag, li_C, P_implied)
   # Sigma_implied <- calculated$Sigma_implied
   # min_values <- min(eigen(Sigma_implied, symmetric = TRUE)$values)
   h <- c(vec_theta)

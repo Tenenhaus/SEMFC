@@ -35,11 +35,12 @@ source("functions/s_implied.R")
 source("functions/h_constraints.R")
 source("functions/reconstruct_blocs.R")
 source("functions/calculate_Sigma.R")
+source("functions/reconstruct_all_exact.R")
 
 #############################################
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
-set.seed(1500)
+set.seed(1501)
 n_simu <- 1
 N <- 1000
 do_full_reorder <- TRUE
@@ -47,7 +48,7 @@ ancien_P <- FALSE
 triche <- FALSE
 show <- TRUE
 show_norme <- FALSE
-R_try <- 2
+R_try <- 1
 
 
 
@@ -199,6 +200,26 @@ for (b in seq_len(n_simu)) {
   big_mat_Lambda <- do.call(cbind, fit.svd$li_Lambda)
   big_vec_Lambda <- as.vector(big_mat_Lambda) # colonne par colonne : ordre lexico j puis r
 
+
+  P_implied_non_equal <- fit.svd$P_IMPLIED
+
+  reconstructed_exact <- reconstruct_all_exact(
+    li_Lambda = fit.svd$li_Lambda,
+    li_phi_exo = fit.svd$li_phi_exo,
+    li_phi_endo = fit.svd$li_phi_endo,
+    vec_theta = fit.svd$vec_theta,
+    li_gamma = fit.svd$li_gamma,
+    li_beta = fit.svd$li_beta,
+    li_gr = fit.svd$li_gr,
+    li_C = li_C,
+    P_implied_non_equal = P_implied_non_equal
+  )
+
+  P_IMPLIED <- reconstructed_exact$P_IMPLIED
+  # P_IMPLIED <- fit.svd$P_IMPLIED
+
+  # TO DO: reconstruire P à base de beta, gamma, éventuellement Psi de manière à respecter l'égalité puis en déduire Sigma
+
   li_vec_phi_exo <- lapply(1:R_try, function(r) {
     phi_exo <- fit.svd$li_phi_exo[[r]]
     upper_tri <- phi_exo[upper.tri(phi_exo, diag = FALSE)]
@@ -259,16 +280,6 @@ for (b in seq_len(n_simu)) {
   })
   vec_gamma <- do.call(c, li_vec_gamma)
 
-  P_IMPLIED <- fit.svd$P_IMPLIED
-  # li_correl_same_diag <- lapply(1:J, function(j) {
-  #   index_low <- R_try * (j - 1) + 1
-  #   index_high <- R_try * j
-  #   diag_bloc <- P_IMPLIED[index_low:index_high, index_low:index_high]
-  #   diag_vec <- as.vector(diag_bloc)
-  #   return(diag_vec)
-  # })
-
-  # vec_correl_same_diag <- do.call(c, li_correl_same_diag)
 
   cholesky_P <- chol(P_IMPLIED)
   vec_cholesky_P <- as.vector(cholesky_P[upper.tri(cholesky_P, diag = TRUE)])
@@ -278,37 +289,131 @@ for (b in seq_len(n_simu)) {
   vrais_at_opt_SVD <- F1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma, li_C)
   print(paste("vrais_at_opt SVD", vrais_at_opt_SVD))
 
-  # stop("F1")
 
-  n_zeros_eq <- J * R_try * (R_try - 1) / 2
+  # Compter les conditions d'egalite
+
+  # orthogonality
+  n_zeros_eq <- (J * R_try * (R_try - 1)) %/% 2
+  # zeros in P
+
+  is_zero_P <- matrix(TRUE, nrow = R_try * J, ncol = R_try * J)
+  for (j in 1:J) {
+    for (k in 1:J) {
+      if (j != k) {
+        for (r in 1:R_try) {
+          is_zero_P[(j - 1) * R_try + r, (k - 1) * R_try + r] <- FALSE
+        }
+      }
+      if (j == k) {
+        index_low <- (j - 1) * R_try + 1
+        index_high <- j * R_try
+        is_zero_P[index_low:index_high, index_low:index_high] <- FALSE
+      }
+    }
+  }
+
+
+  is_zero_P_upper_tri <- is_zero_P[upper.tri(is_zero_P, diag = FALSE)]
+  n_zeros_eq <- n_zeros_eq + sum(is_zero_P_upper_tri)
+
+
+  # diagonale de 1 dans P_implied
+
+  n_zeros_eq <- n_zeros_eq + R_try * J
+
+  # Contrainte sur les non diag terms
+
+  n_exo <- sum(!is_endogenes)
+  n_endo <- sum(is_endogenes)
+  n_zeros_eq <- n_zeros_eq + R_try * n_exo * n_endo
+
+  # contrainte sur les dag
+
+  for (r in 1:R_try) {
+    gr <- fit.svd$li_gr[[r]]
+    if (igraph::is_dag(gr)) {
+      n_zeros_eq <- n_zeros_eq + (n_endo * (n_endo - 1)) %/% 2
+    }
+  }
+
+  # Compter conditions inegalite
   n_zeros_ineq <- sum(vec_indicators_per_bloc)
 
+  # vel_eq_0 <- heq1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma, li_C)
+  # print(paste("heq1 after ML", norm(as.matrix(vel_eq_0), "F")))
 
-  fit.ml <- solnp(
-    pars = init_ml_with_S,
-    fun = F1, eqfun = heq1, # aucune contrainte en plus
-    eqB = rep(0, n_zeros_eq),
-    ineqfun = ineqfun,
-    ineqLB = rep(0, n_zeros_ineq),
-    ineqUB = rep(100, n_zeros_ineq),
-    S = S, J = J, R_try = R_try, vec_indicators_per_bloc = vec_indicators_per_bloc, li_gr = fit.svd$li_gr, li_non_null_beta_gamma = li_non_null_beta_gamma, li_C = li_C,
-    control = list(trace = 0, tol = 1e-8, delta = 1e-7, rho = 1)
+  # stop("must be exact")
+
+  # fit.ml <- solnp(
+  #   pars = init_ml_with_S,
+  #   fun = F1, eqfun = heq1, # aucune contrainte en plus
+  #   eqB = rep(0, n_zeros_eq),
+  #   ineqfun = ineqfun,
+  #   ineqLB = rep(0, n_zeros_ineq),
+  #   ineqUB = rep(100, n_zeros_ineq),
+  #   S = S, J = J, R_try = R_try, vec_indicators_per_bloc = vec_indicators_per_bloc, li_gr = fit.svd$li_gr, li_non_null_beta_gamma = li_non_null_beta_gamma, li_C = li_C,
+  #   control = list(trace = 0, tol = 1e-8, delta = 1e-7, rho = 1)
+  # )
+
+  # convergence <- fit.ml$convergence
+  # if (convergence != 0) {
+  #   print(paste("Convergence issue at iteration", b, "with convergence code:", convergence))
+  # }
+  # opt_param <- fit.ml$pars
+  # opt_vrais <- fit.ml$values[length(fit.ml$values)]
+
+  #### c(big_vec_Lambda, vec_cholesky_P, theta, vec_gamma, vec_beta)
+
+  index_theta <- (length(big_vec_Lambda) + length(vec_cholesky_P) + 1):(length(big_vec_Lambda) + length(vec_cholesky_P) + length(theta))
+
+  lb <- rep(-Inf, length(init_ml_with_S))
+  lb[index_theta] <- 0
+
+  heps <- 1e-7
+  F1c <- function(p) {
+    F1(p,
+      S = S, J = J, R_try = R_try,
+      vec_indicators_per_bloc = vec_indicators_per_bloc,
+      li_gr = fit.svd$li_gr,
+      li_non_null_beta_gamma = li_non_null_beta_gamma,
+      li_C = li_C
+    )
+  }
+
+  heq1c <- function(p) {
+    heq1(p,
+      S = S, J = J, R_try = R_try,
+      vec_indicators_per_bloc = vec_indicators_per_bloc,
+      li_gr = fit.svd$li_gr,
+      li_non_null_beta_gamma = li_non_null_beta_gamma,
+      li_C = li_C
+    )
+  }
+
+  grad_F1c <- function(p) nloptr::nl.grad(p, F1c, heps = heps)
+  jac_heq1c <- function(p) nloptr::nl.jacobian(p, heq1c, heps = heps)
+
+  fit.ml <- nloptr::nloptr(
+    x0 = init_ml_with_S,
+    eval_f = F1c,
+    eval_grad_f = grad_F1c,
+    lb = lb,
+    eval_g_eq = heq1c,
+    eval_jac_g_eq = jac_heq1c,
+    opts = list(
+      algorithm = "NLOPT_LD_SLSQP", xtol_rel = 1e-8,
+      maxeval = 1000, print_level = 1
+    )
   )
 
-  convergence <- fit.ml$convergence
-  if (convergence != 0) {
-    warning(paste("Convergence issue at iteration", b, "with convergence code:", convergence))
-  }
-  opt_param <- fit.ml$pars
-  opt_vrais <- fit.ml$values[length(fit.ml$values)]
+  opt_param <- fit.ml$solution
+  opt_vrais <- fit.ml$objective
+  convergence <- fit.ml$status
+
+  print(paste("Convergence code:", convergence))
 
 
-  opt_param <- fit.ml$sol
-  opt_vrais <- fit.ml$value
-  convergence <- fit.ml$convergence
-  print("convergence code:", convergence)
-
-  reconstructed_params <- reconstruct_blocs(opt_param, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma)
+  reconstructed_params <- reconstruct_blocs(opt_param, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma, li_C)
   li_Lambda <- reconstructed_params$li_Lambda
   li_phi_exo <- reconstructed_params$li_phi_exo
   li_phi_endo <- reconstructed_params$li_phi_endo
@@ -316,7 +421,7 @@ for (b in seq_len(n_simu)) {
   li_gamma <- reconstructed_params$li_gamma
   li_beta <- reconstructed_params$li_beta
   is_dag <- reconstructed_params$is_dag
-  li_correl_same_diag <- reconstructed_params$li_correl_same_diag
+  P_implied <- reconstructed_params$P_implied
 
   if (any(vec_theta > 99)) {
     print("augmenter upper bound sur theta car atteinte")
@@ -327,6 +432,9 @@ for (b in seq_len(n_simu)) {
   print(li_Lambda)
   print(fit.svd$li_Lambda)
   print(li_lambda_TRUE)
+
+  vel_eq_0 <- heq1(opt_param, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma, li_C)
+  print(paste("heq1 after ML", norm(as.matrix(vel_eq_0), "F")))
 
   # print(t(li_Lambda[[1]]) %*% li_Lambda[[1]])
 

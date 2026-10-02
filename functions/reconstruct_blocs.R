@@ -9,16 +9,19 @@ reconstruct_blocs <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li
 
     end_previous <- cumsum_indicators[J + 1] * R_try
 
-    x_cholesky_P <- x[(end_previous + 1):(end_previous + R_try * (R_try + 1) / 2)]
-    cholesky_P <- matrix(0, nrow = R_try, ncol = R_try)
+    x_cholesky_P <- x[(end_previous + 1):(end_previous + R_try * J * (R_try * J + 1) / 2)]
+    cholesky_P <- matrix(0, nrow = R_try * J, ncol = R_try * J)
     cholesky_P[upper.tri(cholesky_P, diag = TRUE)] <- x_cholesky_P
     P_IMPLIED <- t(cholesky_P) %*% cholesky_P
+
+    end_previous <- end_previous + length(x_cholesky_P)
 
     n_exogenes <- sum(!is_endogenes)
     li_which_exo_endo <- lapply(li_C, function(C) {
         out <- ind_exo_endo(C)
         return(out)
     })
+
 
     li_phi_exo <- lapply(1:R_try, function(r) {
         phi_exo_r <- matrix(0, nrow = n_exogenes, ncol = n_exogenes)
@@ -36,27 +39,22 @@ reconstruct_blocs <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li
 
     n_endogenes <- sum(is_endogenes)
 
-    end_previous <- end_previous + R_try * (n_exogenes * (n_exogenes - 1)) %/% 2
 
     li_phi_endo <- lapply(1:R_try, function(r) {
-        gr <- li_gr[[r]]
-        if (!igraph::is_dag(gr)) {
-            index_low <- 1 + end_previous + (r - 1) * (n_endogenes * (n_endogenes - 1)) %/% 2
-            index_high <- index_low + (n_endogenes * (n_endogenes - 1)) %/% 2 - 1
-            x_usefull <- x[index_low:index_high]
-            phi_endo_r <- matrix(0, nrow = n_endogenes, ncol = n_endogenes)
-            phi_endo_r[upper.tri(phi_endo_r)] <- x_usefull
-            phi_endo_r <- phi_endo_r + t(phi_endo_r)
-            diag(phi_endo_r) <- 1
-        } else {
-            phi_endo_r <- NULL
+        phi_endo_r <- matrix(0, nrow = n_endogenes, ncol = n_endogenes)
+        for (i in 1:n_endogenes) {
+            for (j in 1:n_endogenes) {
+                i_endo <- li_which_exo_endo[[r]]$ind_endo[i]
+                j_endo <- li_which_exo_endo[[r]]$ind_endo[j]
+                index_i <- (i_endo - 1) * R_try + r
+                index_j <- (j_endo - 1) * R_try + r
+                phi_endo_r[i, j] <- P_IMPLIED[index_i, index_j]
+            }
         }
         return(phi_endo_r)
     })
 
     is_dag <- sapply(li_gr, function(gr) igraph::is_dag(gr))
-
-    end_previous <- end_previous + sum(!is_dag) * (n_endogenes * (n_endogenes - 1)) %/% 2
 
     vec_theta <- x[(end_previous + 1):(end_previous + cumsum_indicators[J + 1])]
 
@@ -102,16 +100,6 @@ reconstruct_blocs <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li
         return(beta)
     })
 
-    end_previous <- end_previous + cumsum_beta[R_try + 1]
 
-    li_correl_same_diag <- lapply(1:J, function(j) {
-        index_low <- 1 + end_previous + (j - 1) * R_try^2
-        index_high <- index_low + R_try^2 - 1
-        x_usefull <- x[index_low:index_high]
-        mat_correl_same_diag <- matrix(x_usefull, nrow = R_try, ncol = R_try)
-        return(mat_correl_same_diag)
-    })
-
-
-    return(list(li_Lambda = li_Lambda, li_phi_exo = li_phi_exo, li_phi_endo = li_phi_endo, vec_theta = vec_theta, li_gamma = li_gamma, li_beta = li_beta, is_dag = is_dag, li_correl_same_diag = li_correl_same_diag))
+    return(list(li_Lambda = li_Lambda, li_phi_exo = li_phi_exo, li_phi_endo = li_phi_endo, vec_theta = vec_theta, li_gamma = li_gamma, li_beta = li_beta, is_dag = is_dag, P_implied = P_IMPLIED))
 }
