@@ -8,7 +8,7 @@ R_true <- 2
 
 is_endogenes <- c(rep(FALSE, 4), rep(TRUE, 2)) # 4 blocs exogenes et 2 endogenes
 n_blocs <- length(is_endogenes)
-vec_indicators_per_bloc <- rep(4, n_blocs) # 7 indicateurs par bloc
+vec_indicators_per_bloc <- rep(4, n_blocs) # 4 indicateurs par bloc
 
 
 n_endogenes <- sum(is_endogenes)
@@ -36,7 +36,7 @@ li_BETA_TRUE <- lapply(1:R_true, function(r) {
       if (r == 1) {
             vec_weights <- c(0, 0.3, 0.2, 0)
       } else if (r == 2) {
-            vec_weights <- c(0, 0.1, 0.3, 0)
+            vec_weights <- c(0, -0.2, 0.3, 0)
       } else {
             vec_weights <- c(0, 0.5, -0.1, 0)
       }
@@ -51,7 +51,7 @@ li_GAMMA_TRUE <- lapply(1:R_true, function(r) {
       if (r == 1) {
             vec_weights <- c(0.2, -0.2, 0, 0, 0, 0, 1, -1)
       } else if (r == 2) {
-            vec_weights <- c(0, 0, -0.5, 0.5, -1, -1, 0, 0)
+            vec_weights <- c(0.4, 0.5, 0, 0, 0, 0, -1, 0.2)
       } else {
             vec_weights <- c(0, 1, 0, 0, 0, 0, 1, 0)
       }
@@ -175,6 +175,8 @@ for (r in 1:R_true) {
       diag(Phi_endo_std) <- 1 # doit deja valoir ~1 ; ceci nettoie les residus numeriques
       li_R22_TRUE[[r]] <- Phi_endo_std
 }
+
+# print(li_PSI_TRUE)
 
 # verification: diag(Psi) doit etre dans (0,1), ni proche de 0 ni de 1
 

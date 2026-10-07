@@ -2,7 +2,7 @@
 # # Objective function for ML estimation #
 # ########################################
 
-F1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma) {
+F1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma, show_eigen = FALSE) {
   #   # loadings
 
   reconstructed <- reconstruct_blocs(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma)
@@ -102,11 +102,12 @@ F1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_
 
   # print(min(eigen(Sigma_implied)$values, symmetric = TRUE))
 
-  log_vrais <- log(abs(det(Sigma_implied))) + sum(diag(solve(Sigma_implied) %*% S)) -
+  log_vrais <- log(det(Sigma_implied)) + sum(diag(solve(Sigma_implied) %*% S)) -
     log(det(S)) -
     NCOL(S)
 
-  print(log_vrais)
+  # print(paste("log_vrais", log_vrais))
+
 
   if (is.nan(log_vrais)) {
     print("ouille")
@@ -116,10 +117,21 @@ F1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_
 
   # print(li_Lambda[[1]])
   # print(paste("log_vrais", log_vrais))
-  # if (log_vrais < -1e6) {
-  #   print("log_vrais < -1e6")
-  #   #stop("erreur")
-  # }
+  # print(min(eigen(P_induced)$values, symmetric = TRUE))
+  if (show_eigen) {
+    diff <- sum(abs(P_induced - t(P_induced)))
+    print(diff)
+    print(P_induced)
+  }
+
+  if (log_vrais < -1e-2) {
+    print(min(eigen(Sigma_implied, symmetric = TRUE)$values))
+    print(paste("log_vrais", log_vrais))
+    print("log_vrais < -1e-2")
+    # if (log_vrais < -1) {
+    #   stop("erreur")
+    # }
+  }
 
   # print(round(Lambda_TRUE %*% as.matrix(P_TRUE), 3))
 

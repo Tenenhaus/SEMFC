@@ -38,15 +38,16 @@ source("functions/reconstruct_blocs.R")
 #############################################
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
-set.seed(1501)
-n_simu <- 1
+set.seed(1502)
+n_simu <- 1000
 N <- 10000
 do_full_reorder <- TRUE
 ancien_P <- FALSE
 triche <- FALSE
-show <- TRUE
+show <- FALSE
 show_norme <- FALSE
 R_try <- 2
+do_ML <- TRUE
 
 
 
@@ -141,6 +142,12 @@ for (b in seq_len(n_simu)) {
   })
 
 
+  # fit.svd <- svdSEM_multi(Y, li_C,
+  #   scale = FALSE,
+  #   mode = rep("reflective", n_blocs),
+  #   bias = FALSE
+  # )
+
   tryCatch(
     {
       fit.svd <- svdSEM_multi(Y, li_C,
@@ -173,7 +180,7 @@ for (b in seq_len(n_simu)) {
       message("Erreur dans svd à l'itération ", b)
     }
   )
-  print(paste("erreur Sigma SVD", erreur_abs))
+  # print(paste("erreur Sigma SVD", erreur_abs))
 
 
   for (j in 1:J) {
@@ -195,131 +202,160 @@ for (b in seq_len(n_simu)) {
 
   # à mettre dans le try d'avant: au cas où ça marche pas ATTENTION
 
-  big_mat_Lambda <- do.call(cbind, fit.svd$li_Lambda)
-  big_vec_Lambda <- as.vector(big_mat_Lambda) # colonne par colonne : ordre lexico j puis r
+  if (do_ML) {
+    big_mat_Lambda <- do.call(cbind, fit.svd$li_Lambda)
+    big_vec_Lambda <- as.vector(big_mat_Lambda) # colonne par colonne : ordre lexico j puis r
 
-  li_vec_phi_exo <- lapply(1:R_try, function(r) {
-    phi_exo <- fit.svd$li_phi_exo[[r]]
-    upper_tri <- phi_exo[upper.tri(phi_exo, diag = FALSE)]
-    return(upper_tri)
-  })
-
-  big_vec_phi_exo <- do.call(c, li_vec_phi_exo)
-  li_vec_phi_endo <- lapply(1:R_try, function(r) {
-    phi_endo <- fit.svd$li_phi_endo[[r]]
-    upper_tri <- phi_endo[upper.tri(phi_endo, diag = FALSE)]
-    gr <- fit.svd$li_gr[[r]]
-    if (!igraph::is_dag(gr)) {
+    li_vec_phi_exo <- lapply(1:R_try, function(r) {
+      phi_exo <- fit.svd$li_phi_exo[[r]]
+      upper_tri <- phi_exo[upper.tri(phi_exo, diag = FALSE)]
       return(upper_tri)
-    } else {
-      return(c())
+    })
+
+    big_vec_phi_exo <- do.call(c, li_vec_phi_exo)
+    li_vec_phi_endo <- lapply(1:R_try, function(r) {
+      phi_endo <- fit.svd$li_phi_endo[[r]]
+      upper_tri <- phi_endo[upper.tri(phi_endo, diag = FALSE)]
+      gr <- fit.svd$li_gr[[r]]
+      if (!igraph::is_dag(gr)) {
+        return(upper_tri)
+      } else {
+        return(c())
+      }
+      return(upper_tri)
+    })
+
+    big_vec_phi_endo <- do.call(c, li_vec_phi_endo)
+
+    theta <- do.call(c, fit.svd$li_theta)
+
+    li_beta <- fit.svd$li_beta
+    li_gamma <- fit.svd$li_gamma
+
+    li_non_null_beta_gamma <- lapply(1:R_try, function(r) {
+      # non_null_beta <- matrix(0, nrow = nrow(li_beta[[r]]), ncol = ncol(li_beta[[r]]))
+      # non_null_gamma <- matrix(0, nrow = nrow(li_gamma[[r]]), ncol = ncol(li_gamma[[r]]))
+      C <- li_C[[r]]
+      exo_endo <- ind_exo_endo(C)
+      ind_exo <- exo_endo$ind_exo
+      ind_endo <- exo_endo$ind_endo
+      C_endo <- C[ind_endo, ind_endo]
+      C_exo_to_endo <- C[ind_exo, ind_endo]
+      non_null_gamma <- t(C_exo_to_endo)
+      non_null_beta <- t(C_endo)
+      return(list(non_null_gamma = non_null_gamma, non_null_beta = non_null_beta))
+    })
+
+    li_vec_beta <- lapply(1:R_try, function(r) {
+      non_null_beta <- li_non_null_beta_gamma[[r]]$non_null_beta
+      beta_r <- li_beta[[r]]
+      beta_r[non_null_beta == 0] <- NA
+      vec_beta_r <- as.vector(beta_r)
+      vec_beta_r <- vec_beta_r[!is.na(vec_beta_r)]
+      return(vec_beta_r)
+    })
+    vec_beta <- do.call(c, li_vec_beta)
+
+    li_vec_gamma <- lapply(1:R_try, function(r) {
+      non_null_gamma <- li_non_null_beta_gamma[[r]]$non_null_gamma
+      gamma_r <- li_gamma[[r]]
+      gamma_r[non_null_gamma == 0] <- NA
+      vec_gamma_r <- as.vector(gamma_r)
+      vec_gamma_r <- vec_gamma_r[!is.na(vec_gamma_r)]
+      return(vec_gamma_r)
+    })
+    vec_gamma <- do.call(c, li_vec_gamma)
+
+    P_IMPLIED <- fit.svd$P_IMPLIED
+    li_correl_same_diag <- lapply(1:J, function(j) {
+      index_low <- R_try * (j - 1) + 1
+      index_high <- R_try * j
+      diag_bloc <- P_IMPLIED[index_low:index_high, index_low:index_high]
+      diag_vec <- diag_bloc[upper.tri(diag_bloc)]
+      return(diag_vec)
+    })
+
+    vec_correl_same_diag <- do.call(c, li_correl_same_diag)
+
+
+    init_ml_with_S <- c(big_vec_Lambda, big_vec_phi_exo, big_vec_phi_endo, theta, vec_gamma, vec_beta, vec_correl_same_diag)
+
+    vrais_at_opt_SVD <- F1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma)
+    print(paste("vrais_at_opt SVD", vrais_at_opt_SVD))
+
+    # stop("F1")
+
+
+    n_zeros_eq <- J * R_try * (R_try - 1) / 2
+    n_zeros_ineq <- sum(vec_indicators_per_bloc)
+
+
+    # fit.ml <- solnp(
+    #   pars = init_ml_with_S,
+    #   fun = F1, eqfun = heq1, # aucune contrainte en plus
+    #   eqB = rep(0, n_zeros_eq),
+    #   ineqfun = ineqfun,
+    #   ineqLB = rep(0, n_zeros_ineq),
+    #   ineq_UB <- rep(100, n_zeros_ineq),
+    #   S = S, J = J, R_try = R_try, vec_indicators_per_bloc = vec_indicators_per_bloc, li_gr = fit.svd$li_gr, li_non_null_beta_gamma = li_non_null_beta_gamma,
+    #   control = list(trace = 0, tol = 1e-8, delta = 1e-7)
+    # )
+
+
+    which_theta <- (length(big_vec_Lambda) + length(big_vec_phi_exo) + length(big_vec_phi_endo) + 1):(length(big_vec_Lambda) + length(big_vec_phi_exo) + length(big_vec_phi_endo) + length(theta))
+
+    ineq_LB <- rep(-Inf, length(init_ml_with_S))
+    ineq_LB[which_theta] <- 0
+
+    fit.ml <- easy_solver(
+      pars = init_ml_with_S,
+      fun = F1,
+      eqfun = heq1,
+      eqB = rep(0, n_zeros_eq),
+      ineqLB = ,
+      S = S,
+      J = J,
+      R_try = R_try,
+      vec_indicators_per_bloc = vec_indicators_per_bloc,
+      li_gr = fit.svd$li_gr,
+      li_non_null_beta_gamma = li_non_null_beta_gamma,
+      maxit = 1000,
+      kkt_tol = 1e-7,
+      stepsize = 1e-3,
+      max_step = 0.01,
+      f_min = -1e-2,
+      trace = 10
+    )
+
+    convergence <- fit.ml$convergence
+    if (convergence != 0) {
+      warning(paste("Convergence issue at iteration", b, "with convergence code:", convergence))
     }
-    return(upper_tri)
-  })
+    opt_param <- fit.ml$pars
+    opt_vrais <- fit.ml$values[length(fit.ml$values)]
 
-  big_vec_phi_endo <- do.call(c, li_vec_phi_endo)
+    reconstructed_params <- reconstruct_blocs(opt_param, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma)
+    li_Lambda <- reconstructed_params$li_Lambda
+    li_phi_exo <- reconstructed_params$li_phi_exo
+    li_phi_endo <- reconstructed_params$li_phi_endo
+    vec_theta <- reconstructed_params$vec_theta
+    li_gamma <- reconstructed_params$li_gamma
+    li_beta <- reconstructed_params$li_beta
+    is_dag <- reconstructed_params$is_dag
+    li_correl_same_diag <- reconstructed_params$li_correl_same_diag
 
-  theta <- do.call(c, fit.svd$li_theta)
+    if (any(vec_theta > 99)) {
+      print("augmenter upper bound sur theta car atteinte")
+    }
 
-  li_beta <- fit.svd$li_beta
-  li_gamma <- fit.svd$li_gamma
+    print(paste("opt_vrais", opt_vrais))
 
-  li_non_null_beta_gamma <- lapply(1:R_try, function(r) {
-    # non_null_beta <- matrix(0, nrow = nrow(li_beta[[r]]), ncol = ncol(li_beta[[r]]))
-    # non_null_gamma <- matrix(0, nrow = nrow(li_gamma[[r]]), ncol = ncol(li_gamma[[r]]))
-    C <- li_C[[r]]
-    exo_endo <- ind_exo_endo(C)
-    ind_exo <- exo_endo$ind_exo
-    ind_endo <- exo_endo$ind_endo
-    C_endo <- C[ind_endo, ind_endo]
-    C_exo_to_endo <- C[ind_exo, ind_endo]
-    non_null_gamma <- t(C_exo_to_endo)
-    non_null_beta <- t(C_endo)
-    return(list(non_null_gamma = non_null_gamma, non_null_beta = non_null_beta))
-  })
+    print(li_Lambda)
 
-  li_vec_beta <- lapply(1:R_try, function(r) {
-    non_null_beta <- li_non_null_beta_gamma[[r]]$non_null_beta
-    beta_r <- li_beta[[r]]
-    beta_r[non_null_beta == 0] <- NA
-    vec_beta_r <- as.vector(beta_r)
-    vec_beta_r <- vec_beta_r[!is.na(vec_beta_r)]
-    return(vec_beta_r)
-  })
-  vec_beta <- do.call(c, li_vec_beta)
+    # print(t(li_Lambda[[1]]) %*% li_Lambda[[1]])
 
-  li_vec_gamma <- lapply(1:R_try, function(r) {
-    non_null_gamma <- li_non_null_beta_gamma[[r]]$non_null_gamma
-    gamma_r <- li_gamma[[r]]
-    gamma_r[non_null_gamma == 0] <- NA
-    vec_gamma_r <- as.vector(gamma_r)
-    vec_gamma_r <- vec_gamma_r[!is.na(vec_gamma_r)]
-    return(vec_gamma_r)
-  })
-  vec_gamma <- do.call(c, li_vec_gamma)
-
-  P_IMPLIED <- fit.svd$P_IMPLIED
-  li_correl_same_diag <- lapply(1:J, function(j) {
-    index_low <- R_try * (j - 1) + 1
-    index_high <- R_try * j
-    diag_bloc <- P_IMPLIED[index_low:index_high, index_low:index_high]
-    diag_vec <- as.vector(diag_bloc)
-    return(diag_vec)
-  })
-
-  vec_correl_same_diag <- do.call(c, li_correl_same_diag)
-
-
-  init_ml_with_S <- c(big_vec_Lambda, big_vec_phi_exo, big_vec_phi_endo, theta, vec_gamma, vec_beta, vec_correl_same_diag)
-
-  vrais_at_opt_SVD <- F1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma)
-  print(paste("vrais_at_opt SVD", vrais_at_opt_SVD))
-
-  # stop("F1")
-
-
-  n_zeros_eq <- J * R_try * (R_try - 1) / 2
-  n_zeros_ineq <- sum(vec_indicators_per_bloc)
-
-  fit.ml <- solnp(
-    pars = init_ml_with_S,
-    fun = F1, eqfun = heq1, # aucune contrainte en plus
-    eqB = rep(0, n_zeros_eq),
-    ineqfun = ineqfun,
-    ineqLB = rep(0, n_zeros_ineq),
-    ineq_UB <- rep(100, n_zeros_ineq),
-    S = S, J = J, R_try = R_try, vec_indicators_per_bloc = vec_indicators_per_bloc, li_gr = fit.svd$li_gr, li_non_null_beta_gamma = li_non_null_beta_gamma,
-    control = list(trace = 0, tol = 1e-8, delta = 1e-7)
-  )
-
-  convergence <- fit.ml$convergence
-  if (convergence != 0) {
-    warning(paste("Convergence issue at iteration", b, "with convergence code:", convergence))
+    stop("done ML")
   }
-  opt_param <- fit.ml$pars
-  opt_vrais <- fit.ml$values[length(fit.ml$values)]
-
-  reconstructed_params <- reconstruct_blocs(opt_param, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma)
-  li_Lambda <- reconstructed_params$li_Lambda
-  li_phi_exo <- reconstructed_params$li_phi_exo
-  li_phi_endo <- reconstructed_params$li_phi_endo
-  vec_theta <- reconstructed_params$vec_theta
-  li_gamma <- reconstructed_params$li_gamma
-  li_beta <- reconstructed_params$li_beta
-  is_dag <- reconstructed_params$is_dag
-  li_correl_same_diag <- reconstructed_params$li_correl_same_diag
-
-  if (any(vec_theta > 99)) {
-    print("augmenter upper bound sur theta car atteinte")
-  }
-
-  print(paste("opt_vrais", opt_vrais))
-
-  print(li_Lambda)
-
-  # print(t(li_Lambda[[1]]) %*% li_Lambda[[1]])
-
-  stop("done ML")
 
 
   #   sol_svd[, b] <- init_ml_with_S <-
@@ -752,12 +788,10 @@ if (show) {
 
 print("svd vs true")
 print(mean(error_SVD, na.rm = TRUE))
-
-
-# print("svd vs empirique")
-# print(mean(ecart_empirique_svd, na.rm = TRUE))
-# print("empirique vs true")
-# print(mean(ecart_true_empirique, na.rm = TRUE))
+print("svd vs empirique")
+print(mean(ecart_empirique_svd, na.rm = TRUE))
+print("empirique vs true")
+print(mean(ecart_true_empirique, na.rm = TRUE))
 
 # print("moyennes ecarts per blocs")
 # vec_ecarts <- apply(ecarts_sigma_per_bloc, 1, mean, na.rm = TRUE)

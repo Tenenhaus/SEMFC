@@ -93,10 +93,14 @@ reconstruct_blocs <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li
     end_previous <- end_previous + cumsum_beta[R_try + 1]
 
     li_correl_same_diag <- lapply(1:J, function(j) {
-        index_low <- 1 + end_previous + (j - 1) * R_try^2
-        index_high <- index_low + R_try^2 - 1
+        index_low <- 1 + end_previous + (j - 1) * ((R_try * (R_try - 1)) %/% 2)
+        index_high <- index_low + ((R_try * (R_try - 1)) %/% 2) - 1
         x_usefull <- x[index_low:index_high]
-        mat_correl_same_diag <- matrix(x_usefull, nrow = R_try, ncol = R_try)
+        # print(length(x_usefull))
+        mat_correl_same_diag <- matrix(0, nrow = R_try, ncol = R_try)
+        mat_correl_same_diag[upper.tri(mat_correl_same_diag)] <- x_usefull
+        mat_correl_same_diag <- mat_correl_same_diag + t(mat_correl_same_diag)
+        diag(mat_correl_same_diag) <- 1
         return(mat_correl_same_diag)
     })
 
