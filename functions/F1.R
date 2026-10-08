@@ -100,8 +100,6 @@ F1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_
   diag(Sigma_implied) <- diag(Sigma_implied) + vec_theta
 
 
-  # print(min(eigen(Sigma_implied)$values, symmetric = TRUE))
-
   log_vrais <- log(det(Sigma_implied)) + sum(diag(solve(Sigma_implied) %*% S)) -
     log(det(S)) -
     NCOL(S)

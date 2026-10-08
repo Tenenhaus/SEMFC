@@ -9,12 +9,12 @@ easy_solver <- function(
   tol = 1e-8,
   kkt_tol = 1e-5,
   stepsize = 1e-3,
-  stepsize_min = 1e-12,
+  stepsize_min = 1e-9,
   stepsize_max = 1,
-  max_step = 0.01,
+  max_step = 1,
   backtrack = 0.5,
   f_min = -1e-10,
-  eq_tol = 1e-8,
+  eq_tol = 1e-6,
   grad_eps = 1e-6,
   active_tol = 1e-6,
   max_eq_correction = 20,
@@ -728,7 +728,7 @@ easy_solver <- function(
             # Monotonicity
             # ----------------------------------------------------
 
-            if (f_trial > f_current) {
+            if (f_trial >= f_current) {
                 alpha <- alpha * backtrack
                 next
             }

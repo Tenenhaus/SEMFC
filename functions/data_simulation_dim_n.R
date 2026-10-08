@@ -4,7 +4,7 @@
 ######################################
 library(Matrix)
 
-R_true <- 2
+R_true <- 1
 
 is_endogenes <- c(rep(FALSE, 4), rep(TRUE, 2)) # 4 blocs exogenes et 2 endogenes
 n_blocs <- length(is_endogenes)

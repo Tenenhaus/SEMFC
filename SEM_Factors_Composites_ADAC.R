@@ -40,13 +40,13 @@ source("functions/reconstruct_blocs.R")
 #############################################
 set.seed(1502)
 n_simu <- 1000
-N <- 10000
+N <- 1000
 do_full_reorder <- TRUE
 ancien_P <- FALSE
 triche <- FALSE
 show <- FALSE
 show_norme <- FALSE
-R_try <- 2
+R_try <- 1
 do_ML <- TRUE
 
 
@@ -286,33 +286,78 @@ for (b in seq_len(n_simu)) {
     # stop("F1")
 
 
-    n_zeros_eq <- J * R_try * (R_try - 1) / 2
-    n_zeros_ineq <- sum(vec_indicators_per_bloc)
-
-
-    # fit.ml <- solnp(
-    #   pars = init_ml_with_S,
-    #   fun = F1, eqfun = heq1, # aucune contrainte en plus
-    #   eqB = rep(0, n_zeros_eq),
-    #   ineqfun = ineqfun,
-    #   ineqLB = rep(0, n_zeros_ineq),
-    #   ineq_UB <- rep(100, n_zeros_ineq),
-    #   S = S, J = J, R_try = R_try, vec_indicators_per_bloc = vec_indicators_per_bloc, li_gr = fit.svd$li_gr, li_non_null_beta_gamma = li_non_null_beta_gamma,
-    #   control = list(trace = 0, tol = 1e-8, delta = 1e-7)
-    # )
-
+    n_zeros_eq <- (J * R_try * (R_try - 1)) %/% 2
 
     which_theta <- (length(big_vec_Lambda) + length(big_vec_phi_exo) + length(big_vec_phi_endo) + 1):(length(big_vec_Lambda) + length(big_vec_phi_exo) + length(big_vec_phi_endo) + length(theta))
 
     ineq_LB <- rep(-Inf, length(init_ml_with_S))
     ineq_LB[which_theta] <- 0
 
+
+    #### ATTEMPT nloptr
+    # library(nloptr)
+
+    # x0 <- as.numeric(init_ml_with_S)
+    # R <- 1 # rayon max autour du départ (par coordonnée)
+
+    # fn <- function(x) {
+    #   F1(x,
+    #     S = S, J = J, R_try = R_try,
+    #     vec_indicators_per_bloc = vec_indicators_per_bloc,
+    #     li_gr = fit.svd$li_gr,
+    #     li_non_null_beta_gamma = li_non_null_beta_gamma
+    #   )
+    # }
+    # heq <- function(x) {
+    #   heq1(x,
+    #     S = S, J = J, R_try = R_try,
+    #     vec_indicators_per_bloc = vec_indicators_per_bloc,
+    #     li_gr = fit.svd$li_gr,
+    #     li_non_null_beta_gamma = li_non_null_beta_gamma
+    #   )
+    # }
+
+    # res <- nloptr(
+    #   x0 = x0,
+    #   eval_f = fn,
+    #   eval_grad_f = function(x) nl.grad(x, fn, heps = 1e-6),
+    #   eval_g_eq = heq,
+    #   eval_jac_g_eq = function(x) nl.jacobian(x, heq, heps = 1e-6),
+    #   lb = pmax(ineq_LB, x0 - R),
+    #   ub = x0 + R,
+    #   opts = list(
+    #     algorithm = "NLOPT_LD_SLSQP",
+    #     xtol_rel = 1e-8, ftol_rel = 1e-12,
+    #     tol_constraints_eq = rep(1e-6, n_zeros_eq),
+    #     maxeval = 500, print_level = 1
+    #   )
+    # )
+
+    ### END attempt nloptr
+
+    ### ATTEMPT solnp
+
+    # fit.ml <- solnp(
+    #   pars = init_ml_with_S,
+    #   fun = F1, eqfun = heq1, # aucune contrainte en plus
+    #   eqB = rep(0, n_zeros_eq),
+    #   LB = ineq_LB,
+    #   S = S, J = J, R_try = R_try, vec_indicators_per_bloc = vec_indicators_per_bloc, li_gr = fit.svd$li_gr, li_non_null_beta_gamma = li_non_null_beta_gamma,
+    #   control = list(trace = 0, tol = 1e-8, delta = 1e-7)
+    # )
+    #### TEST TRICHE #
+    # S <- SIGMA_TRUE
+    #### END TRICHE
+
+    ### Maison-solveur
+
+
     fit.ml <- easy_solver(
       pars = init_ml_with_S,
       fun = F1,
       eqfun = heq1,
       eqB = rep(0, n_zeros_eq),
-      ineqLB = ,
+      ineqLB = ineq_LB,
       S = S,
       J = J,
       R_try = R_try,
@@ -320,10 +365,10 @@ for (b in seq_len(n_simu)) {
       li_gr = fit.svd$li_gr,
       li_non_null_beta_gamma = li_non_null_beta_gamma,
       maxit = 1000,
-      kkt_tol = 1e-7,
+      kkt_tol = 1e-5,
       stepsize = 1e-3,
-      max_step = 0.01,
-      f_min = -1e-2,
+      max_step = 1,
+      f_min = -1e-10,
       trace = 10
     )
 
