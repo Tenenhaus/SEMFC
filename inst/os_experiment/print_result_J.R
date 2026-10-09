@@ -185,6 +185,15 @@ summary_J %>%
 
 
 
+content <-  readRDS("inst/os_experiment/experiment_J_parallelized.rds")
+
+
+list2env(content, envir = .GlobalEnv)
+
+
+
+
+
 # RMSE
 rmse_svd_J <- table_rmse_J(
   estimates_svd, theta_true_list, J_grid

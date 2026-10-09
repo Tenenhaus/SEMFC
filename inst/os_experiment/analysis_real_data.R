@@ -62,6 +62,7 @@ comparison_real_data  <- function(config, dataset_name) {
     )
 
     fit <- safe_estimation(model)
+    fit$model$summary(standardized = T)
 
     data.frame(
       dataset = dataset_name,
@@ -83,6 +84,7 @@ comparison_real_data  <- function(config, dataset_name) {
     data = data.frame(Reduce("cbind", config$data)),
     composites_cov = "free"
   )
+  show(summary(fit$fit, standardized = TRUE))
 
   results[[4]] <- data.frame(
     dataset = dataset_name,

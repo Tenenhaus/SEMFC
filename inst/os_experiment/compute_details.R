@@ -3,9 +3,9 @@
 ## ============================================================
 
 files <- c(
-  n = "inst/os_experiment/monte_carlo_scaling_n_full.rds",
-  J = "inst/os_experiment/monte_carlo_scaling_J_full.rds",
-  q = "inst/os_experiment/monte_carlo_scaling_q_full.rds"
+  n = "inst/os_experiment/experiment_n_parallelized.rds",
+  J = "inst/os_experiment/experiment_J_parallelized.rds",
+  q = "inst/os_experiment/monte_carlo_scaling_q_full_2.rds"
 )
 
 ## ------------------------------------------------------------

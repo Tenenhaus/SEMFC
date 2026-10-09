@@ -471,7 +471,7 @@ summary_coverage <- function(coverage_os, coverage_rml,
 
       c(
         median = fmt(median(values)),
-        range = paste0(fmt(min(values)), "–", fmt(max(values)))
+        range = paste0(fmt(min(values)), " - ", fmt(max(values)))
       )
     }
 

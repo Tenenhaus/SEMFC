@@ -164,6 +164,14 @@ summary_n %>%
 
 
 
+
+
+
+content <-  readRDS("inst/os_experiment/experiment_n_parallelized.rds")
+
+
+list2env(content, envir = .GlobalEnv)
+
 # ============================================================
 # 1. RMSE : estimation, MCSE et intervalle Monte Carlo
 # ============================================================
@@ -203,6 +211,12 @@ covariance_plugin_rml <- table_covariance_plugin(
 )
 
 
+
+
+
+
+
+
 # ============================================================
 # 4. Covariances Monte Carlo : sans intervalle
 # ============================================================
@@ -239,6 +253,9 @@ coverage_os <- table_coverage(
 coverage_rml <- table_coverage(
   estimates_rml, Vhat_rml, theta_true, n_grid
 )
+
+coverage_table = summary_coverage(
+  coverage_os, coverage_rml)
 
 
 # ============================================================
