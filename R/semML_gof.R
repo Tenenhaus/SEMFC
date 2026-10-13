@@ -1,4 +1,153 @@
+#' Chi-Square Test for Structural Equation Models
+#'
+#' This function computes the chi-square goodness-of-fit test statistic for
+#' structural equation models, along with its degrees of freedom and p-value.
+#'
+#' @param p Number of observed variables in the model
+#' @param q Number of estimated parameters in the model
+#' @param r Number of formative blocks
+#' @param F The fit function value
+#' @param N Sample size
+#'
+#' @return A list containing:
+#'   \item{test}{The chi-square test statistic}
+#'   \item{df}{Degrees of freedom for the test}
+#'   \item{pval}{The p-value of the chi-square test}
+#'
+#' @details The chi-square statistic is calculated as (N-1) * F, where F is the
+#' fit function value. The degrees of freedom are computed as p(p+1)/2 - q + r
+#'
+#' @examples
+#' \dontrun{
+#' chi2_results <- chi2sem(p = 18, q = 61, r = 4, F = 0.428, N = 300)
+#' print(chi2_results$pval)
+#'}
+#' @importFrom stats pchisq
+#' @keywords internal
+chi2sem <- function(p, q, r, F, N){
+  chi2 <- (N-1) * F
+  df <- (p * (p+1)/2) - q + r
+  p_value <- 1 - pchisq(chi2, df)
 
+  return(list(test = chi2, df = df, pval = p_value))
+}
+
+#' Standardized Root Mean Square Residual (SRMR) for Structural Equation Models
+#'
+#' This function calculates the SRMR, a goodness-of-fit measure for structural equation models,
+#' by comparing the empirical covariance matrix with the model-implied covariance matrix.
+#'
+#' @param S A covariance matrix representing the empirical data.
+#' @param Sigma A covariance matrix representing the model-implied data.
+#'
+#' @return A numeric value representing the SRMR, which is the square root of the mean
+#'   of the squared residuals between the lower triangular elements (including the diagonal)
+#'   of the standardized empirical and model-implied correlation matrices.
+#'
+#' @details The function first standardizes the covariance matrices to correlation matrices
+#'   using \code{cov2cor}. It then computes the residuals as the difference between the
+#'   empirical and model-implied correlation matrices. The SRMR is calculated as the square
+#'   root of the mean of the squared residuals from the lower triangular part of the matrix.
+#'
+#' @examples
+#' \dontrun{
+#' S <- matrix(c(1, 0.5, 0.5, 1), ncol = 2)
+#' Sigma <- matrix(c(1, 0.4, 0.4, 1), ncol = 2)
+#' srmr <- srmrsem(S, Sigma)
+#' print(srmr)
+#'}
+#' @keywords internal
+srmrsem <- function(S, Sigma) {
+  R_emp <- cov2cor(S)
+  R_mod <- cov2cor(Sigma)
+  resids <- R_emp - R_mod
+  SRMR <- sqrt(mean(resids[lower.tri(resids, diag=TRUE)]^2))
+  return(SRMR)
+}
+
+
+
+#' Root Mean Square Error of Approximation (RMSEA) for Structural Equation Models
+#'
+#' This function calculates the RMSEA for a structural equation model, along with its
+#' confidence interval and p-values for close and not-close fit hypotheses.
+#'
+#' @param chi2 The chi-square test statistic of the model.
+#' @param df Degrees of freedom associated with the chi-square test.
+#' @param N Sample size used in the model.
+#' @param conf.level Confidence level for the confidence interval (default is 0.90).
+#' @param close Threshold for close fit hypothesis (default is 0.05).
+#' @param notclose Threshold for not-close fit hypothesis (default is 0.08).
+#'
+#' @return A list containing:
+#'   \item{estimate}{The RMSEA estimate.}
+#'   \item{CI_lower}{The lower bound of the confidence interval for RMSEA.}
+#'   \item{CI_upper}{The upper bound of the confidence interval for RMSEA.}
+#'   \item{p_close_fit}{The p-value for the close fit hypothesis (RMSEA ≤ close).}
+#'   \item{p_notclose_fit}{The p-value for the not-close fit hypothesis (RMSEA ≥ notclose).}
+#'
+#' @details The RMSEA is calculated as:
+#'   \deqn{\sqrt{\max(\chi^2 / df - 1, 0) / (N - 1)}}
+#'   Confidence intervals are computed using the non-central chi-square distribution.
+#'   P-values for close and not-close fit hypotheses are derived from the non-centrality
+#'   parameter of the chi-square distribution.
+#'
+#' @examples
+#' \dontrun{
+#' result <- rmseasem(chi2 = 20, df = 10, N = 200)
+#' print(result$estimate)
+#' }
+#' @importFrom stats pchisq uniroot
+#' @keywords internal
+rmseasem <- function(chi2, df, N, conf.level = 0.90, close = 0.05, notclose = 0.08) {
+  RMSEA <- sqrt(max(chi2/df - 1, 0) / (N-1))
+
+  alpha <- 1 - conf.level
+
+  # CI
+  find_ncp <- function(p_target) {
+    f0 <- pchisq(chi2, df = df, ncp = 0) - p_target
+
+    if (f0 <= 0) return(0)
+
+
+    upper <- 1e5
+    f_upper <- pchisq(chi2, df = df, ncp = upper) - p_target
+    max_upper <- 1e10
+    while (f_upper > 0 && upper < max_upper) {
+      upper <- upper * 10
+      f_upper <- pchisq(chi2, df = df, ncp = upper) - p_target
+    }
+    if (f_upper > 0) return(NA)
+
+    uniroot(
+      function(lambda) pchisq(chi2, df = df, ncp = lambda) - p_target,
+      lower = 0, upper = upper
+    )$root
+  }
+  lambda.lower <- find_ncp(1 - alpha / 2)
+  lambda.upper <- find_ncp(alpha / 2)
+
+  lower <- sqrt(lambda.lower / (df * (N - 1)))
+  upper <- sqrt(lambda.upper / (df * (N - 1)))
+
+  # P-value close fit (RMSEA ≤ close)
+  lambda_c <- df * (N - 1) * (close^2)
+  p_close_fit <- pchisq(chi2, df = df, ncp = lambda_c, lower.tail = FALSE)
+  # P-value not close fit (RMSEA ≥ notclose)
+  lambda_nc <- df * (N - 1) * (notclose^2)
+  p_notclose <- pchisq(chi2, df = df, ncp = lambda_nc, lower.tail = TRUE)
+
+  return(
+    list(
+      estimate         = RMSEA,
+      CI_lower      = lower,
+      CI_upper      = upper,
+      p_close_fit   = p_close_fit,
+      p_notclose_fit= p_notclose
+    )
+  )
+}
 
 
 #' Calculate Goodness-of-Fit Statistics for SEM-ML Estimation
