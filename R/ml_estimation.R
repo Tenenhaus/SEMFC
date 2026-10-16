@@ -50,6 +50,24 @@ mlSEM <- function (init, S, model, tol = 1e-08){
 
   }
 
+
+  converged <- isTRUE(result$convergence == 0)
+
+  max_violation <- if (r == 0) {
+    0
+  } else {
+    max(abs(heq1(result$pars, S, model)))
+  }
+
+  result$diagnostics <- list(
+    converged = converged,
+    max_constraint_violation = max_violation,
+    constraints_satisfied = is.finite(max_violation) &&
+                            max_violation <= 1e-6
+  )
+
+  result$diagnostics$success <- converged && result$diagnostics$constraints_satisfied
+
   return(result)
 
 
