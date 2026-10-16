@@ -645,11 +645,10 @@ initialize = function(data, relation_matrix,
       } else {
         initialization <- match.arg(initialization, c('svd', 'random'))
         switch(initialization,
-          svd = {
-            private$fit_svd()
-            private$.estimator <- 'ml'
-            private$.estimate$theta
-          },
+          svd = compute_svd_initialization(
+            private$.data,
+            private$.model
+          ),
           random = runif(len_theta)
         )
       }

@@ -329,3 +329,30 @@ parameters_svd <- function(lambda,
   return(unname(theta_vect))
 }
 
+
+
+
+
+compute_svd_initialization <- function(data, model) {
+
+  svd_result <- svdSEM(
+    data$data,
+    model$relation_matrix,
+    model$scale,
+    model$mode,
+    model$bias
+  )
+
+  theta_svd <- parameters_svd(
+    lambda = svd_result$lambda,
+    P_EXO = svd_result$p_exo,
+    G = svd_result$gamma,
+    B = svd_result$beta,
+    P_ENDO = svd_result$p_endo,
+    residual_variance = svd_result$residual_variance,
+    S_composites = data$S_diag_composites,
+    model = model
+  )
+
+  return(theta_svd)
+}
