@@ -116,7 +116,7 @@ initialize = function(data, relation_matrix,
                       scale = FALSE, bias = FALSE) {
 
       private$.estimator <- estimator
-      init <- get_parameter_model_sem(data, mode, relation_matrix, bias)
+      init <- get_parameter_model_sem(data, mode, relation_matrix, bias, scale)
       private$.model <- init$model
       private$.data <- init$data
 

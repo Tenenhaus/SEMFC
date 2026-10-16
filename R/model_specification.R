@@ -53,10 +53,14 @@
 #'
 #'
 #' @keywords internal
-get_parameter_model_sem <- function(data, mode, relation_matrix, bias){
+get_parameter_model_sem <- function(data, mode, relation_matrix, bias, scale){
+
 
   X <- do.call(cbind, data)
   S <- cov2(X, bias = bias)
+  if (scale) {
+    S <- cov2cor(S)
+  }
   n_row <- NROW(X)
 
   block_sizes <- sapply(data, NCOL)
