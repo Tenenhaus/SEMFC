@@ -664,12 +664,7 @@ initialize = function(data, relation_matrix,
         times = private$.model$block_sizes
       )
       var_MVs <- split(diag(private$.data$cov_S), block_id)
-      std_lambda <- mapply(
-        "/",
-        private$.estimate$lambda,
-        lapply(var_MVs, sqrt),
-        SIMPLIFY = FALSE
-      )
+      std_lambda <- mapply("/", private$.estimate$lambda, lapply(var_MVs, sqrt), SIMPLIFY = FALSE)
       private$.estimate$std_lambda <- std_lambda
       std_omega <- mapply(function(Sjj, lambda_j) solve(cov2cor(Sjj)) %*% lambda_j,
                          private$.data$S_diag_composites, std_lambda[private$.model$mode == "formative"],
