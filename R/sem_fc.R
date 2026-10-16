@@ -659,8 +659,17 @@ initialize = function(data, relation_matrix,
       private$.estimate <- lvm_ml(x = theta_ml, model = private$.model, jac = F)
       private$.estimate$T_LS <- d_LS(private$.data$cov_S, private$.estimate$sigma_implied)
 
-      var_MVs <- lapply(private$.data$data, function(x) diag(cov2(x, bias = private$.model$bias)))
-      std_lambda <- mapply("/", private$.estimate$lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
+      block_id <- rep(
+        seq_along(private$.model$block_sizes),
+        times = private$.model$block_sizes
+      )
+      var_MVs <- split(diag(private$.data$cov_S), block_id)
+      std_lambda <- mapply(
+        "/",
+        private$.estimate$lambda,
+        lapply(var_MVs, sqrt),
+        SIMPLIFY = FALSE
+      )
       private$.estimate$std_lambda <- std_lambda
       std_omega <- mapply(function(Sjj, lambda_j) solve(cov2cor(Sjj)) %*% lambda_j,
                          private$.data$S_diag_composites, std_lambda[private$.model$mode == "formative"],
