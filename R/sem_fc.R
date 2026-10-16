@@ -205,6 +205,11 @@ initialize = function(data, relation_matrix,
 #'
 
     fit = function(infer = FALSE, B = 1000, initialization = 'svd', tol = 1e-8, verbose = TRUE, seed = NULL){
+      private$.estimate <- list()
+      private$.infer_estimate <- NULL
+      private$.gof <- list()
+      private$.boot_rep <- NULL
+
       estimator <- private$.estimator
       private$.boot_rep <- B
       if (estimator == 'svd'){
