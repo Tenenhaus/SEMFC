@@ -27,48 +27,82 @@
 #' identification of the model. The optimization uses a tolerance of 1e-8
 #' with trace output disabled.
 #'
-#' @importFrom Rsolnp solnp
+#' @importFrom nloptr nloptr
 #'
 #' @keywords internal
-mlSEM <- function (init, S, model, tol = 1e-08){
+mlSEM <- function (init, S, model, tol = 1e-08,  constraint_tol = 1e-6){
 
   mode <- model$mode
   # number of formative blocks
   r <- sum(mode == "formative")
 
-  if(r !=0){
+  f <- function (x) { return(F1(x, S, model)) }
+  grad <- function(x){ return(grad_F1(x, S, model)) }
+  h_eq <- function(x){ return(heq(x, S, model)) }
+  grad_h_eq <- function(x){ return(grad_heq(x, S, model)) }
+  hess <- function(x){ return(hess_F1(x, S, model)) }
 
-  result <- solnp(pars = init,
-                  fun=F1, eqfun=heq1,
-                  eqB = rep(0,r), S = S, model = model,
-                  control = list(trace = 0, tol = tol))
+  if(r !=0){
+    result <- nloptr(
+      x0=init,
+      eval_f=f,
+      eval_grad_f=grad,
+      eval_g_eq = h_eq,
+      eval_jac_g_eq = grad_h_eq,
+      opts = list("algorithm"="NLOPT_LD_SLSQP",
+                  'xtol_rel' = tol,
+                  'maxeval' = 500)
+    )
+    x <- result$solution
+    objective <- result$objective
+    convergence_code <- result$status
+    message <- result$message
+    solver <- "SLSQP"
+    converged <- isTRUE(convergence_code %in% 1:4)
+    max_violation <- max(abs(h_eq(x)))
+
+
+
   }
   else{
-    result <- solnp(pars = init,
-                    fun=F1, S = S, model = model,
-                    control = list(trace = 0, tol = tol))
+    result <- nlminb(
+      start = init,
+      objective = f,
+      gradient = grad,
+      hessian = hess,
+      lower = -Inf,
+      upper = Inf,
+      control = list(x.tol = tol)
+    )
+    x <- result$par
+    objective <- result$objective
+    convergence_code <- result$convergence
+    message <- result$message
+    solver <- "nlminb"
+    converged <- isTRUE(convergence_code == 0)
+    max_violation <- 0
 
   }
 
+  constraints_satisfied <- max_violation <= constraint_tol
+  diagnostics <- list(
+  solver = solver,
+  converged = converged,
+  convergence_code = convergence_code,
+  message = message,
+  objective = objective,
+  max_constraint_violation = max_violation,
+  constraints_satisfied = constraints_satisfied,
+  success = converged &&
+            constraints_satisfied &&
+            isTRUE(is.finite(objective))
+)
 
-  converged <- isTRUE(result$convergence == 0)
-
-  max_violation <- if (r == 0) {
-    0
-  } else {
-    max(abs(heq1(result$pars, S, model)))
-  }
-
-  result$diagnostics <- list(
-    converged = converged,
-    max_constraint_violation = max_violation,
-    constraints_satisfied = is.finite(max_violation) &&
-                            max_violation <= 1e-6
-  )
-
-  result$diagnostics$success <- converged && result$diagnostics$constraints_satisfied
-
-  return(result)
+  return(list(
+    pars = x,
+    diagnostics = diagnostics,
+    raw_result = result
+  ))
 
 
 
