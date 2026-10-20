@@ -41,10 +41,11 @@
 #' linearly constrained non-linear programming. 
 #' \href{https://web.stanford.edu/~yyye/YinyuYePhD.pdf}{PhD thesis}, Department 
 #' of ESS, Stanford University
-#' \item Ghalanos A, Theussl S (2015) Rsolnp: general non-linear
-#' optimization using augmented Lagrange multiplier method.
-#' R package version 1.16. \cr
-#' \url{https://CRAN.R-project.org/package=Rsolnp}
+#' \item Johnson SG (2008). The NLopt nonlinear-optimization package.
+#' \url{https://github.com/stevengj/nlopt}. \cr
+#' \item Kraft D (1988). A software package for sequential
+#' quadratic programming. Technical Report DFVLR-FB 88-28,
+#' Institut für Dynamik der Flugsysteme, Oberpfaffenhofen.
 #' }
 #'
 #' @export
@@ -666,7 +667,7 @@ initialize = function(data, relation_matrix,
       var_MVs <- split(diag(private$.data$cov_S), block_id)
       std_lambda <- mapply("/", private$.estimate$lambda, lapply(var_MVs, sqrt), SIMPLIFY = FALSE)
       private$.estimate$std_lambda <- std_lambda
-      std_omega <- mapply(function(Sjj, lambda_j) solve(cov2cor(Sjj)) %*% lambda_j,
+      std_omega <- mapply(function(Sjj, lambda_j) solve(cov2cor(as.matrix(Sjj))) %*% lambda_j,
                          private$.data$S_diag_composites, std_lambda[private$.model$mode == "formative"],
                          SIMPLIFY = FALSE)
       names(std_omega) <- names(std_lambda[private$.model$mode == "formative"])

@@ -7,10 +7,9 @@
 #' @param block_sizes Numeric vector indicating the size of each block
 #' @param lengths_theta Numeric vector indicating parameter counts for each theta component
 #' @param mode Character vector indicating mode ('reflective' or 'formative') for each block
+#' @param dag Logical indicating whether the structural model is recursive (FALSE) or non-recursive (TRUE)
 #' @param R Correlation matrix of latent variables
 #' @param rel_matrix Relationship matrix (C matrix) for structural model
-#' @param m_exo Number of exogenous variables
-#' @param Phi_exo Covariance matrix of exogenous variables
 #' @param BETA Regression matrix of structural model
 #' @param GAMMA Regression matrix from exogenous to endogenous
 #'

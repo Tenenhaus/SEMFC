@@ -18,7 +18,6 @@ Imports:
     R6,
     Matrix,
     MASS,
-    Rsolnp,
     numDeriv,
     pbapply,
     nloptr,

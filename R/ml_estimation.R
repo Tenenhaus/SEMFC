@@ -13,21 +13,48 @@
 #'     \item{mode}{Character vector indicating the measurement mode for each block}
 #'   }
 #' @param tol Numeric value specifying the optimization tolerance (default: 1e-8).
+#' @param constraint_tol Numeric tolerance for checking the maximum
+#'   absolute equality-constraint violation (default: 1e-6).
 #'
-#' @return Object of class "solnp" containing optimization results:
-#'   \item{pars}{Optimal parameter values.}
-#'   \item{convergence}{Convergence code (0 = success).}
-#'   \item{values}{Objective function values at each iteration.}
-#'   \item{hessian}{Hessian matrix at optimum.}
+#' @return A list containing:
+#' \describe{
+#'   \item{pars}{Numeric vector of estimated parameters.}
+#'   \item{diagnostics}{List containing the solver name, convergence
+#'     status, convergence code, message, objective value, maximum
+#'     constraint violation, constraint satisfaction indicator,
+#'     and overall success indicator.}
+#'   \item{raw_result}{Original result returned by the optimizer
+#'     (`nloptr` or `nlminb`).}
+#' }
 #'
 #' @details
-#' The function uses `solnp()` from the Rsolnp package to minimize the
-#' log-likelihood function `F1()`. When formative blocks are present (r > 0),
-#' equality constraints (`heq1()`) are automatically applied to ensure proper
-#' identification of the model. The optimization uses a tolerance of 1e-8
-#' with trace output disabled.
+#' The function minimizes the maximum-likelihood fitting function
+#' `F1()` using analytical derivatives. The optimization method
+#' depends on the presence of formative blocks:
+#'
+#' - Models with formative blocks: Constrained optimization is
+#'   performed using the SLSQP algorithm (`NLOPT_LD_SLSQP`) from
+#'   the `nloptr` package. Equality constraints defined by `heq()`
+#'   enforce the identification conditions of the composite blocks.
+#'   Analytical gradients of the objective function and the
+#'   constraints are provided through `grad_F1()` and `grad_heq()`.
+#'
+#' - Models without formative blocks: Unconstrained optimization
+#'   is performed using `nlminb()`, with analytical gradient and
+#'   Hessian functions provided by `grad_F1()` and `hess_F1()`.
+#'
+#' The optimization tolerance is controlled by `tol`. For SLSQP,
+#' the maximum number of function evaluations is set to 500.
+#'
+#' Convergence and constraint satisfaction are assessed separately.
+#' A solution is considered successful when the optimizer reports
+#' convergence, the objective value is finite, and the maximum
+#' absolute constraint violation does not exceed `constraint_tol`.
+#' The function returns the estimated parameters together with
+#' optimization diagnostics and the raw solver output.
 #'
 #' @importFrom nloptr nloptr
+#' @importFrom stats nlminb
 #'
 #' @keywords internal
 mlSEM <- function (init, S, model, tol = 1e-08,  constraint_tol = 1e-6){
