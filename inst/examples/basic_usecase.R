@@ -21,7 +21,7 @@ print(model$get_estimate('gamma'))
 
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode)
 modelml$fit(infer=T, tol=1e-08)
-modelml$fit(infer=F, tol=1e-08)
+modelml$fit(infer=F, tol=1e-10)
 modelml$summary(standardized = T, effect = T, all_measures = T)
 est = modelml$parameterEstimates(standardized = T)
 print(modelml$get_estimate('gamma'))

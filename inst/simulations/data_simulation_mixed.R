@@ -112,7 +112,7 @@ for (j in 1:(J-1)){
 true_param_with_S <- c(l1, l2 , l3, l4, l5, l6,
                       R[1:4, 1:4][upper.tri(R[1:4, 1:4])],
                       GAMMA[1, 1:2], GAMMA[2, 3:4],
-                      BETA[1, 2], BETA[2, 1],
+                      BETA[2, 1], BETA[1, 2],
                       R[5, 6],
                       SIGMA11[upper.tri(SIGMA11, diag = TRUE)],
                       SIGMA22[upper.tri(SIGMA22, diag = TRUE)],
