@@ -24,8 +24,8 @@ A list containing:
 \item{estimate}{The RMSEA estimate.}
 \item{CI_lower}{The lower bound of the confidence interval for RMSEA.}
 \item{CI_upper}{The upper bound of the confidence interval for RMSEA.}
-\item{p_close_fit}{The p-value for the close fit hypothesis (RMSEA ≤ close).}
-\item{p_notclose_fit}{The p-value for the not-close fit hypothesis (RMSEA ≥ notclose).}
+\item{p_close_fit}{The p-value for the close fit hypothesis (RMSEA <= close).}
+\item{p_notclose_fit}{The p-value for the not-close fit hypothesis (RMSEA >= notclose).}
 }
 \description{
 This function calculates the RMSEA for a structural equation model, along with its

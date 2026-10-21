@@ -76,6 +76,7 @@ sem_svd$check_improper()
 # mlSEM #
 ##########
 
+\donttest{
 sem_ml <- SemFC$new(data = A,
                     relation_matrix = C,
                     mode = mode,
@@ -86,6 +87,7 @@ sem_ml <- SemFC$new(data = A,
 sem_ml$fit(infer = TRUE)
 sem_ml$check_improper()
 sem_ml$summary(standardized = TRUE, all_measures = TRUE)
+}
 }
 \references{
 Russett B.M. (1964), Inequality and Instability: The Relation of

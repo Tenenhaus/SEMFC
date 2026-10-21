@@ -53,6 +53,7 @@ identification and affective commitment.
 }
 }
 \examples{
+\donttest{
 data(BergamiBagozzi2000)
 BB = BergamiBagozzi2000
 A = list(OrgPres = BB[, grep("cei", colnames(BB))],
@@ -101,6 +102,6 @@ sem_ml$fit(infer = TRUE)
 sem_ml$check_improper()
 sem_ml$summary(all_measures = TRUE)
 estimate = sem_ml$parameterEstimates(standardized = FALSE)
-
+}
 }
 \keyword{datasets}

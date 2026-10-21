@@ -53,6 +53,6 @@ Structural Equation Modeling with Factors and Composites (svdSEM)
 Tenenhaus, A., Tenenhaus, M., Dijkstra, T.K. Structural equation modeling
 with factors and composites within the framework of the basic design.
 Advances in Data Analysis Classification (2025).
-\url{https://doi.org/10.1007/s11634-025-00647-4}
+\doi{10.1007/s11634-025-00647-4}
 }
 \keyword{internal}

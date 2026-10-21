@@ -36,15 +36,16 @@ fit (chi-square, CFI, TLI, RMSEA, SRMR, AIC, BIC).
 \item Tenenhaus, A., Tenenhaus, M., Dijkstra, T.K. Structural equation
 modeling with factors and composites within the framework of the basic design.
 Advances in Data Analysis Classification (2025).
-\url{https://doi.org/10.1007/s11634-025-00647-4}
+\doi{10.1007/s11634-025-00647-4}
 \item Ye Y (1987) Interior algorithms for linear, quadratic, and
 linearly constrained non-linear programming.
 \href{https://web.stanford.edu/~yyye/YinyuYePhD.pdf}{PhD thesis}, Department
 of ESS, Stanford University
-\item Ghalanos A, Theussl S (2015) Rsolnp: general non-linear
-optimization using augmented Lagrange multiplier method.
-R package version 1.16. \cr
-\url{https://CRAN.R-project.org/package=Rsolnp}
+\item Johnson SG (2008). The NLopt nonlinear-optimization package.
+\url{https://github.com/stevengj/nlopt}. \cr
+\item Kraft D (1988). A software package for sequential
+quadratic programming. Technical Report DFVLR-FB 88-28,
+Institut für Dynamik der Flugsysteme, Oberpfaffenhofen.
 }
 }
 \examples{
@@ -235,7 +236,7 @@ C = matrix(c(0, 0, 0, 0, 0,
 
 colnames(C) = rownames(C) = names(A)
 
-# Initialize SemFC object with data, model specification 
+# Initialize SemFC object with data, model specification
 # and svd-based estimation method.
 
 sem_model <- SemFC$new(data = A,
@@ -243,7 +244,7 @@ sem_model <- SemFC$new(data = A,
                        mode = rep("reflective", 5),
                        scale = FALSE,
                        estimator = "svd")
-                       
+
 # Fit the full model with bootstrap inference and goodness-of-fit.
 
 sem_model$fit(infer = TRUE, B = 100)
@@ -760,7 +761,7 @@ C = matrix(c(0, 0, 0, 0, 0,
 
 colnames(C) = rownames(C) = names(A)
 
-# Initialize SemFC object with data, model specification 
+# Initialize SemFC object with data, model specification
 # and svd-based estimation method.
 
 sem_model <- SemFC$new(data = A,
@@ -768,7 +769,7 @@ sem_model <- SemFC$new(data = A,
                        mode = rep("reflective", 5),
                        scale = FALSE,
                        estimator = "svd")
-                       
+
 # Fit the full model with bootstrap inference and goodness-of-fit.
 
 sem_model$fit(infer = TRUE, B = 100)

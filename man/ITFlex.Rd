@@ -62,6 +62,7 @@ factors in our firm.}}
 }
 }
 \examples{
+\donttest{
 data(ITFlex)
 A = list(ITComp = ITFlex[, grep("COM", colnames(ITFlex))],
          Modul  = ITFlex[, grep("MOD", colnames(ITFlex))],
@@ -104,6 +105,7 @@ sem_ml <- SemFC$new(data = A,
 
 sem_ml$fit(infer = TRUE)
 sem_ml$summary()
+}
 }
 \references{
 Benitez J, Ray G, Henseler J (2018). "Impact of Information Technology

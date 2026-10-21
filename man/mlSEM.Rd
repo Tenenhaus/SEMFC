@@ -17,13 +17,21 @@ mlSEM(init, S, model, tol = 1e-08, constraint_tol = 1e-06)
 }}
 
 \item{tol}{Numeric value specifying the optimization tolerance (default: 1e-8).}
+
+\item{constraint_tol}{Numeric tolerance for checking the maximum
+absolute equality-constraint violation (default: 1e-6).}
 }
 \value{
-Object of class "solnp" containing optimization results:
-\item{pars}{Optimal parameter values.}
-\item{convergence}{Convergence code (0 = success).}
-\item{values}{Objective function values at each iteration.}
-\item{hessian}{Hessian matrix at optimum.}
+A list containing:
+\describe{
+\item{pars}{Numeric vector of estimated parameters.}
+\item{diagnostics}{List containing the solver name, convergence
+status, convergence code, message, objective value, maximum
+constraint violation, constraint satisfaction indicator,
+and overall success indicator.}
+\item{raw_result}{Original result returned by the optimizer
+(\code{nloptr} or \code{nlminb}).}
+}
 }
 \description{
 Performs ML estimation of a structural equation model using constrained
@@ -31,10 +39,29 @@ optimization via the solnp algorithm. Handles both formative and reflective
 measurement models with automatic constraint application for formative blocks.
 }
 \details{
-The function uses \code{solnp()} from the Rsolnp package to minimize the
-log-likelihood function \code{F1()}. When formative blocks are present (r > 0),
-equality constraints (\code{heq1()}) are automatically applied to ensure proper
-identification of the model. The optimization uses a tolerance of 1e-8
-with trace output disabled.
+The function minimizes the maximum-likelihood fitting function
+\code{F1()} using analytical derivatives. The optimization method
+depends on the presence of formative blocks:
+\itemize{
+\item Models with formative blocks: Constrained optimization is
+performed using the SLSQP algorithm (\code{NLOPT_LD_SLSQP}) from
+the \code{nloptr} package. Equality constraints defined by \code{heq()}
+enforce the identification conditions of the composite blocks.
+Analytical gradients of the objective function and the
+constraints are provided through \code{grad_F1()} and \code{grad_heq()}.
+\item Models without formative blocks: Unconstrained optimization
+is performed using \code{nlminb()}, with analytical gradient and
+Hessian functions provided by \code{grad_F1()} and \code{hess_F1()}.
+}
+
+The optimization tolerance is controlled by \code{tol}. For SLSQP,
+the maximum number of function evaluations is set to 500.
+
+Convergence and constraint satisfaction are assessed separately.
+A solution is considered successful when the optimizer reports
+convergence, the objective value is finite, and the maximum
+absolute constraint violation does not exceed \code{constraint_tol}.
+The function returns the estimated parameters together with
+optimization diagnostics and the raw solver output.
 }
 \keyword{internal}
