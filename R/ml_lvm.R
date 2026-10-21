@@ -164,6 +164,7 @@ lvm_ml <- function(x, model, jac = TRUE){
 
 
   R2 <- 1-diag(PSI)
+  names(R2) <- rownames(B)
 
   ########################################################################
   ########  Correlations between Latent/emergent variables   #############
