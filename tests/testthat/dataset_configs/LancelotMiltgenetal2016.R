@@ -1,5 +1,5 @@
 # Configuration dataset LancelotMiltgenetal2016
-# Source: inst/examples/lancelot.R
+# Source: research/examples/lancelot.R
 
 create_lancelot_config <- function(dataset) {
   A <- list(

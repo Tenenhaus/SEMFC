@@ -1,5 +1,5 @@
 # Configuration dataset model_reflective
-# Source: inst/model/model_reflective.R
+# Source: research/model/model_reflective.R
 
 # Créer les données pour model_reflective
 create_model_reflective_dataset <- function() {

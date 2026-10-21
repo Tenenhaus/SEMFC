@@ -1,5 +1,5 @@
 # Configuration dataset model_mixed
-# Source: inst/model/model_mixed.R
+# Source: research/model/model_mixed.R
 
 # Créer les données pour model_mixed
 create_model_mixed_dataset <- function() {

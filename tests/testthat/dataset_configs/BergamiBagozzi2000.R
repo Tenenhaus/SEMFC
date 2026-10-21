@@ -1,5 +1,5 @@
 # Configuration dataset BergamiBagozzi2000
-# Source: inst/model/model_bergami.R
+# Source: research/model/model_bergami.R
 
 create_bergami_config <- function(dataset) {
   A <- list(

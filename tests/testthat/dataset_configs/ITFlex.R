@@ -1,5 +1,5 @@
 # Configuration dataset ITFlex
-# Source: inst/model/model_itflex.R
+# Source: research/model/model_itflex.R
 
 create_itflex_config <- function(dataset) {
   A <- list(
