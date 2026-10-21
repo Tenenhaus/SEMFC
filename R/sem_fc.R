@@ -36,7 +36,7 @@
 #' \item Tenenhaus, A., Tenenhaus, M., Dijkstra, T.K. Structural equation 
 #' modeling with factors and composites within the framework of the basic design.
 #' Advances in Data Analysis Classification (2025).
-#' \url{https://doi.org/10.1007/s11634-025-00647-4}
+#' \doi{10.1007/s11634-025-00647-4}
 #' \item Ye Y (1987) Interior algorithms for linear, quadratic, and
 #' linearly constrained non-linear programming. 
 #' \href{https://web.stanford.edu/~yyye/YinyuYePhD.pdf}{PhD thesis}, Department 
@@ -475,8 +475,8 @@ initialize = function(data, relation_matrix,
 #'              byrow = FALSE)
 #'
 #' colnames(C) = rownames(C) = names(A)
-#' 
-#' # Initialize SemFC object with data, model specification 
+#'
+#' # Initialize SemFC object with data, model specification
 #' # and svd-based estimation method.
 #'
 #' sem_model <- SemFC$new(data = A,
@@ -484,11 +484,11 @@ initialize = function(data, relation_matrix,
 #'                        mode = rep("reflective", 5),
 #'                        scale = FALSE,
 #'                        estimator = "svd")
-#'                        
+#'
 #'# Fit the full model with bootstrap inference and goodness-of-fit.
 #'
 #' sem_model$fit(infer = TRUE, B = 100)
-#' 
+#'
 #' # Check for improper solutions in the fitted SemFC model.
 #'
 #' improper_results <- sem_model$check_improper()
