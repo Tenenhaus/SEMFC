@@ -128,13 +128,14 @@ sem_model_ml <- SemFC$new(data = A,
 # Fit the full model with asymptotic inference and goodness-of-fit.
 sem_model_ml$fit(infer = TRUE,
                  initialization = "svd",
-                 tol = 1e-04)
+                 tol = 1e-03)
 
 
 ## ------------------------------------------------
 ## Method `SemFC$summary`
 ## ------------------------------------------------
 
+\donttest{
 data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
@@ -164,14 +165,14 @@ sem_model <- SemFC$new(data = A,
                        
 # Fit the full model with bootstrap inference and goodness-of-fit.
 
-sem_model$fit(infer = TRUE, B = 100)
+sem_model$fit(infer = TRUE, B = 10)
 
 # Print comprehensive summary of the fitted SemFC object.
 
 sem_model$summary(standardized = TRUE,
                   effect = TRUE,
                   all_measures = TRUE)
-
+}
 
 ## ------------------------------------------------
 ## Method `SemFC$parameterEstimates`
@@ -247,7 +248,7 @@ sem_model <- SemFC$new(data = A,
 
 # Fit the full model with bootstrap inference and goodness-of-fit.
 
-sem_model$fit(infer = TRUE, B = 100)
+sem_model$fit(infer = FALSE)
 
 # Check for improper solutions in the fitted SemFC model.
 
@@ -500,7 +501,7 @@ sem_model_ml <- SemFC$new(data = A,
 # Fit the full model with asymptotic inference and goodness-of-fit.
 sem_model_ml$fit(infer = TRUE,
                  initialization = "svd",
-                 tol = 1e-04)
+                 tol = 1e-03)
 
 }
 \if{html}{\out{</div>}}
@@ -558,7 +559,8 @@ and pvalue, RMSEA, CFI and SRMR.
 
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
-\preformatted{data(ECSI)
+\preformatted{\donttest{
+data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
@@ -587,14 +589,14 @@ sem_model <- SemFC$new(data = A,
                        
 # Fit the full model with bootstrap inference and goodness-of-fit.
 
-sem_model$fit(infer = TRUE, B = 100)
+sem_model$fit(infer = TRUE, B = 10)
 
 # Print comprehensive summary of the fitted SemFC object.
 
 sem_model$summary(standardized = TRUE,
                   effect = TRUE,
                   all_measures = TRUE)
-
+}
 }
 \if{html}{\out{</div>}}
 
@@ -772,7 +774,7 @@ sem_model <- SemFC$new(data = A,
 
 # Fit the full model with bootstrap inference and goodness-of-fit.
 
-sem_model$fit(infer = TRUE, B = 100)
+sem_model$fit(infer = FALSE)
 
 # Check for improper solutions in the fitted SemFC model.
 

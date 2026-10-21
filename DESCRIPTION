@@ -5,7 +5,7 @@ Authors@R:c(
     person("Alain", "Luong", , "alain.luong@centralesupelec.fr", role =  c("aut", "cre", "rev")),
     person("Arthur", "Tenenhaus", , "arthur.tenenhaus@centralesupelec.fr", role = c("aut", "rev", "ths"))
   )
-Description: Implements two estimation methods for Structural Equation modeling with factors and composites within the framework of the basic design. The packages proposes SVD-SEM which relies on a non-iterative SVD-based algorithm for parameter estimation, producing consistent and asymptotically normal estimators. Additionally, the restricted maximum-likelihood approach (RML-SEM) for the basic design with factors and composites is also proposed.
+Description: Implements two estimation methods for Structural Equation modeling with factors and composites within the framework of the basic design. The packages proposes SVD-SEM which relies on a non-iterative SVD-based algorithm for parameter estimation, producing consistent and asymptotically normal estimators. Additionally, the restricted maximum-likelihood approach for the basic design with factors and composites is also proposed.
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

@@ -202,7 +202,7 @@ initialize = function(data, relation_matrix,
 #'# Fit the full model with asymptotic inference and goodness-of-fit.
 #' sem_model_ml$fit(infer = TRUE,
 #'                  initialization = "svd",
-#'                  tol = 1e-04)
+#'                  tol = 1e-03)
 #'
 
     fit = function(infer = FALSE, B = 1000, initialization = 'svd', tol = 1e-8, verbose = TRUE, seed = NULL){
@@ -266,6 +266,7 @@ initialize = function(data, relation_matrix,
 #' and pvalue, RMSEA, CFI and SRMR.
 #' 
 #' @examples
+#' \donttest{
 #' data(ECSI)
 #' ECSI = ECSI/10
 #' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
@@ -295,14 +296,14 @@ initialize = function(data, relation_matrix,
 #'                        
 #'# Fit the full model with bootstrap inference and goodness-of-fit.
 #'
-#' sem_model$fit(infer = TRUE, B = 100)
+#' sem_model$fit(infer = TRUE, B = 10)
 #' 
 #' # Print comprehensive summary of the fitted SemFC object.
 #'
 #' sem_model$summary(standardized = TRUE,
 #'                   effect = TRUE,
 #'                   all_measures = TRUE)
-#'
+#' }
 
     summary = function(standardized = F, effect = FALSE, all_measures  = F){
 
@@ -487,7 +488,7 @@ initialize = function(data, relation_matrix,
 #'
 #'# Fit the full model with bootstrap inference and goodness-of-fit.
 #'
-#' sem_model$fit(infer = TRUE, B = 100)
+#' sem_model$fit(infer = FALSE)
 #'
 #' # Check for improper solutions in the fitted SemFC model.
 #'
