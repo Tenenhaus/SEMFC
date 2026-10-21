@@ -83,8 +83,8 @@ srmrsem <- function(S, Sigma) {
 #'   \item{estimate}{The RMSEA estimate.}
 #'   \item{CI_lower}{The lower bound of the confidence interval for RMSEA.}
 #'   \item{CI_upper}{The upper bound of the confidence interval for RMSEA.}
-#'   \item{p_close_fit}{The p-value for the close fit hypothesis (RMSEA ≤ close).}
-#'   \item{p_notclose_fit}{The p-value for the not-close fit hypothesis (RMSEA ≥ notclose).}
+#'   \item{p_close_fit}{The p-value for the close fit hypothesis (RMSEA <= close).}
+#'   \item{p_notclose_fit}{The p-value for the not-close fit hypothesis (RMSEA >= notclose).}
 #'
 #' @details The RMSEA is calculated as:
 #'   \deqn{\sqrt{\max(\chi^2 / df - 1, 0) / (N - 1)}}
@@ -131,10 +131,10 @@ rmseasem <- function(chi2, df, N, conf.level = 0.90, close = 0.05, notclose = 0.
   lower <- sqrt(lambda.lower / (df * (N - 1)))
   upper <- sqrt(lambda.upper / (df * (N - 1)))
 
-  # P-value close fit (RMSEA ≤ close)
+  # P-value close fit (RMSEA <= close)
   lambda_c <- df * (N - 1) * (close^2)
   p_close_fit <- pchisq(chi2, df = df, ncp = lambda_c, lower.tail = FALSE)
-  # P-value not close fit (RMSEA ≥ notclose)
+  # P-value not close fit (RMSEA >= notclose)
   lambda_nc <- df * (N - 1) * (notclose^2)
   p_notclose <- pchisq(chi2, df = df, ncp = lambda_nc, lower.tail = TRUE)
 
