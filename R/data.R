@@ -195,7 +195,8 @@
 #' ##########
 #' # mlSEM #
 #' ##########
-#' 
+#'
+#' \donttest{
 #' sem_ml <- SemFC$new(data = A,
 #'                     relation_matrix = C,
 #'                     mode = mode,
@@ -206,6 +207,7 @@
 #' sem_ml$fit(infer = TRUE)
 #' sem_ml$check_improper()
 #' sem_ml$summary(standardized = TRUE, all_measures = TRUE)
+#' }
 #' @keywords datasets
 "Russett"
 
@@ -256,6 +258,7 @@
 #' 
 #' @usage data(BergamiBagozzi2000)
 #' @examples
+#' \donttest{
 #' data(BergamiBagozzi2000)
 #' BB = BergamiBagozzi2000
 #' A = list(OrgPres = BB[, grep("cei", colnames(BB))],
@@ -304,7 +307,7 @@
 #' sem_ml$check_improper()
 #' sem_ml$summary(all_measures = TRUE)
 #' estimate = sem_ml$parameterEstimates(standardized = FALSE)
-#' 
+#' }
 #' @keywords datasets
 "BergamiBagozzi2000"
 
@@ -370,6 +373,7 @@
 #' 
 #' @usage data(ITFlex)
 #' @examples
+#' \donttest{
 #' data(ITFlex)
 #' A = list(ITComp = ITFlex[, grep("COM", colnames(ITFlex))],
 #'          Modul  = ITFlex[, grep("MOD", colnames(ITFlex))],
@@ -412,6 +416,7 @@
 #' 
 #' sem_ml$fit(infer = TRUE)
 #' sem_ml$summary()
+#' }
 #' @keywords datasets
 "ITFlex"
 
