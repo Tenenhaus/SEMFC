@@ -36,8 +36,9 @@
 #' @references Tenenhaus, A., Tenenhaus, M., Dijkstra, T.K. Structural equation modeling
 #' with factors and composites within the framework of the basic design.
 #' Advances in Data Analysis Classification (2025).
-#' \url{https://doi.org/10.1007/s11634-025-00647-4}
+#' \doi{10.1007/s11634-025-00647-4}
 #' @title Structural Equation Modeling with Factors and Composites (svdSEM)
+#' @importFrom stats cor
 #'@keywords internal             
 
 svdSEM <- function(A, C, scale = TRUE,
@@ -132,7 +133,7 @@ svdSEM <- function(A, C, scale = TRUE,
 
 
     for (j in which(mode == "formative")){
-        std_omega[[j]] <- solve(cor(A[[j]]))%*%std_lambda[[j]]
+        std_omega[[j]] <- solve(stats::cor(A[[j]]))%*%std_lambda[[j]]
     }
     std_omega <- std_omega[!sapply(std_omega, is.null)]
 

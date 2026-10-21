@@ -410,7 +410,7 @@ calcul_J_rhoR_B_recursif <- function(R, R_endo, P_endo, C, M_B, D_bar_plus, K_ps
   Term1 <- 2 * D_bar_plus %*% kronecker(RP, PC)
 
   # 2. Terme de correction récursif : K_psi H^{-1} 2*S_diag (R_endo ⊗ C)
-  Term2 <- K_psi %*% H_inv %*% (2 * t(KhatriRao(t(as(R_endo, "dgCMatrix")), t(C))))
+  Term2 <- K_psi %*% H_inv %*% (2 * t(KhatriRao(t(methods::as(R_endo, "dgCMatrix")), t(C))))
 
   # 3. Application de la matrice de sélection M_B
   J_B <- (Term1 - Term2) %*% M_B
