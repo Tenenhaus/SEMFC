@@ -52,16 +52,26 @@ get_stars <- function(p) {
 #' @keywords internal
 print_link <- function(df, type, op, standardized = FALSE) {
 
+  name_width <- max(14, nchar(as.character(df$rhs)), na.rm = TRUE) + 2
+
+  if (standardized) {
+    fmt <- sprintf("    %%-%ds %%8s %%8s %%8s %%8s %%8s %%-3s\n",
+                   name_width)
+  } else {
+    fmt <- sprintf("    %%-%ds %%8s %%8s %%8s %%8s %%-3s\n",
+                   name_width)
+  }
+
   if (is.null(df) || nrow(df) == 0) return(invisible(NULL))
 
 
   cat(type, ":\n")
   if (standardized) {
-    cat(sprintf("%-14s %8s %8s %8s %8s %8s\n",
-                "", "Estimate", "Std.Err", "z-value", "P(>|z|)", "Std.all"))
+    cat(sprintf(fmt, "", "Estimate", "Std.Err",
+                "z-value", "P(>|z|)", "Std.all", ""))
   } else {
-    cat(sprintf("%-14s %8s %8s %8s %8s\n",
-                "", "Estimate", "Std.Err", "z-value", "P(>|z|)"))
+    cat(sprintf(fmt, "", "Estimate", "Std.Err",
+                "z-value", "P(>|z|)", ""))
   }
 
   latents <- unique(df$lhs)
@@ -97,11 +107,11 @@ print_link <- function(df, type, op, standardized = FALSE) {
         stars <- get_stars(row$pvalue)
       }
       if (standardized) {
-        cat(sprintf("    %-10s %8s %8s %8s %8s %8s %-3s\n",
-                    row$rhs, est, se, z_val, p_val, std_all, stars))
+        cat(sprintf(fmt, row$rhs, est, se, z_val,
+                    p_val, std_all, stars))
       } else {
-        cat(sprintf("    %-10s %8s %8s %8s %8s %-3s\n",
-                    row$rhs, est, se, z_val, p_val, stars))
+        cat(sprintf(fmt, row$rhs, est, se, z_val,
+                    p_val, stars))
       }
     }
   }
@@ -129,12 +139,23 @@ print_link <- function(df, type, op, standardized = FALSE) {
 print_variance <- function(df, type, standardized = FALSE) {
   if (is.null(df) || nrow(df) == 0) return(invisible(NULL))
   cat("\n", type, ":\n")
+  display_names <- paste0("   .", as.character(df$lhs))
+  name_width <- max(14, nchar(display_names), na.rm = TRUE) + 2
+
   if (standardized) {
-    cat(sprintf("%-14s %8s %8s %8s %8s %8s\n",
-                "", "Estimate", "Std.Err", "z-value", "P(>|z|)", "Std.all"))
+    fmt <- sprintf(
+      "%%-%ds %%8s %%8s %%8s %%8s %%8s %%-3s\n",
+      name_width
+    )
+    cat(sprintf(fmt, "", "Estimate", "Std.Err",
+                "z-value", "P(>|z|)", "Std.all", ""))
   } else {
-    cat(sprintf("%-14s %8s %8s %8s %8s\n",
-                "", "Estimate", "Std.Err", "z-value", "P(>|z|)"))
+    fmt <- sprintf(
+      "%%-%ds %%8s %%8s %%8s %%8s %%-3s\n",
+      name_width
+    )
+    cat(sprintf(fmt, "", "Estimate", "Std.Err",
+                "z-value", "P(>|z|)", ""))
   }
 
   for (i in seq_len(nrow(df))) {
@@ -160,11 +181,11 @@ print_variance <- function(df, type, standardized = FALSE) {
     }
 
     if (standardized) {
-      cat(sprintf("%-14s %8s %8s %8s %8s %8s %-3s\n",
-                  display_name, est, se, z_val, p_val, std_all, stars))
+      cat(sprintf(fmt, display_name, est, se,
+                  z_val, p_val, std_all, stars))
     } else {
-      cat(sprintf("%-14s %8s %8s %8s %8s %-3s\n",
-                  display_name, est, se, z_val, p_val, stars))
+      cat(sprintf(fmt, display_name, est, se,
+                  z_val, p_val, stars))
     }
   }
 }
