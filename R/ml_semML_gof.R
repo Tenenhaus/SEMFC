@@ -213,7 +213,11 @@ semML_gof <- function(p, q, r, F, N, S, Sigma) {
 
   # loglik
   loglik_H0 <- -(N/2)*(p*log(2*pi) + log(det(Sigma)) + sum(diag(solve(Sigma) %*% S)))
-  loglik_H1 <- -(N/2)*(p*log(2*pi) + log(det(S)) + sum(diag(solve(S) %*% S)))
+  if (det(S) == 0) {
+    loglik_H1 <- NA
+  } else {
+    loglik_H1 <- -(N/2)*(p*log(2*pi) + log(det(S)) + sum(diag(solve(S) %*% S)))
+  }
   AIC <- -2 * loglik_H0 + 2 * q
   BIC <- -2 * loglik_H0 + q * log(N)
   SABIC <- -2 * loglik_H0 + q * log((N + 2) / 24)
