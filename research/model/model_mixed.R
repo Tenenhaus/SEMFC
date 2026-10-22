@@ -1,4 +1,4 @@
-source('inst/simulations/data_simulation_mixed.R')
+source('research/simulations/data_simulation_mixed.R')
 
 library(MASS)
 library(mvtnorm)
