@@ -54,7 +54,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE, seed = NULL){
                                   sapply(fit$blocks, NCOL)))),
               t)
 
-  Z0_bs <- scaleDataSet(df, fit$sigma_implied)
+  Z0_bs <- scaleDataSet(df, fit$sigma_implied, bias = fit$bias)
   Z0_bs <- lapply(split(data.frame(t(Z0_bs)),
                   as.factor(rep(seq_along(fit$blocks),
                                 sapply(fit$blocks, NCOL)))),
