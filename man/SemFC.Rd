@@ -216,46 +216,6 @@ estimates <- sem_model$parameterEstimates(standardized = TRUE)
 
 
 ## ------------------------------------------------
-## Method `SemFC$check_improper`
-## ------------------------------------------------
-
-data(ECSI)
-ECSI = ECSI/10
-A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
-                               "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
-         PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-         CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-         CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
-
-C = matrix(c(0, 0, 0, 0, 0,
-             1, 0, 0, 0, 0,
-             1, 1, 0, 0, 0,
-             1, 1, 1, 0, 0,
-             0, 0, 0, 1, 0), 5, 5,
-             byrow = FALSE)
-
-colnames(C) = rownames(C) = names(A)
-
-# Initialize SemFC object with data, model specification
-# and svd-based estimation method.
-
-sem_model <- SemFC$new(data = A,
-                       relation_matrix = C,
-                       mode = rep("reflective", 5),
-                       scale = FALSE,
-                       estimator = "svd")
-
-# Fit the full model with bootstrap inference and goodness-of-fit.
-
-sem_model$fit(infer = FALSE)
-
-# Check for improper solutions in the fitted SemFC model.
-
-improper_results <- sem_model$check_improper()
-
-
-## ------------------------------------------------
 ## Method `SemFC$get_estimate`
 ## ------------------------------------------------
 
@@ -299,6 +259,50 @@ r2 <- sem_model$get_estimate("r2")
 # Get all estimates
 all_estimates <- sem_model$get_estimate("all")
 
+
+## ------------------------------------------------
+## Method `SemFC$get_gof`
+## ------------------------------------------------
+
+\donttest{
+data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+                               "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+         PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+         CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+         CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+             1, 0, 0, 0, 0,
+             1, 1, 0, 0, 0,
+             1, 1, 1, 0, 0,
+             0, 0, 0, 1, 0), 5, 5,
+             byrow = FALSE)
+
+colnames(C) = rownames(C) = names(A)
+
+# Initialize SemFC object with data, model specification
+# and svd-based estimation method.
+
+sem_model <- SemFC$new(data = A,
+                       relation_matrix = C,
+                       mode = rep("reflective", 5),
+                       scale = FALSE,
+                       estimator = "svd")
+
+# Fit the full model with bootstrap inference and goodness-of-fit.
+
+sem_model$fit(infer = FALSE)
+
+# Get the measures
+
+gof_all <- sem_model$get_gof("all")
+gof_F <- sem_model$get_gof("F")
+gof_bollen_stine <- sem_model$get_gof("bollen_stine")
+gof_reliability <- sem_model$get_gof("reliability")
+}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -307,8 +311,8 @@ all_estimates <- sem_model$get_estimate("all")
 \item \href{#method-SemFC-fit}{\code{SemFC$fit()}}
 \item \href{#method-SemFC-summary}{\code{SemFC$summary()}}
 \item \href{#method-SemFC-parameterEstimates}{\code{SemFC$parameterEstimates()}}
-\item \href{#method-SemFC-check_improper}{\code{SemFC$check_improper()}}
 \item \href{#method-SemFC-get_estimate}{\code{SemFC$get_estimate()}}
+\item \href{#method-SemFC-get_gof}{\code{SemFC$get_gof()}}
 \item \href{#method-SemFC-clone}{\code{SemFC$clone()}}
 }
 }
@@ -698,101 +702,12 @@ estimates <- sem_model$parameterEstimates(standardized = TRUE)
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-check_improper"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-check_improper}{}}}
-\subsection{Method \code{check_improper()}}{
-Check for improper solutions in the fitted SemFC model
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$check_improper()}\if{html}{\out{</div>}}
-}
-
-\subsection{Details}{
-Detects improper solutions for:
-\itemize{
-\item \code{reliability_coef}: reliability coefficients for each block
-\item \code{p_implied}: implied correlation matrix between latent
-variables
-\item \code{residual_variance}: residual variances
-\item \code{std_lambda}: standardized loadings
-\item \code{sigma_implied}: implied covariance matrix of observed
-variables
-\item \code{r2}: r-squared values for endogenous latent variables
-\item \code{psi}: residual covariance matrix of latent variables
-\item \code{p_tilde}: intermediate estimation of correlation matrix
-between latent variables (only for svdSEM)
-}
-}
-
-\subsection{Returns}{
-logical vector indicating improper solutions for each of the
-following criteria:
-\describe{
-\item{\code{reliability_coef}}{\code{TRUE} if any reliability coefficient is
-outside (0, 1).}
-\item{\code{rho_jh}}{\code{TRUE} if any correlation in \code{p_implied} is outside
-(-1, 1).}
-\item{\code{p_implied}}{\code{TRUE} if \code{p_implied} is not positive definite.}
-\item{\code{theta_jh}}{\code{TRUE} if any residual variance is negative.}
-\item{\code{std_lambda}}{\code{TRUE} if any standardized loading is outside
-(-1, 1).}
-\item{\code{sigma_implied}}{\code{TRUE} if \code{sigma_implied} is not positive
-definite.}
-\item{\code{r2}}{\code{TRUE} if any r-squared is outside (0, 1).}
-\item{\code{psi}}{\code{TRUE} if \code{psi} is not positive definite.}
-\item{\code{p_tilde}}{\code{TRUE} if \code{p_tilde} is not positive definite (only
-for svdSEM).}
-}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{data(ECSI)
-ECSI = ECSI/10
-A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
-                               "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
-         PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-         CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-         CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
-
-C = matrix(c(0, 0, 0, 0, 0,
-             1, 0, 0, 0, 0,
-             1, 1, 0, 0, 0,
-             1, 1, 1, 0, 0,
-             0, 0, 0, 1, 0), 5, 5,
-             byrow = FALSE)
-
-colnames(C) = rownames(C) = names(A)
-
-# Initialize SemFC object with data, model specification
-# and svd-based estimation method.
-
-sem_model <- SemFC$new(data = A,
-                       relation_matrix = C,
-                       mode = rep("reflective", 5),
-                       scale = FALSE,
-                       estimator = "svd")
-
-# Fit the full model with bootstrap inference and goodness-of-fit.
-
-sem_model$fit(infer = FALSE)
-
-# Check for improper solutions in the fitted SemFC model.
-
-improper_results <- sem_model$check_improper()
-
-}
-\if{html}{\out{</div>}}
-
-}
-
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SemFC-get_estimate"></a>}}
 \if{latex}{\out{\hypertarget{method-SemFC-get_estimate}{}}}
 \subsection{Method \code{get_estimate()}}{
 Get a specific estimate from the fitted SemFC model.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$get_estimate(estimate)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$get_estimate(estimate = "all")}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -807,7 +722,7 @@ Possible values are:
 \code{"p_implied"}, \code{"sigma_implied"}, \code{"r2"}, \code{"T_LS"},
 \code{"theta"}, and \code{"effect"}.
 
-Use \code{"all"} to retrieve all estimates.}
+Use \code{"all"} to retrieve all estimates (default).}
 }
 \if{html}{\out{</div>}}
 }
@@ -862,6 +777,85 @@ r2 <- sem_model$get_estimate("r2")
 # Get all estimates
 all_estimates <- sem_model$get_estimate("all")
 
+}
+\if{html}{\out{</div>}}
+
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SemFC-get_gof"></a>}}
+\if{latex}{\out{\hypertarget{method-SemFC-get_gof}{}}}
+\subsection{Method \code{get_gof()}}{
+Retrieve goodness-of-fit measures and model diagnostics
+computed for the fitted SEMFC model.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SemFC$get_gof(measure = "all")}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{measure}}{Character string specifying the measure to retrieve.
+Available options are:
+\itemize{
+\item \code{"all"}: All computed measures (default).
+\item \code{"bollen_stine"}: Bollen-Stine bootstrap goodness-of-fit test.
+\item \code{"F"}: Model fitting function value.
+\item \code{"ml"}: Maximum likelihood fit indices.
+\item \code{"reliability"}: Reliability coefficients.
+\item \code{"improper"}: Diagnostics for improper solutions.
+}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A named list of all computed measures if
+\code{measure = "all"}, or the requested measure otherwise.
+Returns \code{NULL} with a warning if the requested measure
+has not been computed.
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+data(ECSI)
+ECSI = ECSI/10
+A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+         PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+                               "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+         PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+         CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+         CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+
+C = matrix(c(0, 0, 0, 0, 0,
+             1, 0, 0, 0, 0,
+             1, 1, 0, 0, 0,
+             1, 1, 1, 0, 0,
+             0, 0, 0, 1, 0), 5, 5,
+             byrow = FALSE)
+
+colnames(C) = rownames(C) = names(A)
+
+# Initialize SemFC object with data, model specification
+# and svd-based estimation method.
+
+sem_model <- SemFC$new(data = A,
+                       relation_matrix = C,
+                       mode = rep("reflective", 5),
+                       scale = FALSE,
+                       estimator = "svd")
+
+# Fit the full model with bootstrap inference and goodness-of-fit.
+
+sem_model$fit(infer = FALSE)
+
+# Get the measures
+
+gof_all <- sem_model$get_gof("all")
+gof_F <- sem_model$get_gof("F")
+gof_bollen_stine <- sem_model$get_gof("bollen_stine")
+gof_reliability <- sem_model$get_gof("reliability")
+}
 }
 \if{html}{\out{</div>}}
 

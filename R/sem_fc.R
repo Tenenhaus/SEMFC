@@ -218,12 +218,12 @@ initialize = function(data, relation_matrix,
 
       } else if(estimator == 'ml'){
         private$fit_ml(initialization, tol)
-        private$get_gof()
+        private$compute_gof()
       }
       if (infer){
         if (estimator == 'svd'){
           private$svd_infer(B, verbose = verbose, seed = seed)
-          private$get_gof()
+          private$compute_gof()
         }
       else if(estimator == 'ml'){
           private$ml_infer()
@@ -421,88 +421,6 @@ initialize = function(data, relation_matrix,
     },
 
 #' @description
-#' Check for improper solutions in the fitted SemFC model
-#'
-#' @details
-#' Detects improper solutions for:
-#' \itemize{
-#'   \item \code{reliability_coef}: reliability coefficients for each block
-#'   \item \code{p_implied}: implied correlation matrix between latent
-#'     variables
-#'   \item \code{residual_variance}: residual variances
-#'   \item \code{std_lambda}: standardized loadings
-#'   \item \code{sigma_implied}: implied covariance matrix of observed
-#'     variables
-#'   \item \code{r2}: r-squared values for endogenous latent variables
-#'   \item \code{psi}: residual covariance matrix of latent variables
-#'   \item \code{p_tilde}: intermediate estimation of correlation matrix
-#'     between latent variables (only for svdSEM)
-#' }
-#'
-#' @return logical vector indicating improper solutions for each of the
-#'   following criteria:
-#' \describe{
-#'   \item{\code{reliability_coef}}{\code{TRUE} if any reliability coefficient is
-#'     outside (0, 1).}
-#'   \item{\code{rho_jh}}{\code{TRUE} if any correlation in \code{p_implied} is outside
-#'     (-1, 1).}
-#'   \item{\code{p_implied}}{\code{TRUE} if \code{p_implied} is not positive definite.}
-#'   \item{\code{theta_jh}}{\code{TRUE} if any residual variance is negative.}
-#'   \item{\code{std_lambda}}{\code{TRUE} if any standardized loading is outside
-#'     (-1, 1).}
-#'   \item{\code{sigma_implied}}{\code{TRUE} if \code{sigma_implied} is not positive
-#'     definite.}
-#'   \item{\code{r2}}{\code{TRUE} if any r-squared is outside (0, 1).}
-#'   \item{\code{psi}}{\code{TRUE} if \code{psi} is not positive definite.}
-#'   \item{\code{p_tilde}}{\code{TRUE} if \code{p_tilde} is not positive definite (only
-#'     for svdSEM).}
-#' }
-#'
-#' @examples
-#' data(ECSI)
-#' ECSI = ECSI/10
-#' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-#'          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
-#'                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
-#'          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-#'          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-#'          CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
-#'
-#' C = matrix(c(0, 0, 0, 0, 0,
-#'              1, 0, 0, 0, 0,
-#'              1, 1, 0, 0, 0,
-#'              1, 1, 1, 0, 0,
-#'              0, 0, 0, 1, 0), 5, 5,
-#'              byrow = FALSE)
-#'
-#' colnames(C) = rownames(C) = names(A)
-#'
-#' # Initialize SemFC object with data, model specification
-#' # and svd-based estimation method.
-#'
-#' sem_model <- SemFC$new(data = A,
-#'                        relation_matrix = C,
-#'                        mode = rep("reflective", 5),
-#'                        scale = FALSE,
-#'                        estimator = "svd")
-#'
-#'# Fit the full model with bootstrap inference and goodness-of-fit.
-#'
-#' sem_model$fit(infer = FALSE)
-#'
-#' # Check for improper solutions in the fitted SemFC model.
-#'
-#' improper_results <- sem_model$check_improper()
-#'
-
-    check_improper = function(){
-      if (is.null(private$.estimate) || length(private$.estimate) == 0L) {
-        stop("Model has not been fitted yet. Call `fit()` before `check_improper()`.", call. = FALSE)
-      }
-      return(improper(private$.estimate))
-    },
-
-#' @description
 #' Get a specific estimate from the fitted SemFC model.
 #'
 #' @param estimate Character string specifying the estimate component to select. 
@@ -514,7 +432,7 @@ initialize = function(data, relation_matrix,
 #'   \code{"p_implied"}, \code{"sigma_implied"}, \code{"r2"}, \code{"T_LS"}, 
 #'   \code{"theta"}, and \code{"effect"}. 
 #'   
-#'   Use \code{"all"} to retrieve all estimates. 
+#'   Use \code{"all"} to retrieve all estimates (default).
 #'
 #' @return The requested estimate. Returns \code{NULL} with a warning if:
 #'   \itemize{
@@ -565,7 +483,7 @@ initialize = function(data, relation_matrix,
 #' # Get all estimates
 #' all_estimates <- sem_model$get_estimate("all")
 #'
-    get_estimate = function(estimate){
+    get_estimate = function(estimate = "all") {
       if (is.null(private$.estimate) || length(private$.estimate) == 0L) {
         warning("Model has not been fitted yet. Returning NULL.", call. = FALSE)
         return(NULL)
@@ -581,7 +499,108 @@ initialize = function(data, relation_matrix,
       }
 
       return(private$.estimate[[estimate]])
+    },
+
+
+
+#' @description
+#' Retrieve goodness-of-fit measures and model diagnostics
+#' computed for the fitted SEMFC model.
+#'
+#' @param measure Character string specifying the measure to retrieve.
+#'   Available options are:
+#'   \itemize{
+#'     \item \code{"all"}: All computed measures (default).
+#'     \item \code{"bollen_stine"}: Bollen-Stine bootstrap goodness-of-fit test.
+#'     \item \code{"F"}: Model fitting function value.
+#'     \item \code{"ml"}: Maximum likelihood fit indices.
+#'     \item \code{"reliability"}: Reliability coefficients.
+#'     \item \code{"improper"}: Diagnostics for improper solutions.
+#'   }
+#'
+#' @return A named list of all computed measures if
+#'   \code{measure = "all"}, or the requested measure otherwise.
+#'   Returns \code{NULL} with a warning if the requested measure
+#'   has not been computed.
+#'
+#' @examples
+#' \donttest{
+#' data(ECSI)
+#' ECSI = ECSI/10
+#' A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
+#'          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
+#'                                "PERQ4", "PERQ5", "PERQ6", "PERQ7")],
+#'          PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
+#'          CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
+#'          CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")])
+#'
+#' C = matrix(c(0, 0, 0, 0, 0,
+#'              1, 0, 0, 0, 0,
+#'              1, 1, 0, 0, 0,
+#'              1, 1, 1, 0, 0,
+#'              0, 0, 0, 1, 0), 5, 5,
+#'              byrow = FALSE)
+#'
+#' colnames(C) = rownames(C) = names(A)
+#'
+#' # Initialize SemFC object with data, model specification
+#' # and svd-based estimation method.
+#'
+#' sem_model <- SemFC$new(data = A,
+#'                        relation_matrix = C,
+#'                        mode = rep("reflective", 5),
+#'                        scale = FALSE,
+#'                        estimator = "svd")
+#'
+#'# Fit the full model with bootstrap inference and goodness-of-fit.
+#'
+#' sem_model$fit(infer = FALSE)
+#'
+#' # Get the measures
+#'
+#' gof_all <- sem_model$get_gof("all")
+#' gof_F <- sem_model$get_gof("F")
+#' gof_bollen_stine <- sem_model$get_gof("bollen_stine")
+#' gof_reliability <- sem_model$get_gof("reliability")
+#' }
+
+    get_gof = function(measure = "all") {
+
+      valid_measures <- c(
+        "all", "bollen_stine", "F",
+        "ml", "reliability", "improper"
+      )
+
+      # Check argument
+      measure <- match.arg(measure, valid_measures)
+
+      # Check if goodness-of-fit has been computed
+      if (is.null(private$.gof) ||
+          length(private$.gof) == 0L) {
+        warning(
+          "Goodness-of-fit has not been computed yet. Returning NULL.",
+          call. = FALSE
+        )
+        return(NULL)
+      }
+
+      if (measure == "all") {
+        return(private$.gof)
+      }
+
+      if (!measure %in% names(private$.gof)) {
+        warning(
+          "Goodness-of-fit measure '", measure,
+          "' has not been computed. Returning NULL.",
+          call. = FALSE
+        )
+        return(NULL)
+      }
+
+      return(private$.gof[[measure]])
     }
+
+
   ),
 
   private = list(
@@ -699,7 +718,7 @@ initialize = function(data, relation_matrix,
 
 
 
-    get_gof = function(B = 1000){
+    compute_gof = function(B = 1000){
 
       estimator <- private$.estimator
 
@@ -724,9 +743,10 @@ initialize = function(data, relation_matrix,
         S <- private$.data$cov_S
         Sigma <- private$.estimate$sigma_implied
 
-        res_gof <- c(res_gof, semML_gof(p, q, r, F, N, S, Sigma))
+        res_gof$ml <- semML_gof(p, q, r, F, N, S, Sigma)
 
       }
+      res_gof$improper <- improper(private$.estimate)
       private$.gof <- c(private$.gof, res_gof)
 
     }
