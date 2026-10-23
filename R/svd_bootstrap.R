@@ -80,7 +80,12 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE, seed = NULL){
                           Zb_bs <- lapply(Z0_bs, function(x) x[ind, ])
                           names(Zb) <- names(Zb_bs) <- names(fit$blocks)
 
-                          S_bs <- cov2(Reduce("cbind", Zb_bs), bias = fit$bias)
+                          S_bs <- cov2(
+                            scale2(
+                              Reduce("cbind", Zb_bs), bias = fit$bias, scale = fit$scale
+                            ),
+                            bias = fit$bias
+                          )
 
 
                           fit_b <- svdSEM(Zb,
