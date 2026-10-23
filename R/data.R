@@ -190,7 +190,7 @@
 #' 
 #' sem_svd$fit(infer = TRUE, B = 100)
 #' sem_svd$summary(standardized = TRUE, all_measures = TRUE)
-#' sem_svd$check_improper()
+#' sem_svd$get_gof('improper')
 #' 
 #' ##########
 #' # mlSEM #
@@ -205,7 +205,7 @@
 #'                     estimator = "ml")
 #' 
 #' sem_ml$fit(infer = TRUE)
-#' sem_ml$check_improper()
+#' sem_ml$get_gof('improper')
 #' sem_ml$summary(standardized = TRUE, all_measures = TRUE)
 #' }
 #' @keywords datasets
@@ -289,7 +289,7 @@
 #'                      bias = TRUE,
 #'                      estimator = "svd")
 #' sem_svd$fit(infer = TRUE, B = 100)
-#' sem_svd$check_improper()
+#' sem_svd$get_gof('improper')
 #' sem_svd$summary(all_measures = TRUE)
 #' estimate = sem_svd$parameterEstimates(standardized = TRUE)
 #' 
@@ -304,7 +304,7 @@
 #'                     bias = TRUE, 
 #'                     estimator = "ml") 
 #' sem_ml$fit(infer = TRUE)
-#' sem_ml$check_improper()
+#' sem_ml$get_gof('improper')
 #' sem_ml$summary(all_measures = TRUE)
 #' estimate = sem_ml$parameterEstimates(standardized = FALSE)
 #' }
@@ -400,7 +400,7 @@
 #'                      estimator = "svd")
 #' 
 #' sem_svd$fit(infer = TRUE, B = 100)
-#' sem_svd$check_improper()
+#' sem_svd$get_gof('improper')
 #' sem_svd$summary()
 #' 
 #' ##########
@@ -500,7 +500,7 @@
 #' 
 #' sem_svd$fit(infer = TRUE, B = 100)
 #' sem_svd$summary()
-#' sem_svd$check_improper()
+#' sem_svd$get_gof('improper')
 #' 
 #' #########
 #' # mlSEM #
@@ -515,7 +515,7 @@
 #' 
 #' sem_ml$fit(infer = TRUE)
 #' sem_ml$summary(standardized = TRUE)
-#' sem_ml$check_improper()
+#' sem_ml$get_gof('improper')
 #' 
 #' @keywords datasets
 "LancelotMiltgenetal2016"
@@ -582,7 +582,7 @@
 #' 
 #' sem_svd$fit(infer = TRUE, B = 100)
 #' sem_svd$summary(standardized = TRUE)
-#' sem_svd$check_improper()
+#' sem_svd$get_gof('improper')
 #' 
 #' #########
 #' # mlSEM #
@@ -595,7 +595,7 @@
 #' 
 #' sem_ml$fit(infer = TRUE)
 #' sem_ml$summary(standardized = TRUE)
-#' sem_ml$check_improper()
+#' sem_ml$get_gof('improper')
 #'@keywords datasets
 #'
 "PoliticalDemocracy"

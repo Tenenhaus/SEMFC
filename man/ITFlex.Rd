@@ -89,7 +89,7 @@ sem_svd <- SemFC$new(data = A,
                      estimator = "svd")
 
 sem_svd$fit(infer = TRUE, B = 100)
-sem_svd$check_improper()
+sem_svd$get_gof('improper')
 sem_svd$summary()
 
 ##########

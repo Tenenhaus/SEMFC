@@ -84,7 +84,7 @@ sem_svd <- SemFC$new(data = A,
                      bias = TRUE,
                      estimator = "svd")
 sem_svd$fit(infer = TRUE, B = 100)
-sem_svd$check_improper()
+sem_svd$get_gof('improper')
 sem_svd$summary(all_measures = TRUE)
 estimate = sem_svd$parameterEstimates(standardized = TRUE)
 
@@ -99,7 +99,7 @@ sem_ml <- SemFC$new(data = A,
                     bias = TRUE, 
                     estimator = "ml") 
 sem_ml$fit(infer = TRUE)
-sem_ml$check_improper()
+sem_ml$get_gof('improper')
 sem_ml$summary(all_measures = TRUE)
 estimate = sem_ml$parameterEstimates(standardized = FALSE)
 }

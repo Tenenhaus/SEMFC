@@ -66,7 +66,7 @@ sem_svd <- SemFC$new(data=A,
 
 sem_svd$fit(infer = TRUE, B = 100)
 sem_svd$summary(standardized = TRUE)
-sem_svd$check_improper()
+sem_svd$get_gof('improper')
 
 #########
 # mlSEM #
@@ -79,7 +79,7 @@ sem_ml <- SemFC$new(data=A,
 
 sem_ml$fit(infer = TRUE)
 sem_ml$summary(standardized = TRUE)
-sem_ml$check_improper()
+sem_ml$get_gof('improper')
 }
 \references{
 Bollen, K. A. (1989). Structural Equations with Latent Variables. Wiley

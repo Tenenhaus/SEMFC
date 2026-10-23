@@ -4,14 +4,12 @@
 \alias{svdSEM_gof}
 \title{Global Fit Assessment for svdSEM Models}
 \usage{
-svdSEM_gof(fit, B = 100, bias = FALSE)
+svdSEM_gof(fit, B = 100)
 }
 \arguments{
 \item{fit}{A svdSEM fit object containing the fitted model information}
 
 \item{B}{Number of bootstrap replications. If NULL, only the T_LS statistic is returned}
-
-\item{bias}{Logical indicating whether a biased covariance estimator should be used (default: FALSE)}
 }
 \value{
 If B is NULL, returns the T_LS statistic. Otherwise, returns a list containing:
@@ -32,7 +30,7 @@ Solutions with negative eigenvalues are considered improper and excluded.
 }
 \examples{
 \dontrun{
-gof_results <- svdSEM_gof(fit, B = 100, bias = FALSE)
+gof_results <- svdSEM_gof(fit, B = 100)
 print(gof_results$pval)
 }
 
