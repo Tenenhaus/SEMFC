@@ -6,7 +6,7 @@ library(devtools)
 load_all()
 
 set.seed(27)
-source('inst/model/model_mixed.R')
+source('research/model/model_mixed.R')
 Y <- Y_2
 X <- X_2
 
@@ -17,6 +17,7 @@ model$fit(infer = T, B = 100)
 model$fit(infer = F)
 model$summary(standardized = T, effect = T, all_measures = T)
 est = model$parameterEstimates(standardized = T)
+gof = model$get_gof('all')
 print(model$get_estimate('psi'))
 
 modelml <- SemFC$new(data=Y, relation_matrix = C, mode=mode)
@@ -24,6 +25,7 @@ modelml$fit(infer=T, tol=1e-08)
 modelml$fit(infer=F, tol=1e-10)
 modelml$summary(standardized = T, effect = T, all_measures = T)
 est = modelml$parameterEstimates(standardized = T)
+gofml = modelml$get_gof('all')
 print(modelml$get_estimate('psi'))
 
 
