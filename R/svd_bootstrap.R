@@ -80,7 +80,6 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE, seed = NULL){
                           Zb_bs <- lapply(Z0_bs, function(x) x[ind, ])
                           names(Zb) <- names(Zb_bs) <- names(fit$blocks)
 
-                          SD <- apply(Reduce("cbind", Zb), 2, sd)
                           S_bs <- cov2(Reduce("cbind", Zb_bs), bias = fit$bias)
 
 
@@ -106,7 +105,7 @@ bootstrap_svd <- function(fit, B = 100, verbose = TRUE, seed = NULL){
 
                             res <- list(
                               boot_lambda  = as.vector(Reduce("c", fit_b$lambda)),
-                              boot_std_loadings = as.vector(Reduce("c", fit_b$lambda)/SD),
+                              boot_std_loadings = unlist(fit_b$std_lambda, use.names = FALSE),
                               boot_beta = fit_b$beta[fit_b$beta!=0],
                               boot_gamma = fit_b$gamma[fit_b$gamma!=0],
                               boot_residual_variance = as.vector(Reduce("c", fit_b$residual_variance)),
