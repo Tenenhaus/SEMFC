@@ -1,29 +1,8 @@
-test_that("RML-SEM estimation", {
+check_ml_sem <- function(recursive) {
+  setup <- make_test_semfc_data(recursive = recursive)
 
-  setup <- make_test_semfc_data()
 
-
-  # Construct the theoretical parameter vector
-  sigma_blocks <- unlist(lapply(
-    list(1:3, 4:6, 7:9, 10:12),
-    function(idx) {
-      S_jj <- setup$SIGMA[idx, idx]
-      S_jj[lower.tri(S_jj, diag = TRUE)]
-    }
-  ))
-
-  x <- c(
-    unlist(setup$lambda, use.names = FALSE),
-    setup$PHI[lower.tri(setup$PHI)],
-    setup$GAMMA[1, 1:2],
-    setup$GAMMA[2, 3:4],
-    setup$BETA[2, 1],
-    setup$BETA[1, 2],
-    setup$R[5, 6],
-    sigma_blocks,
-    1 - setup$lambda[[5]]^2,
-    1 - setup$lambda[[6]]^2
-  )
+  x <- setup$theta_true
 
 
 
@@ -45,6 +24,7 @@ test_that("RML-SEM estimation", {
   lambda_hat <- model$get_estimate("lambda")
   beta_hat <- model$get_estimate("beta")
   gamma_hat <- model$get_estimate("gamma")
+  psi_hat <- model$get_estimate("psi")
   Sigma_hat <- as.matrix(
     model$get_estimate("sigma_implied")
   )
@@ -79,6 +59,12 @@ test_that("RML-SEM estimation", {
   expect_equal(
     unname(as.matrix(gamma_hat)),
     unname(setup$GAMMA),
+    tolerance = 1e-10
+  )
+
+  expect_equal(
+    unname(as.matrix(psi_hat)),
+    unname(setup$PSI),
     tolerance = 1e-10
   )
 
@@ -122,4 +108,11 @@ test_that("RML-SEM estimation", {
     tolerance = 1e-10
   )
 
+}
+test_that("RML-SEM estimation - nonrecursive", {
+  check_ml_sem(recursive = FALSE)
+})
+
+test_that("RML-SEM estimation - recursive", {
+  check_ml_sem(recursive = TRUE)
 })

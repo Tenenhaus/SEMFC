@@ -1,6 +1,5 @@
-test_that("Analytical Fisher information matches numerical information", {
-
-  setup <- make_test_semfc_data()
+check_gradient <- function(recursive){
+  setup <- make_test_semfc_data(recursive = recursive)
 
   init <- get_parameter_model_sem(
     data = setup$data,
@@ -21,18 +20,7 @@ test_that("Analytical Fisher information matches numerical information", {
     }
   ))
 
-  x <- c(
-    unlist(setup$lambda, use.names = FALSE),
-    setup$PHI[upper.tri(setup$PHI)],
-    setup$GAMMA[1, 1:2],
-    setup$GAMMA[2, 3:4],
-    setup$BETA[1, 2],
-    setup$BETA[2, 1],
-    setup$R[5, 6],
-    sigma_blocks,
-    1 - setup$lambda[[5]]^2,
-    1 - setup$lambda[[6]]^2
-  )
+  x <- setup$theta_true
 
   # Analytical Fisher information
   I_analytical <- information_matrix(x, model)
@@ -128,5 +116,12 @@ test_that("Analytical Fisher information matches numerical information", {
     unname(H_numerical),
     tolerance = 1e-10
   )
+}
 
+test_that("Analytical Fisher information matches numerical information - nonrecursive", {
+  check_gradient(recursive = FALSE)
+})
+
+test_that("Analytical Fisher information matches numerical information - recursive", {
+  check_gradient(recursive = TRUE)
 })

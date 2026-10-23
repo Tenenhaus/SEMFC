@@ -1,10 +1,20 @@
 
-make_test_semfc_data <- function(N = 300, seed = 123) {
+make_test_semfc_data <- function(N = 300, seed = 123, recursive = FALSE) {
 
   set.seed(seed)
 
   mode <- c(rep("formative", 4),
             rep("reflective", 2))
+
+  # Structural relation matrix
+  C <- matrix(0, 6, 6)
+
+  C[1, 5] <- 1
+  C[2, 5] <- 1
+  C[3, 6] <- 1
+  C[4, 6] <- 1
+  C[5, 6] <- 1
+  C[6, 5] <- 1
 
   BETA <- matrix(c(
     0,   0.25,
@@ -23,6 +33,18 @@ make_test_semfc_data <- function(N = 300, seed = 123) {
     1, sqrt(0.5),
     sqrt(0.5), 1
   ), 2, 2)
+
+  if (recursive) {
+    BETA[1, 2] <- 0
+    C[6, 5] <- 0
+
+    R22 <- matrix(
+      c(1,     0.575,
+        0.575, 1),
+      nrow = 2,
+      byrow = TRUE
+    )
+  }
 
   A <- diag(2) - BETA
   A_inv <- solve(A)
@@ -114,19 +136,49 @@ make_test_semfc_data <- function(N = 300, seed = 123) {
     paste0("LV", 1:6)
   )
 
-  # Structural relation matrix
-  C <- matrix(0, 6, 6)
 
-  C[1, 5] <- 1
-  C[2, 5] <- 1
-  C[3, 6] <- 1
-  C[4, 6] <- 1
-  C[5, 6] <- 1
-  C[6, 5] <- 1
 
   dimnames(C) <- list(names(Y), names(Y))
 
+ # Construct the theoretical parameter vector
+  sigma_blocks <- unlist(lapply(
+    list(1:3, 4:6, 7:9, 10:12),
+    function(idx) {
+      S_jj <- SIGMA[idx, idx]
+      S_jj[lower.tri(S_jj, diag = TRUE)]
+    }
+  ))
+
+  if (recursive == FALSE) {
+    theta_true <- c(
+      unlist(lambda, use.names = FALSE),
+      PHI[lower.tri(PHI)],
+      GAMMA[1, 1:2],
+      GAMMA[2, 3:4],
+      BETA[2, 1],
+      BETA[1, 2],
+      R[5, 6],
+      sigma_blocks,
+      1 - lambda[[5]]^2,
+      1 - lambda[[6]]^2
+    )
+
+
+  } else {
+    theta_true <- c(
+      unlist(lambda, use.names = FALSE),
+      PHI[lower.tri(PHI)],
+      GAMMA[1, 1:2],
+      GAMMA[2, 3:4],
+      BETA[2, 1],
+      sigma_blocks,
+      1 - lambda[[5]]^2,
+      1 - lambda[[6]]^2
+    )
+  }
+
   return(list(
+    theta_true = theta_true,
     data = Y,
     X = X,
     relation_matrix = C,
