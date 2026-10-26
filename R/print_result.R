@@ -311,27 +311,27 @@ print_gof_svd <- function(B, pvalbs) {
 print_gof_ml <- function(gof) {
 
     # user test
-    testchi2 <- gof$chi2$test
-    dfchi2 <- gof$chi2$df
-    pvalchi2 <- gof$chi2$pval
+    testchi2 <- gof$ml$chi2$test
+    dfchi2 <- gof$ml$chi2$df
+    pvalchi2 <- gof$ml$chi2$pval
 
     # baseline test
 
-    testbaseline <- gof$baseline$test
-    dfbaseline <- gof$baseline$df
-    pvalbaseline <- gof$baseline$pval
+    testbaseline <- gof$ml$baseline$test
+    dfbaseline <- gof$ml$baseline$df
+    pvalbaseline <- gof$ml$baseline$pval
 
     #  vs
-    cfi <- gof$cfi
-    tli <- gof$tli
+    cfi <- gof$ml$cfi
+    tli <- gof$ml$tli
 
     # RMSEA and srmr
-    rmsea_val <- gof$RMSEA$estimate
-    rmsea_ci_lower <- gof$RMSEA$CI_lower
-    rmsea_ci_upper <- gof$RMSEA$CI_upper
-    p_rmsea_le_005 <- gof$RMSEA$p_close_fit
-    p_rmsea_ge_008 <- gof$RMSEA$p_notclose_fit
-    srmr_val <- gof$SRMR
+    rmsea_val <- gof$ml$RMSEA$estimate
+    rmsea_ci_lower <- gof$ml$RMSEA$CI_lower
+    rmsea_ci_upper <- gof$ml$RMSEA$CI_upper
+    p_rmsea_le_005 <- gof$ml$RMSEA$p_close_fit
+    p_rmsea_ge_008 <- gof$ml$RMSEA$p_notclose_fit
+    srmr_val <- gof$ml$SRMR
     cat("Model Test User Model :\n\n")
     cat(sprintf("  %-40s%12.3f\n", "Test statistic", testchi2))
     cat(sprintf("  %-40s%12d\n", "Degrees of freedom", dfchi2))
@@ -363,11 +363,11 @@ print_gof_ml <- function(gof) {
 
     # Information criteria
 
-    loglik_H0 <-  gof$info_criteria$loglik_H0
-    loglik_H1 <-  gof$info_criteria$loglik_H1
-    AIC <-  gof$info_criteria$AIC
-    BIC <-  gof$info_criteria$BIC
-    SABIC <-  gof$info_criteria$SABIC
+    loglik_H0 <-  gof$ml$info_criteria$loglik_H0
+    loglik_H1 <-  gof$ml$info_criteria$loglik_H1
+    AIC <-  gof$ml$info_criteria$AIC
+    BIC <-  gof$ml$info_criteria$BIC
+    SABIC <-  gof$ml$info_criteria$SABIC
 
     cat("Loglikelihood and Information Criteria:\n\n")
     cat(sprintf("  %-40s%12.3f\n", "Loglikelihood user model (H0)", loglik_H0))
