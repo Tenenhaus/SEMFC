@@ -20,6 +20,7 @@ Imports:
     numDeriv,
     pbapply,
     nloptr,
+    RGCCA
 Depends:
     R (>= 3.5)
 LazyData: true

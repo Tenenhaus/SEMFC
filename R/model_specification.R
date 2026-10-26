@@ -58,6 +58,8 @@ get_parameter_model_sem <- function(data, mode, relation_matrix, bias, scale){
 
   X <- do.call(cbind, data)
   S <- cov2(scale2(X, scale = scale, bias = bias), bias = bias)
+  tau <- RGCCA:::tau.estimate(X)
+  S <- (1-tau) * S + tau * diag(diag(S))
   n_row <- NROW(X)
 
   block_sizes <- sapply(data, NCOL)
