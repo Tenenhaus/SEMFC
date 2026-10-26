@@ -1,9 +1,4 @@
 lvm <- function(R, li_C) {
-  # print(round(R - P_TRUE, 4))
-  # print(round(R, 4))
-  # print(P_TRUE)
-
-
   li_gr <- lapply(li_C, function(C) igraph::graph_from_adjacency_matrix(C))
   li_which_exo_endo <- lapply(li_C, function(C) {
     out <- ind_exo_endo(C)

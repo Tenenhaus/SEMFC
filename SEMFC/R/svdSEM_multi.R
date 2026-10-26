@@ -382,6 +382,11 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     # print(P_induced)
 
 
+    if(!no_svd_refining){
+        Sigma_implied <- SIGMA_IMPLIED
+    } else{
+        Sigma_implied <- Estim_Sigma
+    }
 
 
     out <- list(
@@ -397,7 +402,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
         li_vec_norm = li_vec_norm,
         P_tilde = P_tilde,
         P_IMPLIED = P_induced,
-        SIGMA_IMPLIED = SIGMA_IMPLIED,
+        SIGMA_IMPLIED = Sigma_implied, 
         T_LS = T_LS,
         li_C = li_C,
         mode = mode,

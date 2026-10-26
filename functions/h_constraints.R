@@ -1,15 +1,19 @@
 # restrictions for the minimization of the Loglikelihood function
 heq1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma) {
-  reconstructed <- reconstruct_blocs(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma)
-  li_Lambda <- reconstructed$li_Lambda
-  li_orthogonalities <- lapply(1:J, function(j) {
-    mat_diag <- t(li_Lambda[[j]]) %*% li_Lambda[[j]]
-    orthogonalities <- mat_diag[upper.tri(mat_diag)]
-    return(orthogonalities)
-  })
-  vec_orthogonalities <- do.call("c", li_orthogonalities)
+  if (ortho_solve) {
+    reconstructed <- reconstruct_blocs(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma)
+    li_Lambda <- reconstructed$li_Lambda
+    li_orthogonalities <- lapply(1:J, function(j) {
+      mat_diag <- t(li_Lambda[[j]]) %*% li_Lambda[[j]]
+      orthogonalities <- mat_diag[upper.tri(mat_diag)]
+      return(orthogonalities)
+    })
+    vec_orthogonalities <- do.call("c", li_orthogonalities)
 
-  h <- c(vec_orthogonalities)
+    h <- c(vec_orthogonalities)
+  } else {
+    h <- c()
+  }
 
 
   # print(h)

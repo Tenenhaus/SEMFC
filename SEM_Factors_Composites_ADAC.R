@@ -24,51 +24,60 @@ library(mvtnorm)
 library(MASS)
 library(lavaan)
 library(Rsolnp)
+
+setwd("~/Documents/SEMFC")
 load_all("SEMFC")
 
+
 # functions
-source("functions/data_simulation_dim_n.R")
+
 # source("functions/data_simulation.R")
 source("functions/F1.R")
 source("functions/h_theta.R")
 source("functions/s_implied.R")
 source("functions/h_constraints.R")
 source("functions/reconstruct_blocs.R")
+source("functions/calculate_Sigma.R")
 
 #############################################
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
-set.seed(1502)
-n_simu <- 1000
-N <- 1000
+set.seed(6)
+n_simu <- 1
+N <- 10000
+R_try <- 2
+R_true <- 2
+n_signif <- 3
+do_ML <- FALSE
+
+
+ortho_generate <- TRUE
+ortho_solve <- TRUE
+diag_generate <- FALSE
+
+show_svd <- FALSE
+show_ml <- FALSE
+show_TRUE <- FALSE
+show_norme <- FALSE
+# show_svd <- TRUE
+# show_ml <- TRUE
+# show_TRUE <- TRUE
+
 do_full_reorder <- TRUE
 ancien_P <- FALSE
-triche <- FALSE
-show <- FALSE
-show_norme <- FALSE
-R_try <- 1
-do_ML <- TRUE
+
+triche <- TRUE
+no_svd_refining <- FALSE
+mauvais_depart <- FALSE
 
 
+source("functions/data_simulation_dim_n.R")
 
 
 sol_svd <- matrix(0, 61, n_simu)
 sol_ml <- matrix(0, 61, n_simu)
 
-# eigen
 
-# lambda_hat_svd <- matrix(0, 18, n_simu)
-# omega_hat_svd <- matrix(0, 12, n_simu)
-# rho_hat_svd <- matrix(0, 15, n_simu)
-# beta_hat_svd <- matrix(0, 2, n_simu)
-# gamma_hat_svd <- matrix(0, 4, n_simu)
-# r2_hat_svd <- matrix(0, 2, n_simu)
-# psi_hat_svd <- matrix(0, 3, n_simu)
-# var_hat_svd <- matrix(0, 6, n_simu)
-# f_svd <- rep(0, n_simu)
-# param_svd <- matrix(0, 61, n_simu)
-# z <- rep(NA, n_simu)
-# svd_pval <- rep(NA, n_simu)
 lili_lambda_svd <- list()
 lili_beta_svd <- list()
 lili_gamma_svd <- list()
@@ -86,6 +95,15 @@ lili_phi_endo_svd <- list()
 lili_phi_exo_svd <- list()
 lili_S <- list()
 
+lili_lambda_ml <- list()
+lili_phi_exo_ml <- list()
+lili_phi_endo_ml <- list()
+lili_theta_ml <- list()
+lili_gamma_ml <- list()
+lili_beta_ml <- list()
+lili_is_dag_ml <- list()
+lili_correl_same_diag_ml <- list()
+
 # Maximum likelihood
 lambda_hat_ml <- matrix(0, 18, n_simu) # les correlations entre facteurs et y
 omega_hat_ml <- matrix(0, 12, n_simu) # les w de poids pour les blocs formatifs
@@ -101,7 +119,7 @@ f_ml <- rep(0, n_simu) # goodness of fit?
 param_ml <- matrix(0, 61, n_simu)
 lrt_pval <- rep(NA, n_simu)
 vcov_pval <- rep(NA, n_simu)
-
+error_ML <- rep(NA, n_simu)
 
 
 # Goodness of fit
@@ -110,6 +128,8 @@ gof <- matrix(NA, 2, n_simu)
 J <- length(is_endogenes)
 
 for (b in seq_len(n_simu)) {
+  Sigma_SVD <- NULL
+  fit.svd <- NULL
   if (b %% 10 == 0) print(b)
   # try(
   #   {
@@ -142,14 +162,11 @@ for (b in seq_len(n_simu)) {
   })
 
 
-  # fit.svd <- svdSEM_multi(Y, li_C,
-  #   scale = FALSE,
-  #   mode = rep("reflective", n_blocs),
-  #   bias = FALSE
-  # )
-
   tryCatch(
     {
+      # if (b <= 7) {
+      #   stop("stop svd")
+      # }
       fit.svd <- svdSEM_multi(Y, li_C,
         scale = FALSE,
         mode = rep("reflective", n_blocs),
@@ -169,473 +186,307 @@ for (b in seq_len(n_simu)) {
       lili_phi_exo_svd[[b]] <- fit.svd$li_phi_exo
       lili_S[[b]] <- fit.svd$li_S
 
+      for (j in 1:J) {
+        Sigma_svd_ii <- fit.svd$SIGMA_IMPLIED[sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j], sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j]]
+        Sigma_true_ii <- SIGMA_TRUE[sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j], sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j]]
+        ecart_ii <- norm(as.matrix(Sigma_svd_ii) - as.matrix(Sigma_true_ii), "F")
+        ecarts_sigma_per_bloc[j, b] <- ecart_ii
+      }
       Sigma_SVD <- fit.svd$SIGMA_IMPLIED
+
+      ## TESTING
+      li_Lambda <- fit.svd$li_Lambda
+      mat_Lambda <- Matrix::bdiag(li_Lambda)
+      P_tilde_approx <- t(mat_Lambda) %*% SIGMA_TRUE %*% mat_Lambda
+      print(round(as.matrix(P_tilde_approx), 2))
+      P_tilde_obtained <- t(mat_Lambda) %*% Sigma_SVD %*% mat_Lambda
+      print(round(as.matrix(P_tilde_obtained), 2))
+      # print(round(as.matrix(abs(P_tilde_approx - P_tilde_obtained)), 2))
+
+
+      # relat_P <- round(as.matrix(abs(fit.svd$P_tilde - P_TRUE) / abs(P_TRUE)), 2)
+      # mask <- as.matrix(P_TRUE) < 1e-2
+      # relat_P[mask] <- 0
+      # print(paste("Relative error:", norm(as.matrix(relat_P), "F")))
+
+      # print("relative error")
+      # relat <- round(as.matrix(abs(Sigma_SVD - SIGMA_TRUE) / abs(SIGMA_TRUE)), 2)
+      # mask <- as.matrix(SIGMA_TRUE) < 1e-2
+      # relat[mask] <- 0
+      # print(norm(as.matrix(relat), "F"))
+      ### END TESTING
 
 
       erreur_abs <- norm(as.matrix(Sigma_SVD) - as.matrix(SIGMA_TRUE), "F")
+
       error_SVD[b] <- erreur_abs
       ecart_empirique_svd[b] <- norm(as.matrix(Sigma_SVD) - as.matrix(S), "F")
     },
     error = function(e) {
       message("Erreur dans svd à l'itération ", b)
+      warning(paste("Erreur dans svd à l'itération", b, ":", conditionMessage(e)))
     }
   )
-  # print(paste("erreur Sigma SVD", erreur_abs))
 
-
-  for (j in 1:J) {
-    Sigma_svd_ii <- fit.svd$SIGMA_IMPLIED[sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j], sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j]]
-    Sigma_true_ii <- SIGMA_TRUE[sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j], sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j]]
-    ecart_ii <- norm(as.matrix(Sigma_svd_ii) - as.matrix(Sigma_true_ii), "F")
-    ecarts_sigma_per_bloc[j, b] <- ecart_ii
-  }
-
-
-  # # TEST de significativité
-  # boot_out <- svdSEM_infer(fit.svd, B = 1000, verbose = TRUE)
-  # z[b] <- diff(boot_out$gamma[2:3, 1]) / sd(diff(t(boot_out$out[[4]][, 2:3]))) # meme test de significativite gaussian par bootstrap qu'ailleurs
-  # svd_pval[b] <- 2 * pnorm(abs(z[b]), lower.tail = FALSE)
-
-  #################
-  # flatten la solution svd avec seulement les paramètres décisifs pour l'estimation
-  #################
-
-  # à mettre dans le try d'avant: au cas où ça marche pas ATTENTION
 
   if (do_ML) {
-    big_mat_Lambda <- do.call(cbind, fit.svd$li_Lambda)
-    big_vec_Lambda <- as.vector(big_mat_Lambda) # colonne par colonne : ordre lexico j puis r
+    tryCatch(
+      {
+        if (is.null(Sigma_SVD)) {
+          # warning(paste("SVD failed at iteration", b, "- ML estim from scratch"))
+          init_base <- TRUE
+        } else {
+          min_eigenvalue <- min(eigen(Sigma_SVD, symmetric = TRUE, only.values = TRUE)$values)
+          if (min_eigenvalue < 1e-8) {
+            warning(paste("SVD implied covariance matrix is not positive definite at iteration", b, "value:", min_eigenvalue, "< 1e-8 - ML estim from scratch"))
+            init_base <- TRUE
+          } else {
+            init_base <- FALSE
+          }
+        }
+        if (!is.null(fit.svd)) {
+          big_mat_Lambda <- do.call(cbind, fit.svd$li_Lambda)
+          big_vec_Lambda <- as.vector(big_mat_Lambda) # colonne par colonne : ordre lexico j puis r
+        }
 
-    li_vec_phi_exo <- lapply(1:R_try, function(r) {
-      phi_exo <- fit.svd$li_phi_exo[[r]]
-      upper_tri <- phi_exo[upper.tri(phi_exo, diag = FALSE)]
-      return(upper_tri)
-    })
+        if (mauvais_depart | init_base) {
+          li_vec_lambda <- lapply(1:J, function(j) {
+            Lambda_j <- matrix(0, nrow = vec_indicators_per_bloc[j], ncol = R_try)
+            for (r in 1:R_try) {
+              delta <- rep(0, vec_indicators_per_bloc[j])
+              delta[r] <- 1
+              Lambda_j[, r] <- delta
+            }
+            vec_lambda_j <- as.vector(Lambda_j)
+            return(vec_lambda_j)
+          })
+          big_vec_Lambda <- do.call(c, li_vec_lambda)
+        }
 
-    big_vec_phi_exo <- do.call(c, li_vec_phi_exo)
-    li_vec_phi_endo <- lapply(1:R_try, function(r) {
-      phi_endo <- fit.svd$li_phi_endo[[r]]
-      upper_tri <- phi_endo[upper.tri(phi_endo, diag = FALSE)]
-      gr <- fit.svd$li_gr[[r]]
-      if (!igraph::is_dag(gr)) {
-        return(upper_tri)
-      } else {
-        return(c())
+        ####
+        if (!is.null(fit.svd)) {
+          li_vec_phi_exo <- lapply(1:R_try, function(r) {
+            phi_exo <- fit.svd$li_phi_exo[[r]]
+            upper_tri <- phi_exo[upper.tri(phi_exo, diag = FALSE)]
+            return(upper_tri)
+          })
+        }
+        n_exogenes <- sum(!is_endogenes)
+        n_endogenes <- sum(is_endogenes)
+
+
+        if (mauvais_depart | init_base) {
+          li_vec_phi_exo <- lapply(1:R_try, function(r) {
+            phi_exo <- matrix(0, nrow = n_exogenes, ncol = n_exogenes)
+            upper_tri <- phi_exo[upper.tri(phi_exo, diag = FALSE)]
+            upper_tri[] <- 0
+            return(upper_tri)
+          })
+        }
+
+        big_vec_phi_exo <- do.call(c, li_vec_phi_exo)
+
+        if (!is.null(fit.svd)) {
+          li_vec_phi_endo <- lapply(1:R_try, function(r) {
+            phi_endo <- fit.svd$li_phi_endo[[r]]
+            upper_tri <- phi_endo[upper.tri(phi_endo, diag = FALSE)]
+            gr <- fit.svd$li_gr[[r]]
+            if (!igraph::is_dag(gr)) {
+              return(upper_tri)
+            } else {
+              return(c())
+            }
+            return(upper_tri)
+          })
+        }
+
+        li_gr <- lapply(li_C, function(C) igraph::graph_from_adjacency_matrix(C))
+
+        if (mauvais_depart | init_base) {
+          li_vec_phi_endo <- lapply(1:R_try, function(r) {
+            phi_endo <- matrix(0, nrow = n_endogenes, ncol = n_endogenes)
+            upper_tri <- phi_endo[upper.tri(phi_endo, diag = FALSE)]
+            gr <- li_gr[[r]]
+            if (!igraph::is_dag(gr)) {
+              upper_tri[] <- 0
+              return(upper_tri)
+            } else {
+              return(c())
+            }
+          })
+        }
+
+        big_vec_phi_endo <- do.call(c, li_vec_phi_endo)
+
+        if (!is.null(fit.svd)) {
+          theta <- do.call(c, fit.svd$li_theta)
+        }
+        if (mauvais_depart | init_base) {
+          theta <- rep(0.1, sum(vec_indicators_per_bloc))
+        }
+
+
+        li_non_null_beta_gamma <- lapply(1:R_try, function(r) {
+          # non_null_beta <- matrix(0, nrow = nrow(li_beta[[r]]), ncol = ncol(li_beta[[r]]))
+          # non_null_gamma <- matrix(0, nrow = nrow(li_gamma[[r]]), ncol = ncol(li_gamma[[r]]))
+          C <- li_C[[r]]
+          exo_endo <- ind_exo_endo(C)
+          ind_exo <- exo_endo$ind_exo
+          ind_endo <- exo_endo$ind_endo
+          C_endo <- C[ind_endo, ind_endo]
+          C_exo_to_endo <- C[ind_exo, ind_endo]
+          non_null_gamma <- t(C_exo_to_endo)
+          non_null_beta <- t(C_endo)
+          return(list(non_null_gamma = non_null_gamma, non_null_beta = non_null_beta))
+        })
+
+        if (!is.null(fit.svd)) {
+          li_beta <- fit.svd$li_beta
+          li_vec_beta <- lapply(1:R_try, function(r) {
+            non_null_beta <- li_non_null_beta_gamma[[r]]$non_null_beta
+            beta_r <- li_beta[[r]]
+            beta_r[non_null_beta == 0] <- NA
+            vec_beta_r <- as.vector(beta_r)
+            vec_beta_r <- vec_beta_r[!is.na(vec_beta_r)]
+            return(vec_beta_r)
+          })
+
+          vec_beta <- do.call(c, li_vec_beta)
+        }
+
+
+        if (mauvais_depart | init_base) {
+          vec_beta <- rep(0, sum(sapply(li_non_null_beta_gamma, function(x) sum(x$non_null_beta))))
+        }
+
+        if (!is.null(fit.svd)) {
+          li_gamma <- fit.svd$li_gamma
+          li_vec_gamma <- lapply(1:R_try, function(r) {
+            non_null_gamma <- li_non_null_beta_gamma[[r]]$non_null_gamma
+            gamma_r <- li_gamma[[r]]
+            gamma_r[non_null_gamma == 0] <- NA
+            vec_gamma_r <- as.vector(gamma_r)
+            vec_gamma_r <- vec_gamma_r[!is.na(vec_gamma_r)]
+            return(vec_gamma_r)
+          })
+          vec_gamma <- do.call(c, li_vec_gamma)
+        }
+        if (mauvais_depart | init_base) {
+          vec_gamma <- rep(0, sum(sapply(li_non_null_beta_gamma, function(x) sum(x$non_null_gamma))))
+        }
+
+
+        if (!is.null(fit.svd)) {
+          P_IMPLIED <- fit.svd$P_IMPLIED
+          li_correl_same_diag <- lapply(1:J, function(j) {
+            index_low <- R_try * (j - 1) + 1
+            index_high <- R_try * j
+            diag_bloc <- P_IMPLIED[index_low:index_high, index_low:index_high]
+            diag_vec <- diag_bloc[upper.tri(diag_bloc)]
+            return(diag_vec)
+          })
+        }
+
+        if (mauvais_depart | init_base) {
+          li_correl_same_diag <- lapply(1:J, function(j) {
+            index_low <- R_try * (j - 1) + 1
+            index_high <- R_try * j
+            diag_bloc <- diag(1, nrow = R_try, ncol = R_try)
+            diag_vec <- diag_bloc[upper.tri(diag_bloc)]
+            diag_vec[] <- 0
+            return(diag_vec)
+          })
+        }
+
+        vec_correl_same_diag <- do.call(c, li_correl_same_diag)
+
+
+        init_ml_with_S <- c(big_vec_Lambda, big_vec_phi_exo, big_vec_phi_endo, theta, vec_gamma, vec_beta, vec_correl_same_diag)
+
+        vrais_at_opt_SVD <- F1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma)
+        print(paste("vrais_at_opt SVD", vrais_at_opt_SVD))
+
+        # stop("F1")
+
+        if (ortho_solve) {
+          n_zeros_eq <- (J * R_try * (R_try - 1)) %/% 2
+        } else {
+          n_zeros_eq <- 0
+        }
+
+        which_theta <- (length(big_vec_Lambda) + length(big_vec_phi_exo) + length(big_vec_phi_endo) + 1):(length(big_vec_Lambda) + length(big_vec_phi_exo) + length(big_vec_phi_endo) + length(theta))
+
+        ineq_LB <- rep(-Inf, length(init_ml_with_S))
+        ineq_LB[which_theta] <- 0
+
+
+        setwd("~/Documents/SEMFC/SEMFC/easy_solver")
+        source("easy_solver.R")
+
+        # if (b <= 7) {
+        #   stop("stop ml")
+        # }
+
+        fit.ml <- easy_solver(
+          pars = init_ml_with_S,
+          fun = F1,
+          eqfun = heq1,
+          eqB = rep(0, n_zeros_eq),
+          ineqLB = ineq_LB,
+          S = S,
+          J = J,
+          R_try = R_try,
+          vec_indicators_per_bloc = vec_indicators_per_bloc,
+          li_gr = li_gr,
+          li_non_null_beta_gamma = li_non_null_beta_gamma,
+          maxit = 1000,
+          kkt_tol = 1e-5,
+          stepsize = 1e-3,
+          max_step = 10,
+          f_min = -1e-10,
+          trace = 10
+        )
+
+        convergence <- fit.ml$convergence
+        if (convergence != 0) {
+          warning(paste("Convergence issue at iteration", b, "with convergence code:", convergence))
+        }
+        opt_param <- fit.ml$pars
+        opt_vrais <- fit.ml$values[length(fit.ml$values)]
+
+        reconstructed_params <- reconstruct_blocs(opt_param, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma)
+        li_Lambda <- reconstructed_params$li_Lambda
+        li_phi_exo <- reconstructed_params$li_phi_exo
+        li_phi_endo <- reconstructed_params$li_phi_endo
+        vec_theta <- reconstructed_params$vec_theta
+        li_gamma <- reconstructed_params$li_gamma
+        li_beta <- reconstructed_params$li_beta
+        is_dag <- reconstructed_params$is_dag
+        li_correl_same_diag <- reconstructed_params$li_correl_same_diag
+
+        lili_lambda_ml[[b]] <- li_Lambda
+        lili_phi_exo_ml[[b]] <- li_phi_exo
+        lili_phi_endo_ml[[b]] <- li_phi_endo
+        lili_theta_ml[[b]] <- vec_theta
+        lili_gamma_ml[[b]] <- li_gamma
+        lili_beta_ml[[b]] <- li_beta
+        lili_is_dag_ml[[b]] <- is_dag
+        lili_correl_same_diag_ml[[b]] <- li_correl_same_diag
+        Sigma_ML <- calculate_Sigma(li_Lambda, li_phi_exo, li_phi_endo, vec_theta, li_gamma, li_beta, is_dag, li_correl_same_diag, li_C, is_endogenes)
+
+        error_ML[b] <- norm(as.matrix(Sigma_ML) - as.matrix(SIGMA_TRUE), "F")
+
+        print(paste("opt_vrais", opt_vrais))
+      },
+      error = function(e) {
+        message("Erreur dans ML à l'itération ", b, ": ", conditionMessage(e))
+        warning(paste("Erreur dans ML à l'itération", b, ":", conditionMessage(e)))
       }
-      return(upper_tri)
-    })
-
-    big_vec_phi_endo <- do.call(c, li_vec_phi_endo)
-
-    theta <- do.call(c, fit.svd$li_theta)
-
-    li_beta <- fit.svd$li_beta
-    li_gamma <- fit.svd$li_gamma
-
-    li_non_null_beta_gamma <- lapply(1:R_try, function(r) {
-      # non_null_beta <- matrix(0, nrow = nrow(li_beta[[r]]), ncol = ncol(li_beta[[r]]))
-      # non_null_gamma <- matrix(0, nrow = nrow(li_gamma[[r]]), ncol = ncol(li_gamma[[r]]))
-      C <- li_C[[r]]
-      exo_endo <- ind_exo_endo(C)
-      ind_exo <- exo_endo$ind_exo
-      ind_endo <- exo_endo$ind_endo
-      C_endo <- C[ind_endo, ind_endo]
-      C_exo_to_endo <- C[ind_exo, ind_endo]
-      non_null_gamma <- t(C_exo_to_endo)
-      non_null_beta <- t(C_endo)
-      return(list(non_null_gamma = non_null_gamma, non_null_beta = non_null_beta))
-    })
-
-    li_vec_beta <- lapply(1:R_try, function(r) {
-      non_null_beta <- li_non_null_beta_gamma[[r]]$non_null_beta
-      beta_r <- li_beta[[r]]
-      beta_r[non_null_beta == 0] <- NA
-      vec_beta_r <- as.vector(beta_r)
-      vec_beta_r <- vec_beta_r[!is.na(vec_beta_r)]
-      return(vec_beta_r)
-    })
-    vec_beta <- do.call(c, li_vec_beta)
-
-    li_vec_gamma <- lapply(1:R_try, function(r) {
-      non_null_gamma <- li_non_null_beta_gamma[[r]]$non_null_gamma
-      gamma_r <- li_gamma[[r]]
-      gamma_r[non_null_gamma == 0] <- NA
-      vec_gamma_r <- as.vector(gamma_r)
-      vec_gamma_r <- vec_gamma_r[!is.na(vec_gamma_r)]
-      return(vec_gamma_r)
-    })
-    vec_gamma <- do.call(c, li_vec_gamma)
-
-    P_IMPLIED <- fit.svd$P_IMPLIED
-    li_correl_same_diag <- lapply(1:J, function(j) {
-      index_low <- R_try * (j - 1) + 1
-      index_high <- R_try * j
-      diag_bloc <- P_IMPLIED[index_low:index_high, index_low:index_high]
-      diag_vec <- diag_bloc[upper.tri(diag_bloc)]
-      return(diag_vec)
-    })
-
-    vec_correl_same_diag <- do.call(c, li_correl_same_diag)
-
-
-    init_ml_with_S <- c(big_vec_Lambda, big_vec_phi_exo, big_vec_phi_endo, theta, vec_gamma, vec_beta, vec_correl_same_diag)
-
-    vrais_at_opt_SVD <- F1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma)
-    print(paste("vrais_at_opt SVD", vrais_at_opt_SVD))
-
-    # stop("F1")
-
-
-    n_zeros_eq <- (J * R_try * (R_try - 1)) %/% 2
-
-    which_theta <- (length(big_vec_Lambda) + length(big_vec_phi_exo) + length(big_vec_phi_endo) + 1):(length(big_vec_Lambda) + length(big_vec_phi_exo) + length(big_vec_phi_endo) + length(theta))
-
-    ineq_LB <- rep(-Inf, length(init_ml_with_S))
-    ineq_LB[which_theta] <- 0
-
-
-    #### ATTEMPT nloptr
-    # library(nloptr)
-
-    # x0 <- as.numeric(init_ml_with_S)
-    # R <- 1 # rayon max autour du départ (par coordonnée)
-
-    # fn <- function(x) {
-    #   F1(x,
-    #     S = S, J = J, R_try = R_try,
-    #     vec_indicators_per_bloc = vec_indicators_per_bloc,
-    #     li_gr = fit.svd$li_gr,
-    #     li_non_null_beta_gamma = li_non_null_beta_gamma
-    #   )
-    # }
-    # heq <- function(x) {
-    #   heq1(x,
-    #     S = S, J = J, R_try = R_try,
-    #     vec_indicators_per_bloc = vec_indicators_per_bloc,
-    #     li_gr = fit.svd$li_gr,
-    #     li_non_null_beta_gamma = li_non_null_beta_gamma
-    #   )
-    # }
-
-    # res <- nloptr(
-    #   x0 = x0,
-    #   eval_f = fn,
-    #   eval_grad_f = function(x) nl.grad(x, fn, heps = 1e-6),
-    #   eval_g_eq = heq,
-    #   eval_jac_g_eq = function(x) nl.jacobian(x, heq, heps = 1e-6),
-    #   lb = pmax(ineq_LB, x0 - R),
-    #   ub = x0 + R,
-    #   opts = list(
-    #     algorithm = "NLOPT_LD_SLSQP",
-    #     xtol_rel = 1e-8, ftol_rel = 1e-12,
-    #     tol_constraints_eq = rep(1e-6, n_zeros_eq),
-    #     maxeval = 500, print_level = 1
-    #   )
-    # )
-
-    ### END attempt nloptr
-
-    ### ATTEMPT solnp
-
-    # fit.ml <- solnp(
-    #   pars = init_ml_with_S,
-    #   fun = F1, eqfun = heq1, # aucune contrainte en plus
-    #   eqB = rep(0, n_zeros_eq),
-    #   LB = ineq_LB,
-    #   S = S, J = J, R_try = R_try, vec_indicators_per_bloc = vec_indicators_per_bloc, li_gr = fit.svd$li_gr, li_non_null_beta_gamma = li_non_null_beta_gamma,
-    #   control = list(trace = 0, tol = 1e-8, delta = 1e-7)
-    # )
-    #### TEST TRICHE #
-    # S <- SIGMA_TRUE
-    #### END TRICHE
-
-    ### Maison-solveur
-
-
-    fit.ml <- easy_solver(
-      pars = init_ml_with_S,
-      fun = F1,
-      eqfun = heq1,
-      eqB = rep(0, n_zeros_eq),
-      ineqLB = ineq_LB,
-      S = S,
-      J = J,
-      R_try = R_try,
-      vec_indicators_per_bloc = vec_indicators_per_bloc,
-      li_gr = fit.svd$li_gr,
-      li_non_null_beta_gamma = li_non_null_beta_gamma,
-      maxit = 1000,
-      kkt_tol = 1e-5,
-      stepsize = 1e-3,
-      max_step = 1,
-      f_min = -1e-10,
-      trace = 10
     )
-
-    convergence <- fit.ml$convergence
-    if (convergence != 0) {
-      warning(paste("Convergence issue at iteration", b, "with convergence code:", convergence))
-    }
-    opt_param <- fit.ml$pars
-    opt_vrais <- fit.ml$values[length(fit.ml$values)]
-
-    reconstructed_params <- reconstruct_blocs(opt_param, S, J, R_try, vec_indicators_per_bloc, fit.svd$li_gr, li_non_null_beta_gamma)
-    li_Lambda <- reconstructed_params$li_Lambda
-    li_phi_exo <- reconstructed_params$li_phi_exo
-    li_phi_endo <- reconstructed_params$li_phi_endo
-    vec_theta <- reconstructed_params$vec_theta
-    li_gamma <- reconstructed_params$li_gamma
-    li_beta <- reconstructed_params$li_beta
-    is_dag <- reconstructed_params$is_dag
-    li_correl_same_diag <- reconstructed_params$li_correl_same_diag
-
-    if (any(vec_theta > 99)) {
-      print("augmenter upper bound sur theta car atteinte")
-    }
-
-    print(paste("opt_vrais", opt_vrais))
-
-    print(li_Lambda)
-
-    # print(t(li_Lambda[[1]]) %*% li_Lambda[[1]])
-
-    stop("done ML")
   }
-
-
-  #   sol_svd[, b] <- init_ml_with_S <-
-  #     as.vector(c(
-  #       Reduce("c", fit.svd$lambda),
-  #       R_LVM_SVD[1:4, 1:4][upper.tri(R_LVM_SVD[1:4, 1:4])],
-  #       fit.svd$gamma[1, 1:2], fit.svd$gamma[2, 3:4],
-  #       fit.svd$beta[1, 2], fit.svd$beta[2, 1],
-  #       R_LVM_SVD[5, 6],
-  #       S[1:3, 1:3][upper.tri(S[1:3, 1:3], diag = TRUE)],
-  #       S[4:6, 4:6][upper.tri(S[4:6, 4:6], diag = TRUE)],
-  #       S[7:9, 7:9][upper.tri(S[7:9, 7:9], diag = TRUE)],
-  #       S[10:12, 10:12][upper.tri(S[10:12, 10:12], diag = TRUE)],
-  #       apply(X[, 13:15], 2, var) - fit.svd$lambda[[5]]^2,
-  #       apply(X[, 16:18], 2, var) - fit.svd$lambda[[6]]^2
-  #     ))
-
-  #   # Minimiser la likelihood par quasi newton a gradient calcule auto. F1 est la likelhood pour ce modele precis
-  #   fit.ml <- solnp(
-  #     pars = init_ml_with_S,
-  #     fun = F1, eqfun = heq1, # aucune contrainte en plus
-  #     eqB = rep(0, 4), S = S,
-  #     control = list(trace = 0, tol = 1e-8)
-  #   )
-
-  #   # ML output
-  #   x <- fit.ml$pars
-
-
-  #   # Likelihood Ratio Test
-  #   fit.ml0 <- solnp(
-  #     pars = init_ml_with_S,
-  #     fun = F1, eqfun = heq0, # on a contrainte une egalite entre gamme_12 et gamma_23
-  #     eqB = rep(0, 5), S = S,
-  #     control = list(trace = 0, tol = 1e-8)
-  #   )
-
-  #   # ML output
-  #   x0 <- fit.ml0$pars
-
-  #   lrt_pval[b] <- pchisq((N - 1) * (F1(x0, S) - F1(x, S)),
-  #     1,
-  #     lower.tail = F
-  #   )
-
-
-  #   # asymptotic test based on the CAN properties of ML
-  #   # -> asymptotic covariance matrix of theta
-
-  #   # Jacobian and hessian comutation
-
-  #   # Jacobienne de vech(Sigma)
-  #   JAC <- numDeriv::jacobian(s_implied, x = x, S = S, jac = TRUE)
-  #   # On reordonne la jacobienne en une liste de matrice dSigma/dtheta_i (indice de liste i)
-  #   full_jac <- sapply(1:NCOL(JAC),
-  #     function(x) {
-  #       ds_dt <- matrix(0, NCOL(S), NCOL(S))
-  #       ds_dt[upper.tri(ds_dt, diag = T)] <- JAC[, x]
-  #       ds_dt <- ds_dt + t(ds_dt) - diag(diag(ds_dt))
-  #     },
-  #     simplify = FALSE
-  #   )
-
-  #   nb_param <- length(x)
-  #   B <- matrix(0, nb_param, nb_param)
-  #   Sinv <- solve(s_implied(x, S, jac = F)) # S_implied inversee
-  #   for (i in 1:61) {
-  #     for (j in i:61) {
-  #       B[i, j] <- 0.5 * sum(diag(Sinv %*% full_jac[[i]] %*% Sinv %*% full_jac[[j]])) # information de Fischer (eq 38)
-  #     }
-  #   }
-
-  #   B <- B + t(B) - diag(diag(B))
-
-  #   # Calcule la matrice H (juste en dessous de l'eq 38: contraintes sur blocs formatifs)
-  #   H <- sapply(
-  #     1:4,
-  #     function(b) {
-  #       numDeriv::jacobian(h_theta, x = x, block = b) # calcul de la b-ieme colonne de H
-  #     }
-  #   )
-
-  #   P <- solve(rbind(
-  #     cbind(B + H %*% t(H), H),
-  #     cbind(t(H), matrix(0, 4, 4))
-  #   ))[1:61, 1:61] # Matrice P de l'equationn 39. Attention ici B est le I_theta: information de Fischer
-
-  #   VCOV <- P / N # Estimation de la covariance de l'estimateur Theta
-  #   SD <- sqrt(diag(VCOV)) # Estimation des ecarts types de chaque estimation de Theta
-
-  #   z <- abs(diff(x[26:27])) / sqrt(VCOV[26, 26] + VCOV[27, 27] - 2 * VCOV[26, 27])
-  #   vcov_pval[b] <- 2 * pnorm(z, lower.tail = F) # test de significativite des coefficients presente page 249 avec la methode de calcul des ecarts types en ML
-
-  #   P_EXO <- matrix(c(
-  #     1, x[19], x[20], x[22],
-  #     x[19], 1, x[21], x[23],
-  #     x[20], x[21], 1, x[24],
-  #     x[22], x[23], x[24], 1
-  #   ), 4, 4) # Estimation ML de la corrrelation entre latentes exogenes
-
-  #   P_ENDO <- matrix(c(
-  #     1, x[31],
-  #     x[31], 1
-  #   ), 2, 2) # Estimation ML de la corrrelation entre latentes endogenes
-
-  #   # path coefficients
-  #   G <- matrix(c(
-  #     x[25], x[26], 0, 0,
-  #     0, 0, x[27], x[28]
-  #   ), 2, 4, byrow = TRUE) # Estimation ML de Gamma
-
-  #   # path coefficients
-  #   B <- matrix(c(
-  #     0, x[29],
-  #     x[30], 0
-  #   ), 2, 2, byrow = TRUE) # Estimation ML de B
-
-  #   R_LVM_ML <- rbind(
-  #     cbind(P_EXO, P_EXO %*% t(G) %*% t(solve(diag(2) - B))),
-  #     cbind(solve(diag(2) - B) %*% G %*% P_EXO, P_ENDO)
-  #   ) # Estimation ML de la matrice de correlation entre toutes les latentes
-
-  #   I_B_ML <- diag(2) - B
-
-  #   PSI_ML <- I_B_ML %*% P_ENDO %*% t(I_B_ML) - G %*% P_EXO %*% t(G) # Estimatuib ML de PSI
-
-  #   r2_1_ML <- 1 - PSI_ML[1, 1] # R^2 de la premiere latente endogene
-  #   r2_2_ML <- 1 - PSI_ML[2, 2] # R^2 de la deuxieme latente endogene
-
-  #   # Omega
-  #   # cov between MVs
-  #   S1 <- matrix(c(
-  #     x[32], x[33], x[35],
-  #     x[33], x[34], x[36],
-  #     x[35], x[36], x[37]
-  #   ), 3, 3) # Cov entre les indicatrices du premier bloc formatif
-
-  #   # cov between MVs
-
-  #   S2 <- matrix(c(
-  #     x[38], x[39], x[41],
-  #     x[39], x[40], x[42],
-  #     x[41], x[42], x[43]
-  #   ), 3, 3) # Cov entre les indicatrices du deuxieme bloc formatif etc...
-
-  #   # cov between MVs
-  #   S3 <- matrix(c(
-  #     x[44], x[45], x[47],
-  #     x[45], x[46], x[48],
-  #     x[47], x[48], x[49]
-  #   ), 3, 3)
-  #   # cov between MVs
-  #   S4 <- matrix(c(
-  #     x[50], x[51], x[53],
-  #     x[51], x[52], x[54],
-  #     x[53], x[54], x[55]
-  #   ), 3, 3)
-
-  #   LAMBDA_ML <- bdiag(split(x[1:18], f = rep(1:6, each = 3))) # (bloc diagonale des lambda: exactement Lambda dans l'article nouveau)
-  #   RESID_VAR_ML <- apply(X, 2, var) - x[1:18]^2 # variance residuelle (surtout valable pour les blocs reflectifs). Attention ce n'est peut-etre pas la solution ML (meme si normalement oui...)
-  #   SIGMA_ML <- LAMBDA_ML %*% R_LVM_ML %*% t(LAMBDA_ML) + diag(RESID_VAR_ML) # Sigma implied
-
-  #   # corriger ce sigma pour blocs formatifs (ou RESID_VAR_ML etait inapplicable)
-  #   SIGMA_ML[1:3, 1:3] <- S1 # S[1:3, 1:3]
-  #   SIGMA_ML[4:6, 4:6] <- S2 # S[4:6, 4:6]
-  #   SIGMA_ML[7:9, 7:9] <- S3 # S[7:9, 7:9]
-  #   SIGMA_ML[10:12, 10:12] <- S4 # S[10:12, 10:12]
-
-  #   S_1 <- solve(S1)
-  #   S_2 <- solve(S2)
-  #   S_3 <- solve(S3)
-  #   S_4 <- solve(S4)
-
-  #   # Calcul des scores w
-  #   omega_ML <- c(
-  #     S_1 %*% x[1:3] / drop(sqrt(x[1:3] %*% S_1 %*% x[1:3])),
-  #     S_2 %*% x[4:6] / drop(sqrt(x[4:6] %*% S_2 %*% x[4:6])),
-  #     S_3 %*% x[7:9] / drop(sqrt(x[7:9] %*% S_3 %*% x[7:9])),
-  #     S_4 %*% x[10:12] / drop(sqrt(x[10:12] %*% S_4 %*% x[10:12]))
-  #   )
-
-  #   # Enregistrer les resultats
-  #   lambda_hat_ml[, b] <- x[1:18]
-  #   omega_hat_ml[, b] <- omega_ML
-  #   rho_hat_ml[, b] <- R_LVM_ML[upper.tri(R_LVM_ML)]
-  #   beta_hat_ml[, b] <- x[30:29]
-  #   gamma_hat_ml[, b] <- x[25:28]
-  #   r2_hat_ml[, b] <- c(r2_1_ML, r2_2_ML)
-  #   psi_hat_ml[, b] <- PSI_ML[upper.tri(PSI_ML, diag = TRUE)]
-  #   var_hat_ml[, b] <- c(
-  #     apply(Y[[5]], 2, var) - x[13:15]^2,
-  #     apply(Y[[6]], 2, var) - x[16:18]^2
-  #   )
-  #   std_err_ml[, b] <- SD
-
-  #   # Calcul des erreurs quadratiques entre les matrices de covariance estimees et la vraie matrice de covariance pour les blocs formatifs (vs TRUE et vs SVD = empirique)
-  #   sigma_hat[5, b] <- d_LS(S1, SIGMA11)
-  #   sigma_hat[6, b] <- d_LS(S2, SIGMA22)
-  #   sigma_hat[7, b] <- d_LS(S3, SIGMA33)
-  #   sigma_hat[8, b] <- d_LS(S4, SIGMA44)
-  #   sigma_hat[9, b] <- d_LS(S1, S[1:3, 1:3])
-  #   sigma_hat[10, b] <- d_LS(S2, S[4:6, 4:6])
-  #   sigma_hat[11, b] <- d_LS(S3, S[7:9, 7:9])
-  #   sigma_hat[12, b] <- d_LS(S4, S[10:12, 10:12])
-
-  #   # goodness of fit
-  #   gof[1, b] <- d_LS(SIGMA_SVD, SIGMA)
-  #   gof[2, b] <- d_LS(SIGMA_ML, SIGMA)
-
-  #   # param eigen
-  #   param_svd[, b] <- init_ml_with_S
-
-  #   # param ml
-  #   param_ml[, b] <- x
-
-  #   # F_ml
-  #   f_ml[b] <- F1(x, S)
-
-  #   # F_svd
-  #   f_svd[b] <- F1(init_ml_with_S, S)
-  #   },
-  #   silent = TRUE
-  # )
 }
-# print("poids lambda SVD")
-# print(lambda_hat_svd)
-# print("erreurs de fit SVD en proportion de la norme de Frobenius de chaque bloc")
-# vec_norm_frob <- c(norm(SIGMA11, type = "F"), norm(SIGMA22, type = "F"), norm(SIGMA33, type = "F"), norm(SIGMA44, type = "F"))
-# print(sigma_hat[1:4, ] / vec_norm_frob)
 
-# lili_lambda_star_svd[[b]] <- fit.svd$li_Lambda
-# lili_beta_svd[[b]] <- fit.svd$li_beta
-# lili_gamma_svd[[b]] <- fit.svd$li_gamma
-# lili_psi_svd[[b]] <- fit.svd$li_psi
-# li_P_svd[[b]] <- fit.svd$P_IMPLIED
+### On calcule les stats SVD
 
 li_P_svd_non_null <- li_P_svd[!sapply(li_P_svd, is.null)]
 P_tridim <- simplify2array(li_P_svd_non_null)
@@ -646,8 +497,8 @@ lili_Lambda_aggregate <- lapply(1:J, function(j) {
   li_Lambda_j <- lapply(lili_lambda_svd, function(x) x[[j]])
   li_Lambda_j_non_null <- li_Lambda_j[!sapply(li_Lambda_j, is.null)]
   li_Lambda_j_tridim <- simplify2array(li_Lambda_j_non_null)
-  Lambda_j_sd <- round(apply(li_Lambda_j_tridim, c(1, 2), sd, na.rm = TRUE), 3)
-  Lambda_j_mean <- round(apply(li_Lambda_j_tridim, c(1, 2), mean, na.rm = TRUE), 3)
+  Lambda_j_sd <- round(apply(li_Lambda_j_tridim, c(1, 2), sd, na.rm = TRUE), n_signif)
+  Lambda_j_mean <- round(apply(li_Lambda_j_tridim, c(1, 2), mean, na.rm = TRUE), n_signif)
   return(list(Lambda_j_sd = Lambda_j_sd, Lambda_j_mean = Lambda_j_mean))
 })
 
@@ -673,18 +524,12 @@ lili_S_aggregate <- lapply(1:J, function(i) {
   })
 })
 
-# print(lili_S_aggregate[[5]][[5]]$sd)
-# print(lili_S_aggregate[[5]][[5]]$mean)
-# print(SIGMA_TRUE[17:20, 17:20])
-# print(mean(lili_S_aggregate[[5]][[5]]$mean - as.matrix(SIGMA_TRUE[17:20, 17:20])))
-# stop()
-
 lili_gamma_aggregate <- lapply(1:R_try, function(r) {
   li_gamma_j <- lapply(lili_gamma_svd, function(x) x[[r]])
   li_gamma_j_non_null <- li_gamma_j[!sapply(li_gamma_j, is.null)]
   li_gamma_j_tridim <- simplify2array(li_gamma_j_non_null)
-  gamma_j_sd <- round(apply(li_gamma_j_tridim, c(1, 2), sd, na.rm = TRUE), 3)
-  gamma_j_mean <- round(apply(li_gamma_j_tridim, c(1, 2), mean, na.rm = TRUE), 3)
+  gamma_j_sd <- round(apply(li_gamma_j_tridim, c(1, 2), sd, na.rm = TRUE), n_signif)
+  gamma_j_mean <- round(apply(li_gamma_j_tridim, c(1, 2), mean, na.rm = TRUE), n_signif)
   return(list(gamma_j_sd = gamma_j_sd, gamma_j_mean = gamma_j_mean))
 })
 
@@ -692,8 +537,8 @@ lili_beta_aggregate <- lapply(1:R_try, function(r) {
   li_beta_j <- lapply(lili_beta_svd, function(x) x[[r]])
   li_beta_j_non_null <- li_beta_j[!sapply(li_beta_j, is.null)]
   li_beta_j_tridim <- simplify2array(li_beta_j_non_null)
-  beta_j_sd <- round(apply(li_beta_j_tridim, c(1, 2), sd, na.rm = TRUE), 3)
-  beta_j_mean <- round(apply(li_beta_j_tridim, c(1, 2), mean, na.rm = TRUE), 3)
+  beta_j_sd <- round(apply(li_beta_j_tridim, c(1, 2), sd, na.rm = TRUE), n_signif)
+  beta_j_mean <- round(apply(li_beta_j_tridim, c(1, 2), mean, na.rm = TRUE), n_signif)
   return(list(beta_j_sd = beta_j_sd, beta_j_mean = beta_j_mean))
 })
 
@@ -701,8 +546,8 @@ lili_psi_aggregate <- lapply(1:R_try, function(r) {
   li_psi_j <- lapply(lili_psi_svd, function(x) x[[r]])
   li_psi_j_non_null <- li_psi_j[!sapply(li_psi_j, is.null)]
   li_psi_j_tridim <- simplify2array(li_psi_j_non_null)
-  psi_j_sd <- round(apply(li_psi_j_tridim, c(1, 2), sd, na.rm = TRUE), 3)
-  psi_j_mean <- round(apply(li_psi_j_tridim, c(1, 2), mean, na.rm = TRUE), 3)
+  psi_j_sd <- round(apply(li_psi_j_tridim, c(1, 2), sd, na.rm = TRUE), n_signif)
+  psi_j_mean <- round(apply(li_psi_j_tridim, c(1, 2), mean, na.rm = TRUE), n_signif)
   return(list(psi_j_sd = psi_j_sd, psi_j_mean = psi_j_mean))
 })
 
@@ -710,8 +555,8 @@ lili_endo_aggregate <- lapply(1:R_try, function(r) {
   li_endo_j <- lapply(lili_phi_endo_svd, function(x) x[[r]])
   li_endo_j_non_null <- li_endo_j[!sapply(li_endo_j, is.null)]
   li_endo_j_tridim <- simplify2array(li_endo_j_non_null)
-  endo_j_sd <- round(apply(li_endo_j_tridim, c(1, 2), sd, na.rm = TRUE), 3)
-  endo_j_mean <- round(apply(li_endo_j_tridim, c(1, 2), mean, na.rm = TRUE), 3)
+  endo_j_sd <- round(apply(li_endo_j_tridim, c(1, 2), sd, na.rm = TRUE), n_signif)
+  endo_j_mean <- round(apply(li_endo_j_tridim, c(1, 2), mean, na.rm = TRUE), n_signif)
   return(list(endo_j_sd = endo_j_sd, endo_j_mean = endo_j_mean))
 })
 
@@ -719,18 +564,19 @@ lili_exo_aggregate <- lapply(1:R_try, function(r) {
   li_exo_j <- lapply(lili_phi_exo_svd, function(x) x[[r]])
   li_exo_j_non_null <- li_exo_j[!sapply(li_exo_j, is.null)]
   li_exo_j_tridim <- simplify2array(li_exo_j_non_null)
-  exo_j_sd <- round(apply(li_exo_j_tridim, c(1, 2), sd, na.rm = TRUE), 3)
-  exo_j_mean <- round(apply(li_exo_j_tridim, c(1, 2), mean, na.rm = TRUE), 3)
+  exo_j_sd <- round(apply(li_exo_j_tridim, c(1, 2), sd, na.rm = TRUE), n_signif)
+  exo_j_mean <- round(apply(li_exo_j_tridim, c(1, 2), mean, na.rm = TRUE), n_signif)
   return(list(exo_j_sd = exo_j_sd, exo_j_mean = exo_j_mean))
 })
 
 
-
-li_Lambda_star_2 <- lapply(lili_lambda_svd, function(x) x[[2]] / sum(x[[2]]^2)^0.5)
-li_lambda_star_2_non_null <- li_Lambda_star_2[!sapply(li_Lambda_star_2, is.null)]
-li_lambda_star_2_tridim <- simplify2array(li_lambda_star_2_non_null)
-Lambda_star_2_sd <- apply(li_lambda_star_2_tridim, c(1, 2), sd, na.rm = TRUE)
-Lambda_star_2_mean <- apply(li_lambda_star_2_tridim, c(1, 2), mean, na.rm = TRUE)
+# li_Lambda_star_2 <- lapply(lili_lambda_svd, function(x) x[[2]] / sum(x[[2]]^2)^0.5)
+# li_lambda_star_2_non_null <- li_Lambda_star_2[!sapply(li_Lambda_star_2, is.null)]
+# li_lambda_star_2_tridim <- simplify2array(li_lambda_star_2_non_null)
+# print(li_lambda_star_2_tridim)
+# print(li_lambda_star_2_tridim[, , 1])
+# Lambda_star_2_sd <- apply(li_lambda_star_2_tridim, c(1, 2), sd, na.rm = TRUE)
+# Lambda_star_2_mean <- apply(li_lambda_star_2_tridim, c(1, 2), mean, na.rm = TRUE)
 
 li_beta_1 <- lapply(lili_beta_svd, function(x) x[[1]])
 li_beta_1_non_null <- li_beta_1[!sapply(li_beta_1, is.null)]
@@ -748,859 +594,202 @@ li_theta_svd <- lapply(1:J, function(j) {
   li_theta_j <- lapply(lili_theta_svd, function(x) x[[j]])
   li_theta_j_non_null <- li_theta_j[!sapply(li_theta_j, is.null)]
   li_theta_j_bidim <- simplify2array(li_theta_j_non_null)
-  theta_j_sd <- round(apply(li_theta_j_bidim, c(1), sd, na.rm = TRUE), 3)
-  theta_j_mean <- round(apply(li_theta_j_bidim, c(1), mean, na.rm = TRUE), 3)
+  theta_j_sd <- round(apply(li_theta_j_bidim, c(1), sd, na.rm = TRUE), n_signif)
+  theta_j_mean <- round(apply(li_theta_j_bidim, c(1), mean, na.rm = TRUE), n_signif)
   return(list(theta_j_sd = theta_j_sd, theta_j_mean = theta_j_mean))
 })
 
-if (show) {
-  print("ground truth endo")
-  print(li_R22_TRUE)
 
-  print("ground truth exo")
-  print(li_PHI_TRUE)
+### On calcule les stats ML
 
-  print("endo svd")
+if (do_ML) {
+  lili_Lambda_ml_aggregate <- lapply(1:J, function(j) {
+    li_Lambda_j <- lapply(lili_lambda_ml, function(x) x[[j]])
+    li_Lambda_j_non_null <- li_Lambda_j[!sapply(li_Lambda_j, is.null)]
+    li_Lambda_j_tridim <- simplify2array(li_Lambda_j_non_null)
+    Lambda_j_sd <- round(apply(li_Lambda_j_tridim, c(1, 2), sd, na.rm = TRUE), n_signif)
+    Lambda_j_mean <- round(apply(li_Lambda_j_tridim, c(1, 2), mean, na.rm = TRUE), n_signif)
+    return(list(Lambda_j_sd = Lambda_j_sd, Lambda_j_mean = Lambda_j_mean))
+  })
+
+  lili_norm_lambda_ml_aggregate <- lapply(lili_Lambda_ml_aggregate, function(mat) {
+    vec_norm <- apply(mat$Lambda_j_mean, 2, function(x) sqrt(sum(x^2)))
+    return(vec_norm)
+  })
+
+  lili_gamma_ml_aggregate <- lapply(1:R_try, function(r) {
+    li_gamma_j <- lapply(lili_gamma_ml, function(x) x[[r]])
+    li_gamma_j_non_null <- li_gamma_j[!sapply(li_gamma_j, is.null)]
+    li_gamma_j_tridim <- simplify2array(li_gamma_j_non_null)
+    gamma_j_sd <- round(apply(li_gamma_j_tridim, c(1, 2), sd, na.rm = TRUE), n_signif)
+    gamma_j_mean <- round(apply(li_gamma_j_tridim, c(1, 2), mean, na.rm = TRUE), n_signif)
+    return(list(gamma_j_sd = gamma_j_sd, gamma_j_mean = gamma_j_mean))
+  })
+
+  lili_beta_ml_aggregate <- lapply(1:R_try, function(r) {
+    li_beta_j <- lapply(lili_beta_ml, function(x) x[[r]])
+    li_beta_j_non_null <- li_beta_j[!sapply(li_beta_j, is.null)]
+    li_beta_j_tridim <- simplify2array(li_beta_j_non_null)
+    beta_j_sd <- round(apply(li_beta_j_tridim, c(1, 2), sd, na.rm = TRUE), n_signif)
+    beta_j_mean <- round(apply(li_beta_j_tridim, c(1, 2), mean, na.rm = TRUE), n_signif)
+    return(list(beta_j_sd = beta_j_sd, beta_j_mean = beta_j_mean))
+  })
+
+  lili_theta_ml_non_null <- lili_theta_ml[!sapply(lili_theta_ml, is.null)]
+  theta_ml_tridim <- simplify2array(lili_theta_ml_non_null)
+  theta_ml_sd <- round(apply(theta_ml_tridim, 1, sd, na.rm = TRUE), n_signif)
+  theta_ml_mean <- round(apply(theta_ml_tridim, 1, mean, na.rm = TRUE), n_signif)
+
+  lili_endo_ml_aggregate <- lapply(1:R_try, function(r) {
+    li_endo_j <- lapply(lili_phi_endo_ml, function(x) x[[r]])
+    li_endo_j_non_null <- li_endo_j[!sapply(li_endo_j, is.null)]
+    if (length(li_endo_j_non_null) == 0) {
+      return(list(endo_j_sd = NULL, endo_j_mean = NULL))
+    }
+    li_endo_j_tridim <- simplify2array(li_endo_j_non_null)
+    endo_j_sd <- round(apply(li_endo_j_tridim, c(1, 2), sd, na.rm = TRUE), n_signif)
+    endo_j_mean <- round(apply(li_endo_j_tridim, c(1, 2), mean, na.rm = TRUE), n_signif)
+    return(list(endo_j_sd = endo_j_sd, endo_j_mean = endo_j_mean))
+  })
+
+  lili_exo_ml_aggregate <- lapply(1:R_try, function(r) {
+    li_exo_j <- lapply(lili_phi_exo_ml, function(x) x[[r]])
+    li_exo_j_non_null <- li_exo_j[!sapply(li_exo_j, is.null)]
+    li_exo_j_tridim <- simplify2array(li_exo_j_non_null)
+    exo_j_sd <- round(apply(li_exo_j_tridim, c(1, 2), sd, na.rm = TRUE), n_signif)
+    exo_j_mean <- round(apply(li_exo_j_tridim, c(1, 2), mean, na.rm = TRUE), n_signif)
+    return(list(exo_j_sd = exo_j_sd, exo_j_mean = exo_j_mean))
+  })
+
+  lili_is_dag_ml_non_null <- lili_is_dag_ml[!sapply(lili_is_dag_ml, is.null)]
+  is_dag_ml_tridim <- simplify2array(lili_is_dag_ml_non_null)
+  is_dag_ml_mean <- apply(is_dag_ml_tridim, 1, mean, na.rm = TRUE)
+
+  lili_correl_same_diag_ml_aggregate <- lapply(1:J, function(j) {
+    li_correl_j <- lapply(lili_correl_same_diag_ml, function(x) x[[j]])
+    li_correl_j_non_null <- li_correl_j[!sapply(li_correl_j, is.null)]
+    li_correl_j_tridim <- simplify2array(li_correl_j_non_null)
+    correl_j_sd <- round(apply(li_correl_j_tridim, c(1, 2), sd, na.rm = TRUE), n_signif)
+    correl_j_mean <- round(apply(li_correl_j_tridim, c(1, 2), mean, na.rm = TRUE), n_signif)
+    return(list(correl_j_sd = correl_j_sd, correl_j_mean = correl_j_mean))
+  })
+}
+
+print(paste("Nombre d'itérations SVD échouées :", sum(sapply(lili_lambda_svd, is.null))))
+print(paste("erreur SVD moyenne L2 sur Sigma:", mean(error_SVD, na.rm = TRUE)))
+
+if (do_ML) {
+  print(paste("Nombre d'itérations ML échouées :", sum(sapply(lili_lambda_ml, is.null))))
+  print(paste("erreur ML moyenne L2 sur Sigma:", mean(error_ML, na.rm = TRUE)))
+}
+
+
+if (show_svd) {
+  print("SVD Lambda")
+  print(lili_Lambda_aggregate)
+
+  print("SVD normes Lambda")
+  print(lili_norm_lambda_aggregate)
+
+  print("SVD Phi endo")
   print(lili_endo_aggregate)
 
-  print("exo svd")
+  print("SVD Phi exo")
   print(lili_exo_aggregate)
 
-
-  print("ground truth Beta Gamma")
-
-  print(li_BETA_TRUE)
-
-  print("sep")
-
-  print(li_GAMMA_TRUE)
-
-  print("Beta Gamma estimated svd")
-  print(lili_beta_aggregate)
-  print("sep")
+  print("SVD Gamma")
   print(lili_gamma_aggregate)
 
-  print("ground truth psi")
-  print(li_PSI_TRUE)
+  print("SVD Beta")
+  print(lili_beta_aggregate)
 
-  print("psi svd estimated")
+  print("SVD Theta")
+  print(li_theta_svd)
+
+  print("SVD Psi")
   print(lili_psi_aggregate)
-
-
-  print("normes Lambda ground truth")
-  print(li_lambda_norm_TRUE)
-
-  print("estimate svd")
-
-  print(lili_norm_lambda_aggregate)
 }
 
+if (show_ml & do_ML) {
+  print("ML Lambda")
+  print(lili_Lambda_ml_aggregate)
 
-# print("truth Theta")
-# print(round(Theta_TRUE, 3))
+  print("ML normes Lambda")
+  print(lili_norm_lambda_ml_aggregate)
 
-# print("estimated theta via svd")
-# print(li_theta_svd)
+  print("ML Phi endo")
+  print(lili_endo_ml_aggregate)
 
+  print("ML Phi exo")
+  print(lili_exo_ml_aggregate)
 
-# print(round(abs(gamma_1_mean), 4))
-# print(round(gamma_1_sd, 4))
+  print("ML Gamma")
+  print(lili_gamma_ml_aggregate)
 
-# print(round(abs(beta_1_mean), 4))
-# print(round(beta_1_sd, 4))
+  print("ML Beta")
+  print(lili_beta_ml_aggregate)
 
-# print("ground_truth")
+  print("ML Theta")
+  print(list(theta_ml_sd = theta_ml_sd, theta_ml_mean = theta_ml_mean))
 
-# print(li_lambda_TRUE)
+  print("ML is_dag")
+  print(is_dag_ml_mean)
 
-# print("estimated with mean and sd")
+  print("ML correlations within blocks")
+  print(lili_correl_same_diag_ml_aggregate)
 
-# print(lili_Lambda_aggregate)
 
+  ### UNIQUEMENT si TRICHE = TRUE pour la suite
 
-# print(round(abs(Lambda_star_2_mean), 4))
-# print(round(Lambda_star_2_sd , 4))
-# print("P_true")
-
-# print(round(as.matrix(P_TRUE), 3))
-
-# print("P estim")
-
-# print(round(as.matrix(P_mean), 3))
-
-# print(round(abs(as.matrix(P_mean) - as.matrix(P_TRUE)), 3))
-# # print(round(P_sd, 4))
-
-print("svd vs true")
-print(mean(error_SVD, na.rm = TRUE))
-print("svd vs empirique")
-print(mean(ecart_empirique_svd, na.rm = TRUE))
-print("empirique vs true")
-print(mean(ecart_true_empirique, na.rm = TRUE))
-
-# print("moyennes ecarts per blocs")
-# vec_ecarts <- apply(ecarts_sigma_per_bloc, 1, mean, na.rm = TRUE)
-# print(round(vec_ecarts, 3))
-
-stop("On est au bout")
-
-
-
-##################################################
-############ Table IMPROPER SOLUTIONS ############
-##################################################
-
-# On va refiter le modele n_simu fois pour chaque taille d'echantillon N, et compter le nombre de solutions impropres (matrice de correlation non positive definie) pour SVD et ML. On va stocker les resultats dans des matrices Table_improper et Table_improper_ml.
-N <- c(seq(20, 100, by = 10), 200, 300, 400, 500, 600, 700)
-n_simu <- 2
-n_improper <- 9 # nombre de criteres a checker en SVD pour l'exemple donne avant de conclure que la solution est impropre ou non
-n_improper_ml <- 7
-improper_sol <- array(NA, dim = c(n_simu, n_improper, length(N)))
-improper_sol_ml <- array(NA, dim = c(n_simu, n_improper_ml, length(N)))
-Table_improper <- matrix(0, 9, length(N))
-Table_improper_ml <- matrix(0, 7, length(N))
-
-
-set.seed(27) # my favorite number
-for (n in 1:length(N)) {
-  for (s in 1:n_simu) {
-    print(paste(N[n], " & ", s))
-    X <- mvrnorm(N[n], rep(0, 18), SIGMA, empirical = FALSE)
-    colnames(X) <- paste("X", rep(1:6, each = 3), rep(1:3, 6), sep = "")
-    S <- cov(X)
-
-    Y <- list(
-      X1 = X[, 1:3], X2 = X[, 4:6], X3 = X[, 7:9],
-      X4 = X[, 10:12], X5 = X[, 13:15], X6 = X[, 16:18]
-    )
-
-    C <- matrix(c(
-      0, 0, 0, 0, 1, 0,
-      0, 0, 0, 0, 1, 0,
-      0, 0, 0, 0, 0, 1,
-      0, 0, 0, 0, 0, 1,
-      0, 0, 0, 0, 0, 1,
-      0, 0, 0, 0, 1, 0
-    ), 6, 6, byrow = TRUE)
-
-    colnames(C) <- rownames(C) <- names(Y)
-
-    fit.svd <- svdSEM(Y, C,
-      scale = FALSE,
-      mode = c(
-        rep("formative", 4),
-        rep("reflective", 2)
-      ),
-      bias = FALSE
-    )
-
-    improper_sol[s, , n] <- improper(fit.svd)
-
-    dimnames(improper_sol) <- list(1:n_simu, c(
-      "RELIABILITY_COEF",
-      "RHO_JH",
-      "P_TILDE",
-      "P_IMPLIED",
-      "THETA_JH",
-      "STD_LAMBDA",
-      "SIGMA_IMPLIED",
-      "R2",
-      "PSI"
-    ), N)
-
-    try(
-      {
-        #################################
-        # Restricted Maximum Likelihood #
-        #################################
-
-        init_ml <- as.vector(c(
-          Reduce("c", fit.svd$lambda),
-          fit.svd$P_IMPLIED[1:4, 1:4][upper.tri(fit.svd$P_IMPLIED[1:4, 1:4])],
-          fit.svd$gamma[1, 1:2], fit.svd$gamma[2, 3:4],
-          fit.svd$beta[1, 2], fit.svd$beta[2, 1],
-          fit.svd$P_IMPLIED[5, 6],
-          S[1:3, 1:3][upper.tri(S[1:3, 1:3], diag = TRUE)],
-          S[4:6, 4:6][upper.tri(S[4:6, 4:6], diag = TRUE)],
-          S[7:9, 7:9][upper.tri(S[7:9, 7:9], diag = TRUE)],
-          S[10:12, 10:12][upper.tri(S[10:12, 10:12], diag = TRUE)],
-          apply(X[, 13:15], 2, var) - fit.svd$lambda[[5]]^2,
-          apply(X[, 16:18], 2, var) - fit.svd$lambda[[6]]^2
-        ))
-
-
-        fit.ml <- solnp(
-          pars = init_ml,
-          fun = F1, eqfun = heq1,
-          eqB = rep(0, 4), S = S,
-          control = list(trace = 0, tol = 1e-4)
-        )
-
-        # ML output
-        x <- fit.ml$pars
-
-
-        P_EXO <- matrix(c(
-          1, x[19], x[20], x[22],
-          x[19], 1, x[21], x[23],
-          x[20], x[21], 1, x[24],
-          x[22], x[23], x[24], 1
-        ), 4, 4)
-
-        P_ENDO <- matrix(c(
-          1, x[31],
-          x[31], 1
-        ), 2, 2)
-
-        # path coefficients
-        G <- matrix(c(
-          x[25], x[26], 0, 0,
-          0, 0, x[27], x[28]
-        ), 2, 4, byrow = TRUE)
-
-        # path coefficients
-        B <- matrix(c(
-          0, x[29],
-          x[30], 0
-        ), 2, 2, byrow = TRUE)
-
-        R_LVM_ML <- rbind(
-          cbind(P_EXO, P_EXO %*% t(G) %*% t(solve(diag(2) - B))),
-          cbind(solve(diag(2) - B) %*% G %*% P_EXO, P_ENDO)
-        )
-
-        I_B_ML <- diag(2) - B
-
-        PSI_ML <- I_B_ML %*% P_ENDO %*% t(I_B_ML) - G %*% P_EXO %*% t(G)
-
-        r2_1_ML <- 1 - PSI_ML[1, 1]
-        r2_2_ML <- 1 - PSI_ML[2, 2]
-        R2_ML <- c(r2_1_ML, r2_2_ML)
-
-        # Omega
-        # cov between MVs
-        S1 <- matrix(c(
-          x[32], x[33], x[35],
-          x[33], x[34], x[36],
-          x[35], x[36], x[37]
-        ), 3, 3)
-
-        # cov between MVs
-
-        S2 <- matrix(c(
-          x[38], x[39], x[41],
-          x[39], x[40], x[42],
-          x[41], x[42], x[43]
-        ), 3, 3)
-
-        # cov between MVs
-        S3 <- matrix(c(
-          x[44], x[45], x[47],
-          x[45], x[46], x[48],
-          x[47], x[48], x[49]
-        ), 3, 3)
-        # cov between MVs
-        S4 <- matrix(c(
-          x[50], x[51], x[53],
-          x[51], x[52], x[54],
-          x[53], x[54], x[55]
-        ), 3, 3)
-
-        LAMBDA_ML <- bdiag(split(x[1:18], f = rep(1:6, each = 3)))
-        STD_LAMBDA_ML <- LAMBDA_ML / apply(X, 2, var)
-        RESID_VAR_ML <- apply(X, 2, var) - x[1:18]^2
-        SIGMA_ML <- LAMBDA_ML %*% R_LVM_ML %*% t(LAMBDA_ML) + diag(RESID_VAR_ML)
-
-        SIGMA_ML[1:3, 1:3] <- S1 # S[1:3, 1:3]
-        SIGMA_ML[4:6, 4:6] <- S2 # S[4:6, 4:6]
-        SIGMA_ML[7:9, 7:9] <- S3 # S[7:9, 7:9]
-        SIGMA_ML[10:12, 10:12] <- S4 # S[10:12, 10:12]
-
-
-        # Improper solution 1 : number of out of range rho_jk
-        # Expected value : -1 <=rho_jk <=1
-
-        improper_sol_ml[s, 1, n] <- any(abs(R_LVM_ML[upper.tri(R_LVM_ML)]) > 1)
-
-        # Improper solution 2 : is P_IMPLIED positive definite
-        # Expected value = TRUE
-
-        improper_sol_ml[s, 2, n] <- any(eigen(R_LVM_ML)$values < 0)
-
-
-        # Improper solution 3 : is variance of the residual positive
-        # Expected value = TRUE
-
-        improper_sol_ml[s, 3, n] <- any(RESID_VAR_ML < 0)
-
-        # Improper solution 4 : number of out of range cor(y_jh, eta_j)
-        # Expected value : -1 <= cor(y_jh, eta_j) <=1
-
-        improper_sol_ml[s, 4, n] <- any(abs(STD_LAMBDA_ML) > 1)
-
-        # Improper solution 5 : is SIGMA_IMPLIED positive definite
-        # Expected value = TRUE
-
-        improper_sol_ml[s, 5, n] <- any(eigen(SIGMA_ML)$values < 0)
-
-        # Improper solution 6 : number of out of range R^2_i
-        # Expected value : 0 <= R^2_i <=1
-
-        improper_sol_ml[s, 6, n] <- any(R2_ML < 0 | R2_ML > 1)
-
-        # Improper solution 7 : is PSI positive definite
-        # Expected value = TRUE
-
-        improper_sol_ml[s, 7, n] <- any(eigen(PSI_ML)$values < 0)
-      },
-      silent = FALSE
-    )
-  }
+  # li_Lambda <- lapply(1:J, function(j) {
+  #   li_Lambda_j <- lili_Lambda_ml_aggregate[[j]]$Lambda_j_mean
+  # })
+  # mat_Lambda <- as.matrix(Matrix::bdiag(li_Lambda))
+  # P_estimate <- t(mat_Lambda) %*% SIGMA_TRUE %*% mat_Lambda
+  # P_all_approx <- t(mat_Lambda) %*% Sigma_ML %*% mat_Lambda
+  # print(round(as.matrix(P_estimate), 2))
+  # print(round(as.matrix(P_all_approx), 2))
 }
 
-dimnames(improper_sol_ml) <- list(1:n_simu, c(
-  "RHO_JH",
-  "P_IMPLIED",
-  "THETA_JH",
-  "STD_LAMBDA",
-  "SIGMA_IMPLIED",
-  "R2",
-  "PSI"
-), N)
+if (show_TRUE) {
+  round_list <- function(x) lapply(x, round, digits = n_signif)
 
-Table_improper <- sapply(
-  1:length(N),
-  function(x) colMeans(improper_sol[, , x])
-)
-colnames(Table_improper) <- N
-Table_improper[-c(1, 3), ] # virer les causes d'improprietes specifiques a SVD pour ne garder que celle qui sont communes a SVD et ML (et donc qui sont pertinentes pour comparer les deux methodes)
+  print("TRUE Lambda")
+  print(round_list(li_lambda_TRUE))
 
+  print("TRUE normes Lambda")
+  print(round_list(li_lambda_norm_TRUE))
 
-Table_improper_ml <- sapply(
-  1:length(N),
-  function(x) colMeans(improper_sol_ml[, , x])
-)
-colnames(Table_improper_ml) <- N
-Table_improper_ml
+  print("TRUE Phi endo")
+  print(round_list(li_R22_TRUE))
 
-#### Je m'arrete ici dans la lecture des tables de resultats, car le reste est juste la generation des tableaux de resultats pour notre cas particulier
+  print("TRUE Phi exo")
+  print(round_list(li_PHI_TRUE))
 
-#####################################
-############ Table SIGMA ############
-#####################################
+  print("TRUE Gamma")
+  print(round_list(li_GAMMA_TRUE))
 
-Table1 <- matrix(rowMeans(sigma_hat), 4, 3)
-rownames(Table1) <- c("Sigma_11", "Sigma_22", "Sigma_33", "Sigma_44")
-colnames(Table1) <- c(
-  "d_LS(empirical_S, Sigma)",
-  "d_LS(implied_S, Sigma)",
-  "d_LS(implied_S, empirical_S)"
-)
+  print("TRUE Beta")
+  print(round_list(li_BETA_TRUE))
 
-Table1
+  print("TRUE Theta")
+  print(round(Theta_TRUE, digits = n_signif))
 
-#####################################
-############ Table LAMBDA ###########
-#####################################
+  print("TRUE Psi")
+  print(round_list(li_PSI_TRUE))
 
-Table2 <- matrix(0, 18, 8)
-Table2[, 1] <- unlist(lambda)
-Table2[, 2] <- rowMeans(lambda_hat_svd)
-Table2[, 3] <- rowMeans(abs(lambda_hat_svd - Reduce("c", lambda)))
-Table2[, 4] <- rowMeans(lambda_hat_ml)
-Table2[, 5] <- rowMeans(abs(lambda_hat_ml - Reduce("c", lambda)))
-Table2[, 6] <- apply(lambda_hat_svd, 1, sd)
-Table2[, 7] <- apply(lambda_hat_ml, 1, sd)
-Table2[, 8] <- rowMeans(std_err_ml[1:18, ])
+  print("TRUE R2")
+  print(round_list(li_R2_TRUE))
 
-rownames(Table2) <- paste("lambda_", rep(1:6, each = 3), rep(1:3, 6), sep = "")
-colnames(Table2) <- c(
-  "Population", "Mean_SVD", "MAD_SVD",
-  "Mean_ML", "MAD_ML", "std_SVD",
-  "std_ML", "std_RML"
-)
+  print("TRUE is_dag")
+  print(vec_dag)
 
-round(Table2, 3)
+  print("TRUE correlations within blocks")
+  print(round_list(lapply(seq_along(is_endogenes), function(j) {
+    indices <- ((j - 1) * R_true + 1):(j * R_true)
+    P_TRUE[indices, indices]
+  })))
 
-#################################################
-############ Table residual variance ############
-#################################################
-
-Table3 <- matrix(0, 6, 8)
-Table3[, 1] <- 1 - 0.7^2
-Table3[, 2] <- rowMeans(var_hat_svd)
-Table3[, 3] <- rowMeans(abs(var_hat_svd - (1 - 0.7^2)))
-Table3[, 4] <- rowMeans(var_hat_ml)
-Table3[, 5] <- rowMeans(abs(var_hat_ml - (1 - 0.7^2)))
-Table3[, 6] <- apply(var_hat_svd, 1, sd)
-Table3[, 7] <- apply(var_hat_ml, 1, sd)
-Table3[, 8] <- rowMeans(std_err_ml[56:61, ])
-
-rownames(Table3) <- c(
-  "theta_51", "theta_52", "theta_53",
-  "theta_61", "theta_62", "theta_63"
-)
-
-colnames(Table3) <- c(
-  "Population", "Mean_SVD", "MAD_SVD",
-  "Mean_ML", "MAD_ML",
-  "std_SVD", "std_ML", "std_RML"
-)
-round(Table3, 3)
-
-################################
-#            Table 4           #
-##########    OMEGA    #########
-################################
-
-Table4 <- matrix(0, 12, 7)
-Table4[, 1] <- unlist(omega)
-Table4[, 2] <- rowMeans(omega_hat_svd)
-Table4[, 3] <- rowMeans(abs(omega_hat_svd - Reduce("c", omega)))
-Table4[, 4] <- rowMeans(omega_hat_ml)
-Table4[, 5] <- rowMeans(abs(omega_hat_ml - Reduce("c", omega)))
-Table4[, 6] <- apply(omega_hat_svd, 1, sd)
-Table4[, 7] <- apply(omega_hat_ml, 1, sd)
-
-rownames(Table4) <- paste("omega_", rep(1:4, each = 3), rep(1:3, 4), sep = "")
-colnames(Table4) <- c(
-  "Population", "Mean_SVD", "MAD_SVD",
-  "Mean_ML", "MAD_ML", "std_SVD", "std_ML"
-)
-
-round(Table4, 3)
-
-#######################################################
-####################### Table5 ########################
-############ Table structural model parameters ########
-#######################################################
-
-Table5 <- matrix(NA, 11, 8)
-Table5[1:4, 1] <- GAMMA[GAMMA != 0]
-Table5[1:4, 2] <- rowMeans(gamma_hat_svd)
-Table5[1:4, 3] <- rowMeans(abs(gamma_hat_svd - GAMMA[GAMMA != 0]))
-Table5[1:4, 4] <- rowMeans(gamma_hat_ml)
-Table5[1:4, 5] <- rowMeans(abs(gamma_hat_ml - GAMMA[GAMMA != 0]))
-Table5[1:4, 6] <- apply(gamma_hat_svd, 1, sd)
-Table5[1:4, 7] <- apply(gamma_hat_ml, 1, sd)
-Table5[1:4, 8] <- rowMeans(std_err_ml[25:28, ])
-
-Table5[5:6, 1] <- BETA[BETA != 0]
-Table5[5:6, 2] <- rowMeans(beta_hat_svd)
-Table5[5:6, 3] <- rowMeans(abs(beta_hat_svd - BETA[BETA != 0]))
-Table5[5:6, 4] <- rowMeans(beta_hat_ml)
-Table5[5:6, 5] <- rowMeans(abs(beta_hat_ml - BETA[BETA != 0]))
-Table5[5:6, 6] <- apply(beta_hat_svd, 1, sd)
-Table5[5:6, 7] <- apply(beta_hat_ml, 1, sd)
-Table5[5:6, 8] <- rowMeans(std_err_ml[29:30, ])
-
-Table5[7:9, 1] <- PSI[as.vector(upper.tri(PSI, diag = TRUE))]
-Table5[7:9, 2] <- rowMeans(psi_hat_svd)
-Table5[7:9, 3] <- rowMeans(abs(psi_hat_svd - PSI[as.vector(upper.tri(PSI, diag = TRUE))]))
-Table5[7:9, 4] <- rowMeans(psi_hat_ml)
-Table5[7:9, 5] <- rowMeans(abs(psi_hat_ml - PSI[as.vector(upper.tri(PSI, diag = TRUE))]))
-Table5[7:9, 6] <- apply(psi_hat_svd, 1, sd)
-Table5[7:9, 7] <- apply(psi_hat_ml, 1, sd)
-
-
-Table5[10:11, 1] <- R2
-Table5[10:11, 2] <- rowMeans(r2_hat_svd)
-Table5[10:11, 3] <- rowMeans(abs(r2_hat_svd - R2))
-Table5[10:11, 4] <- rowMeans(r2_hat_ml)
-Table5[10:11, 5] <- rowMeans(abs(r2_hat_ml - R2))
-Table5[10:11, 6] <- apply(r2_hat_svd, 1, sd)
-Table5[10:11, 7] <- apply(r2_hat_ml, 1, sd)
-
-rownames(Table5) <- c(
-  "gamma_11", "gamma_12", "gamma_23", "gamma_24",
-  "beta_21", "beta_12", "psi11", "psi12", "psi22",
-  "R2_1", "R2_2"
-)
-
-colnames(Table5) <- c(
-  "Population", "Mean_SVD", "MAD_SVD",
-  "Mean_ML", "MAD_ML",
-  "std_SVD", "std_ML", "std_RML"
-)
-
-round(Table5, 3)
-
-##################################
-############# Table6 #############
-############ Table rho ###########
-##################################
-
-Table6 <- matrix(NA, 15, 8)
-Table6[, 1] <- R[as.vector(upper.tri(R))]
-Table6[, 2] <- rowMeans(rho_hat_svd)
-Table6[, 3] <- rowMeans(abs(rho_hat_svd - R[as.vector(upper.tri(R))]))
-Table6[, 4] <- rowMeans(rho_hat_ml)
-Table6[, 5] <- rowMeans(abs(rho_hat_ml - R[as.vector(upper.tri(R))]))
-Table6[, 6] <- apply(rho_hat_svd, 1, sd)
-Table6[, 7] <- apply(rho_hat_ml, 1, sd)
-Table6[c(1:6, 15), 8] <- rowMeans(std_err_ml[c(19:24, 31), ])
-
-
-rownames(Table6) <- c(
-  "p12", "p13", "p23", "p14", "p24",
-  "p34", "p15", "p25", "p35", "p45",
-  "p16", "p26", "p36", "p46", "p56"
-)
-
-colnames(Table6) <- c(
-  "Population", "Mean_SVD", "MAD_SVD",
-  "Mean_ML", "MAD_ML",
-  "std_err_SVD", "std_err_ML", "std_RML"
-)
-
-round(Table6, 3)
-
-#####################################
-############ Table 8 ################
-# Empirical rejection probabilities #
-#####################################
-
-z <- (gamma_hat_svd[2, ] - gamma_hat_svd[3, ]) / sd(gamma_hat_svd[2, ] - gamma_hat_svd[3, ])
-
-Table8 <- matrix(NA, 1, 3)
-Table8[1, 1] <- mean(2 * pnorm(abs(z), lower.tail = F) < 0.05)
-Table8[1, 2] <- mean(vcov_pval < 0.05)
-Table8[1, 3] <- mean(lrt_pval < 0.05)
-
-colnames(Table8) <- c("SVD_SEM", "ML-SEM_ZSCORE", "ML-SEM_LRT")
-rownames(Table8) <- c("% of false alarms")
-round(Table8, 3)
-
-#########################################
-###      hypothesis testing with      ###
-###           ML-SEM, eigenSEM        ###
-#########################################
-
-# Bootstrap testing
-nsimu <- 2
-nboot <- 1000
-N <- c(300, 600, 1200)
-
-decision_svd <- matrix(NA, nsimu, length(N))
-decision_ml <- matrix(NA, nsimu, length(N))
-
-T_LS_SVD <- matrix(NA, nsimu, length(N))
-Tb_LS_SVD <- array(NA, c(nboot, nsimu, length(N)))
-f_ml <- matrix(NA, nsimu, length(N))
-
-set.seed(20091979) # my date of birth
-
-for (n in 1:length(N)) {
-  for (s in 1:nsimu) {
-    X <- mvrnorm(N[n], rep(0, 18), SIGMA, empirical = FALSE)
-    colnames(X) <- paste("X", rep(1:6, each = 3), rep(1:3, 6), sep = "")
-    S <- cov(X)
-
-    Y <- list(
-      X1 = X[, 1:3], X2 = X[, 4:6], X3 = X[, 7:9],
-      X4 = X[, 10:12], X5 = X[, 13:15], X6 = X[, 16:18]
-    )
-
-    C <- matrix(c(
-      0, 0, 0, 0, 1, 0,
-      0, 0, 0, 0, 1, 0,
-      0, 0, 0, 0, 0, 1,
-      0, 0, 0, 0, 0, 1,
-      0, 0, 0, 0, 0, 1,
-      0, 0, 0, 0, 1, 0
-    ), 6, 6, byrow = TRUE)
-
-    colnames(C) <- rownames(C) <- names(Y)
-
-    ##########
-    #  SVD   #
-    ##########
-
-    fit.svd <- svdSEM(Y, C,
-      scale = FALSE,
-      mode = c(
-        rep("formative", 4),
-        rep("reflective", 2)
-      ),
-      bias = FALSE
-    )
-
-    P_LVM_SVD <- fit.svd$P_IMPLIED
-    eigenval <- eigen(P_LVM_SVD)$values
-
-    if (!any(eigenval < 0)) {
-      T_LS_SVD[s, n] <- fit.svd$T_LS
-      try({
-        ##########
-        #   ML   #
-        ##########
-
-        init_ml_with_S <-
-          as.vector(c(
-            Reduce("c", fit.svd$lambda),
-            P_LVM_SVD[1:4, 1:4][upper.tri(P_LVM_SVD[1:4, 1:4])],
-            fit.svd$gamma[1, 1:2], fit.svd$gamma[2, 3:4],
-            fit.svd$beta[1, 2], fit.svd$beta[2, 1],
-            P_LVM_SVD[5, 6],
-            S[1:3, 1:3][upper.tri(S[1:3, 1:3], diag = TRUE)],
-            S[4:6, 4:6][upper.tri(S[4:6, 4:6], diag = TRUE)],
-            S[7:9, 7:9][upper.tri(S[7:9, 7:9], diag = TRUE)],
-            S[10:12, 10:12][upper.tri(S[10:12, 10:12], diag = TRUE)],
-            apply(X[, 13:15], 2, var) - fit.svd$lambda[[5]]^2,
-            apply(X[, 16:18], 2, var) - fit.svd$lambda[[6]]^2
-          ))
-
-
-        fit.ml <- solnp(
-          pars = init_ml_with_S,
-          fun = F1, eqfun = heq1,
-          eqB = rep(0, 4), S = S,
-          control = list(trace = 0)
-        )
-
-
-        # ML output
-        f_ml[s, n] <- F1(fit.ml$pars, S)
-      })
-    }
-
-    # transform the data sets in the way proposed
-    # by Yuan & Hayashi (2003)
-
-    if (!any(eigenval < 0)) {
-      Z_SVD <- scaleDataSet(X, fit.svd$SIGMA_IMPLIED)
-      Z_SVD <- lapply(
-        split(
-          data.frame(t(Z_SVD)),
-          as.factor(rep(1:6, each = 3))
-        ),
-        t
-      )
-    }
-
-
-    ################################
-    # Bootstrap hypotestis testing #
-    ################################
-
-    for (b in 1:nboot) {
-      ind <- sample(1:N[n], replace = TRUE)
-
-      ##########
-      # SVD  #
-      ##########
-
-      if (!any(eigenval < 0)) {
-        Zb_SVD <- lapply(Z_SVD, function(x) x[ind, ])
-        Sb_SVD <- cov2(Reduce("cbind", Zb_SVD), bias = FALSE)
-
-        fit.svd <- svdSEM(Zb_SVD, C,
-          scale = FALSE,
-          mode = c(rep("formative", 4), rep("reflective", 2)),
-          bias = FALSE
-        )
-
-        # SIGMA_SEM_SVD = fit.svd$SIGMA_IMPLIED
-        Tb_LS_SVD[b, s, n] <- fit.svd$T_LS
-      }
-    }
-    decision_ml[s, n] <- pchisq((N[n] - 1) * f_ml[s, n], 114, lower.tail = FALSE) <= 0.05
-    decision_svd[s, n] <- T_LS_SVD[s, n] > quantile(Tb_LS_SVD[, s, n], 0.95, na.rm = TRUE)
-  }
+  print("TRUE latent correlation matrix")
+  print(round(P_TRUE, digits = n_signif))
 }
-
-######################
-####### Table 7 ######
-# global test-of-fit #
-######################
-######################
-
-Table7 <- matrix(NA, 2, 3)
-
-Table7 <- rbind(
-  colMeans(decision_svd),
-  colMeans(decision_ml)
-)
-
-rownames(Table7) <- c("SVD-SEM", "ML-SEM")
-colnames(Table7) <- c("N=300", "N=600", "N=1200")
-round(Table7, 3)
-
-############################
-############################
-##### CASE STUDY: ECSI #####
-############################
-############################
-
-ECSI <- as.data.frame(read_excel("mobil.xls")) / 10
-A <- list(
-  CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
-  PERC_QUAL = ECSI[, c(
-    "PERQ1", "PERQ2", "PERQ3", "PERQ4",
-    "PERQ5", "PERQ6", "PERQ7"
-  )],
-  PERC_VALUE = ECSI[, c("PERV1", "PERV2")],
-  CUSTOMER_S = ECSI[, c("CUSA1", "CUSA2", "CUSA3")],
-  CUSTOMER_L = ECSI[, c("CUSL1", "CUSL2", "CUSL3")]
-)
-
-#######
-# ML #
-#######
-
-A2 <- data.frame(Reduce("cbind", A))
-
-sem.model <- "
-# latent variable definitions
-    eta1 =~ CUEX1+CUEX2+CUEX3
-    eta2 =~ PERQ1+PERQ2+PERQ3+PERQ4+PERQ5+PERQ6+PERQ7
-    eta3 =~ PERV1+PERV2
-    eta4 =~ CUSA1+CUSA2+CUSA3
-    eta5 =~ CUSL1+CUSL2+CUSL3
-
-    # Regressions
-    eta2 ~ eta1
-    eta3 ~ eta1 + eta2
-    eta4 ~ eta1 + eta2 + eta3
-    eta5 ~ eta4"
-
-fit.sem.ml <- sem(sem.model, data = A2, estimator = "ML")
-
-###########
-# SVD-SEM #
-###########
-
-C <- matrix(
-  c(
-    0, 0, 0, 0, 0,
-    1, 0, 0, 0, 0,
-    1, 1, 0, 0, 0,
-    1, 1, 1, 0, 0,
-    0, 0, 0, 1, 0
-  ),
-  5, 5,
-  byrow = FALSE
-)
-
-fit <- svdSEM(A, C,
-  scale = FALSE,
-  mode = rep("reflective", length(A)),
-  bias = FALSE
-)
-
-
-T_LS_SVD <- fit$T_LS
-T_LS_SEM <- d_LS(cov(A2), inspect(fit.sem.ml, "cov.ov"))
-
-
-######################
-#      Table10       #
-# Boostrap inference #
-######################
-boot_out <- svdSEM_infer(fit, B = 1000)
-estimate <- parameterEstimates(fit.sem.ml, standardized = TRUE)
-
-Table10 <- data.frame(boot_out$std_lambda,
-  std_loadings_sem = estimate[1:18, 12],
-  pval_std_loadings_sem = estimate[1:18, 7]
-)
-
-round(Table10, 3)
-
-############
-# Table 11 #
-############
-
-# The model-implied correlation matrix of the latent variables.
-P_LVM_SEM <- inspect(fit.sem.ml, what = "cor.lv")
-
-Table11 <- data.frame(
-  rho_tilda = fit$Ptilde[lower.tri(fit$Ptilde, diag = FALSE)],
-  rho_hat_svd = fit$P_IMPLIED[lower.tri(fit$P_IMPLIED, diag = FALSE)],
-  rho_hat_sem = P_LVM_SEM[lower.tri(P_LVM_SEM, diag = FALSE)]
-)
-
-rownames(Table11) <- c(
-  "p12", "p13", "p14", "p15",
-  "p23", "p24", "p25",
-  "p34", "p35",
-  "p45"
-)
-
-round(Table11, 3)
-
-############
-# Table12a #
-############
-# Estimate of structural equations and p-value
-b_svd <- boot_out$beta[, 1]
-g_svd <- boot_out$gamma[, 1]
-est_svd <- c(g_svd[1:2], b_svd[1], g_svd[3], b_svd[-1])
-pval_svd <- c(
-  boot_out$gamma[1:2, 4], boot_out$beta[1, 4],
-  boot_out$gamma[3, 4], boot_out$beta[-1, 4]
-)
-
-Table12a <- data.frame(
-  estimate_svd = est_svd,
-  pval = pval_svd,
-  estimate_sem = estimate[19:25, 12],
-  pval = estimate[19:25, 7]
-)
-
-round(Table12a, 3)
-
-############
-# Table12b #
-############
-# R-squared
-Table12b <- data.frame(
-  R2_SVD = fit$R2,
-  R2_SEM = inspect(fit.sem.ml, "R-square")[c("eta2", "eta3", "eta4", "eta5")]
-)
-
-rownames(Table12b) <- c(
-  "Perceived quality",
-  "Perceived value",
-  "Customer satisfaction",
-  "Customer loyalty"
-)
-
-round(Table12b, 3)
-
-
-########################
-# Table14: Test-of-fit #
-########################
-
-# Bootstrap testing: global fit
-# Tranforms the data sets in the way proposed
-# by Yuan & Hayashi (2003)
-
-gof <- svdSEM_gof(fit, B = 2000) # ~half of improper solutions
-hist(gof$Tb_LS)
-abline(v = gof$T_LS, col = "red")
-pval_svd <- mean(gof$T_LS <= gof$Tb_LS, na.rm = T)
-pval_svd
-
-
-############
-# Table 14 #
-############
-Test_of_fit_SVD <- data.frame(stat = gof$T_LS, pval = pval_svd)
-Test_of_fit_SEM <- data.frame(
-  CHISQ = fitMeasures(fit.sem.ml)["chisq"],
-  DF = fitMeasures(fit.sem.ml)["df"],
-  PVAL = fitMeasures(fit.sem.ml)["pvalue"],
-  T_LS_SEM,
-  CHISQ_ON_DF = fitMeasures(fit.sem.ml)["chisq"] / fitMeasures(fit.sem.ml)["df"],
-  RMSEA = fitMeasures(fit.sem.ml)["rmsea"],
-  RMSEA.CI.LOWER = fitMeasures(fit.sem.ml)["rmsea.ci.lower"],
-  RMSEA.CI.UPPER = fitMeasures(fit.sem.ml)["rmsea.ci.upper"],
-  CFI = fitMeasures(fit.sem.ml)["cfi"]
-)
-
-rownames(Test_of_fit_SVD) <- "SVD-SEM"
-Test_of_fit_SVD
-rownames(Test_of_fit_SEM) <- "ML-SEM"
-Test_of_fit_SEM

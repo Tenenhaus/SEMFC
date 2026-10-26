@@ -4,7 +4,6 @@
 ######################################
 library(Matrix)
 
-R_true <- 1
 
 is_endogenes <- c(rep(FALSE, 4), rep(TRUE, 2)) # 4 blocs exogenes et 2 endogenes
 n_blocs <- length(is_endogenes)
@@ -246,14 +245,37 @@ bloc_perturbation_TRUE <- matrix(least_val_propre, nrow = R_true, ncol = R_true,
 diag(bloc_perturbation_TRUE) <- 0
 perturbation <- Matrix::bdiag(lapply(1:length(is_endogenes), function(i) bloc_perturbation_TRUE)) # 6 blocs identiques pour lambda
 
+J <- length(is_endogenes)
+if (!diag_generate) {
+      for (i in 1:J) {
+            for (j in 1:J) {
+                  if (i > j) {
+                        perturbation_random_bloc <- matrix(runif(R_true * R_true, min = -least_val_propre, max = least_val_propre), nrow = R_true, ncol = R_true)
+                        perturbation_random_bloc_non_diag <- perturbation_random_bloc
+                        diag(perturbation_random_bloc_non_diag) <- 0
+
+                        # P_TRUE[((i - 1) * R_true + 1):(i * R_true), ((j - 1) * R_true + 1):(j * R_true)] <- P_TRUE[((i - 1) * R_true + 1):(i * R_true), ((j - 1) * R_true + 1):(j * R_true)] + 12 * perturbation_random_bloc_non_diag
+                        # P_TRUE[((j - 1) * R_true + 1):(j * R_true), ((i - 1) * R_true + 1):(i * R_true)] <- t(P_TRUE[((i - 1) * R_true + 1):(i * R_true), ((j - 1) * R_true + 1):(j * R_true)])
+                        P_TRUE[((i - 1) * R_true + 1):(i * R_true), ((j - 1) * R_true + 1):(j * R_true)] <- 40 * perturbation_random_bloc
+                        P_TRUE[((j - 1) * R_true + 1):(j * R_true), ((i - 1) * R_true + 1):(i * R_true)] <- t(P_TRUE[((i - 1) * R_true + 1):(i * R_true), ((j - 1) * R_true + 1):(j * R_true)])
+                  }
+            }
+      }
+}
+
 
 P_TRUE <- P_TRUE + perturbation # On ajoute une petite perturbation pour que la matrice soit positive definie
+
+
 
 least_val_propre <- min(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values)
 if (least_val_propre <= 0) {
       print(paste("La plus petite valeur propre apres perturbation de la matrice de correlation est :", least_val_propre))
       stop("La matrice de correlation entre les variables latentes n'est pas positive definie. Il faut revoir la definition des parametres du modele.")
 }
+# print(paste("La plus petite valeur propre apres perturbation de la matrice de correlation est :", least_val_propre))
+# print(P_TRUE)
+# print(least_val_propre)
 
 # print(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values)
 
@@ -294,7 +316,11 @@ if (do_composite) {
             norme_cible_TRUE <- sqrt(sum(first_lambda_TRUE^2))
             A <- matrix(rnorm(length(first_lambda_TRUE) * R_true), nrow = length(first_lambda_TRUE), ncol = R_true)
             A[, 1] <- first_lambda_TRUE
-            Q <- qr.Q(qr(A))
+            if (ortho_generate) {
+                  Q <- qr.Q(qr(A))
+            } else {
+                  Q <- A
+            }
             Q[, 1] <- first_lambda_TRUE / norme_cible_TRUE
 
             # Normes des autres colonnes : proches de la premiere,

@@ -1,0 +1,5 @@
+Les écarts relatifs sont toujours mauvais avec svd concernant Sigma. Ils diminuent sur P si assez d'individus: 10 000 pour R = 2 et 1000 pour R = 1. En-dessous on obtient quand même des estimations pas trop moches en temps normales de la plupart des paramètres, mais c'est plus hasardeux.
+Si j'enlève les hypothèses de diagonalité ça fait n'importe quoi dans le calcul des corrélations peu importe le nb d'individus dans le modèle de mesure... mais cela serait acceptable, le modèle n'étant plus identifiable. On aimerait par contre que les termes non diagonaux soient bien diminués dans la représentation choisie, au moins pour Sigma_TRUE en entrée. Ce n'est pas non plus le cas. Enfin, on voudrait au moins que les termes diagonaux des P_ij i!=j soient à peu près d'accord dans la représentation choisie. Ce n'est encore pas le cas. Bref, on fait un peu n'importe quoi. SAUF si on refine l'estimateur (ou on fait ML global). Là miraculeusement les termes de P_ij diagonaux deviennent bien estimés ce qui est TRES surprenant
+
+
+La non orthogonalité peut donner des résultats ahurissants sur Sigma avec n = 1000 individus alors que le max vrais 

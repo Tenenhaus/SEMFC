@@ -21,8 +21,11 @@ easy_solver <- function(
   trace = 1,
   use_bfgs = TRUE, # TRUE : direction quasi-Newton (BFGS inverse)
   bfgs_curv_tol = 1e-8, # seuil de la condition de courbure s'y > tol*|s||y|
-  bfgs_scale = TRUE
+  bfgs_scale = TRUE,
+  n_cores = 10, # > 1 : evaluations des differences finies en parallele (Linux/macOS)
+  cl = NULL
 ) {
+    stop("fail: implementation in R instead of C")
     x <- as.numeric(pars)
     n <- length(x)
 
@@ -71,64 +74,123 @@ easy_solver <- function(
     # Numerical gradient of the objective
     # ------------------------------------------------------------
 
-    numerical_gradient <- function(x) {
-        g <- numeric(n)
+    # ------------------------------------------------------------
+    # Differences finies centrees, paralleles, avec cache
+    # ------------------------------------------------------------
 
-        for (j in seq_len(n)) {
-            dx <- grad_eps * max(1, abs(x[j]))
+    par_lapply <- function(X, FUN, ...) {
+        res <- if (!is.null(cl)) {
+            parallel::parLapply(cl, X, FUN, ...)
+        } else if (n_cores > 1 && .Platform$OS.type != "windows") {
+            parallel::mclapply(X, FUN, ..., mc.cores = n_cores)
+        } else {
+            lapply(X, FUN, ...)
+        }
 
-            xp <- x
-            xm <- x
+        if (any(vapply(res, inherits, logical(1), "try-error"))) {
+            stop("Error during parallel finite differences")
+        }
 
-            xp[j] <- xp[j] + dx
-            xm[j] <- xm[j] - dx
+        res
+    }
 
-            fp <- f(xp)
-            fm <- f(xm)
+    fd_task <- function(j, x, do_f, do_h) {
+        dx <- grad_eps * max(1, abs(x[j]))
 
-            if (!is.finite(fp) || !is.finite(fm)) {
+        xp <- x
+        xm <- x
+        xp[j] <- xp[j] + dx
+        xm[j] <- xm[j] - dx
+
+        out <- list(dx = dx)
+
+        if (do_f) {
+            out$fp <- f(xp)
+            out$fm <- f(xm)
+        }
+
+        if (do_h) {
+            out$hp <- h(xp)
+            out$hm <- h(xm)
+        }
+
+        out
+    }
+
+    compute_derivs <- function(x, do_f, do_h) {
+        res <- par_lapply(seq_len(n), fd_task, x = x, do_f = do_f, do_h = do_h)
+
+        dx <- vapply(res, function(r) r$dx, numeric(1))
+        g <- NULL
+        J <- NULL
+
+        if (do_f) {
+            fp <- vapply(res, function(r) r$fp, numeric(1))
+            fm <- vapply(res, function(r) r$fm, numeric(1))
+
+            if (any(!is.finite(c(fp, fm)))) {
                 stop("Non finite objective during gradient calculation")
             }
 
-            g[j] <- (fp - fm) / (2 * dx)
+            g <- (fp - fm) / (2 * dx)
         }
 
-        g
+        if (do_h) {
+            J <- do.call(
+                cbind,
+                lapply(res, function(r) (r$hp - r$hm) / (2 * r$dx))
+            )
+            J <- matrix(J, ncol = n)
+        }
+
+        list(g = g, J = J)
     }
 
+    cache <- new.env()
+    cache$x <- NULL
+    cache$g <- NULL
+    cache$J <- NULL
 
-    # ------------------------------------------------------------
-    # Numerical Jacobian of the equality constraints
-    # ------------------------------------------------------------
+    reset_cache <- function(x) {
+        cache$x <- x
+        cache$g <- NULL
+        cache$J <- NULL
+    }
 
+    same_x <- function(x) !is.null(cache$x) && identical(cache$x, x)
+
+    # calcule gradient ET jacobienne en un seul passage parallel
+    numerical_gradient <- function(x) {
+        if (!same_x(x)) reset_cache(x)
+
+        if (is.null(cache$g)) {
+            d <- compute_derivs(x, TRUE, length(eqB) > 0)
+            cache$g <- d$g
+            if (!is.null(d$J)) cache$J <- d$J
+        }
+
+        cache$g
+    }
+
+    # jacobienne mise en cache
     numerical_jacobian <- function(x) {
-        hx <- h(x)
-        m <- length(hx)
-
-        if (m == 0) {
+        if (length(eqB) == 0) {
             return(matrix(0, 0, n))
         }
 
-        J <- matrix(0, m, n)
+        if (!same_x(x)) reset_cache(x)
 
-        for (j in seq_len(n)) {
-            dx <- grad_eps * max(1, abs(x[j]))
-
-            xp <- x
-            xm <- x
-
-            xp[j] <- xp[j] + dx
-            xm[j] <- xm[j] - dx
-
-            hp <- h(xp)
-            hm <- h(xm)
-
-            J[, j] <- (hp - hm) / (2 * dx)
+        if (is.null(cache$J)) {
+            cache$J <- compute_derivs(x, FALSE, TRUE)$J
         }
 
-        J
+        cache$J
     }
 
+    # jacobienne exacte SANS cache (utilisee par equality_correction)
+    jacobian_only <- function(x) {
+        compute_derivs(x, FALSE, TRUE)$J
+    }
 
     # ------------------------------------------------------------
     # Euclidean projection on lower bounds
@@ -423,98 +485,78 @@ easy_solver <- function(
     #
     # ------------------------------------------------------------
 
-    equality_correction <- function(x) {
+    equality_correction <- function(x, J0 = NULL) {
         if (length(eqB) == 0) {
-            return(list(
-                x = x,
-                success = TRUE
-            ))
+            return(list(x = x, success = TRUE))
         }
 
         xcur <- x
-
+        hcur <- h(xcur)
+        r <- hcur - eqB
+        J <- J0
+        J_fresh <- FALSE
 
         for (iter in seq_len(max_eq_correction)) {
-            hx <- h(xcur)
-            r <- hx - eqB
+            r_norm <- max(abs(r))
 
-            if (max(abs(r)) <= eq_tol) {
-                return(list(
-                    x = xcur,
-                    success = TRUE
-                ))
+            if (r_norm <= eq_tol) {
+                return(list(x = xcur, success = TRUE))
             }
 
-            J <- numerical_jacobian(xcur)
+            if (is.null(J)) {
+                J <- jacobian_only(xcur)
+                J_fresh <- TRUE
+            }
 
-            dx <- least_squares(
-                J,
-                -r
-            )
-
+            dx <- least_squares(J, -r)
             ndx <- sqrt(sum(dx^2))
 
             if (!is.finite(ndx)) {
-                return(list(
-                    x = xcur,
-                    success = FALSE
-                ))
+                return(list(x = xcur, success = FALSE))
             }
 
             if (ndx > max_step) {
                 dx <- dx * max_step / ndx
             }
 
-            xnext <- xcur + dx
+            accepted <- FALSE
+            alpha <- 1
 
-            xnext <- project_lb(xnext)
+            while (alpha >= 1e-6) {
+                xt <- project_lb(xcur + alpha * dx)
+                ht <- h(xt)
 
-            hnext <- h(xnext)
+                if (max(abs(ht - eqB)) < r_norm) {
+                    accepted <- TRUE
+                    break
+                }
 
-            if (max(abs(hnext - eqB)) <
-                max(abs(r))) {
-                xcur <- xnext
+                alpha <- alpha * backtrack
+            }
+
+            if (accepted) {
+                # Mise a jour de Broyden : J <- J + (y - J s) s' / s's
+                s <- xt - xcur
+                y <- ht - hcur
+                ss <- sum(s^2)
+
+                if (ss > 0) {
+                    J <- J + outer(y - as.numeric(J %*% s), s) / ss
+                }
+
+                xcur <- xt
+                hcur <- ht
+                r <- ht - eqB
+                J_fresh <- FALSE
+            } else if (J_fresh) {
+                return(list(x = xcur, success = FALSE))
             } else {
-                # Try a smaller correction
-
-                accepted <- FALSE
-                alpha <- 0.5
-
-                while (alpha >= 1e-6) {
-                    xt <- xcur + alpha * dx
-                    xt <- project_lb(xt)
-
-                    ht <- h(xt)
-
-                    if (
-                        max(abs(ht - eqB)) <
-                            max(abs(r))
-                    ) {
-                        xcur <- xt
-                        accepted <- TRUE
-                        break
-                    }
-
-                    alpha <- alpha * backtrack
-                }
-
-                if (!accepted) {
-                    return(list(
-                        x = xcur,
-                        success = FALSE
-                    ))
-                }
+                J <- NULL # chec avec J approche : on recalcule la J exacte
             }
         }
 
-        hx <- h(xcur)
-
-        list(
-            x = xcur,
-            success = max(abs(hx - eqB)) <= eq_tol
-        )
+        list(x = xcur, success = max(abs(r)) <= eq_tol)
     }
-
 
     # ------------------------------------------------------------
     # Initial point
@@ -651,11 +693,16 @@ easy_solver <- function(
                     H <- diag(sy / sum(y^2), n)
                 }
 
-                rho <- 1 / sy
-                I_n <- diag(n)
+                # rho <- 1 / sy
+                # I_n <- diag(n)
 
-                H <- (I_n - rho * s %*% t(y)) %*% H %*% (I_n - rho * y %*% t(s)) +
-                    rho * s %*% t(s)
+                # H <- (I_n - rho * s %*% t(y)) %*% H %*% (I_n - rho * y %*% t(s)) +
+                #     rho * s %*% t(s)
+
+                Hy <- as.numeric(H %*% y)
+                H <- H +
+                    ((sy + sum(y * Hy)) / sy^2) * outer(s, s) -
+                    (outer(Hy, s) + outer(s, Hy)) / sy
 
                 H_is_identity <- FALSE
             }
