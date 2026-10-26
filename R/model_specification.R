@@ -58,8 +58,12 @@ get_parameter_model_sem <- function(data, mode, relation_matrix, bias, scale){
 
   X <- do.call(cbind, data)
   S <- cov2(scale2(X, scale = scale, bias = bias), bias = bias)
+  if (any(eigen(S)$values) < 1e-5) {
+  
   tau <- RGCCA:::tau.estimate(X)
   S <- (1-tau) * S + tau * diag(diag(S))
+  warning("The sample covariance matrix is singular. Ledoit-Wolf shrinkage was applied.")
+  }
   n_row <- NROW(X)
 
   block_sizes <- sapply(data, NCOL)
