@@ -35,18 +35,17 @@
 compute_effect  <- function(BETA, GAMMA) {
 
   inv_I_B <- solve(diag(nrow(BETA)) - BETA)
-  # total effect endo (endo → endo)
+  # total effect endo (endo -> endo)
   total_endo <- inv_I_B - diag(nrow(BETA))
-  # indirect effects endogenous (endo → endo)
+  # indirect effects endogenous (endo -> endo)
   indirect_endo <- total_endo - BETA
 
-  # total effect exo (exo → endo)
+  # total effect exo (exo -> endo)
   total_exo <- inv_I_B %*% GAMMA
-  # Indirect effect exo (exo → endo)
+  # Indirect effect exo (exo -> endo)
   indirect_exo <- total_exo - GAMMA
 
-
-  # [exo → endo | endo → endo]
+  # [exo -> endo | endo -> endo]
   total_effect <- cbind(total_exo, total_endo)
 
 
@@ -87,7 +86,6 @@ filtering_matrix_effect <- function(M, s, start_index) {
   m <- nrow(M)
   n <- ncol(M)
   mat_index <- matrix(1:(m * n), m, n)
-  # Creation of V matrix
   idx_row <- mat_index[M != 0]
   idx_col <- start_index + seq_along(idx_row)
 
@@ -175,13 +173,10 @@ partial_derivative_exo_effect <- function(BETA, GAMMA, s, effect_type = "total")
   m <- nrow(GAMMA)  # number endo
   n <- ncol(GAMMA) # number exo
   len_vect_gamma <- length(GAMMA[ GAMMA != 0])
-
-
   # Beta part
   Vb <- filtering_matrix_effect(BETA, s, len_vect_gamma)
   inv_I_B <- solve(diag(m) - BETA)
   Kb <- kronecker(inv_I_B%*%GAMMA, t(inv_I_B))
-
   # Gamma part
   Vg <- filtering_matrix_effect(GAMMA, s, 0)
   M_effect_type <- diag(m)
@@ -189,7 +184,6 @@ partial_derivative_exo_effect <- function(BETA, GAMMA, s, effect_type = "total")
     M_effect_type <- matrix(0,m, m)
   }
   Kg <- kronecker(diag(n), t(inv_I_B - M_effect_type))
-
   J <- t(Vb) %*% Kb  + t(Vg) %*% Kg
 
   return(J)
