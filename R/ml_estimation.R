@@ -57,84 +57,112 @@
 #' @importFrom stats nlminb
 #'
 #' @keywords internal
-mlSEM <- function (init, S, model, tol = 1e-08,  constraint_tol = 1e-6){
+mlSEM <- function(init, S, model, tol = 1e-8,
+                  constraint_tol = 1e-6) {
 
   mode <- model$mode
-  # number of formative blocks
   r <- sum(mode == "formative")
 
+  solver <- if (r > 0L) "SLSQP" else "nlminb"
   f <- function (x) { return(F1(x, S, model)) }
   grad <- function(x){ return(grad_F1(x, S, model)) }
-  h_eq <- function(x){ return(heq(x, S, model)) }
-  grad_h_eq <- function(x){ return(grad_heq(x, S, model)) }
   hess <- function(x){ return(hess_F1(x, S, model)) }
+  if (r > 0L) {
+    h_eq <- function(x){ return(heq(x, S, model)) }
+    grad_h_eq <- function(x){ return(grad_heq(x, S, model)) }
+  }
+  result <- tryCatch({
 
-  if(r !=0){
-    result <- nloptr(
-      x0=init,
-      eval_f=f,
-      eval_grad_f=grad,
-      eval_g_eq = h_eq,
-      eval_jac_g_eq = grad_h_eq,
-      opts = list("algorithm"="NLOPT_LD_SLSQP",
-                  'xtol_rel' = tol,
-                  'maxeval' = 500)
+    if (r > 0L) {
+      nloptr::nloptr(
+        x0 = init,
+        eval_f = f,
+        eval_grad_f = grad,
+        eval_g_eq = h_eq,
+        eval_jac_g_eq = grad_h_eq,
+        opts = list(
+          algorithm = "NLOPT_LD_SLSQP",
+          xtol_rel = tol,
+          tol_constraints_eq = rep(constraint_tol, r),
+          maxeval = 500L
+        )
+      )
+
+    } else {
+
+      stats::nlminb(
+        start = init,
+        objective = f,
+        gradient = grad,
+        hessian = hess,
+        control = list(x.tol = tol)
+      )
+
+    }
+
+  }, error = function(e) e)
+
+  if (inherits(result, "error")) {
+
+    diagnostics <- list(
+      solver = solver,
+      converged = FALSE,
+      convergence_code = NA_integer_,
+      message = conditionMessage(result),
+      objective = NA_real_,
+      max_constraint_violation = if (r > 0L) NA_real_ else 0,
+      constraints_satisfied = (r == 0L),
+      success = FALSE
     )
+
+    return(list(
+      pars = init,
+      diagnostics = diagnostics,
+      raw_result = NULL
+    ))
+  }
+  if (r > 0L) {
     x <- result$solution
     objective <- result$objective
     convergence_code <- result$status
     message <- result$message
-    solver <- "SLSQP"
     converged <- isTRUE(convergence_code %in% 1:4)
-    max_violation <- max(abs(h_eq(x)))
 
-
-
-  }
-  else{
-    result <- nlminb(
-      start = init,
-      objective = f,
-      gradient = grad,
-      hessian = hess,
-      lower = -Inf,
-      upper = Inf,
-      control = list(x.tol = tol)
-    )
+  } else {
     x <- result$par
     objective <- result$objective
     convergence_code <- result$convergence
     message <- result$message
-    solver <- "nlminb"
     converged <- isTRUE(convergence_code == 0)
+  }
+  if (r > 0L) {
+    max_violation <- max(abs(h_eq(x)))
+  } else {
     max_violation <- 0
-
   }
 
-  constraints_satisfied <- max_violation <= constraint_tol
-  diagnostics <- list(
-  solver = solver,
-  converged = converged,
-  convergence_code = convergence_code,
-  message = message,
-  objective = objective,
-  max_constraint_violation = max_violation,
-  constraints_satisfied = constraints_satisfied,
-  success = converged &&
-            constraints_satisfied &&
-            isTRUE(is.finite(objective))
-)
+  constraints_satisfied <-
+    is.finite(max_violation) &&
+    max_violation <= constraint_tol
 
+  diagnostics <- list(
+    solver = solver,
+    converged = converged,
+    convergence_code = convergence_code,
+    message = message,
+    objective = objective,
+    max_constraint_violation = max_violation,
+    constraints_satisfied = constraints_satisfied,
+    success = converged &&
+              constraints_satisfied &&
+              isTRUE(is.finite(objective))
+  )
   return(list(
     pars = x,
     diagnostics = diagnostics,
     raw_result = result
   ))
-
-
-
 }
-
 
 
 #' Compute Log-Likelihood for ML Estimation of Structural Equation Model
