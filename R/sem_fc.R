@@ -673,6 +673,9 @@ initialize = function(data, relation_matrix,
       }
 
       ml_sol <- mlSEM(initial_params, private$.data$cov_S, private$.model, tol)
+      if (!ml_sol$diagnostics$success) {
+        warning("Initial value returned,ML estimation failed: ", ml_sol$diagnostics$message, call. = FALSE)
+      }
       theta_ml <- ml_sol$pars
       private$.estimate <- lvm_ml(x = theta_ml, model = private$.model, jac = F)
       private$.estimate$optimization <- ml_sol$diagnostics
@@ -701,6 +704,17 @@ initialize = function(data, relation_matrix,
 
 
     ml_infer = function(){
+
+      if (!isTRUE(private$.estimate$optimization$success)) {
+        private$.infer_estimate <- NULL
+        warning(
+          "ML inference cannot be computed because ",
+          "ML estimation was not successful.",
+          call. = FALSE
+        )
+        return(invisible(NULL))
+      }
+
       theta_ml <- private$.estimate$theta
       S <- private$.data$cov_S
       N <- private$.data$n_row
@@ -733,19 +747,28 @@ initialize = function(data, relation_matrix,
         bollen_stine <- svdSEM_gof(private$.estimate, B)
         res_gof$bollen_stine <- bollen_stine
       } else if (estimator == 'ml'){
-        p <- private$.model$p
-        q <- private$.model$q
-        r <- private$.model$r
-        F <- private$.gof$F
-        N <- private$.data$n_row
-        S <- private$.data$cov_S
-        Sigma <- private$.estimate$sigma_implied
+          if (isTRUE(private$.estimate$optimization$success)) {
+            p <- private$.model$p
+            q <- private$.model$q
+            r <- private$.model$r
+            F <- private$.gof$F
+            N <- private$.data$n_row
+            S <- private$.data$cov_S
+            Sigma <- private$.estimate$sigma_implied
 
-        res_gof$ml <- semML_gof(p, q, r, F, N, S, Sigma)
+            res_gof$ml <- semML_gof(p, q, r, F, N, S, Sigma)
+          } else {
+            private$.gof$ml <- NULL
+            warning(
+              "ML goodness-of-fit statistics were not computed ",
+              "because ML estimation was unsuccessful.",
+              call. = FALSE
+            )
+          }
 
       }
       res_gof$improper <- improper(private$.estimate)
-      private$.gof <- c(private$.gof, res_gof)
+      private$.gof[names(res_gof)] <- res_gof
 
     }
   )
