@@ -81,6 +81,9 @@ SemFC <- R6Class(
 #'   covariance estimation. When \code{TRUE}, covariance matrix is computed
 #'   with division by \code{n} (biased estimator);  when \code{FALSE}, division
 #'   by \code{n-1} is used (unbiased estimator). (default: \code{FALSE})
+#' @param regularization Logical indicating whether to apply regularization in
+#'   empirical covariance computation. When \code{TRUE},Schafer-Strimmer shrinkage is applied to
+#'   improve the conditioning of the covariance matrix. (default: \code{FALSE})
 #'
 #' @examples
 #' data(ECSI)
@@ -114,23 +117,18 @@ SemFC <- R6Class(
 initialize = function(data, relation_matrix, 
                       mode = rep('reflective', length(data)), 
                       estimator = 'ml',
-                      scale = FALSE, bias = FALSE) {
+                      scale = FALSE, bias = FALSE, regularization = FALSE) {
 
       private$.estimator <- match.arg(estimator, choices = c("ml", "svd"))
-      init <- get_parameter_model_sem(data, mode, relation_matrix, bias, scale)
+      init <- get_parameter_model_sem(data, mode, relation_matrix, bias, scale, regularization)
       private$.model <- init$model
       private$.data <- init$data
 
       private$.model$scale <- scale
       private$.model$bias <- bias
+      private$.model$regularization <- regularization
 
     },
-
-#' @description
-#' Fit the full model with inference and goodness-of-fit.
-#'
-#' @param infer Logical indicating whether to perform statistical inference
-#'   or not. When TRUE, bootstrap inference is performed for svdSEM and
 #'   asymptotic inference is performed for ML. (default: \code{FALSE})
 #' @param B Integer number of bootstrap samples for svd (default: 1000)
 #' @param initialization Character string or numeric vector specifying the

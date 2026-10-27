@@ -71,9 +71,33 @@ scale2 <- function (A, center = TRUE, scale = TRUE, bias = TRUE)
 }
 
 
+pm <- function(M1, M2, na.rm = TRUE) {
+  if (na.rm) {
+    M1[is.na(M1)] <- 0
+    M2[is.na(M2)] <- 0
+  }
+  return(M1 %*% M2)
+}
 
 
 
+
+tau_estimate <- function(x, na.rm = TRUE) {
+  p <- NCOL(x)
+  if (p == 1) {
+    return(1)
+  }
+  n <- NROW(x)
+  corm <- cor(x, use = "pairwise.complete.obs")
+  xs <- scale(x, center = TRUE, scale = TRUE)
+  v <- (n / ((n - 1) ^ 3)) * (pm(t(xs ^ 2), xs ^ 2, na.rm = na.rm) - 1 / n * pm(t(xs), xs, na.rm = na.rm) ^ 2)
+  diag(v) <- 0
+  I <- diag(NCOL(x))
+  d <- (corm - I) ^ 2
+  tau <- sum(v) / sum(d)
+  tau <- max(min(tau, 1), 0)
+  return(tau)
+}
 
 
 

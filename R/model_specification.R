@@ -53,24 +53,28 @@
 #'
 #'
 #' @keywords internal
-get_parameter_model_sem <- function(data, mode, relation_matrix, bias, scale){
+get_parameter_model_sem <- function(data, mode, relation_matrix, bias, scale, regularization = FALSE){
 
   X  <- do.call(cbind, data)
   S  <- cov2(scale2(X, scale = scale, bias = bias), bias = bias)
   ev <- eigen(S, symmetric = TRUE, only.values = TRUE)$values
   if (min(ev) < 1e-8 * max(ev)) {
-    tau <- RGCCA:::tau.estimate(X)
-    S   <- (1 - tau) * S + tau * diag(diag(S))
-    
-    # Test for comparison 
-    # S_cs <- unclass(corpcor:::cov.shrink(X, lambda.var = 0, verbose = FALSE))
-    
-    ev2 <- eigen(S, symmetric = TRUE, only.values = TRUE)$values
-    warning(sprintf("Singular sample covariance: Schafer-Strimmer shrinkage (target D, tau = %.3f) applied.", tau))
-    if (min(ev2) < 1e-8 * max(ev2))
-      warning("Covariance still ill-conditioned after shrinkage (tau = 0 or constant columns).")
+    if (!regularization) {
+      warning(
+        "Sample covariance matrix is singular or ill-conditioned. ",
+        "Consider setting 'regularization = TRUE' ",
+        "to apply Schafer-Strimmer shrinkage.",
+        call. = FALSE
+      )
+    } else {
+      tau <- tau_estimate(X)
+      S   <- (1 - tau) * S + tau * diag(diag(S))
+      ev2 <- eigen(S, symmetric = TRUE, only.values = TRUE)$values
+      warning(sprintf("Singular sample covariance: Schafer-Strimmer shrinkage (target D, tau = %.3f) applied.", tau))
+      if (min(ev2) < 1e-8 * max(ev2))
+        warning("Covariance still ill-conditioned after shrinkage (tau = 0 or constant columns).")
+    }
   }
-  
   n_row <- NROW(X)
 
   block_sizes <- sapply(data, NCOL)
