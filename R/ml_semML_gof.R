@@ -212,11 +212,12 @@ semML_gof <- function(p, q, r, F, N, S, Sigma) {
   SRMR <- srmrsem(S, Sigma)
 
   # loglik
+  eigvals <- eigen(S, symmetric = TRUE, only.values = TRUE)$values
   loglik_H0 <- -(N/2)*(p*log(2*pi) + log(det(Sigma)) + sum(diag(solve(Sigma) %*% S)))
-  if (det(S) == 0) {
-    loglik_H1 <- NA
+  if (any(!is.finite(eigvals)) || min(eigvals) <= 1e-8 * max(abs(eigvals))) {
+    loglik_H1 <- NA_real_
   } else {
-    loglik_H1 <- -(N/2)*(p*log(2*pi) + log(det(S)) + sum(diag(solve(S) %*% S)))
+    loglik_H1 <- -(N/2)*(p*log(2*pi) + log(det(S)) + p)
   }
   AIC <- -2 * loglik_H0 + 2 * q
   BIC <- -2 * loglik_H0 + q * log(N)
