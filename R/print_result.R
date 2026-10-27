@@ -259,7 +259,9 @@ print_model <- function(estimator, len_theta, N, dof, F, T_LS) {
   cat(sprintf("%-45s%15d\n", "Number of model parameters", len_theta))
   cat(sprintf("%-45s%15d\n", "Number of observations", N))
   cat(sprintf("%-45s%15d\n", "Degrees of freedom", dof))
-  cat(sprintf("%-45s%15.3f\n", "F", F))
+  if (estimator == "ml") {
+    cat(sprintf("%-45s%15.3f\n", "F", F))
+  }
   cat(sprintf("%-45s%15.3f\n", "d_LS", T_LS))
   cat("\n")
 }
