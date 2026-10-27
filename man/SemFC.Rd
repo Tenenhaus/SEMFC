@@ -6,7 +6,7 @@
 within the framework of the basic design}
 \description{
 The SEMFC package implements Structural Equation Modeling (SEM) with factors
-and composites within the framework of the basic design (Tenenhaus et al, 2025).
+and composites within the framework of the basic design (Tenenhaus et al, 2026).
 }
 \details{
 The SEMFC package supports the svdSEM and the (restricted) maximum likelihood
@@ -21,8 +21,8 @@ estimators, offering a statistically and computationally sound approach.
 \item The restricted maximum-likelihood (RML-SEM) approach for the basic
 design with factors and composites is also implemented within SEMFC.
 svdSEM estimates serve as an initial solution for RML-SEM. The RML-SEM
-estimator is implemented using the solnp algorithm (Ye, 1987), available
-in the Rsolnp package (Ghalanos and Theussl, 2015), which enables efficient
+estimator is implemented using general nonlinear optimization problems available
+in the nloptr package (Johnson SG, 2008), which enables efficient
 nonlinear optimization with constraints.}
 
 The SEMFC package also provides comprehensive tools for statistical inference,
@@ -33,14 +33,10 @@ fit (chi-square, CFI, TLI, RMSEA, SRMR, AIC, BIC).
 \strong{References}
 
 \enumerate{
-\item Tenenhaus, A., Tenenhaus, M., Dijkstra, T.K. Structural equation
-modeling with factors and composites within the framework of the basic design.
-Advances in Data Analysis Classification (2025).
-\doi{10.1007/s11634-025-00647-4}
-\item Ye Y (1987) Interior algorithms for linear, quadratic, and
-linearly constrained non-linear programming.
-\href{https://web.stanford.edu/~yyye/YinyuYePhD.pdf}{PhD thesis}, Department
-of ESS, Stanford University
+\item Tenenhaus, A., Tenenhaus, M., & Dijkstra, T. K. (2026).
+Structural equation modeling with factors and composites within
+the framework of the basic design. Advances in Data Analysis and
+Classification, 20(1), 227-254.
 \item Johnson SG (2008). The NLopt nonlinear-optimization package.
 \url{https://github.com/stevengj/nlopt}. \cr
 \item Kraft D (1988). A software package for sequential
@@ -51,7 +47,7 @@ Institut für Dynamik der Flugsysteme, Oberpfaffenhofen.
 \examples{
 
 ## ------------------------------------------------
-## Method `SemFC$new`
+## Method `SemFC$new()`
 ## ------------------------------------------------
 
 data(ECSI)
@@ -82,7 +78,7 @@ sem_model <- SemFC$new(data = A,
 
 
 ## ------------------------------------------------
-## Method `SemFC$fit`
+## Method `SemFC$fit()`
 ## ------------------------------------------------
 
 data(ECSI)
@@ -132,7 +128,7 @@ sem_model_ml$fit(infer = TRUE,
 
 
 ## ------------------------------------------------
-## Method `SemFC$summary`
+## Method `SemFC$summary()`
 ## ------------------------------------------------
 
 \donttest{
@@ -175,7 +171,7 @@ sem_model$summary(standardized = TRUE,
 }
 
 ## ------------------------------------------------
-## Method `SemFC$parameterEstimates`
+## Method `SemFC$parameterEstimates()`
 ## ------------------------------------------------
 
 data(ECSI)
@@ -216,7 +212,7 @@ estimates <- sem_model$parameterEstimates(standardized = TRUE)
 
 
 ## ------------------------------------------------
-## Method `SemFC$get_estimate`
+## Method `SemFC$get_estimate()`
 ## ------------------------------------------------
 
 data(ECSI)
@@ -261,7 +257,7 @@ all_estimates <- sem_model$get_estimate("all")
 
 
 ## ------------------------------------------------
-## Method `SemFC$get_gof`
+## Method `SemFC$get_gof()`
 ## ------------------------------------------------
 
 \donttest{
@@ -306,73 +302,69 @@ gof_reliability <- sem_model$get_gof("reliability")
 }
 \section{Methods}{
 \subsection{Public methods}{
-\itemize{
-\item \href{#method-SemFC-new}{\code{SemFC$new()}}
-\item \href{#method-SemFC-fit}{\code{SemFC$fit()}}
-\item \href{#method-SemFC-summary}{\code{SemFC$summary()}}
-\item \href{#method-SemFC-parameterEstimates}{\code{SemFC$parameterEstimates()}}
-\item \href{#method-SemFC-get_estimate}{\code{SemFC$get_estimate()}}
-\item \href{#method-SemFC-get_gof}{\code{SemFC$get_gof()}}
-\item \href{#method-SemFC-clone}{\code{SemFC$clone()}}
-}
+  \itemize{
+    \item \href{#method-SemFC-initialize}{\code{SemFC$new()}}
+    \item \href{#method-SemFC-fit}{\code{SemFC$fit()}}
+    \item \href{#method-SemFC-summary}{\code{SemFC$summary()}}
+    \item \href{#method-SemFC-parameterEstimates}{\code{SemFC$parameterEstimates()}}
+    \item \href{#method-SemFC-get_estimate}{\code{SemFC$get_estimate()}}
+    \item \href{#method-SemFC-get_gof}{\code{SemFC$get_gof()}}
+    \item \href{#method-SemFC-clone}{\code{SemFC$clone()}}
+  }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SemFC-new"></a>}}
-\if{latex}{\out{\hypertarget{method-SemFC-new}{}}}
-\subsection{Method \code{new()}}{
-Initialize SemFC object with data and model specification
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$new(
+\if{html}{\out{<a id="method-SemFC-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-SemFC-initialize}{}}}
+\subsection{\code{SemFC$new()}}{
+  Initialize SemFC object with data and model specification
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SemFC$new(
   data,
   relation_matrix,
   mode = rep("reflective", length(data)),
   estimator = "ml",
   scale = FALSE,
   bias = FALSE
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{data}}{A list that contains \code{J} blocks of indicator variables.
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{data}}{A list that contains \code{J} blocks of indicator variables.
 Blocks are either reflective or formative. Each block should be a data
 frame or matrix with rows as observations and columns as indicators.}
-
-\item{\code{relation_matrix}}{Square 0/1 connection matrix (\code{J} x \code{J})
+      \item{\code{relation_matrix}}{Square 0/1 connection matrix (\code{J} x \code{J})
 defining structural connection between latent variables.
 \code{relation_matrix[i, j]} = 1 indicates a structural
 connection from latent variable \code{i} to latent variable \code{j};
 and equal 0 otherwise.}
-
-\item{\code{mode}}{Character vector of length \code{J} specifying the type of
+      \item{\code{mode}}{Character vector of length \code{J} specifying the type of
 measurement model (\code{"reflective"} or \code{"formative"}) for each block.
 Blocks specified as
 \code{"reflective"} are modeled with latent factors, while blocks specified
 as \code{"formative"} are modeled with composites.
 (default: \code{rep("reflective", J)})}
-
-\item{\code{estimator}}{Character string specifying the estimation method:
+      \item{\code{estimator}}{Character string specifying the estimation method:
 \code{"svd"} or \code{"ml"} (default: \code{"ml"}).}
-
-\item{\code{scale}}{Logical indicating whether to standardize the input data or
+      \item{\code{scale}}{Logical indicating whether to standardize the input data or
 not. When \code{TRUE}, all variables are standardized to zero-mean and
 unit variance before estimation. When \code{FALSE}, centered data is used.
 (default: \code{FALSE})}
-
-\item{\code{bias}}{Logical indicating whether to apply bias correction in
+      \item{\code{bias}}{Logical indicating whether to apply bias correction in
 covariance estimation. When \code{TRUE}, covariance matrix is computed
 with division by \code{n} (biased estimator);  when \code{FALSE}, division
 by \code{n-1} is used (unbiased estimator). (default: \code{FALSE})}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A new \code{SemFC} object
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{data(ECSI)
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A new \code{SemFC} object
+  }
+  \subsection{Examples}{
+    \if{html}{\out{<div class="r example copy">}}
+    \preformatted{data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
@@ -397,39 +389,36 @@ sem_model <- SemFC$new(data = A,
                        relation_matrix = C, 
                        mode = rep("reflective", 5), 
                        scale = FALSE, estimator = "svd")
-
 }
-\if{html}{\out{</div>}}
-
+    \if{html}{\out{</div>}}
+  }
 }
 
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SemFC-fit"></a>}}
 \if{latex}{\out{\hypertarget{method-SemFC-fit}{}}}
-\subsection{Method \code{fit()}}{
-Fit the full model with inference and goodness-of-fit.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$fit(
+\subsection{\code{SemFC$fit()}}{
+  Fit the full model with inference and goodness-of-fit.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SemFC$fit(
   infer = FALSE,
-  B = 1000,
+  B = 500,
   initialization = "svd",
   tol = 1e-08,
   verbose = TRUE,
   seed = NULL
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{infer}}{Logical indicating whether to perform statistical inference
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{infer}}{Logical indicating whether to perform statistical inference
 or not. When TRUE, bootstrap inference is performed for svdSEM and
 asymptotic inference is performed for ML. (default: \code{FALSE})}
-
-\item{\code{B}}{Integer number of bootstrap samples for svd (default: 1000)}
-
-\item{\code{initialization}}{Character string or numeric vector specifying the
+      \item{\code{B}}{Integer number of bootstrap samples for svd (default: 500)}
+      \item{\code{initialization}}{Character string or numeric vector specifying the
 initialization strategy for the ML algorithm. This argument is ignored
 when estimator is \code{"svd"}.
 \itemize{
@@ -439,30 +428,26 @@ when estimator is \code{"svd"}.
 values. The length of this vector equals the total number of model
 parameters.
 }}
-
-\item{\code{tol}}{Numeric tolerance for convergence in ML optimization
+      \item{\code{tol}}{Numeric tolerance for convergence in ML optimization
 (default: \code{1e-8})}
-
-\item{\code{verbose}}{Logical indicating whether to print progress messages during
+      \item{\code{verbose}}{Logical indicating whether to print progress messages during
 bootstrap inference (default: \code{TRUE})}
-
-\item{\code{seed}}{Numeric seed for reproducibility of bootstrap inference (default: \code{NULL})}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-This is the main wrapper function that performs:
+      \item{\code{seed}}{Numeric seed for reproducibility of bootstrap inference (default: \code{NULL})}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Details}{
+    This is the main wrapper function that performs:
 \enumerate{
 \item Parameter estimation for svdSEM (\code{"svd"}) or ML (\code{"ml"}).
 \item Statistical inference (bootstrap for svdSEM, asymptotic for ML)
 \item Goodness-of-fit assessment (chi-square, CFI, TLI, RMSEA, SRMR,
 AIC, BIC)
 }
-}
-
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{data(ECSI)
+  }
+  \subsection{Examples}{
+    \if{html}{\out{<div class="r example copy">}}
+    \preformatted{data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
@@ -506,39 +491,36 @@ sem_model_ml <- SemFC$new(data = A,
 sem_model_ml$fit(infer = TRUE,
                  initialization = "svd",
                  tol = 1e-03)
-
 }
-\if{html}{\out{</div>}}
-
+    \if{html}{\out{</div>}}
+  }
 }
 
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SemFC-summary"></a>}}
 \if{latex}{\out{\hypertarget{method-SemFC-summary}{}}}
-\subsection{Method \code{summary()}}{
-Print comprehensive summary of the fitted SemFC object.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$summary(standardized = F, effect = FALSE, all_measures = F)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{standardized}}{Logical indicating whether to report standardized
+\subsection{\code{SemFC$summary()}}{
+  Print comprehensive summary of the fitted SemFC object.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SemFC$summary(standardized = F, effect = FALSE, all_measures = F)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{standardized}}{Logical indicating whether to report standardized
 estimates (default: \code{FALSE}).}
-
-\item{\code{effect}}{Logical indicating whether to report total and indirect
+      \item{\code{effect}}{Logical indicating whether to report total and indirect
 effects (default: \code{FALSE})}
-
-\item{\code{all_measures}}{Logical indicating whether to report all
+      \item{\code{all_measures}}{Logical indicating whether to report all
 goodness-of-fit measures. When \code{FALSE}, only a subset of key fit
 indices is reported. (default: \code{FALSE})}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-Elements that are reported in the summary include:
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Details}{
+    Elements that are reported in the summary include:
 \itemize{
 \item Model information (estimator, sample size, number of parameters)
 \item Chi-square test: This is the primary test of our model. If the test
@@ -559,12 +541,10 @@ indicate good fit.
 There is a lot of controversy about the use (and misuse) of these fit
 indices. Current practice is to report: chi-square value, degree of freedom
 and pvalue, RMSEA, CFI and SRMR.
-}
-
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\donttest{
-data(ECSI)
+  }
+  \subsection{Examples}{
+    \if{html}{\out{<div class="r example copy">}}
+    \preformatted{data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
@@ -601,32 +581,31 @@ sem_model$summary(standardized = TRUE,
                   effect = TRUE,
                   all_measures = TRUE)
 }
+    \if{html}{\out{</div>}}
+  }
 }
-\if{html}{\out{</div>}}
 
-}
-
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SemFC-parameterEstimates"></a>}}
 \if{latex}{\out{\hypertarget{method-SemFC-parameterEstimates}{}}}
-\subsection{Method \code{parameterEstimates()}}{
-Extract parameter estimates from the fitted SemFC model
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$parameterEstimates(standardized = FALSE)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{standardized}}{Logical indicating whether to include standardized
+\subsection{\code{SemFC$parameterEstimates()}}{
+  Extract parameter estimates from the fitted SemFC model
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SemFC$parameterEstimates(standardized = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{standardized}}{Logical indicating whether to include standardized
 estimates ((default: \code{FALSE}). When \code{TRUE}, adds a \code{std.all}
 column with fully standardized coefficients.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-Returns a data frame containing all estimated parameters including:
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Details}{
+    Returns a data frame containing all estimated parameters including:
 \itemize{
 \item \code{lambda}: Loading vectors for reflective and formative
 blocks.
@@ -642,10 +621,9 @@ not have residual variances.
 
 If statistical inference has been performed, the returned estimates
 include standard errors, z-values, p-values, and confidence intervals.
-}
-
-\subsection{Returns}{
-A data frame with all parameter estimates. Columns include:
+  }
+  \subsection{Returns}{
+    A data frame with all parameter estimates. Columns include:
 \itemize{
 \item \code{lhs}: Left-hand side variable
 \item \code{op}: Operator
@@ -656,10 +634,10 @@ A data frame with all parameter estimates. Columns include:
 \item \code{pvalue}: P-value (if inference was performed)
 \item \code{std.all}: Standardized estimate (if standardized = TRUE)
 }
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{data(ECSI)
+  }
+  \subsection{Examples}{
+    \if{html}{\out{<div class="r example copy">}}
+    \preformatted{data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
@@ -694,26 +672,25 @@ sem_model$fit(infer = TRUE, B = 100)
 # standardized solutions. 
 
 estimates <- sem_model$parameterEstimates(standardized = TRUE)
-
 }
-\if{html}{\out{</div>}}
-
+    \if{html}{\out{</div>}}
+  }
 }
 
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SemFC-get_estimate"></a>}}
 \if{latex}{\out{\hypertarget{method-SemFC-get_estimate}{}}}
-\subsection{Method \code{get_estimate()}}{
-Get a specific estimate from the fitted SemFC model.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$get_estimate(estimate = "all")}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{estimate}}{Character string specifying the estimate component to select.
+\subsection{\code{SemFC$get_estimate()}}{
+  Get a specific estimate from the fitted SemFC model.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SemFC$get_estimate(estimate = "all")}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{estimate}}{Character string specifying the estimate component to select.
 Possible values are:
 
 \code{"lambda"}, \code{"std_lambda"}, \code{"omega"}, \code{"std_omega"},
@@ -723,21 +700,21 @@ Possible values are:
 \code{"theta"}, and \code{"effect"}.
 
 Use \code{"all"} to retrieve all estimates (default).}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-The requested estimate. Returns \code{NULL} with a warning if:
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    The requested estimate. Returns \code{NULL} with a warning if:
 \itemize{
 \item The model has not been fitted yet
 \item The requested estimate is not available in the fitted model
 }
 When \code{estimate = "all"}, returns a list containing all available
 estimates.
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{data(ECSI)
+  }
+  \subsection{Examples}{
+    \if{html}{\out{<div class="r example copy">}}
+    \preformatted{data(ECSI)
 
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
@@ -776,27 +753,26 @@ r2 <- sem_model$get_estimate("r2")
 
 # Get all estimates
 all_estimates <- sem_model$get_estimate("all")
-
 }
-\if{html}{\out{</div>}}
-
+    \if{html}{\out{</div>}}
+  }
 }
 
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SemFC-get_gof"></a>}}
 \if{latex}{\out{\hypertarget{method-SemFC-get_gof}{}}}
-\subsection{Method \code{get_gof()}}{
-Retrieve goodness-of-fit measures and model diagnostics
+\subsection{\code{SemFC$get_gof()}}{
+  Retrieve goodness-of-fit measures and model diagnostics
 computed for the fitted SEMFC model.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$get_gof(measure = "all")}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{measure}}{Character string specifying the measure to retrieve.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SemFC$get_gof(measure = "all")}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{measure}}{Character string specifying the measure to retrieve.
 Available options are:
 \itemize{
 \item \code{"all"}: All computed measures (default).
@@ -806,19 +782,18 @@ Available options are:
 \item \code{"reliability"}: Reliability coefficients.
 \item \code{"improper"}: Diagnostics for improper solutions.
 }}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A named list of all computed measures if
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A named list of all computed measures if
 \code{measure = "all"}, or the requested measure otherwise.
 Returns \code{NULL} with a warning if the requested measure
 has not been computed.
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\donttest{
-data(ECSI)
+  }
+  \subsection{Examples}{
+    \if{html}{\out{<div class="r example copy">}}
+    \preformatted{data(ECSI)
 ECSI = ECSI/10
 A = list(CUSTOMER_E = ECSI[, c("CUEX1", "CUEX2", "CUEX3")],
          PERC_QUAL  = ECSI[, c("PERQ1", "PERQ2", "PERQ3",
@@ -856,27 +831,27 @@ gof_F <- sem_model$get_gof("F")
 gof_bollen_stine <- sem_model$get_gof("bollen_stine")
 gof_reliability <- sem_model$get_gof("reliability")
 }
+    \if{html}{\out{</div>}}
+  }
 }
-\if{html}{\out{</div>}}
 
-}
-
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SemFC-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-SemFC-clone}{}}}
-\subsection{Method \code{clone()}}{
-The objects of this class are cloneable with this method.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SemFC$clone(deep = FALSE)}\if{html}{\out{</div>}}
+\subsection{\code{SemFC$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{SemFC$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{deep}}{Whether to make a deep clone.}
-}
-\if{html}{\out{</div>}}
-}
-}
 }

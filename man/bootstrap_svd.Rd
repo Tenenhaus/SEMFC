@@ -4,13 +4,13 @@
 \alias{bootstrap_svd}
 \title{Bootstrap Inference and Goodness-of-Fit Test for SVD-Estimated SEM Models}
 \usage{
-bootstrap_svd(fit, B = 100, verbose = TRUE, seed = NULL)
+bootstrap_svd(fit, B = 500, verbose = TRUE, seed = NULL)
 }
 \arguments{
 \item{fit}{A svdSEM fit object containing the fitted model information, including
 parameter estimates, model-implied covariance matrix, and data blocks.}
 
-\item{B}{Integer specifying the number of bootstrap replications (default: 100).}
+\item{B}{Integer specifying the number of bootstrap replications (default: 500).}
 
 \item{verbose}{Logical indicating whether to display a progress bar during
 bootstrap resampling (default: \code{TRUE}).}
@@ -45,7 +45,17 @@ The function performs two parallel bootstrap procedures:
 }
 
 The data transformation follows Yuan & Hayashi (2003). Bootstrap samples with
-negative eigenvalues are flagged as improper and excluded from standard error calculations.
+negative eigenvalues are flagged as improper and excluded from standard
+error calculations.
+
+\strong{References}
+
+\enumerate{
+\item Yuan, K. H., & Hayashi, K. (2003). Bootstrap approach to inference and
+power analysis based on three test statistics for covariance structure
+models. British Journal of Mathematical and Statistical Psychology,
+56(1), 93-110.
+}
 }
 \examples{
 \dontrun{
