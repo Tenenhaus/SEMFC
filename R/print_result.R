@@ -51,7 +51,7 @@ get_stars <- function(p) {
 #'
 #' @keywords internal
 print_link <- function(df, type, op, standardized = FALSE) {
-
+  df$rhs <- iconv(as.character(df$rhs), to = "ASCII//TRANSLIT")
   name_width <- max(14, nchar(as.character(df$rhs)), na.rm = TRUE) + 2
 
   if (standardized) {
@@ -139,6 +139,7 @@ print_link <- function(df, type, op, standardized = FALSE) {
 print_variance <- function(df, type, standardized = FALSE) {
   if (is.null(df) || nrow(df) == 0) return(invisible(NULL))
   cat("\n", type, ":\n")
+  df$lhs <- iconv(as.character(df$lhs), to = "ASCII//TRANSLIT")
   display_names <- paste0("   .", as.character(df$lhs))
   name_width <- max(14, nchar(display_names), na.rm = TRUE) + 2
 
