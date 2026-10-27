@@ -8,7 +8,7 @@
 #'
 #' @param fit A svdSEM fit object containing the fitted model information, including
 #'   parameter estimates, model-implied covariance matrix, and data blocks.
-#' @param B Integer specifying the number of bootstrap replications (default: 100).
+#' @param B Integer specifying the number of bootstrap replications (default: 500).
 #' @param verbose Logical indicating whether to display a progress bar during
 #'   bootstrap resampling (default: `TRUE`).
 #' @param seed Optional integer for reproducibility of bootstrap results. If `NULL`, no seed is set (default: `NULL`).
@@ -30,7 +30,19 @@
 #'   2. Bollen-Stine bootstrap on transformed data for goodness-of-fit testing
 #'
 #'   The data transformation follows Yuan & Hayashi (2003). Bootstrap samples with
-#'   negative eigenvalues are flagged as improper and excluded from standard error calculations.
+#'   negative eigenvalues are flagged as improper and excluded from standard 
+#'   error calculations.
+#'   
+#' \strong{References}
+#'
+#' \enumerate{
+#' \item Yuan, K. H., & Hayashi, K. (2003). Bootstrap approach to inference and 
+#'   power analysis based on three test statistics for covariance structure 
+#'   models. British Journal of Mathematical and Statistical Psychology, 
+#'   56(1), 93-110.
+#' }
+#'   
+#'   
 #'
 #' @examples
 #' \dontrun{
@@ -44,7 +56,7 @@
 #' @importFrom stats sd pnorm setNames
 #' @keywords internal
 
-bootstrap_svd <- function(fit, B = 100, verbose = TRUE, seed = NULL){
+bootstrap_svd <- function(fit, B = 500, verbose = TRUE, seed = NULL){
 
   df <- data.frame(Reduce("cbind", fit$blocks))
 
