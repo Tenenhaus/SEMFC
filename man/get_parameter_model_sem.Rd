@@ -4,7 +4,14 @@
 \alias{get_parameter_model_sem}
 \title{Extract Parameters for Structural Equation Models}
 \usage{
-get_parameter_model_sem(data, mode, relation_matrix, bias, scale)
+get_parameter_model_sem(
+  data,
+  mode,
+  relation_matrix,
+  bias,
+  scale,
+  regularization = FALSE
+)
 }
 \arguments{
 \item{data}{A list of data frames or matrices, where each element represents

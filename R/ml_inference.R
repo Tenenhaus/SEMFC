@@ -169,7 +169,6 @@ mlSEM_infer <- function(x, S, model, N, fit){
   P_ml <- P_ml(x, S, model)
   VCOV <- P_ml/N
   dag <- model$dag
-  # SD <- sqrt(diag(VCOV))
 
   vcov_effect <- effect_infer(fit$beta, fit$gamma,
                               model$lengths_theta,
@@ -198,42 +197,6 @@ mlSEM_infer <- function(x, S, model, N, fit){
 
 
 }
-
-
-#' Compute Z-Score and P-Value for Hypothesis Test
-#'
-#' Computes the z-score and p-value for testing linear hypotheses H0: L*theta = 0
-#' on model parameters.
-#'
-#' @param x Numeric vector of optimal parameter values.
-#' @param S Sample covariance matrix.
-#' @param X Data matrix (currently unused in function body).
-#' @param model List containing the model structure, including:
-#'   \itemize{
-#'     \item \code{mode}: Character vector indicating the measurement mode for each block.
-#'     \item \code{block_sizes}: Integer vector specifying the number of indicators in each block.
-#'   }
-#' @param L Contrast matrix defining the linear hypothesis.
-#'
-#' @return P-value for the two-tailed test.
-#'
-#' @details
-#' The z-score is computed as:
-#' \deqn{z = \frac{\sqrt{N} L\theta}{\sqrt{LPL'}}}
-#' The p-value is two-tailed using the standard normal distribution.
-#'
-#' @keywords internal
-z_H0 <- function(x, S, X, model, L){
-  N <- nrow(X)
-  P <- P_ml(x, S, model)
-  z <- sqrt(N)*(L %*% x)/sqrt(L%*%P%*%t(L))
-  pval <- 2*pnorm(z, lower.tail = F)
-
-  return(pval)
-
-}
-
-
 
 Jac_omega <- function(Sigma_jj, omega_j){
   D <- duplication_matrix(length(omega_j))

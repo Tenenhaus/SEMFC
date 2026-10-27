@@ -15,7 +15,6 @@
 #' \deqn{I_{ij} = \frac{1}{2} \text{tr}(\Sigma^{-1} \frac{\partial\Sigma}{\partial\theta_i} \Sigma^{-1} \frac{\partial\Sigma}{\partial\theta_j})}
 #' Only the upper triangular part is computed for efficiency.
 #'
-#' @importFrom numDeriv jacobian
 #'
 #' @keywords internal
 information_matrix <- function(x, model){
@@ -27,30 +26,6 @@ information_matrix <- function(x, model){
   return(I)
 }
 
-
-
-#' Compute Jacobian of Constraint Functions
-#'
-#' Computes the transpose of the Jacobian matrix for equality constraints
-#' in formative measurement models.
-#'
-#' @param x Numeric vector of model parameters.
-#' @param S Sample covariance matrix.
-#' @param model List containing the model structure, including block sizes,
-#'   measurement modes, and other relevant information.
-#'
-#' @return Matrix H of dimension length(x) × r, where r is the number of formative blocks.
-#'
-#' @importFrom numDeriv jacobian
-#'
-#' @keywords internal
-Jac_constraints <- function(x, S, model){
-  # transpose of the jacobian of constraint function
-  H <- t(numDeriv::jacobian(heq1, x = x, S=S, model = model))
-
-  return(H)
-
-}
 
 
 ' Compute Projection Matrix for Constrained ML Estimation

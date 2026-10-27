@@ -129,6 +129,11 @@ initialize = function(data, relation_matrix,
       private$.model$regularization <- regularization
 
     },
+#' @description
+#' Fit the full model with inference and goodness-of-fit.
+#'
+#' @param infer Logical indicating whether to perform statistical inference
+#'   or not. When TRUE, bootstrap inference is performed for svdSEM and
 #'   asymptotic inference is performed for ML. (default: \code{FALSE})
 #' @param B Integer number of bootstrap samples for svd (default: 1000)
 #' @param initialization Character string or numeric vector specifying the

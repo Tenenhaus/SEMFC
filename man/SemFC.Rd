@@ -328,7 +328,8 @@ Initialize SemFC object with data and model specification
   mode = rep("reflective", length(data)),
   estimator = "ml",
   scale = FALSE,
-  bias = FALSE
+  bias = FALSE,
+  regularization = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -364,6 +365,10 @@ unit variance before estimation. When \code{FALSE}, centered data is used.
 covariance estimation. When \code{TRUE}, covariance matrix is computed
 with division by \code{n} (biased estimator);  when \code{FALSE}, division
 by \code{n-1} is used (unbiased estimator). (default: \code{FALSE})}
+
+\item{\code{regularization}}{Logical indicating whether to apply regularization in
+empirical covariance computation. When \code{TRUE},Schafer-Strimmer shrinkage is applied to
+improve the conditioning of the covariance matrix. (default: \code{FALSE})}
 }
 \if{html}{\out{</div>}}
 }
