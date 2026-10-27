@@ -61,6 +61,10 @@ get_parameter_model_sem <- function(data, mode, relation_matrix, bias, scale){
   if (min(ev) < 1e-8 * max(ev)) {
     tau <- RGCCA:::tau.estimate(X)
     S   <- (1 - tau) * S + tau * diag(diag(S))
+    
+    # Test for comparison 
+    # S_cs <- unclass(corpcor:::cov.shrink(X, lambda.var = 0, verbose = FALSE))
+    
     ev2 <- eigen(S, symmetric = TRUE, only.values = TRUE)$values
     warning(sprintf("Singular sample covariance: Schafer-Strimmer shrinkage (target D, tau = %.3f) applied.", tau))
     if (min(ev2) < 1e-8 * max(ev2))
@@ -74,7 +78,7 @@ get_parameter_model_sem <- function(data, mode, relation_matrix, bias, scale){
   varnames <- lapply(data, function(x) colnames(x))
 
 
-  # get composite covariance bloc
+  # get composite covariance block
 
   start_indices <- unname(cumsum(c(1, head(block_sizes, -1))))
   end_indices <- unname(cumsum(block_sizes))
