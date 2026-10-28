@@ -44,10 +44,9 @@ get_bdiag <- function(x, mode, block_sizes, initial_start_index_cov) {
                     rep(seq_along(lengths_values_cov), lengths_values_cov))
   names(list_cov) <- names(lengths_values_cov)
 
-  # Building list of formative matrices
+
   S_composites <- lapply(list_cov[mode == "formative"], build_formative_S_diag)
 
-  # Building list of reflectives matrices
   reflective_blocks <- lapply(list_cov[mode == "reflective"], diag)
 
   BDIAG <- vector("list", J)
@@ -90,21 +89,17 @@ get_bdiag <- function(x, mode, block_sizes, initial_start_index_cov) {
 #'
 get_correlation_coeff <- function(x, latent_variables, start_index) {
 
-
   # dim  matrix (number of exogeneous or endogeneous latent variables)
   dim <- length(latent_variables)
-  #length lower values vector from this symetric matrix:
   length_correl <- dim * (dim - 1) / 2
   end_index <- start_index + length_correl - 1
   lower_values <- x[start_index:end_index]
 
-  # Building of the correlation matrix
   P_matrix <- diag(1, dim, dim)
   if (dim > 1) {
     P_matrix[lower.tri(P_matrix)] <- lower_values
     P_matrix[upper.tri(P_matrix)] <- t(P_matrix)[upper.tri(P_matrix)]
   }
-
   return(P_matrix)
 }
 
@@ -130,9 +125,6 @@ get_correlation_coeff <- function(x, latent_variables, start_index) {
 #' get_loadings(x, block_sizes)}
 #' @keywords internal
 get_loadings <- function(x, block_sizes) {
-
-
-  # total number of emergent variables
   y <- sum(block_sizes)
   loadings <- setNames(
     lapply(seq_along(block_sizes), function(b) {
@@ -143,10 +135,7 @@ get_loadings <- function(x, block_sizes) {
     }),
     names(block_sizes)
   )
-
-
   return(loadings)
-
 }
 
 
@@ -181,8 +170,6 @@ get_loadings <- function(x, block_sizes) {
 #' @keywords internal
 
 get_path_coeff <- function(x, row_exo_endo, col_exo_endo, C, initial_start_index) {
-
-
   vec_m <- as.vector(t(C[col_exo_endo, row_exo_endo, drop = FALSE]))
   len_param <- sum(vec_m)
   if (len_param == 0){
@@ -211,15 +198,11 @@ get_path_coeff <- function(x, row_exo_endo, col_exo_endo, C, initial_start_index
 #'
 #' @examples
 #' \dontrun{
-#' upper_values <- c(1, 0.3, 0.5, 1, 0.2, 1)
-#' build_formative_S_diag(upper_values)}
+#' lower_values <- c(1, 0.3, 0.5, 1, 0.2, 1)
+#' build_formative_S_diag(lower_values)}
 #' @keywords internal
-
-
 build_formative_S_diag <- function(lower_values_composite_i) {
 
-
-  # dim of the matrix extracted from the length of the lower values
   dim_block <- (-1 + sqrt(1 + 8 * length(lower_values_composite_i))) / 2
   S_composite_i <- matrix(0, dim_block, dim_block)
   S_composite_i[lower.tri(S_composite_i, diag = TRUE)] <- lower_values_composite_i
@@ -227,10 +210,6 @@ build_formative_S_diag <- function(lower_values_composite_i) {
 
   return(S_composite_i)
 }
-
-
-
-
 
 
 #' Convert SVD-SEM Parameters to Vector Form

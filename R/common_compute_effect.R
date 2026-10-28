@@ -35,17 +35,12 @@
 compute_effect  <- function(BETA, GAMMA) {
 
   inv_I_B <- solve(diag(nrow(BETA)) - BETA)
-  # total effect endo (endo -> endo)
   total_endo <- inv_I_B - diag(nrow(BETA))
-  # indirect effects endogenous (endo -> endo)
   indirect_endo <- total_endo - BETA
 
-  # total effect exo (exo -> endo)
   total_exo <- inv_I_B %*% GAMMA
-  # Indirect effect exo (exo -> endo)
   indirect_exo <- total_exo - GAMMA
 
-  # [exo -> endo | endo -> endo]
   total_effect <- cbind(total_exo, total_endo)
 
 

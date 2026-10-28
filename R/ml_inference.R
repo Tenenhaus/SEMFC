@@ -219,7 +219,6 @@ Jac_psi_nonrecursive <- function(Gamma, Beta, P_endo, P_exo, M_gamma, M_beta, M_
   J_beta <- -part_beta %*% M_beta
 
   J <- cbind(-kronecker(Gamma, Gamma)%*%M_exo, J_gamma, J_beta, kronecker(I_B,I_B)%*%M_endo)
-  # We need to multiply by the elimination matrix E to get the Jacobian of vech(Psi)
   J <- E %*% J
 
   return(J)
@@ -239,9 +238,7 @@ Jac_psi_recursive <- function(Gamma, Beta, P_exo, Psi, M_gamma, M_beta, M_exo){
   J_gamma <- -2 * H_1 %*% L %*% kronecker(A %*% Gamma %*% P_exo, A) %*% M_gamma
   J_exo <- -H_1 %*% L %*% kronecker(A %*% Gamma, A %*% Gamma) %*% M_exo
 
-  # Jacobian of the vector diag(Psi)
   J <- cbind(J_exo, J_gamma, J_beta)
-  # We need to multiply by E %*% t(L) to get the Jacobian of the vector vech(Psi) instead of diag(Psi)
   J <- E %*% t(L) %*% J
   return(J)
 }
@@ -316,7 +313,6 @@ vcov_psi <- function(Gamma, Beta, P_endo, P_exo, Psi, which_exo_endo, C, lengths
   } else {
     J <- Jac_psi_recursive(Gamma, Beta, P_exo, Psi, M_gamma, M_beta, M_exo)
   }
-
   vcov_psi <- vcov_estimator(J, idx, VCOV)
 
   return(vcov_psi)

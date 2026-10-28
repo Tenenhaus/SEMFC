@@ -195,9 +195,7 @@ get_lengths_theta <- function(which_exo_endo, block_sizes, mode, dag){
   ##########################################################
   number_loadings <- sum(block_sizes)
   number_upper_values_exo <- length(n) * (length(n) - 1) / 2
-  # number_non_zero_G <- sum(lengths(which_exo_endo$Hi))
   number_non_zero_G <- sum(length(unlist(which_exo_endo$Hi)[unlist(which_exo_endo$Hi) != 0]))
-  # number_non_zero_B <- sum(lengths(which_exo_endo$Ji))
   number_non_zero_B <- sum(length(unlist(which_exo_endo$Ji)[unlist(which_exo_endo$Ji) != 0]))
   number_upper_values_endo <- length(m) * (length(m) - 1) / 2
   if (dag){

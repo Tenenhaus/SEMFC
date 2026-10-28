@@ -3,7 +3,7 @@
 #' Maximum Likelihood Estimation of Structural Equation Model
 #'
 #' Performs ML estimation of a structural equation model using constrained
-#' optimization via the solnp algorithm. Handles both formative and reflective
+#' optimization via the nloptr or the nlminb algorithm. Handles both formative and reflective
 #' measurement models with automatic constraint application for formative blocks.
 #'
 #' @param init Numeric vector of initial parameter values for optimization.
@@ -282,7 +282,6 @@ F1 <- function(x, S, model){
   implied_S <- lvm_ml(x, model, jac = FALSE)$sigma_implied
 
   # check for positive definiteness
-
   eigvals <- eigen(implied_S, symmetric = TRUE, only.values = TRUE)$values
   if (any(eigvals <= 0.0001)){
     return(1e+5)
@@ -297,9 +296,41 @@ F1 <- function(x, S, model){
 
 }
 
+grad_F1 <- function (x, S, model) {
+  est <- lvm_ml(x, model, jac = FALSE)
+  R <- est$p_implied
+  lambda <- est$lambda
+  BETA <- est$beta
+  GAMMA <- est$gamma
+  Sigma <- est$sigma_implied
+
+  J_Sigma_theta <- compute_J_Sigma_theta(model$block_sizes, model$lengths_theta, model$mode,model$dag,
+                                         R, model$relation_matrix, lambda, BETA, GAMMA)
+  Gradient <- compute_gradient(Sigma, S, J_Sigma_theta)
+
+  return(as.vector(Gradient))
+}
 
 
-#' @title Equality Constraints for Loglikelihood Minimization (H1)
+hess_F1 <- function(x, S, model) {
+  est <- lvm_ml(x, model, jac = FALSE)
+  R <- est$p_implied
+  lambda <- est$lambda
+  BETA <- est$beta
+  GAMMA <- est$gamma
+  Sigma <- est$sigma_implied
+
+  J_Sigma_theta <- compute_J_Sigma_theta(model$block_sizes, model$lengths_theta, model$mode,model$dag,
+                                         R, model$relation_matrix, lambda, BETA, GAMMA)
+
+  H <- compute_Hessian(Sigma, J_Sigma_theta)
+
+  return(as.matrix(H))
+}
+
+
+
+#' @title Equality Constraints for Loglikelihood Minimization
 #'
 #' @description
 #' Generalized version for multiple blocks with formative/reflective modes.
@@ -335,47 +366,9 @@ F1 <- function(x, S, model){
 #'
 #' x  <- rnorm(61)
 #'
-#' heq1(x, S, model)
+#' heq(x, S, model)
 #'}
 #' @keywords internal
-heq1 <- function (x, S, model){
-
-  block_sizes <- model$block_sizes
-  mode <- model$mode
-
-  loadings <- get_loadings(x, block_sizes)
-
-
-
- # list of lengths: diagonal covariances for reflective blocks,
- # or lower-triangular covariance values for formative blocks
-  lengths_values_cov <- block_sizes
-  lengths_values_cov[mode == "formative"] <- (block_sizes[mode == "formative"]^2 + block_sizes[mode == "formative"]) / 2
-  # number of parameters for covariance
-  total_cov_parameter <- sum(lengths_values_cov)
-    # the coefficient are stocked at the end of x
-  initial_start_index_cov <- length(x) - total_cov_parameter +1
-  end_endex_cov <- initial_start_index_cov + total_cov_parameter - 1
-
-  # part of the vector corresponding to covariance blocks
-  extracted_parameters_cov <- x[initial_start_index_cov:end_endex_cov]
-  # list of parameters corresponding to each covariance bloc
-  list_cov <- split(extracted_parameters_cov,
-                    rep(seq_along(lengths_values_cov), lengths_values_cov))
-
-  # list of formative covariance matrices
-  S_composite <- lapply(list_cov[mode == "formative"], build_formative_S_diag)
-  h <- as.vector(mapply(function(S_composite_i, loadings_i) {
-    t(loadings_i) %*% solve(S_composite_i) %*% loadings_i - 1
-  }, S_composite, loadings[mode == "formative"], SIMPLIFY = TRUE))
-
-  return(h)
-
-}
-
-
-
-
 heq <- function (x, S, model){
 
   block_sizes <- model$block_sizes
