@@ -19,7 +19,7 @@ using the lower triangular values provided in \code{lower_values_composite_i}.
 }
 \examples{
 \dontrun{
-upper_values <- c(1, 0.3, 0.5, 1, 0.2, 1)
-build_formative_S_diag(upper_values)}
+lower_values <- c(1, 0.3, 0.5, 1, 0.2, 1)
+build_formative_S_diag(lower_values)}
 }
 \keyword{internal}

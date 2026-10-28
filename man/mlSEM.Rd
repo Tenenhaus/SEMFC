@@ -35,7 +35,7 @@ and overall success indicator.}
 }
 \description{
 Performs ML estimation of a structural equation model using constrained
-optimization via the solnp algorithm. Handles both formative and reflective
+optimization via the nloptr or the nlminb algorithm. Handles both formative and reflective
 measurement models with automatic constraint application for formative blocks.
 }
 \details{
