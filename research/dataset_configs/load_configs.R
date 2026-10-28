@@ -74,6 +74,11 @@ DATASETS_CONFIG <- list(
     data_source = NULL,
     config_func = "create_model_reflective_config",
     is_generated = TRUE
+  ),
+  "benitez" = list(
+    data_source = "Benitezetal2020",
+    config_func = "create_benitez_config",
+    is_generated = FALSE
   )
 )
 
@@ -87,7 +92,7 @@ GENERATED_DATASETS <- names(DATASETS_CONFIG)[sapply(DATASETS_CONFIG, function(x)
 
 
 # Dossier des configurations
-config_dir <- testthat::test_path("dataset_configs")
+config_dir <- file.path("research", "dataset_configs")
 
 # Sourcer tous les fichiers de configuration (sauf celui-ci!)
 .load_dataset_configs <- function() {
@@ -98,7 +103,7 @@ config_dir <- testthat::test_path("dataset_configs")
   )
 
   # Chemin complet du fichier courant
-  this_file <- normalizePath(testthat::test_path("dataset_configs/load_configs.R"))
+  this_file <- normalizePath(file.path("research", "dataset_configs", "load_configs.R"))
 
   for (file in config_files) {
     # Ignorer load_configs.R lui-même pour éviter la récursion

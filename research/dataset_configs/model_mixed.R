@@ -1,16 +1,15 @@
-# Configuration dataset model_reflective
-# Source: research/model/model_reflective.R
+# Configuration dataset model_mixed
+# Source: research/model/model_mixed.R
 
-# Créer les données pour model_reflective
-create_model_reflective_dataset <- function() {
+# Créer les données pour model_mixed
+create_model_mixed_dataset <- function() {
   library(MASS)
   library(mvtnorm)
   set.seed(20091979)
-
-  # Load SIGMA from data_simulation_reflective.R
-  source(system.file("simulations", "data_simulation_reflective.R", package = "SEMFC"))
-
   N <- 300
+
+  # Load SIGMA from data_simulation_mixed.R
+  source(system.file("research", "simulations", "data_simulation_mixed.R", package = "SEMFC"))
 
   # Generate dataset
   X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = FALSE)
@@ -29,10 +28,10 @@ create_model_reflective_dataset <- function() {
   return(A)
 }
 
-# Configuration de model_reflective
-create_model_reflective_config <- function() {
+# Configuration de model_mixed
+create_model_mixed_config <- function() {
   # Récupérer les données générées
-  A <- create_model_reflective_dataset()
+  A <- create_model_mixed_dataset()
 
   # Relation matrix (C) - Path structure
   C <- matrix(c(0, 0, 0, 0, 1, 0,
@@ -44,17 +43,17 @@ create_model_reflective_config <- function() {
 
   colnames(C) <- rownames(C) <- names(A)
 
-  # Mode: all reflective
-  mode <- rep("reflective", 6)
+  # Mode: formative for first 4, reflective for last 2
+  mode <- c(rep("formative", 4), rep("reflective", 2))
   names(mode) <- names(A)
 
 
   sem <-  '
     # latent variable definitions
-    LV1 =~ X11+X12+X13
-    LV2 =~ X21+X22+X23
-    LV3 =~ X31+X32+X33
-    LV4 =~ X41+X42+X43
+    LV1 <~ X11+X12+X13
+    LV2 <~ X21+X22+X23
+    LV3 <~ X31+X32+X33
+    LV4 <~ X41+X42+X43
     LV5 =~ X51+X52+X53
     LV6 =~ X61+X62+X63
 

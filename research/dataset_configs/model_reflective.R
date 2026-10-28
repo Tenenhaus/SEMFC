@@ -1,15 +1,16 @@
-# Configuration dataset model_mixed
-# Source: research/model/model_mixed.R
+# Configuration dataset model_reflective
+# Source: research/model/model_reflective.R
 
-# Créer les données pour model_mixed
-create_model_mixed_dataset <- function() {
+# Créer les données pour model_reflective
+create_model_reflective_dataset <- function() {
   library(MASS)
   library(mvtnorm)
   set.seed(20091979)
-  N <- 300
 
-  # Load SIGMA from data_simulation_mixed.R
-  source(system.file("simulations", "data_simulation_mixed.R", package = "SEMFC"))
+  # Load SIGMA from data_simulation_reflective.R
+  source(system.file("research", "simulations", "data_simulation_reflective.R", package = "SEMFC"))
+
+  N <- 300
 
   # Generate dataset
   X <- mvrnorm(N, rep(0, 18), SIGMA, empirical = FALSE)
@@ -28,10 +29,10 @@ create_model_mixed_dataset <- function() {
   return(A)
 }
 
-# Configuration de model_mixed
-create_model_mixed_config <- function() {
+# Configuration de model_reflective
+create_model_reflective_config <- function() {
   # Récupérer les données générées
-  A <- create_model_mixed_dataset()
+  A <- create_model_reflective_dataset()
 
   # Relation matrix (C) - Path structure
   C <- matrix(c(0, 0, 0, 0, 1, 0,
@@ -43,8 +44,8 @@ create_model_mixed_config <- function() {
 
   colnames(C) <- rownames(C) <- names(A)
 
-  # Mode: formative for first 4, reflective for last 2
-  mode <- c(rep("formative", 4), rep("reflective", 2))
+  # Mode: all reflective
+  mode <- rep("reflective", 6)
   names(mode) <- names(A)
 
 

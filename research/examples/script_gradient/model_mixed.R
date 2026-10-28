@@ -4,9 +4,9 @@ library(lavaan)
 library('Rsolnp')
 
 
-source("tests/testthat/dataset_configs/load_configs.R")
-source("inst/report/report_utils.R")
-source("inst/examples/script_gradient/utils.num.R")
+source("research/dataset_configs/load_configs.R")
+source("research/report/report_utils.R")
+source("research/examples/script_gradient/utils.num.R")
 
 dataset_name = 'model_mixed'
 dataset <- load_dataset_data(dataset_name)

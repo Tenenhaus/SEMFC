@@ -15,13 +15,13 @@ library(lavaan)
 pkg_root <- getwd()
 
 # Sourcer les configurations
-source(file.path(pkg_root, "tests/testthat/dataset_configs/load_configs.R"))
+source(file.path(pkg_root, "research/dataset_configs/load_configs.R"))
 
 # Sourcer les fonctions utiles
-source(file.path(pkg_root, "inst/report/report_utils.R"))
+source(file.path(pkg_root, "research/report/report_utils.R"))
 
 # Créer le dossier de rapport
-report_dir <- file.path(pkg_root, "inst/report/reports")
+report_dir <- file.path(pkg_root, "research/report/reports")
 dir.create(report_dir, showWarnings = FALSE, recursive = TRUE)
 
 # ============================================================================
