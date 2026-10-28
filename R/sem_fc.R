@@ -6,7 +6,7 @@
 #'
 #' @description
 #' The SEMFC package implements Structural Equation Modeling (SEM) with factors
-#' and composites within the framework of the basic design (Tenenhaus et al, 2025).
+#' and composites within the framework of the basic design (Tenenhaus et al, 2026).
 #'
 #' @details
 #' The SEMFC package supports the svdSEM and the (restricted) maximum likelihood
@@ -21,8 +21,8 @@
 #' \item The restricted maximum-likelihood (RML-SEM) approach for the basic
 #' design with factors and composites is also implemented within SEMFC.
 #' svdSEM estimates serve as an initial solution for RML-SEM. The RML-SEM
-#' estimator is implemented using the solnp algorithm (Ye, 1987), available
-#' in the Rsolnp package (Ghalanos and Theussl, 2015), which enables efficient
+#' estimator is implemented using general nonlinear optimization problems available
+#' in the nloptr package (Johnson SG, 2008), which enables efficient
 #' nonlinear optimization with constraints.}
 #'
 #' The SEMFC package also provides comprehensive tools for statistical inference,
@@ -33,14 +33,10 @@
 #' \strong{References}
 #'
 #' \enumerate{
-#' \item Tenenhaus, A., Tenenhaus, M., Dijkstra, T.K. Structural equation 
-#' modeling with factors and composites within the framework of the basic design.
-#' Advances in Data Analysis Classification (2025).
-#' \doi{10.1007/s11634-025-00647-4}
-#' \item Ye Y (1987) Interior algorithms for linear, quadratic, and
-#' linearly constrained non-linear programming. 
-#' \href{https://web.stanford.edu/~yyye/YinyuYePhD.pdf}{PhD thesis}, Department 
-#' of ESS, Stanford University
+#' \item Tenenhaus, A., Tenenhaus, M., & Dijkstra, T. K. (2026). 
+#' Structural equation modeling with factors and composites within 
+#' the framework of the basic design. Advances in Data Analysis and 
+#' Classification, 20(1), 227-254.
 #' \item Johnson SG (2008). The NLopt nonlinear-optimization package.
 #' \url{https://github.com/stevengj/nlopt}. \cr
 #' \item Kraft D (1988). A software package for sequential
@@ -135,7 +131,7 @@ initialize = function(data, relation_matrix,
 #' @param infer Logical indicating whether to perform statistical inference
 #'   or not. When TRUE, bootstrap inference is performed for svdSEM and
 #'   asymptotic inference is performed for ML. (default: \code{FALSE})
-#' @param B Integer number of bootstrap samples for svd (default: 1000)
+#' @param B Integer number of bootstrap samples for svd (default: 500)
 #' @param initialization Character string or numeric vector specifying the
 #'   initialization strategy for the ML algorithm. This argument is ignored 
 #'   when estimator is \code{"svd"}. 
@@ -208,7 +204,8 @@ initialize = function(data, relation_matrix,
 #'                  tol = 1e-03)
 #'
 
-    fit = function(infer = FALSE, B = 1000, initialization = 'svd', tol = 1e-8, verbose = TRUE, seed = NULL){
+    fit = function(infer = FALSE, B = 500, initialization = 'svd', 
+                   tol = 1e-8, verbose = TRUE, seed = NULL){
       private$.estimate <- list()
       private$.infer_estimate <- NULL
       private$.gof <- list()
