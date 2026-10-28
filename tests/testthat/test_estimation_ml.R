@@ -1,10 +1,7 @@
 check_ml_sem <- function(recursive) {
   setup <- make_test_semfc_data(recursive = recursive)
 
-
   x <- setup$theta_true
-
-
 
   # Initialize the RML-SEM model
   model <- SemFC$new(
@@ -16,8 +13,11 @@ check_ml_sem <- function(recursive) {
 
   expect_true(inherits(model, "SemFC"))
 
-  # Fit without statistical inference
-  expect_no_error(model$fit(infer = FALSE))
+
+  # Fit with statistical inference
+  expect_no_error(model$fit(infer = TRUE))
+  # Print the summary of the fitted model
+  expect_no_error(model$summary(standardized = TRUE, all_measures = TRUE))
 
   # Retrieve estimated parameters
   theta_hat <- model$get_estimate("theta")

@@ -19,8 +19,11 @@ check_svd_sem <- function(recursive) {
   )
 
 
-  # Fit without statistical inference
-  expect_no_error(model$fit(infer = FALSE))
+
+  # Fit with statistical inference
+  expect_no_error(model$fit(infer = TRUE, B = 50))
+  # Print the summary of the fitted model
+  expect_no_error(model$summary(standardized = TRUE, all_measures = TRUE))
 
   # Retrieve estimated parameters
   theta_hat <- model$get_estimate("theta")
