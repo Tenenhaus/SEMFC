@@ -42,31 +42,32 @@ source("functions/calculate_Sigma.R")
 #############################################
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
-set.seed(6)
-n_simu <- 1
-N <- 10000
+set.seed(4)
+n_simu <- 100
+N <- 100000
 R_try <- 2
 R_true <- 2
 n_signif <- 3
 do_ML <- FALSE
 
 
-ortho_generate <- TRUE
-ortho_solve <- TRUE
-diag_generate <- FALSE
+ortho_generate <- FALSE
+ortho_solve_SVD <- FALSE
+ortho_solve_ML <- FALSE
+diag_generate <- TRUE
 
 show_svd <- FALSE
 show_ml <- FALSE
 show_TRUE <- FALSE
 show_norme <- FALSE
-# show_svd <- TRUE
-# show_ml <- TRUE
-# show_TRUE <- TRUE
+show_svd <- TRUE
+show_ml <- TRUE
+show_TRUE <- TRUE
 
 do_full_reorder <- TRUE
 ancien_P <- FALSE
 
-triche <- TRUE
+triche <- FALSE
 no_svd_refining <- FALSE
 mauvais_depart <- FALSE
 
@@ -161,6 +162,11 @@ for (b in seq_len(n_simu)) {
     }
   })
 
+  # fit.svd <- svdSEM_multi(Y, li_C,
+  #   scale = FALSE,
+  #   mode = rep("reflective", n_blocs),
+  #   bias = FALSE
+  # )
 
   tryCatch(
     {
@@ -198,9 +204,10 @@ for (b in seq_len(n_simu)) {
       li_Lambda <- fit.svd$li_Lambda
       mat_Lambda <- Matrix::bdiag(li_Lambda)
       P_tilde_approx <- t(mat_Lambda) %*% SIGMA_TRUE %*% mat_Lambda
-      print(round(as.matrix(P_tilde_approx), 2))
+      # print(round(as.matrix(P_tilde_approx), 2))
       P_tilde_obtained <- t(mat_Lambda) %*% Sigma_SVD %*% mat_Lambda
-      print(round(as.matrix(P_tilde_obtained), 2))
+      # print(round(as.matrix(P_tilde_obtained), 2))
+      # print(eigen(as.matrix(P_tilde_obtained), symmetric = TRUE)$values)
       # print(round(as.matrix(abs(P_tilde_approx - P_tilde_obtained)), 2))
 
 
@@ -408,7 +415,7 @@ for (b in seq_len(n_simu)) {
 
         # stop("F1")
 
-        if (ortho_solve) {
+        if (ortho_solve_ML) {
           n_zeros_eq <- (J * R_try * (R_try - 1)) %/% 2
         } else {
           n_zeros_eq <- 0
@@ -439,7 +446,7 @@ for (b in seq_len(n_simu)) {
           vec_indicators_per_bloc = vec_indicators_per_bloc,
           li_gr = li_gr,
           li_non_null_beta_gamma = li_non_null_beta_gamma,
-          maxit = 1000,
+          maxit = 1500,
           kkt_tol = 1e-5,
           stepsize = 1e-3,
           max_step = 10,

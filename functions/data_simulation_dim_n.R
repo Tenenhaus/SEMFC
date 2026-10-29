@@ -228,6 +228,10 @@ for (r in 1:R_true) {
       }
 }
 
+li_R2_TRUE <- lapply(1:R_true, function(r) {
+      vec_R2 <- sapply(1:n_endogenes, function(i) 1 - li_PSI_TRUE[[r]][i, i])
+      return(vec_R2)
+})
 # print(P_TRUE)
 
 # print(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values)
@@ -266,6 +270,14 @@ if (!diag_generate) {
 
 P_TRUE <- P_TRUE + perturbation # On ajoute une petite perturbation pour que la matrice soit positive definie
 
+if (!diag_generate) {
+      # matrice vraiment aleatoire
+      random_mat <- matrix(rnorm((J * R_true)^2), nrow = J * R_true, ncol = J * R_true)
+      P_base <- t(random_mat) %*% random_mat
+      vec_sd <- sqrt(diag(P_base))
+      P_TRUE <- diag(1 / vec_sd) %*% P_base %*% diag(1 / vec_sd) # matrice de correlation aleatoire
+}
+
 
 
 least_val_propre <- min(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values)
@@ -287,10 +299,7 @@ if (least_val_propre <= 0) {
 
 # li_R2_1_TRUE <- lapply(1:R_true, function(r) 1 - li_PSI_TRUE[[r]][1, 1])
 # li_R2_2_TRUE <- lapply(1:R_true, function(r) 1 - li_PSI_TRUE[[r]][2, 2])
-li_R2_TRUE <- lapply(1:R_true, function(r) {
-      vec_R2 <- sapply(1:n_endogenes, function(i) 1 - li_PSI_TRUE[[r]][i, i])
-      return(vec_R2)
-}) # coeff R^2 for each endogenous latent variable
+# coeff R^2 for each endogenous latent variable
 
 if (do_composite) {
       SIGMA11_TRUE <- SIGMA22_TRUE <- SIGMA33_TRUE <- SIGMA44_TRUE <- matrix(c(

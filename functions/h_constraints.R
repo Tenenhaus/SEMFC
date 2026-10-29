@@ -1,6 +1,6 @@
 # restrictions for the minimization of the Loglikelihood function
 heq1 <- function(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma) {
-  if (ortho_solve) {
+  if (ortho_solve_ML) {
     reconstructed <- reconstruct_blocs(x, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma)
     li_Lambda <- reconstructed$li_Lambda
     li_orthogonalities <- lapply(1:J, function(j) {

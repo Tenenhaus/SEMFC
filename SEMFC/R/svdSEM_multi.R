@@ -92,45 +92,407 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
     
 
+    if(ortho_solve_SVD){
+        # Extract first singular vector for each block. Nouvelle methode: celle du papier
+        li_Lambda_star <- lapply(
+            1:J,
+            function(j) {
+                li_sigma_jk <- lapply(1:J, function(k) {
+                    Sigma_jk <- li_S[[j]][[k]]
+                    if (j == k) {
+                        Sigma_jk <- matrix(0, nrow = pjs[j], ncol = pjs[k])
+                    }
+                    prod <- Sigma_jk %*% t(Sigma_jk)
+                    return(prod)
+                })
+                mat_sum <- Reduce("+", li_sigma_jk)
+                svd.fit <- svd(mat_sum, nu = R_try, nv = 1)
+                Lambda_star <- svd.fit$u
+                #print(svd.fit$d)
+                return(Lambda_star)
 
-
-
-    # Extract first singular vector for each block. Nouvelle methode: celle du papier
-    li_Lambda_star <- lapply(
-        1:J,
-        function(j) {
-            li_sigma_jk <- lapply(1:J, function(k) {
-                Sigma_jk <- li_S[[j]][[k]]
-                if (j == k) {
-                    Sigma_jk <- matrix(0, nrow = pjs[j], ncol = pjs[k])
-                }
-                prod <- Sigma_jk %*% t(Sigma_jk)
-                return(prod)
-            })
-            mat_sum <- Reduce("+", li_sigma_jk)
-            svd.fit <- svd(mat_sum, nu = R_try, nv = 1)
-            Lambda_star <- svd.fit$u
-            #print(svd.fit$d)
-            return(Lambda_star)
-
-            # svd(t(A[[x]]) %*% Reduce("cbind", A[-x]),
-            #     nu = 1, nv = 1
-            # )$u
-        }
-    )
-    
-
-    # check for sign inversion
-    li_Lambda_star <- lapply(li_Lambda_star, function(Lambda_star) {
-        for (r in 1:R_try) {
-            if (Lambda_star[1, r] < 0 ) {
-                Lambda_star[, r] <- -Lambda_star[, r]
+                # svd(t(A[[x]]) %*% Reduce("cbind", A[-x]),
+                #     nu = 1, nv = 1
+                # )$u
             }
-        }
-        return(Lambda_star)
-    })
-    names(li_Lambda_star) <- names(A)
+        )
 
+
+        # check for sign inversion
+        li_Lambda_star <- lapply(li_Lambda_star, function(Lambda_star) {
+            for (r in 1:R_try) {
+                if (Lambda_star[1, r] < 0 ) {
+                    Lambda_star[, r] <- -Lambda_star[, r]
+                }
+            }
+            return(Lambda_star)
+        })
+        names(li_Lambda_star) <- names(A)
+    } else{
+        #-------------------------------------------------------
+        # 1. Reduction to R x R matrices
+        #-------------------------------------------------------
+
+        # Singular vectors associated with the R largest singular values
+        # of the concatenation of all cross-block covariance matrices.
+
+        li_U <- lapply(1:J, function(i) {
+
+            C_i <- do.call(cbind, lapply(
+                setdiff(1:J, i),
+                function(j) li_S[[i]][[j]]
+            ))
+
+            svd.fit <- svd(C_i, nu = R_try, nv = 0)
+
+            svd.fit$u[, 1:R_try, drop = FALSE]
+        })
+
+
+        # Reduced cross-block covariance matrices:
+        # W_ij = U_i' Sigma_ij U_j
+
+        li_W <- lapply(1:J, function(i) {
+            lapply(1:J, function(j) {
+
+                if (i == j) {
+                    return(matrix(0, nrow = R_try, ncol = R_try))
+                }
+
+                t(li_U[[i]]) %*% li_S[[i]][[j]] %*% li_U[[j]]
+            })
+        })
+
+
+        # Ratio between the smallest and largest singular values.
+        # A small ratio indicates a poorly conditioned matrix.
+
+        svd_ratio <- function(X) {
+
+            d <- svd(X, nu = 0, nv = 0)$d
+
+            if (length(d) == 0 || !all(is.finite(d)) || max(d) == 0) {
+                return(0)
+            }
+
+            min(d) / max(d)
+        }
+
+
+        #-------------------------------------------------------
+        # 2. Estimate the directions block by block
+        #-------------------------------------------------------
+
+        # Number of random (u, v) configurations tested per pivot
+        n_uv <- 10
+
+        # Number of candidate linear combinations tested
+        n_alpha <- 100
+
+        # Numerical thresholds
+        tol_W <- 1e-6
+        tol_M <- 1e-6
+        tol_imag <- 1e-6
+
+
+        li_Lambda_star <- lapply(1:J, function(a) {
+
+            # Store the candidate matrices F and their quality scores.
+            # Each F is normalized before aggregation.
+
+            li_F <- list()
+            quality <- numeric(0)
+
+
+            #---------------------------------------------------
+            # 2.1 Construct candidate matrices F for target a
+            #---------------------------------------------------
+
+            for (b in setdiff(1:J, a)) {
+
+                js <- setdiff(1:J, c(a, b))
+
+                # M_j = W_aj W_bj^{-1}
+                # Skip this pivot if one of the W_bj is
+                # numerically too close to being singular.
+
+                li_M <- vector("list", length(js))
+                pivot_ok <- TRUE
+
+                for (k in seq_along(js)) {
+
+                    j <- js[k]
+
+                    W_bj <- li_W[[b]][[j]]
+
+                    if (svd_ratio(W_bj) < tol_W) {
+                        pivot_ok <- FALSE
+                        break
+                    }
+
+                    inv_W_bj <- tryCatch(
+                        solve(W_bj),
+                        error = function(e) NULL
+                    )
+
+                    if (is.null(inv_W_bj)) {
+                        pivot_ok <- FALSE
+                        break
+                    }
+
+                    li_M[[k]] <- li_W[[a]][[j]] %*% inv_W_bj
+                }
+
+                if (!pivot_ok) {
+                    next
+                }
+
+
+                # Generate random Gaussian vectors u and v.
+                # Normalize them to avoid arbitrary scale effects.
+
+                for (iter in 1:n_uv) {
+
+                    u <- rnorm(length(js))
+                    v <- rnorm(length(js))
+
+                    u <- u / sqrt(sum(u^2))
+                    v <- v / sqrt(sum(v^2))
+
+
+                    # M(u) = sum_j u_j M_j
+                    # M(v) = sum_j v_j M_j
+
+                    M_u <- matrix(0, nrow = R_try, ncol = R_try)
+                    M_v <- matrix(0, nrow = R_try, ncol = R_try)
+
+                    for (k in seq_along(js)) {
+                        M_u <- M_u + u[k] * li_M[[k]]
+                        M_v <- M_v + v[k] * li_M[[k]]
+                    }
+
+
+                    # Reject poorly conditioned M(v).
+
+                    cond_v <- svd_ratio(M_v)
+
+                    if (!is.finite(cond_v) || cond_v < tol_M) {
+                        next
+                    }
+
+
+                    # F = M(u) M(v)^{-1}
+
+                    F <- tryCatch(
+                        M_u %*% solve(M_v),
+                        error = function(e) NULL
+                    )
+
+                    if (is.null(F) || !all(is.finite(F))) {
+                        next
+                    }
+
+                    norm_F <- sqrt(sum(F^2))
+
+                    if (!is.finite(norm_F) || norm_F < 1e-12) {
+                        next
+                    }
+
+
+                    # Normalize F and retain the conditioning score.
+
+                    li_F[[length(li_F) + 1L]] <- F / norm_F
+                    quality <- c(quality, cond_v)
+                }
+            }
+
+
+            # Stop if no usable candidate was found.
+
+            K <- length(li_F)
+
+            if (K == 0) {
+                stop(
+                    paste(
+                        "No usable candidate matrix for block", a,
+                        "- check the covariance matrices and numerical thresholds."
+                    )
+                )
+            }
+
+
+            #---------------------------------------------------
+            # 2.2 Aggregate the candidate matrices
+            #---------------------------------------------------
+
+            # Better-conditioned configurations receive larger
+            # weights. We then test random combinations of these
+            # matrices and retain the one with the largest minimum
+            # relative eigenvalue gap.
+
+            quality <- pmax(quality, 1e-8)
+
+            best_score <- -Inf
+            best_eig <- NULL
+            best_imag <- Inf
+
+
+            for (iter in 1:n_alpha) {
+
+                if (iter == 1) {
+
+                    # First try a positive, quality-weighted average.
+
+                    alpha <- quality
+
+                } else {
+
+                    # Then explore random linear combinations.
+
+                    alpha <- rnorm(K) * sqrt(pmin(quality, 0.01))
+                }
+
+                # Normalize the coefficients.
+
+                if (!all(is.finite(alpha)) || sum(abs(alpha)) < 1e-12) {
+                    next
+                }
+
+                alpha <- alpha / sum(abs(alpha))
+
+
+                # F_bar = sum_c alpha_c F_c
+
+                F_bar <- matrix(0, nrow = R_try, ncol = R_try)
+
+                for (k in seq_len(K)) {
+                    F_bar <- F_bar + alpha[k] * li_F[[k]]
+                }
+
+
+                # Compute the eigendecomposition.
+
+                eig <- tryCatch(
+                    eigen(F_bar),
+                    error = function(e) NULL
+                )
+
+                if (is.null(eig) || !all(is.finite(eig$values))) {
+                    next
+                }
+
+
+                # Reject combinations with materially complex
+                # eigenvalues: the desired directions are real.
+
+                vals <- eig$values
+
+                spectral_scale <- max(abs(vals))
+
+                if (!is.finite(spectral_scale) || spectral_scale < 1e-12) {
+                    next
+                }
+
+                imag_ratio <- max(abs(Im(vals))) / spectral_scale
+
+                if (imag_ratio > tol_imag) {
+                    next
+                }
+
+
+                # Minimum pairwise eigenvalue gap, normalized by
+                # the spectral scale.
+
+                D <- abs(outer(vals, vals, "-"))
+                gap <- min(D[upper.tri(D)])
+
+                score <- gap / spectral_scale
+
+                if (is.finite(score) && score > best_score) {
+                    best_score <- score
+                    best_eig <- eig
+                    best_imag <- imag_ratio
+                    best_alpha <- alpha
+                }
+            }
+
+
+            if (is.null(best_eig)) {
+                stop(
+                    paste(
+                        "No suitable real eigendecomposition found for block", a,
+                        "- try more configurations or inspect the eigenvalue gaps."
+                    )
+                )
+            }
+
+
+            #---------------------------------------------------
+            # 2.3 Recover the directions for block a
+            #---------------------------------------------------
+
+            # The eigenvectors estimate the columns of Q_a,
+            # up to permutation and scaling.
+
+            Q_hat <- Re(best_eig$vectors)
+
+            # Normalize the eigenvectors.
+
+            Q_hat <- sweep(
+                Q_hat, 2,
+                sqrt(colSums(Q_hat^2)),
+                "/"
+            )
+
+
+            # Return to the original block:
+            # Lambda_a = U_a Q_a
+
+            Lambda_star <- li_U[[a]] %*% Q_hat
+
+
+            # Normalize each column to obtain directions.
+
+            Lambda_star <- sweep(
+                Lambda_star, 2,
+                sqrt(colSums(Lambda_star^2)),
+                "/"
+            )
+
+
+            # Fix the sign of each direction for reproducibility:
+            # the coordinate with the largest absolute value is positive.
+
+            for (r in 1:R_try) {
+
+                #idx <- which.max(abs(Lambda_star[, r])) #mieux mais incoherent avec simu
+                idx <- 1
+
+                if (Lambda_star[idx, r] < 0) {
+                    Lambda_star[, r] <- -Lambda_star[, r]
+                }
+            }
+
+            Lambda_star
+        })
+
+
+        names(li_Lambda_star) <- names(A)
+
+        # print("guess")
+        # print(li_Lambda_star)
+        li_Lambda_star_TRUE <- lapply(1:J, function(j){
+             lambda_star_TRUE <- sweep(
+                li_lambda_TRUE[[j]], 2,
+                sqrt(colSums(li_lambda_TRUE[[j]]^2)),
+                "/"
+            )
+            return(lambda_star_TRUE)
+        })          
+        # print("TRUE")
+        # print(li_Lambda_star_TRUE)
+    
+    }
 
     li_vec_norm_and_Cjj <- lapply(
         1:J,
@@ -241,7 +603,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
 
     # Pour le bon ordre : plus simple mais ne change rien after
-    if(R_try > 1){
+    if(R_try > 1 & R_try == R_true){
         Lambda_1_TRUE <- li_lambda_TRUE[[1]]
         mat_ps <- t(t(li_Lambda_star[[1]]) %*% Lambda_1_TRUE)
         vec_reorder <- as.integer(clue::solve_LSAP(abs(mat_ps), maximum = TRUE))
@@ -255,13 +617,13 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
     if(R_try > 1){
         if(do_full_reorder){
-            reorder_full_fit <- reorder_full(li_S, li_Lambda_star, li_Lambda, li_vec_norm, li_C_jj_hat, R_try, J)
+            reorder_full_fit <- reorder_full(li_S, li_Lambda_star, li_Lambda, li_vec_norm, li_C_jj_hat, R_try, J, ortho = ortho_solve_SVD)
             li_Lambda_star <- reorder_full_fit$li_Lambda_star
             li_Lambda <- reorder_full_fit$li_Lambda
             li_vec_norm <- reorder_full_fit$li_vec_norm
             li_C_jj_hat <- reorder_full_fit$li_C_jj_hat
         } else{
-            reorder_vs_one_col_fit <- reorder_vs_one_col(li_S, li_Lambda_star, li_Lambda, li_vec_norm, li_C_jj_hat, R_try, J)
+            reorder_vs_one_col_fit <- reorder_vs_one_col(li_S, li_Lambda_star, li_Lambda, li_vec_norm, li_C_jj_hat, R_try, J, ortho = ortho_solve_SVD)
             li_Lambda_star <- reorder_vs_one_col_fit$li_Lambda_star
             li_Lambda <- reorder_vs_one_col_fit$li_Lambda
             li_vec_norm <- reorder_vs_one_col_fit$li_vec_norm
@@ -273,7 +635,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
     # print(li_Lambda)
     # # print("oui")
-    #  print(li_lambda_TRUE)
+    # print(li_lambda_TRUE)
+    # stop("ok")
 
     # print(lapply(1:J, function(j) round(li_Lambda[[j]] - li_lambda_TRUE[[j]], 4)))
 
@@ -293,10 +656,15 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
                 D_j_inv <- diag(1 / li_vec_norm[[j]], nrow = R_try, ncol = R_try)
                 S_ij <- li_S[[i]][[j]]
                 if(ancien_P){
-                    P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- D_i_inv %*% t(li_Lambda_star[[i]]) %*% S_ij %*% li_Lambda_star[[j]] %*% D_j_inv
+                    if(ortho_solve_SVD){
+                        P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- D_i_inv %*% t(li_Lambda_star[[i]]) %*% S_ij %*% li_Lambda_star[[j]] %*% D_j_inv
+                    } else{
+                        p_inv_i <- solve(t(li_Lambda_star[[i]]) %*% li_Lambda_star[[i]]) %*% t(li_Lambda_star[[i]])
+                        p_inv_j <- solve(t(li_Lambda_star[[j]]) %*% li_Lambda_star[[j]]) %*% t(li_Lambda_star[[j]])
+                        P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- D_i_inv %*% p_inv_i %*% S_ij %*% t(p_inv_j) %*% D_j_inv
+                    }
                 } else{
-                    P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- calc_P_ij_tilde(S_ij, li_Lambda_star, li_Lambda, li_vec_norm, i, j, R_try)
-                    # P_tilde[((j - 1) * R_try + 1):(j * R_try), ((i - 1) * R_try + 1):(i * R_try)] <- t(P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)]) #symmetrize
+                    P_tilde[((i - 1) * R_try + 1):(i * R_try), ((j - 1) * R_try + 1):(j * R_try)] <- calc_P_ij_tilde(S_ij, li_Lambda_star, li_Lambda, li_vec_norm, i, j, R_try, ortho_solve_SVD, S_ii = li_S[[i]][[i]], S_jj = li_S[[j]][[j]])
                 }
             }
         }
@@ -314,6 +682,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
             }
         }
     }
+
+
 
     Lambda_mat <- as.matrix(Matrix::bdiag(li_Lambda))
 

@@ -7,7 +7,7 @@ easy_solver <- function(
   eqB = NULL,
   ineqLB = NULL,
   ...,
-  maxit = 1000,
+  maxit = 1500,
   tol = 1e-8,
   kkt_tol = 1e-5,
   stepsize = 1e-3,

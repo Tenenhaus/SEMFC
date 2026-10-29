@@ -1,4 +1,7 @@
-reorder_vs_one_col <- function(li_S, li_Lambda_star, li_Lambda, li_vec_norm, li_C_jj_hat, R_try, J) {
+reorder_vs_one_col <- function(li_S, li_Lambda_star, li_Lambda, li_vec_norm, li_C_jj_hat, R_try, J, ortho) {
+    if (!ortho) {
+        stop("reorder_vs_one_col is only implemented for ortho = TRUE")
+    }
     for (j in 2:J) {
         Sigma_1j <- li_S[[1]][[j]]
         svd_fit <- svd(Sigma_1j, nu = R_try, nv = R_try)
