@@ -44,7 +44,7 @@ source("functions/calculate_Sigma.R")
 #############################################
 set.seed(4)
 n_simu <- 100
-N <- 100000
+N <- 1000
 R_try <- 2
 R_true <- 2
 n_signif <- 3
@@ -66,6 +66,7 @@ show_TRUE <- TRUE
 
 do_full_reorder <- TRUE
 ancien_P <- FALSE
+# blanchir <- FALSE
 
 triche <- FALSE
 no_svd_refining <- FALSE
@@ -162,11 +163,11 @@ for (b in seq_len(n_simu)) {
     }
   })
 
-  # fit.svd <- svdSEM_multi(Y, li_C,
-  #   scale = FALSE,
-  #   mode = rep("reflective", n_blocs),
-  #   bias = FALSE
-  # )
+  fit.svd <- svdSEM_multi(Y, li_C,
+    scale = FALSE,
+    mode = rep("reflective", n_blocs),
+    bias = FALSE
+  )
 
   tryCatch(
     {

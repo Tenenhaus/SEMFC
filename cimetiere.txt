@@ -1,0 +1,65 @@
+ if(blanchir){
+        li_S_sqrt <- lapply(1:J, function(j) {
+            S_jj <- li_S[[j]][[j]]
+            sqrtm_S_jj <- sqrtm(S_jj)
+            return(sqrtm_S_jj)
+        })
+
+        li_S_inv_sqrt <- lapply(1:J, function(j) {
+            S_jj <- li_S_sqrt[[j]]
+            svd_ratio_j <- svd_ratio(S_jj)
+            if(svd_ratio_j < 0.01){
+                # print("Warning: S_jj is poorly conditioned. Skipping whitening for block ", j)
+                return(NULL)
+            } else{
+                inv_sqrtm_S_jj <- solve(S_jj)
+            }
+            return(inv_sqrtm_S_jj)
+        })
+        li_S <- lapply(1:J, function(j) {
+            lapply(1:J, function(k) {
+                S_jk <- li_S[[j]][[k]]
+                inv_sqrt_j <- li_S_inv_sqrt[[j]]
+                inv_sqrt_k <- li_S_inv_sqrt[[k]]
+                if(!is.null(inv_sqrt_j)){
+                    S_jk <- inv_sqrt_j %*% S_jk
+                }
+                if(!is.null(inv_sqrt_k)){
+                    S_jk <- S_jk %*% inv_sqrt_k
+                }
+                return(S_jk)
+            })
+        })
+    }
+
+
+    ...
+
+
+    if(blanchir){
+        li_S <- lapply(1:J, function(j) {
+            lapply(1:J, function(k) {
+                S_jk <- li_S[[j]][[k]]
+                sqrt_j <- li_S_sqrt[[j]]
+                sqrt_k <- li_S_sqrt[[k]]
+                inv_sqrt_j <- li_S_inv_sqrt[[j]]
+                inv_sqrt_k <- li_S_inv_sqrt[[k]]
+                if(!is.null(inv_sqrt_j)){
+                    S_jk <- sqrt_j %*% S_jk
+                }
+                if(!is.null(inv_sqrt_k)){
+                    S_jk <- S_jk %*% sqrt_k
+                }
+                return(S_jk)
+            })
+        })
+
+        li_Lambda_star <- lapply(1:J, function(j){
+        L <- li_Lambda_star[[j]]
+        if(!is.null(li_S_inv_sqrt[[j]])){
+            L <- li_S_sqrt[[j]] %*% L
+        }
+        sweep(L, 2, sqrt(colSums(L^2)), "/")
+        })
+
+    }

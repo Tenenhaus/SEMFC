@@ -43,6 +43,25 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     if (any(mode == "formative")) {
         stop("svdSEM_multi() does not support yet formative blocks. Please use svdSEM() instead.")
     }
+
+
+    svd_ratio <- function(X) {
+
+        d <- svd(X, nu = 0, nv = 0)$d
+
+        if (length(d) == 0 || !all(is.finite(d)) || max(d) == 0) {
+            return(0)
+        }
+
+        min(d) / max(d)
+    }
+
+    sqrtm <- function(X) {
+        eig <- eigen(X, symmetric = TRUE)
+        sqrt_eig <- sqrt(pmax(eig$values, 0))
+        return(eig$vectors %*% diag(sqrt_eig) %*% t(eig$vectors))
+    }
+
     pjs <- sapply(A, NCOL)
     nb_row <- NROW(A[[1]])
 
@@ -52,6 +71,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     R_try <- length(li_C)
 
     cumsum_pjs <- cumsum(c(0, pjs))
+    
 
     if(!triche){
         li_S <- lapply(A, function(x){
@@ -70,6 +90,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
         })
     }
 
+   
+
 
     S_full <- matrix(0, nrow = sum(pjs), ncol = sum(pjs))
     for (i in 1:J) {
@@ -77,6 +99,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
             S_full[(cumsum_pjs[i] + 1):(cumsum_pjs[i + 1]), (cumsum_pjs[j] + 1):(cumsum_pjs[j + 1])] <- li_S[[i]][[j]]
         }
     }
+
 
     # print("init diff")
     # print(round(as.matrix(abs(SIGMA_TRUE)), 3))
@@ -190,8 +213,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
         n_alpha <- 100
 
         # Numerical thresholds
-        tol_W <- 1e-6
-        tol_M <- 1e-6
+        tol_W <- 0.01
+        tol_M <- 0.01
         tol_imag <- 1e-6
 
 
@@ -224,7 +247,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
                     j <- js[k]
 
                     W_bj <- li_W[[b]][[j]]
-
+                    # print(svd_ratio(W_bj))
                     if (svd_ratio(W_bj) < tol_W) {
                         pivot_ok <- FALSE
                         break
@@ -275,6 +298,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
                     # Reject poorly conditioned M(v).
 
                     cond_v <- svd_ratio(M_v)
+                    #print(svd_ratio(M_v))
 
                     if (!is.finite(cond_v) || cond_v < tol_M) {
                         next
@@ -331,12 +355,13 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
             # relative eigenvalue gap.
 
             quality <- pmax(quality, 1e-8)
+            quality <- pmin(quality, 0.1)
 
             best_score <- -Inf
             best_eig <- NULL
             best_imag <- Inf
 
-
+            #print(pmin(quality, 0.1))
             for (iter in 1:n_alpha) {
 
                 if (iter == 1) {
@@ -349,7 +374,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
                     # Then explore random linear combinations.
 
-                    alpha <- rnorm(K) * sqrt(pmin(quality, 0.01))
+                    alpha <- rnorm(K) * sqrt(quality)
+
                 }
 
                 # Normalize the coefficients.
@@ -406,7 +432,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
                 D <- abs(outer(vals, vals, "-"))
                 gap <- min(D[upper.tri(D)])
 
-                score <- gap / spectral_scale
+                score <- gap / spectral_scale + sd(alpha * quality)/mean(abs(alpha * quality))
 
                 if (is.finite(score) && score > best_score) {
                     best_score <- score
@@ -415,6 +441,10 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
                     best_alpha <- alpha
                 }
             }
+            # print(best_alpha)
+            # print(best_eig$values)
+            # print(best_score)
+
 
 
             if (is.null(best_eig)) {
@@ -434,15 +464,25 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
             # The eigenvectors estimate the columns of Q_a,
             # up to permutation and scaling.
 
-            Q_hat <- Re(best_eig$vectors)
+            Q_hat_init <- Re(best_eig$vectors)
 
             # Normalize the eigenvectors.
 
-            Q_hat <- sweep(
-                Q_hat, 2,
-                sqrt(colSums(Q_hat^2)),
+            Q_hat_init <- sweep(
+                Q_hat_init, 2,
+                sqrt(colSums(Q_hat_init^2)),
                 "/"
             )
+
+            Q_hat <- joint_diag_nonorth(li_F, weights = quality, A0 = Q_hat_init,
+                               maxit = 200, tol = 1e-12, ridge = 1e-10,
+                               verbose = FALSE)$A
+            
+            # print(Q_hat_init)
+            # print(Q_hat)
+            # stop("ok")
+
+
 
 
             # Return to the original block:
@@ -479,6 +519,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
         names(li_Lambda_star) <- names(A)
 
+        
+
         # print("guess")
         # print(li_Lambda_star)
         li_Lambda_star_TRUE <- lapply(1:J, function(j){
@@ -494,6 +536,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     
     }
 
+    
     li_vec_norm_and_Cjj <- lapply(
         1:J,
         function(j) {
