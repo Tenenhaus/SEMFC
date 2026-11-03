@@ -1,0 +1,257 @@
+
+
+#' Compute Implied Covariance Matrix for Latent Variable Model
+#'
+#' This function computes the implied covariance matrix (SIGMA) for a structural
+#' equation model with latent variables. It extracts model parameters from the
+#' optimization vector `x` and returns either the upper triangular values of the
+#' implied covariance matrix or the full model structure.
+#'
+#' @param x Numeric vector containing all model parameters (loadings, correlations,
+#'   path coefficients, and variance/covariance parameters).
+#' @param model A list containing model specifications with the following elements:
+#'   \describe{
+#'     \item{block_sizes}{Integer vector specifying the number of indicators in each block.}
+#'     \item{mode}{Character vector indicating the measurement mode for each block
+#'       ("formative" or "reflective").}
+#'     \item{lengths_parameter}{Integer vector specifying the length of each parameter
+#'       group in `x` (loadings, exogenous correlations, gamma, beta, endogenous correlations,
+#'       covariance of composite blocks and residual variances).}
+#'     \item{which_exo_endo}{List containing indices and structure information for
+#'       exogenous and endogenous latent variables (output from `ind_exo_endo()`).}
+#'      \item{varnames}{list of character vectors containing variable names.}
+#'    \item{dag}{Logical indicating whether the structural model is recursive (FALSE)
+#'       or non-recursive (TRUE).}
+#'    \item{relation_matrix}{defining structural connection between latent variables.}
+#'   }
+#' @param jac Logical value. If TRUE, returns only the upper triangular values of
+#'   the implied covariance matrix (for Jacobian computation). If FALSE, returns
+#'   the complete model structure (default: TRUE).
+#'
+#' @return If `jac = TRUE`, returns a numeric vector of upper triangular values
+#'   (including diagonal) of the implied covariance matrix.
+#'   If `jac = FALSE`, returns a list containing:
+#'   \item{lambda}{List of loading vectors for each block.}
+#'   \item{beta}{Matrix of path coefficients between endogenous latent variables.}
+#'   \item{gamma}{Matrix of path coefficients from exogenous to endogenous variables.}
+#'   \item{psi}{Covariance matrix of structural disturbances.}
+#'   \item{r2}{Vector of R-squared values for endogenous variables.}
+#'   \item{residual_variance}{List of residual variances for reflective indicators.}
+#'   \item{S_composites}{List of variance-covariance matrices for formative composites.}
+#'   \item{omega}{List of composite weights for formative blocks.}
+#'   \item{p_exo}{Correlation matrix of exogenous latent variables.}
+#'   \item{p_endo}{Correlation matrix of endogenous latent variables.}
+#'   \item{p_implied}{Full correlation matrix of all latent variables.}
+#'   \item{sigma_implied}{Implied covariance matrix of observed variables.}
+#'
+#' @details
+#' The function follows these steps:
+#' 1. Extracts loadings from parameter vector `x`
+#' 2. Constructs correlation matrices for exogenous (P_EXO) and endogenous (P_ENDO) variables
+#' 3. Builds path coefficient matrices gamma (G) and beta (B)
+#' 4. Computes structural disturbance covariance (PSI) and R-squared values
+#' 5. Constructs variance/covariance blocks (BDIAG) for formative and reflective indicators
+#' 6. Computes the implied covariance matrix using the LISREL equation:
+#'   SIGMA = L * R * L' + BDIAG
+#'
+#' @keywords internal
+lvm_ml <- function(x, model, jac = TRUE){
+
+  block_sizes <- model$block_sizes
+  mode <- model$mode
+  lengths_parameter <- model$lengths_theta
+  which_exo_endo <- model$which_exo_endo
+  varnames <- model$varnames
+  dag <- model$dag
+  C <- model$relation_matrix
+
+  n <- which_exo_endo$ind_exo
+  m <- which_exo_endo$ind_endo
+
+
+
+  start_indices_in_x <- cumsum(c(1, head(lengths_parameter, -1)))
+
+  ######################################################
+  ####### mapping of the loadings from x ###############
+  ######################################################
+
+  loadings <- get_loadings(x, block_sizes = block_sizes)
+  # naming loadings
+  if (!is.null(varnames)){
+    loadings <- mapply(function(x, nms) {names(x) <- nms; x}, loadings, varnames, SIMPLIFY = FALSE)
+  }
+
+
+  ##################################################################
+  ####### mapping of the exogeneous correlation matrix from x ######
+  ##################################################################
+
+  P_EXO <- get_correlation_coeff(x,
+                                 latent_variables = n,
+                                 start_index = start_indices_in_x[2])
+
+  rownames(P_EXO) <- names(n)
+  colnames(P_EXO) <- names(n)
+
+
+  ##################################################################
+  ####### mapping of the path coefficients matrix G from x #########
+  ##################################################################
+
+  G <- get_path_coeff(x,
+                      row_exo_endo = m,
+                      col_exo_endo = n,
+                      C = C,
+                      initial_start_index = start_indices_in_x[3])
+  colnames(G) <- names(n)
+  rownames(G) <- names(m)
+
+  ##################################################################
+  ####### mapping of the path coefficients matrix B from x #########
+  ##################################################################
+
+  B <- get_path_coeff(x,
+                      row_exo_endo = m,
+                      col_exo_endo = m,
+                      C = C,
+                      initial_start_index = start_indices_in_x[4])
+
+  colnames(B) <- names(m)
+  rownames(B) <- names(m)
+
+  ##################################################################
+  ####### mapping of the endogeneous correlation matrix from x #####
+  ##################################################################
+
+  if (!dag){
+
+
+  P_ENDO <- get_correlation_coeff(x,
+                                  latent_variables = m,
+                                  start_index = start_indices_in_x[5])
+
+  ##################################################################
+  ########################## Computation of PSI, R2 ################
+  ##################################################################
+
+  PSI <-  (diag(NROW(B)) - B)%*%P_ENDO%*%t((diag(NROW(B)) - B)) - G%*%P_EXO%*%t(G)
+
+  } else {
+
+
+    I_B_1 <- solve(diag(ncol(B)) - B)
+    D <- diag(diag(ncol(B)) - (I_B_1%*%G%*%P_EXO%*%t(G)%*%t(I_B_1)))
+    diag_PSI <- drop(solve(I_B_1*I_B_1)%*%D)
+    PSI <- if(length(diag_PSI) == 1) {
+      matrix(diag_PSI, 1, 1)
+    } else {
+      diag(diag_PSI)
+    }
+
+    P_ENDO <- I_B_1%*%(G%*%P_EXO%*%t(G) + PSI)%*%t(I_B_1)
+
+
+  }
+  dimnames(PSI) <- list(
+    paste0(".", rownames(B)),
+    paste0(".", rownames(B))
+  )
+
+  rownames(P_ENDO) <- names(m)
+  colnames(P_ENDO) <- names(m)
+
+
+
+  R2 <- 1-diag(PSI)
+  names(R2) <- rownames(B)
+
+  ########################################################################
+  ########  Correlations between Latent/emergent variables   #############
+  ########################################################################
+
+  R <- rbind(cbind(P_EXO, P_EXO%*%t(G)%*%t(solve(diag(NROW(B)) - B))),
+            cbind(solve(diag(NROW(B)) - B)%*%G%*%P_EXO, P_ENDO))
+
+  ########################################################################
+  ############## Compute the variance blocks #############################
+  ########################################################################
+
+  BDIAG <- get_bdiag(x,
+                     mode = mode,
+                     block_sizes = block_sizes,
+                     initial_start_index_cov = start_indices_in_x[6])
+
+
+  # Get the residual variance for reflective blocks
+  residual_variance <- lapply(BDIAG[mode == 'reflective'], diag)
+  if (length(residual_variance) != 0){
+
+    names_residual_variance <- names(residual_variance)
+    # name the value
+    residual_variance <- unname(split(
+      `names<-`(
+        unlist(residual_variance),
+        paste0(".", names(unlist(unname(loadings[mode == "reflective"]))))
+      ),
+      rep(seq_along(residual_variance), lengths(residual_variance))
+    ))
+    names(residual_variance) <- names_residual_variance
+  }
+
+
+  # Get the variance matrices for reflective blocks
+  S_composites <- BDIAG[mode == 'formative']
+
+  ########################################################################
+  ############## Get omega ###############################################
+  ########################################################################
+
+  omega <- mapply(function(Sjj, lambda_j) solve(Sjj) %*% lambda_j,
+                  S_composites, loadings[mode == "formative"], SIMPLIFY = FALSE)
+
+  for (b in seq_len(length(omega))){
+    rownames(omega[[b]]) <- names(loadings[mode == "formative"][[b]])
+  }
+
+
+
+  ########################################################################
+  ####### Compute the implied covariance matrix implied by the model #####
+  ########################################################################
+  formative_loadings <- lapply(loadings[mode == "formative"], function(lambda) { lambda %*% t(lambda) })
+  BDIAG[mode == 'formative'] <- mapply("-", S_composites, formative_loadings, SIMPLIFY = FALSE)
+
+  L <- as.matrix(Matrix::bdiag(loadings))
+  BDIAG <- as.matrix(Matrix::bdiag(BDIAG))
+
+  implied_S <- L%*%R[names(varnames), names(varnames)]%*%t(L) + BDIAG
+
+  dimnames(implied_S) <- list(
+    unlist(varnames),
+    unlist(varnames)
+  )
+
+
+  out <- list(
+    lambda = loadings,
+    beta = B,
+    gamma = G,
+    psi = PSI,
+    r2 = R2,
+    residual_variance = residual_variance,
+    S_composites = S_composites,
+    omega = omega,
+    p_exo = P_EXO,
+    p_endo = P_ENDO,
+    p_implied = R[names(varnames), names(varnames)],
+    sigma_implied  = implied_S
+  )
+
+  if(jac){
+    return(implied_S[upper.tri(implied_S, diag = T)])
+  }else{
+    return(out)
+  }
+
+}

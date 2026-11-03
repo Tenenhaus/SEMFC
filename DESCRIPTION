@@ -1,11 +1,30 @@
 Package: SEMFC
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Title: Structural Equation Modeling with Factors and Composites
+Version: 1.0
+Authors@R: c(
+    person("Alain", "Luong", , "alain.luong@centralesupelec.fr", role =  c("aut", "rev")),
+    person("Arthur", "Tenenhaus", , "arthur.tenenhaus@centralesupelec.fr", role = c("cre", "aut", "rev", "ths"))
+  )
+Description: Implements two estimation methods for Structural Equation modeling with factors and composites within the framework of the basic design. The packages proposes SVD-SEM which relies on a non-iterative SVD-based algorithm for parameter estimation, producing consistent and asymptotically normal estimators. Additionally, the restricted maximum-likelihood approach for the basic design with factors and composites is also proposed.
+License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
+Imports:
+    stats,
+    methods,
+    igraph,
+    R6,
+    Matrix,
+    MASS,
+    pbapply,
+    nloptr,
+Depends:
+    R (>= 3.5)
+LazyData: true
+Suggests: 
+    testthat (>= 3.0.0),
+    mvtnorm,
+    numDeriv
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.1
 RoxygenNote: 7.3.3

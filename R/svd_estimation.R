@@ -1,0 +1,261 @@
+
+
+#' @import Matrix
+#' @param A  A list that contains the \eqn{J} blocks of variables \eqn{X_1, X_2, ..., X_J}.
+#' @param C  An adjacency matrix representing the structural model among latent variables.
+#' @param scale  If scale = TRUE, each block is standardized to zero means and unit variances.
+#' @param bias A logical value for biaised or unbiaised estimator of the var/cov (default: bias = TRUE).
+#' @param mode a vector of lenght J indication the mode for each block formative or reflective.
+#' @return A list containing the following elements:
+#' \describe{
+#'   \item{a}{A list of J elements. Each element contains the first singular vector for each block.}
+#'   \item{lambda}{A list of loadings for each block.}
+#'   \item{std_lambda}{A list of standardized loadings for each block.}
+#'   \item{std_omega}{A list of standardized weights for formative blocks only.}
+#'   \item{omega}{A list of weights for formative blocks only.}
+#'   \item{gr}{A directed graph representing the structural model.}
+#'   \item{beta}{A matrix of structural coefficients among endogenous latent variables.}
+#'   \item{gamma}{A matrix of structural coefficients from exogenous to endogenous latent variables.}
+#'   \item{r2}{A vector of R-squared coefficients for endogenous latent variables.}
+#'   \item{psi}{A variance-covariance matrix of structural errors.}
+#'   \item{d}{A vector of disattenuation (correction) factors for each block.}
+#'   \item{p_tilde}{An estimated correlation matrix among latent variables.}
+#'   \item{p_exo}{A correlation matrix of exogenous latent variables.}
+#'   \item{p_endo}{A correlation matrix of endogenous latent variables.}
+#'   \item{p_implied}{A model-implied correlation matrix for latent variables.}
+#'   \item{sigma_implied}{A model-implied covariance matrix for observed variables.}
+#'   \item{T_LS}{A model fit measure (least squares discrepancy).}
+#'   \item{reliability_coef}{A vector of reliability coefficients for each block.}
+#'   \item{residual_variance}{A list of residual variances for reflective blocks.}
+#'   \item{blocks}{The input data (list of blocks).}
+#'   \item{mode}{A vector of measurement modes for each block.}
+#'   \item{bias}{A logical value indicating whether biased estimation was used.}
+#'   \item{scale}{A logical value indicating whether data were standardized.}
+#'   \item{C}{An adjacency matrix of the structural model.}
+#' }
+#' @references Tenenhaus, A., Tenenhaus, M., Dijkstra, T.K. Structural equation modeling
+#' with factors and composites within the framework of the basic design.
+#' Advances in Data Analysis Classification (2025).
+#' \doi{10.1007/s11634-025-00647-4}
+#' @title Structural Equation Modeling with Factors and Composites (svdSEM)
+#' @importFrom stats cor
+#'@keywords internal             
+
+svdSEM <- function(A, C, scale = TRUE,
+                   mode = rep("formative", length(A)), 
+                   bias = FALSE){
+
+    #-------------------------------------------------------
+    blocks <- A
+    if(scale){
+      A <- lapply(A, function(x) scale2(x, bias = bias))
+    }else{
+      A <- lapply(A, function(x) scale2(x, bias = bias, scale = FALSE))
+    }
+    
+
+    lambda <- list()
+    omega <- list()
+    std_omega <- list()
+    nb_ind <- NROW(A[[1]])
+    J <- length(A)
+
+
+    # Extract first singular vector for each block.
+    a <- sapply(1:J,
+               function(x) 
+                 svd(t(A[[x]])%*%Reduce("cbind", A[-x]), 
+                     nu = 1, nv = 1)$u, 
+               simplify = FALSE
+               )
+    
+    #check for sign inversion 
+    a <- lapply(a, function(x) {if (x[1]>0) {x<-x} else {x<--x}})
+    names(a) <- names(A)
+
+    #Compute disattenuation 
+    d <- rep(0, J)
+    
+    for(j in seq_len(J)){
+      d[j] <- correction(A[[j]], a[[j]], 
+                         mode = mode[j], 
+                         bias = bias)$d
+    }
+    
+    names(d) <- names(A)
+    
+    #... and apply the correction
+    lambda <- mapply("*", a, d, SIMPLIFY = FALSE)
+    
+    for (j in which(mode == "formative")){
+        omega[[j]] <- solve(cov2(A[[j]], bias = bias))%*%a[[j]]*d[j]
+    }
+    omega <- omega[!sapply(omega, is.null)]
+
+    
+    if(any(mode == "formative")) 
+      names(omega) <- names(A)[which(mode=="formative")]
+    
+        
+    for (b in seq_len(J))
+      rownames(a[[b]]) <- rownames(lambda[[b]]) <- colnames(A[[b]])
+      
+
+    # reliability coefficients 
+    reliability_coef <- d^2/mapply("%*%",
+                                  lapply(a, t), 
+                                  mapply("%*%", 
+                                  lapply(A, function(x) cov2(x, bias= bias)), 
+                                         a, SIMPLIFY = FALSE)
+                                  )
+        
+      
+    # rho_jk (Expected value : -1 <=rho_jk <=1)
+    Phat <- matrix(0, J, J)
+    for (j in seq_len(J)){
+      for (k in j:J){
+            Phat[j, k] <- t(a[[j]])%*%cov2(A[[j]], A[[k]], bias = bias)%*%a[[k]]/(d[j]*d[k])
+      }
+    }
+    
+    Phat <- Phat + t(Phat)
+    diag(Phat) <- 1
+    colnames(Phat) <- rownames(Phat) <- names(A)
+    
+    #Call lvm() for the structural model
+    lv <- lvm(Phat, C)
+    
+    var_MVs <- lapply(A, function(x) diag(cov2(x, bias = bias)))
+    
+    #standardized loadings     
+    # Expected value : -1 <= cor(y_jh, eta_j) <=1
+    std_lambda <- mapply("/", lambda, lapply(var_MVs, sqrt),  SIMPLIFY = FALSE)
+
+
+    for (j in which(mode == "formative")){
+        std_omega[[j]] <- solve(stats::cor(A[[j]]))%*%std_lambda[[j]]
+    }
+    std_omega <- std_omega[!sapply(std_omega, is.null)]
+
+    
+    #residual variance    
+    residual_variance <- mapply("-", var_MVs, lapply(lambda, function(x) x^2),
+                               SIMPLIFY = FALSE)
+    
+    #Compute the implied covariance matrix implied by the model
+    BDIAG <- list()
+
+    for (i in seq_len(J)){
+      if(mode[i] == "formative"){
+        BDIAG [[i]] <- cov2(A[[i]], bias = bias)-lambda[[i]]%*%t(lambda[[i]])
+      }else{
+        BDIAG [[i]] <- diag(drop(residual_variance[[i]]))
+      }
+    }
+    
+    LAMBDA <- as.matrix(Matrix::bdiag(lambda))
+    BDIAG <- as.matrix(Matrix::bdiag(BDIAG))
+    SIGMA_LVM <- LAMBDA%*%lv$R_LVM%*%t(LAMBDA) + BDIAG
+    
+    var_Names <- colnames(Reduce("cbind", A))
+    dimnames(SIGMA_LVM) <- list(var_Names, var_Names)
+    
+    #Measure of goodness-of(fit)
+    T_LS <- d_LS(cov2(Reduce("cbind", A), bias = bias), SIGMA_LVM)
+
+    lambda <- lapply(lambda, function(x) setNames(as.vector(x), rownames(x)))
+    residual_variance <- lapply(residual_variance, function(x) setNames(as.vector(x), paste0(".", rownames(x))))
+
+
+    out <- list(a = a, 
+                lambda = lambda,
+                std_lambda = std_lambda,
+                omega = omega,
+                std_omega = std_omega,
+                gr = lv$gr,
+                beta = lv$BETA,
+                gamma = lv$GAMMA,
+                r2 = lv$R2,
+                psi = lv$PSI,
+                d = d,
+                p_tilde = Phat,
+                p_exo = lv$P_EXO,
+                p_endo = lv$P_ENDO,
+                p_implied = lv$R_LVM,
+                sigma_implied = SIGMA_LVM,
+                T_LS = T_LS, 
+                reliability_coef = reliability_coef,
+                residual_variance = residual_variance[mode == 'reflective'],
+                blocks = blocks,
+                mode = mode,
+                bias = bias,
+                scale = scale,
+                C = C)
+        
+    return(out)
+}
+
+
+
+#' Correct Loading Estimates in Component-Based SEM
+#'
+#' Computes the loading norm estimator giving the normalised loadings.
+#' The correction differs depending on whether the measurement model is reflective
+#' or formative.
+#'
+#' @param A Numeric matrix of indicators for the block (n × p).
+#' @param a Numeric vector of normalised loadings (length p).
+#' @param mode Character string indicating the measurement mode: "reflective" or "formative".
+#'   Default is "reflective".
+#' @param bias Logical indicating whether to use biased covariance estimator (division by n)
+#'   or unbiased (division by n-1). Default is `FALSE` (unbiased).
+#'
+#' @return List containing:
+#'   \item{d}{Numeric correction factor to apply to the loadings.}
+#'   \item{n}{Integer count of negative covariances (reflective) or zero eigenvalues (formative).}
+#'
+#' @details
+#' ## Reflective mode
+#' For reflective blocks, the correction factor is computed as:
+#' \deqn{d = \sqrt{
+#'   \frac{\mathbf{a}_j^t (\mathbf{S}_{jj} - \text{diag}(\mathbf{S}_{jj})) \mathbf{a}_j}
+#'   {1 - \mathbf{a}_j^t \text{diag}(\mathbf{a}_j \mathbf{a}_j^t) \mathbf{a}_j}
+#' }}
+#' where \eqn{S} is the sample covariance matrix.
+#' If all elements are negative, \eqn{d = 1}.
+#'
+#' ## Formative mode
+#' For formative blocks, the correction factor is:
+#' \deqn{d = \frac{1}{\sqrt{a'S^{-1}a}}}
+#' where \eqn{S} is the sample covariance matrix of indicators.
+#'
+#' @keywords internal
+correction <- function(A, a, mode = "reflective", bias = FALSE){
+
+  if(mode == "reflective"){
+    S <- cov2(A, bias = bias)
+    W <- a%*%t(a);diag(W) <- 0
+    WS <- W*S
+    d <- ifelse(any(WS>0), sqrt(sum(WS[WS>0])/sum(W[WS>0]^2)), 1)
+    n <- length(which(WS<0))
+  }
+
+  if(mode == "formative"){
+    #S = cov2(A, bias = bias)
+    #eig = eigen(S)
+    #Sinv_sqrt  = eig$vectors %*% diag(eig$values^(-1/2)) %*% t(eig$vectors)
+    #d = 1/norm(Sinv_sqrt%*%a, type = "2")
+    #n = sum(eig$values == 0)
+    d <- 1/drop(sqrt(t(a)%*%solve(cov2(A, bias = bias))%*%a))
+    n <- 0
+  }
+
+  return(list(d = d, n = n))
+}
+
+
+
+
+
+    
+    
