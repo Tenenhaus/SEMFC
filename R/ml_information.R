@@ -73,7 +73,7 @@ P_ml <- function(x, S, model){
   invM <- tryCatch(
     solve(M),
     error = function(e) {
-      warning("Inversion of M failed; using MASS::ginv().")
+      warning("Inversion of the bordered information matrix failed; using MASS::ginv(). Estimates may be unreliable.")
       MASS::ginv(M)
     }
   )
