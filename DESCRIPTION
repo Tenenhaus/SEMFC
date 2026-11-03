@@ -27,3 +27,4 @@ Suggests:
     numDeriv
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.1
+RoxygenNote: 7.3.3
