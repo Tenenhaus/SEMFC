@@ -49,6 +49,7 @@ lvm <- function(R, C){
   S <- C[, J, drop = F]
   s <- as.vector(S)
   S <- diag(ncol(C)*length(J))[, s == 1]
+  
   gb_vec <- solve(t(S)%*%kronecker(I, R_proj)%*%S)%*%(t(S)%*%as.vector(R_proj[, J, drop = F]))
 
   GAMMA_BETA <- matrix(S%*%gb_vec, ncol(C), length(J))
