@@ -21,9 +21,9 @@
 #' \item The restricted maximum-likelihood (RML-SEM) approach for the basic
 #' design with factors and composites is also implemented within SEMFC.
 #' svdSEM estimates serve as an initial solution for RML-SEM. The RML-SEM
-#' estimator is implemented using general nonlinear optimization problems available
-#' in the nloptr package (Johnson SG, 2008), which enables efficient
-#' nonlinear optimization with constraints.}
+#' estimator is implemented using general nonlinear optimization problems 
+#' (Kraft, 1988) available in the nloptr package (Johnson, 2008), which 
+#' enables efficient nonlinear optimization with constraints.}
 #'
 #' The SEMFC package also provides comprehensive tools for statistical inference,
 #' including bootstrap methods for SVD-based estimation and asymptotic inference

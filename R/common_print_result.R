@@ -225,9 +225,9 @@ print_estimates <- function(estimate, standardized, effect){
       psi <- estimate$psi
 
       cat("\nParameter Estimates:\n")
-      print_link(lambda, 'Loadings', '=~', standardized)
-      print_link(omega, 'Formative block weight', '<~', standardized)
-      print_link(rbind(beta, gamma), 'Regression', '~', standardized)
+      print_link(lambda, '\nLoadings', '=~', standardized)
+      print_link(omega, '\nFormative block weight', '<~', standardized)
+      print_link(rbind(beta, gamma), '\nRegression', '~', standardized)
       print_variance(residualvariance, 'Residual Variances', standardized)
       print_variance(psi, 'Disturbances', standardized)
       if (effect){
