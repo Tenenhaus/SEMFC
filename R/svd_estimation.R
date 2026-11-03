@@ -241,11 +241,6 @@ correction <- function(A, a, mode = "reflective", bias = FALSE){
   }
 
   if(mode == "formative"){
-    #S = cov2(A, bias = bias)
-    #eig = eigen(S)
-    #Sinv_sqrt  = eig$vectors %*% diag(eig$values^(-1/2)) %*% t(eig$vectors)
-    #d = 1/norm(Sinv_sqrt%*%a, type = "2")
-    #n = sum(eig$values == 0)
     d <- 1/drop(sqrt(t(a)%*%solve(cov2(A, bias = bias))%*%a))
     n <- 0
   }
