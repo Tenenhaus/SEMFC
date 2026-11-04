@@ -3,3 +3,4 @@
 ^\.idea$
 ^cran-comments\.md$
 ^research$
+^CRAN-SUBMISSION$
