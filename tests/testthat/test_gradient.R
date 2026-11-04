@@ -1,5 +1,5 @@
-check_gradient <- function(recursive){
-  setup <- make_test_semfc_data(recursive = recursive)
+check_gradient <- function(measurement = "mixed", recursive = recursive){
+  setup <- make_test_semfc_data(measurement = measurement, recursive = recursive)
 
   init <- get_parameter_model_sem(
     data = setup$data,

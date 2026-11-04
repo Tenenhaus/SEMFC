@@ -1,10 +1,13 @@
 
-make_test_semfc_data <- function(N = 300, seed = 123, recursive = FALSE) {
-
+make_test_semfc_data <- function(N = 300, seed = 123, measurement = c("mixed", "reflective"), recursive = FALSE) {
+  measurement <- match.arg(measurement)
   set.seed(seed)
 
-  mode <- c(rep("formative", 4),
-            rep("reflective", 2))
+  if (measurement == "mixed") {
+    mode <- c(rep("formative", 4), rep("reflective", 2))
+  } else {
+    mode <- rep("reflective", 6)
+  }
 
   # Structural relation matrix
   C <- matrix(0, 6, 6)
@@ -75,25 +78,46 @@ make_test_semfc_data <- function(N = 300, seed = 123, recursive = FALSE) {
   S_refl <- matrix(0.49, 3, 3)
   diag(S_refl) <- 1
 
-  # Theoretical composite weights
-  normalize_weight <- function(w) {
-    as.vector(
-      w / sqrt(drop(t(w) %*% S_form %*% w))
+
+  if (measurement == "mixed") {
+
+    normalize_weight <- function(w) {
+      as.vector(
+        w / sqrt(drop(t(w) %*% S_form %*% w))
+      )
+    }
+
+    w1 <- w2 <- normalize_weight(rep(1, 3))
+    w3 <- w4 <- normalize_weight(1:3)
+
+    # Theoretical loadings
+    lambda <- list(
+      as.vector(S_form %*% w1),
+      as.vector(S_form %*% w2),
+      as.vector(S_form %*% w3),
+      as.vector(S_form %*% w4),
+      rep(0.7, 3),
+      rep(0.7, 3)
     )
+
+    omega <- list(w1, w2, w3, w4)
+
+    sigma_blocks <- c(
+      rep(list(S_form), 4),
+      rep(list(S_refl), 2)
+    )
+
+  } else {
+
+    omega <- NULL
+
+    lambda <- rep(list(rep(0.7, 3)), 6)
+
+    sigma_blocks <- rep(list(S_refl), 6)
+
+
+
   }
-
-  w1 <- w2 <- normalize_weight(rep(1, 3))
-  w3 <- w4 <- normalize_weight(1:3)
-
-  # Theoretical loadings
-  lambda <- list(
-    as.vector(S_form %*% w1),
-    as.vector(S_form %*% w2),
-    as.vector(S_form %*% w3),
-    as.vector(S_form %*% w4),
-    rep(0.7, 3),
-    rep(0.7, 3)
-  )
 
   # Construct the population covariance matrix
   SIGMA <- matrix(0, 18, 18)
@@ -101,8 +125,7 @@ make_test_semfc_data <- function(N = 300, seed = 123, recursive = FALSE) {
   indices <- split(1:18, rep(1:6, each = 3))
 
   for (j in 1:6) {
-    SIGMA[indices[[j]], indices[[j]]] <-
-      if (j <= 4) S_form else S_refl
+    SIGMA[indices[[j]], indices[[j]]] <- sigma_blocks[[j]]
   }
 
   for (j in 1:5) {
@@ -141,41 +164,55 @@ make_test_semfc_data <- function(N = 300, seed = 123, recursive = FALSE) {
   dimnames(C) <- list(names(Y), names(Y))
 
  # Construct the theoretical parameter vector
-  sigma_blocks <- unlist(lapply(
-    list(1:3, 4:6, 7:9, 10:12),
-    function(idx) {
-      S_jj <- SIGMA[idx, idx]
+  # Identify formative and reflective blocks
+  formative_blocks <- which(mode == "formative")
+  reflective_blocks <- which(mode == "reflective")
+
+  # Within-block covariance parameters for formative blocks
+  within_cov_blocks <- unlist(
+    lapply(formative_blocks, function(j) {
+      idx <- indices[[j]]
+      S_jj <- SIGMA[idx, idx, drop = FALSE]
       S_jj[lower.tri(S_jj, diag = TRUE)]
-    }
-  ))
+    }),
+    use.names = FALSE
+  )
 
-  if (recursive == FALSE) {
-    theta_true <- c(
-      unlist(lambda, use.names = FALSE),
-      PHI[lower.tri(PHI)],
-      GAMMA[1, 1:2],
-      GAMMA[2, 3:4],
-      BETA[2, 1],
-      BETA[1, 2],
-      R[5, 6],
-      sigma_blocks,
-      1 - lambda[[5]]^2,
-      1 - lambda[[6]]^2
-    )
+  # Measurement error variances for reflective blocks
+  error_variances <- unlist(
+    lapply(reflective_blocks, function(j) {
+      idx <- indices[[j]]
+      diag(SIGMA[idx, idx, drop = FALSE]) -
+        as.numeric(lambda[[j]])^2
+    }),
+    use.names = FALSE
+  )
 
-
+  # Structural coefficients
+  beta_free <- if (recursive) {
+    BETA[2, 1]
   } else {
-    theta_true <- c(
-      unlist(lambda, use.names = FALSE),
-      PHI[lower.tri(PHI)],
-      GAMMA[1, 1:2],
-      GAMMA[2, 3:4],
-      BETA[2, 1],
-      sigma_blocks,
-      1 - lambda[[5]]^2,
-      1 - lambda[[6]]^2
-    )
+    c(BETA[2, 1], BETA[1, 2])
   }
+
+  # Additional latent correlation in nonrecursive models
+  rho_free <- if (recursive) {
+    numeric(0)
+  } else {
+    R[5, 6]
+  }
+
+  # Construct the theoretical parameter vector
+  theta_true <- c(
+    unlist(lambda, use.names = FALSE),
+    PHI[lower.tri(PHI)],
+    GAMMA[1, 1:2],
+    GAMMA[2, 3:4],
+    beta_free,
+    rho_free,
+    within_cov_blocks,
+    error_variances
+  )
 
   return(list(
     theta_true = theta_true,
@@ -185,7 +222,7 @@ make_test_semfc_data <- function(N = 300, seed = 123, recursive = FALSE) {
     mode = mode,
     SIGMA = SIGMA,
     lambda = lambda,
-    omega = list(w1, w2, w3, w4),
+    omega = omega,
     BETA = BETA,
     GAMMA = GAMMA,
     PHI = PHI,
