@@ -310,10 +310,7 @@ initialize = function(data, relation_matrix,
       estimator <- private$.estimator
       print_model(estimator, sum(private$.model$lengths_theta), private$.data$n_row,
                   private$.model$dof, private$.gof$F, private$.estimate$T_LS)
-
       print_gof(all_measures, estimator, private$.gof, private$.boot_rep, private$.estimate$r2)
-
-      # estimation
       estimate <- formatting_estimate(private$.estimate)
       if (!is.null(private$.infer_estimate)){
         estimate <- private$.infer_estimate
@@ -408,14 +405,11 @@ initialize = function(data, relation_matrix,
       gamma <- estimate$gamma
       omega <- estimate$omega
       psi <- estimate$psi
-
-
       table_estimate <- rbind(lambda, omega, beta, gamma, residualvariance, psi)
       rownames(table_estimate) <- NULL
       if (!standardized){
         table_estimate$std.all <- NULL
       }
-
       return(table_estimate)
 
     },
@@ -488,7 +482,6 @@ initialize = function(data, relation_matrix,
         warning("Model has not been fitted yet. Returning NULL.", call. = FALSE)
         return(NULL)
       }
-
       if (estimate == "all") {
         return(private$.estimate)
       } else if (!estimate %in% names(private$.estimate)) {
@@ -497,7 +490,6 @@ initialize = function(data, relation_matrix,
                 call. = FALSE)
         return(NULL)
       }
-
       return(private$.estimate[[estimate]])
     },
 
@@ -570,11 +562,7 @@ initialize = function(data, relation_matrix,
         "all", "bollen_stine", "F",
         "ml", "reliability", "improper"
       )
-
-      # Check argument
       measure <- match.arg(measure, valid_measures)
-
-      # Check if goodness-of-fit has been computed
       if (is.null(private$.gof) ||
           length(private$.gof) == 0L) {
         warning(
@@ -604,9 +592,6 @@ initialize = function(data, relation_matrix,
   ),
 
   private = list(
-
-
-
     .estimator      = NULL,
     .data           = list(),
     .model          = list(),
@@ -614,9 +599,6 @@ initialize = function(data, relation_matrix,
     .infer_estimate = NULL,
     .boot_rep       = NULL,
     .gof            = list(),
-
-
-
     fit_svd = function() {
       private$.estimator <- 'svd'
       svd_result <- svdSEM(private$.data$data,
@@ -639,16 +621,11 @@ initialize = function(data, relation_matrix,
       private$.estimate$effect <- compute_effect(private$.estimate$beta, private$.estimate$gamma)
       private$.gof$F <- F1(theta_svd, private$.data$cov_S, private$.model)
     },
-
-
-
     svd_infer = function(B = 1000, verbose = TRUE, seed = NULL){
 
       boot_out <- svdsem_infer(private$.estimate, B, verbose = verbose, seed = seed)
       private$.infer_estimate <- boot_out$result$infer
       private$.gof$bollen_stine <- boot_out$gof
-
-
     },
 
 
