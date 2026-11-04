@@ -12,18 +12,13 @@ Structural Equation Modeling with Factors and Composites, (Restricted) Maximum L
 arthur.tenenhaus@centralesupelec.fr
 
 ## Description
-The SEMFC package implements Structural Equation Modeling (SEM) with factors and composites within the framework of the basic design (Tenenhaus et al., 2026).
+The SEMFC package implements Structural Equation Modeling (SEM) with factors and composites within the framework of the basic design (Tenenhaus et al., 2026). SEMFC supports both SVD-based and (restricted) maximum likelihood estimation methods. 
 
-SEMFC supports both SVD-based and (restricted) maximum likelihood estimation methods. The SVD-based approach relies on a non-iterative algorithm 
-for parameter estimation and yields consistent and asymptotically normal estimators, providing a statistically sound and computationally efficient solution.
+The SVD-based approach relies on a non-iterative algorithm for parameter estimation and yields consistent and asymptotically normal estimators, providing a statistically sound and computationally efficient solution.
 
-The package also implements the Restricted Maximum Likelihood SEM (RML-SEM) approach for the basic design with factors and composites. SVD-based estimates 
-are used as starting values for RML-SEM estimation. The RML-SEM estimator is obtained by solving a constrained nonlinear optimization problem (Kraft, 1988) 
-using the optimization routines available in the nloptr package (Johnson, 2008), enabling efficient estimation under parameter constraints.
+The package also implements the Restricted Maximum Likelihood SEM (RML-SEM) approach for the basic design with factors and composites. SVD-based estimates are used as starting values for RML-SEM estimation. The RML-SEM estimator is obtained by solving a constrained nonlinear optimization problem (Kraft, 1988) using the optimization routines available in the nloptr package (Johnson, 2008), enabling efficient estimation under parameter constraints.
 
-In addition, SEMFC provides comprehensive tools for statistical inference, including bootstrap procedures for SVD-based estimation and asymptotic 
-inference for maximum likelihood estimation. The package also offers a wide range of goodness-of-fit measures for model evaluation, 
-including the chi-square statistic, CFI, TLI, RMSEA, SRMR, AIC, and BIC.
+In addition, SEMFC provides comprehensive tools for statistical inference, including bootstrap procedures for SVD-based estimation and asymptotic inference for maximum likelihood estimation. The package also offers a wide range of goodness-of-fit measures for model evaluation, including the chi-square statistic, CFI, TLI, RMSEA, SRMR, AIC, and BIC.
 
 ## Installation
 Required:
