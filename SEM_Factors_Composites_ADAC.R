@@ -123,6 +123,8 @@ lrt_pval <- rep(NA, n_simu)
 vcov_pval <- rep(NA, n_simu)
 error_ML <- rep(NA, n_simu)
 
+error_empirical <- rep(NA, n_simu)
+
 
 # Goodness of fit
 gof <- matrix(NA, 2, n_simu)
@@ -163,11 +165,11 @@ for (b in seq_len(n_simu)) {
     }
   })
 
-  fit.svd <- svdSEM_multi(Y, li_C,
-    scale = FALSE,
-    mode = rep("reflective", n_blocs),
-    bias = FALSE
-  )
+  # fit.svd <- svdSEM_multi(Y, li_C,
+  #   scale = FALSE,
+  #   mode = rep("reflective", n_blocs),
+  #   bias = FALSE
+  # )
 
   tryCatch(
     {
@@ -192,6 +194,7 @@ for (b in seq_len(n_simu)) {
       lili_phi_endo_svd[[b]] <- fit.svd$li_phi_endo
       lili_phi_exo_svd[[b]] <- fit.svd$li_phi_exo
       lili_S[[b]] <- fit.svd$li_S
+
 
       for (j in 1:J) {
         Sigma_svd_ii <- fit.svd$SIGMA_IMPLIED[sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j], sum(vec_indicators_per_bloc[1:(j - 1)]) + 1:vec_indicators_per_bloc[j]]
@@ -225,10 +228,9 @@ for (b in seq_len(n_simu)) {
       ### END TESTING
 
 
-      erreur_abs <- norm(as.matrix(Sigma_SVD) - as.matrix(SIGMA_TRUE), "F")
-
-      error_SVD[b] <- erreur_abs
+      error_SVD[b] <- norm(as.matrix(Sigma_SVD) - as.matrix(SIGMA_TRUE), "F")
       ecart_empirique_svd[b] <- norm(as.matrix(Sigma_SVD) - as.matrix(S), "F")
+      error_empirical[b] <- norm(as.matrix(SIGMA_TRUE) - as.matrix(S), "F")
     },
     error = function(e) {
       message("Erreur dans svd à l'itération ", b)
@@ -608,6 +610,150 @@ li_theta_svd <- lapply(1:J, function(j) {
 })
 
 
+### Export des resultats SVD dans un fichier lisible par Excel
+
+result_rows <- data.frame(
+  Parametre = character(),
+  `TRUE` = character(),
+  Mean = character(),
+  SD = character(),
+  stringsAsFactors = FALSE
+)
+
+add_separator <- function() {
+  result_rows <<- rbind(result_rows, data.frame(
+    Parametre = "", `TRUE` = "", Mean = "", SD = "",
+    stringsAsFactors = FALSE
+  ))
+}
+
+add_matrix_group <- function(group_name, true_values, aggregate_values, true_available = TRUE) {
+  result_rows <<- rbind(result_rows, data.frame(
+    Parametre = group_name, `TRUE` = "", Mean = "", SD = "",
+    stringsAsFactors = FALSE
+  ))
+
+  for (r in seq_along(aggregate_values)) {
+    true_matrix <- if (true_available) true_values[[r]] else NULL
+    mean_matrix <- aggregate_values[[r]][[2]]
+    sd_matrix <- aggregate_values[[r]][[1]]
+
+    for (i in seq_len(nrow(mean_matrix))) {
+      for (j in seq_len(ncol(mean_matrix))) {
+        result_rows <<- rbind(result_rows, data.frame(
+          Parametre = sprintf("%s[rang %d, ligne %d, colonne %d]", group_name, r, i, j),
+          `TRUE` = if (true_available) format(round(true_matrix[i, j], n_signif), trim = TRUE) else "",
+          Mean = format(round(mean_matrix[i, j], n_signif), trim = TRUE),
+          SD = format(round(sd_matrix[i, j], n_signif), trim = TRUE),
+          stringsAsFactors = FALSE
+        ))
+      }
+    }
+  }
+}
+
+add_vector_group <- function(group_name, true_values, mean_values, sd_values) {
+  result_rows <<- rbind(result_rows, data.frame(
+    Parametre = group_name, `TRUE` = "", Mean = "", SD = "",
+    stringsAsFactors = FALSE
+  ))
+
+  for (i in seq_along(mean_values)) {
+    result_rows <<- rbind(result_rows, data.frame(
+      Parametre = sprintf("%s[ligne %d]", group_name, i),
+      `TRUE` = format(round(true_values[i], n_signif), trim = TRUE),
+      Mean = format(round(mean_values[i], n_signif), trim = TRUE),
+      SD = format(round(sd_values[i], n_signif), trim = TRUE),
+      stringsAsFactors = FALSE
+    ))
+  }
+}
+
+result_rows <- rbind(result_rows, data.frame(
+  Parametre = "Erreur SVD moyenne L2 sur Sigma",
+  `TRUE` = "",
+  Mean = format(round(mean(error_SVD, na.rm = TRUE), n_signif), trim = TRUE),
+  SD = "",
+  stringsAsFactors = FALSE
+))
+result_rows <- rbind(result_rows, data.frame(
+  Parametre = "Nombre d'iterations SVD echouees",
+  `TRUE` = "",
+  Mean = as.character(sum(sapply(lili_lambda_svd, is.null))),
+  SD = "",
+  stringsAsFactors = FALSE
+))
+add_separator()
+
+add_matrix_group("Lambda", li_lambda_TRUE, lili_Lambda_aggregate)
+add_separator()
+add_matrix_group("Beta", li_BETA_TRUE, lili_beta_aggregate)
+add_separator()
+add_matrix_group("Gamma", li_GAMMA_TRUE, lili_gamma_aggregate)
+add_separator()
+add_matrix_group("Phi endo", NULL, lili_endo_aggregate, true_available = FALSE)
+add_separator()
+add_matrix_group("Phi exo", NULL, lili_exo_aggregate, true_available = FALSE)
+add_separator()
+add_vector_group(
+  "Theta",
+  Theta_TRUE,
+  unlist(lapply(li_theta_svd, function(x) x$theta_j_mean)),
+  unlist(lapply(li_theta_svd, function(x) x$theta_j_sd))
+)
+add_separator()
+add_matrix_group("Psi", li_PSI_TRUE, lili_psi_aggregate)
+
+results_file <- "results.xls"
+results_to_write <- result_rows
+
+if (file.exists(results_file)) {
+  previous_results <- tryCatch(
+    read.delim(
+      results_file,
+      header = TRUE,
+      sep = "\t",
+      quote = "",
+      comment.char = "",
+      fill = TRUE,
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    ),
+    error = function(e) NULL
+  )
+
+  if (!is.null(previous_results) && ncol(previous_results) >= 4) {
+    n_rows <- max(nrow(previous_results), nrow(result_rows))
+    n_cols <- max(ncol(previous_results), ncol(result_rows))
+    results_to_write <- as.data.frame(
+      matrix("", nrow = n_rows, ncol = n_cols),
+      stringsAsFactors = FALSE
+    )
+    extra_column_names <- character()
+    if (n_cols > ncol(previous_results)) {
+      extra_column_names <- paste0(
+        "Column",
+        seq_len(n_cols - ncol(previous_results))
+      )
+    }
+    names(results_to_write) <- c(names(previous_results), extra_column_names)
+    results_to_write[seq_len(nrow(previous_results)), seq_len(ncol(previous_results))] <- previous_results
+    results_to_write[seq_len(nrow(result_rows)), seq_len(4)] <- result_rows[, seq_len(4)]
+    names(results_to_write)[seq_len(4)] <- names(result_rows)[seq_len(4)]
+  }
+}
+
+write.table(
+  results_to_write,
+  file = results_file,
+  sep = "\t",
+  row.names = FALSE,
+  col.names = TRUE,
+  quote = FALSE,
+  na = ""
+)
+
+
 ### On calcule les stats ML
 
 if (do_ML) {
@@ -682,6 +828,8 @@ if (do_ML) {
     return(list(correl_j_sd = correl_j_sd, correl_j_mean = correl_j_mean))
   })
 }
+
+print(paste("erreur estimateur empirique", mean(error_empirical, na.rm = TRUE)))
 
 print(paste("Nombre d'itérations SVD échouées :", sum(sapply(lili_lambda_svd, is.null))))
 print(paste("erreur SVD moyenne L2 sur Sigma:", mean(error_SVD, na.rm = TRUE)))

@@ -474,7 +474,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
                 "/"
             )
 
-            Q_hat <- joint_diag_nonorth(li_F, weights = quality, A0 = Q_hat_init,
+            Q_hat <- joint_diag_nonorth(li_F, weights = NULL, A0 = Q_hat_init,
                                maxit = 200, tol = 1e-12, ridge = 1e-10,
                                verbose = FALSE)$A
             
@@ -535,6 +535,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
         # print(li_Lambda_star_TRUE)
     
     }
+    # print(li_Lambda_star)
+    # print(li_Lambda_star_TRUE)
 
     
     li_vec_norm_and_Cjj <- lapply(
@@ -579,6 +581,12 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
             rank_Gjj_cov <- qr(Gjj_cov)$rank
             full_rank <- rank_Gjj_cov == ncol(Gjj)
 
+            # if(j == 3 | j == 2){
+            #     print(Gjj_cov)
+            #     print(eigen(Gjj_cov, only.values = TRUE, symmetric = TRUE)$values)
+
+            # }
+
 
             if (!full_rank) {
                 # Not full rank: non-unique least-squares solution
@@ -605,7 +613,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
             for (i in 1:R_try) {
                 A_cons[(i - 1) * R_try + i, i] <- 1
             }
-            b_0_cons <- rep(1e-10, R_try)
+            b_0_cons <- rep(0.5, R_try)
             # Il sera bon de checker la formule simple d'inversion si elle existe pour voir si on n'a bien aucun negatif sur la diagonale
             quadprog_fit <- quadprog::solve.QP(Gjj_cov + eps * max_eigen * diag(ncol(Gjj)), as.vector(t(Gjj) %*% bjj), A_cons, b_0_cons)
             Cjj_vec <- quadprog_fit$solution
@@ -632,6 +640,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
     li_vec_norm <- lapply(li_vec_norm_and_Cjj, function(x) x$vec_norm)
     li_C_jj_hat <- lapply(li_vec_norm_and_Cjj, function(x) x$Cjj_hat)
+
 
 
     li_Lambda <- lapply(
@@ -679,7 +688,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     # print(li_Lambda)
     # # print("oui")
     # print(li_lambda_TRUE)
-    # stop("ok")
+    # # stop("ok")
 
     # print(lapply(1:J, function(j) round(li_Lambda[[j]] - li_lambda_TRUE[[j]], 4)))
 
@@ -746,8 +755,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     # print(round(as.matrix(P_tilde), 2))
 
     
-    # erreur_abs <- norm(Estim_Sigma - as.matrix(SIGMA_TRUE), "F")
-    # error_SVD <- erreur_abs 
+    erreur_abs <- norm(Estim_Sigma - as.matrix(SIGMA_TRUE), "F")
+    error_SVD <- erreur_abs 
     # print(paste("Absolute error measurement model:", round(error_SVD, 4)))
     # print(li_Lambda)
     # print(li_lambda_TRUE)
@@ -793,6 +802,10 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
 
     # print(P_tilde)
     # print(P_induced)
+    ecart <- norm(P_tilde - P_induced, "F")/ norm(P_tilde, "F")
+    if(ecart > 0.5){
+        stop(paste("Error: large difference between P_tilde and P_induced, check colinearity and identifiability:", round(ecart, 4)))
+    }
 
 
     if(!no_svd_refining){

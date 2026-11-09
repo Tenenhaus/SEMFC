@@ -33,6 +33,11 @@ calc_P_ij_tilde <- function(S_ij, li_Lambda_star, li_Lambda, li_vec_norm, i, j, 
             c_r <- as.vector(t(lambda_i_r) %*% S_ij %*% lambda_j_r)
             return(c_r)
         })
+        # if (min(eigen(A, only.values = TRUE, symmetric = TRUE)$values) < 1e-5) {
+        #     print(i)
+        #     print(li_Lambda[[i]])
+        #     print(A)
+        # }
         diag_tilde <- solve(A, C)
         P_ij_tilde <- diag(diag_tilde, nrow = R_try, ncol = R_try)
     }

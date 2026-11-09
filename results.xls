@@ -1,0 +1,161 @@
+Parametre	TRUE.	Mean	SD	Mean N = 10 000	SD N = 10 000
+Erreur SVD moyenne L2 sur Sigma		2.089		0.688	
+Nombre d'iterations SVD echouees		0			
+					
+Lambda					
+Lambda[rang 1, ligne 1, colonne 1]	0.7	0.661	0.106	0.677	0.042
+Lambda[rang 1, ligne 1, colonne 2]	0.568	0.642	0.017	0.561	0.024
+Lambda[rang 1, ligne 2, colonne 1]	0.7	0.712	0.022	0.703	0.01
+Lambda[rang 1, ligne 2, colonne 2]	-0.067	-0.115	0.073	-0.077	0.021
+Lambda[rang 1, ligne 3, colonne 1]	0.7	0.704	0.023	0.698	0.007
+Lambda[rang 1, ligne 3, colonne 2]	0.051	0.025	0.062	0.041	0.02
+Lambda[rang 1, ligne 4, colonne 1]	0.7	0.687	0.049	0.69	0.019
+Lambda[rang 1, ligne 4, colonne 2]	0.25	0.264	0.04	0.241	0.021
+Lambda[rang 2, ligne 1, colonne 1]	0.7	0.683	0.038	0.695	0.013
+Lambda[rang 2, ligne 1, colonne 2]	0.228	0.196	0.083	0.221	0.033
+Lambda[rang 2, ligne 2, colonne 1]	0.7	0.513	0.198	0.66	0.075
+Lambda[rang 2, ligne 2, colonne 2]	1.805	1.643	0.736	1.769	0.338
+Lambda[rang 2, ligne 3, colonne 1]	0.7	0.521	0.188	0.66	0.076
+Lambda[rang 2, ligne 3, colonne 2]	1.778	1.614	0.722	1.744	0.333
+Lambda[rang 2, ligne 4, colonne 1]	0.7	0.622	0.092	0.682	0.035
+Lambda[rang 2, ligne 4, colonne 2]	0.818	0.737	0.301	0.801	0.142
+Lambda[rang 3, ligne 1, colonne 1]	0.7	0.71	0.027	0.703	0.011
+Lambda[rang 3, ligne 1, colonne 2]	0.224	0.226	0.06	0.221	0.023
+Lambda[rang 3, ligne 2, colonne 1]	0.7	0.752	0.124	0.724	0.064
+Lambda[rang 3, ligne 2, colonne 2]	1.536	1.514	0.289	1.534	0.026
+Lambda[rang 3, ligne 3, colonne 1]	0.7	0.672	0.092	0.683	0.046
+Lambda[rang 3, ligne 3, colonne 2]	-1.101	-1.075	0.261	-1.106	0.024
+Lambda[rang 3, ligne 4, colonne 1]	0.7	0.637	0.171	0.665	0.09
+Lambda[rang 3, ligne 4, colonne 2]	-2.164	-2.119	0.471	-2.17	0.027
+Lambda[rang 4, ligne 1, colonne 1]	0.7	0.729	0.064	0.708	0.02
+Lambda[rang 4, ligne 1, colonne 2]	0.817	0.894	0.127	0.835	0.054
+Lambda[rang 4, ligne 2, colonne 1]	0.7	0.681	0.13	0.69	0.042
+Lambda[rang 4, ligne 2, colonne 2]	-1.722	-1.64	0.145	-1.705	0.053
+Lambda[rang 4, ligne 3, colonne 1]	0.7	0.709	0.031	0.7	0.009
+Lambda[rang 4, ligne 3, colonne 2]	-0.233	-0.155	0.129	-0.217	0.052
+Lambda[rang 4, ligne 4, colonne 1]	0.7	0.68	0.122	0.69	0.04
+Lambda[rang 4, ligne 4, colonne 2]	-1.657	-1.58	0.147	-1.644	0.052
+Lambda[rang 5, ligne 1, colonne 1]	0.7	0.75	0.078	0.718	0.03
+Lambda[rang 5, ligne 1, colonne 2]	1.009	1.027	0.065	1.017	0.03
+Lambda[rang 5, ligne 2, colonne 1]	0.7	0.58	0.195	0.661	0.076
+Lambda[rang 5, ligne 2, colonne 2]	-2.506	-2.518	0.074	-2.502	0.03
+Lambda[rang 5, ligne 3, colonne 1]	0.7	0.658	0.072	0.687	0.029
+Lambda[rang 5, ligne 3, colonne 2]	-0.926	-0.925	0.059	-0.921	0.028
+Lambda[rang 5, ligne 4, colonne 1]	0.7	0.661	0.068	0.688	0.028
+Lambda[rang 5, ligne 4, colonne 2]	-0.87	-0.869	0.057	-0.865	0.027
+Lambda[rang 6, ligne 1, colonne 1]	0.7	0.7	0.058	0.697	0.023
+Lambda[rang 6, ligne 1, colonne 2]	1.026	1.007	0.101	1.02	0.041
+Lambda[rang 6, ligne 2, colonne 1]	0.7	0.712	0.023	0.703	0.008
+Lambda[rang 6, ligne 2, colonne 2]	-0.23	-0.249	0.097	-0.235	0.042
+Lambda[rang 6, ligne 3, colonne 1]	0.7	0.69	0.112	0.692	0.044
+Lambda[rang 6, ligne 3, colonne 2]	1.989	1.973	0.11	1.983	0.042
+Lambda[rang 6, ligne 4, colonne 1]	0.7	0.727	0.087	0.709	0.035
+Lambda[rang 6, ligne 4, colonne 2]	-1.576	-1.595	0.103	-1.58	0.043
+					
+Beta					
+Beta[rang 1, ligne 1, colonne 1]	0	0	0	0.589	0.034
+Beta[rang 1, ligne 1, colonne 2]	0.6	0.539	0.095	0.099	0.063
+Beta[rang 1, ligne 2, colonne 1]	0.1	0.083	0.159	-0.287	0.018
+Beta[rang 1, ligne 2, colonne 2]	0	0	0	0.213	0.007
+Beta[rang 2, ligne 1, colonne 1]	0	0	0		
+Beta[rang 2, ligne 1, colonne 2]	-0.283	-0.232	0.041		
+Beta[rang 2, ligne 2, colonne 1]	0.212	0.215	0.025	0.234	0.023
+Beta[rang 2, ligne 2, colonne 2]	0	0	0	-0.254	0.065
+				0.573	0.033
+Gamma				-0.57	0.034
+Gamma[rang 1, ligne 1, colonne 1]	0.227	0.264	0.069	0.541	0.029
+Gamma[rang 1, ligne 1, colonne 2]	-0.227	-0.339	0.15	0.665	0.152
+Gamma[rang 1, ligne 1, colonne 3]	0	0	0	-0.963	0.006
+Gamma[rang 1, ligne 1, colonne 4]	0	0	0	0.195	0.006
+Gamma[rang 1, ligne 2, colonne 1]	0	0	0		
+Gamma[rang 1, ligne 2, colonne 2]	0	0	0		
+Gamma[rang 1, ligne 2, colonne 3]	0.568	0.586	0.106	0.86	0.026
+Gamma[rang 1, ligne 2, colonne 4]	-0.568	-0.568	0.085	-0.005	0.011
+Gamma[rang 2, ligne 1, colonne 1]	0.544	0.427	0.046		
+Gamma[rang 2, ligne 1, colonne 2]	0.68	0.631	0.34		
+Gamma[rang 2, ligne 1, colonne 3]	0	0	0	0.207	0.018
+Gamma[rang 2, ligne 1, colonne 4]	0	0	0	0.103	0.012
+Gamma[rang 2, ligne 2, colonne 1]	0	0	0	-0.207	0.012
+Gamma[rang 2, ligne 2, colonne 2]	0	0	0	-0.308	0.02
+Gamma[rang 2, ligne 2, colonne 3]	-0.96	-0.945	0.187	0.207	0.021
+Gamma[rang 2, ligne 2, colonne 4]	0.192	0.201	0.018	-0.202	0.014
+				0.086	0.026
+Phi endo				-0.18	0.017
+Phi endo[rang 1, ligne 1, colonne 1]		1	0	0.244	0.015
+Phi endo[rang 1, ligne 1, colonne 2]		0.869	0.053	0.277	0.063
+Phi endo[rang 1, ligne 2, colonne 1]		0.869	0.053	-0.014	0.012
+Phi endo[rang 1, ligne 2, colonne 2]		1	0	0.121	0.01
+Phi endo[rang 2, ligne 1, colonne 1]		1	0		
+Phi endo[rang 2, ligne 1, colonne 2]		-0.006	0.035		
+Phi endo[rang 2, ligne 2, colonne 1]		-0.006	0.035	0.027	0.009
+Phi endo[rang 2, ligne 2, colonne 2]		1	0	0.017	0.005
+				0.017	0.004
+Phi exo				0.02	0.005
+Phi exo[rang 1, ligne 1, colonne 1]		1	0	0.019	0.006
+Phi exo[rang 1, ligne 1, colonne 2]		0.22	0.053	0.129	0.013
+Phi exo[rang 1, ligne 1, colonne 3]		0.111	0.036	0.126	0.013
+Phi exo[rang 1, ligne 1, colonne 4]		-0.223	0.031	0.04	0.006
+Phi exo[rang 1, ligne 2, colonne 1]		0.22	0.053	0.019	0.003
+Phi exo[rang 1, ligne 2, colonne 2]		1	0	0.099	0.008
+Phi exo[rang 1, ligne 2, colonne 3]		-0.352	0.057	0.058	0.005
+Phi exo[rang 1, ligne 2, colonne 4]		0.239	0.067	0.178	0.009
+Phi exo[rang 1, ligne 3, colonne 1]		0.111	0.036	0.039	0.018
+Phi exo[rang 1, ligne 3, colonne 2]		-0.352	0.057	0.126	0.027
+Phi exo[rang 1, ligne 3, colonne 3]		1	0	0.018	0.005
+Phi exo[rang 1, ligne 3, colonne 4]		-0.212	0.044	0.105	0.027
+Phi exo[rang 1, ligne 4, colonne 1]		-0.223	0.031	0.051	0.007
+Phi exo[rang 1, ligne 4, colonne 2]		0.239	0.067	0.235	0.017
+Phi exo[rang 1, ligne 4, colonne 3]		-0.212	0.044	0.046	0.005
+Phi exo[rang 1, ligne 4, colonne 4]		1	0	0.042	0.004
+Phi exo[rang 2, ligne 1, colonne 1]		1	0	0.053	0.004
+Phi exo[rang 2, ligne 1, colonne 2]		0.081	0.055	0.019	0.002
+Phi exo[rang 2, ligne 1, colonne 3]		-0.161	0.057	0.152	0.008
+Phi exo[rang 2, ligne 1, colonne 4]		0.225	0.042	0.102	0.005
+Phi exo[rang 2, ligne 2, colonne 1]		0.081	0.055		
+Phi exo[rang 2, ligne 2, colonne 2]		1	0		
+Phi exo[rang 2, ligne 2, colonne 3]		0.252	0.146	0.235	0.042
+Phi exo[rang 2, ligne 2, colonne 4]		-0.013	0.038	0.106	0.021
+Phi exo[rang 2, ligne 3, colonne 1]		-0.161	0.057	0.106	0.021
+Phi exo[rang 2, ligne 3, colonne 2]		0.252	0.146	0.055	0.039
+Phi exo[rang 2, ligne 3, colonne 3]		1	0	0.256	0.033
+Phi exo[rang 2, ligne 3, colonne 4]		0.115	0.038	0.138	0.01
+Phi exo[rang 2, ligne 4, colonne 1]		0.225	0.042	0.138	0.01
+Phi exo[rang 2, ligne 4, colonne 2]		-0.013	0.038	0.128	0.01
+Phi exo[rang 2, ligne 4, colonne 3]		0.115	0.038		
+Phi exo[rang 2, ligne 4, colonne 4]		1	0		
+					
+Theta					
+Theta[ligne 1]	0.028	-0.051	0.052		
+Theta[ligne 2]	0.017	-0.005	0.019		
+Theta[ligne 3]	0.017	0.006	0.017		
+Theta[ligne 4]	0.019	0.008	0.018		
+Theta[ligne 5]	0.019	0.023	0.019		
+Theta[ligne 6]	0.129	0.128	0.039		
+Theta[ligne 7]	0.126	0.122	0.039		
+Theta[ligne 8]	0.04	0.041	0.017		
+Theta[ligne 9]	0.019	0.019	0.01		
+Theta[ligne 10]	0.098	0.098	0.02		
+Theta[ligne 11]	0.058	0.057	0.017		
+Theta[ligne 12]	0.177	0.176	0.031		
+Theta[ligne 13]	0.04	0.043	0.049		
+Theta[ligne 14]	0.119	0.125	0.105		
+Theta[ligne 15]	0.019	0.019	0.016		
+Theta[ligne 16]	0.111	0.102	0.099		
+Theta[ligne 17]	0.052	0.051	0.026		
+Theta[ligne 18]	0.232	0.234	0.043		
+Theta[ligne 19]	0.046	0.046	0.013		
+Theta[ligne 20]	0.043	0.042	0.014		
+Theta[ligne 21]	0.053	0.053	0.013		
+Theta[ligne 22]	0.019	0.019	0.006		
+Theta[ligne 23]	0.153	0.149	0.026		
+Theta[ligne 24]	0.102	0.103	0.015		
+					
+Psi					
+Psi[rang 1, ligne 1, colonne 1]	0.258	0.19	0.088		
+Psi[rang 1, ligne 1, colonne 2]	0.097	0.12	0.061		
+Psi[rang 1, ligne 2, colonne 1]	0.097	0.12	0.061		
+Psi[rang 1, ligne 2, colonne 2]	0.065	0.059	0.088		
+Psi[rang 2, ligne 1, colonne 1]	0.261	0.3	0.08		
+Psi[rang 2, ligne 1, colonne 2]	0.138	0.126	0.021		
+Psi[rang 2, ligne 2, colonne 1]	0.138	0.126	0.021		
+Psi[rang 2, ligne 2, colonne 2]	0.13	0.126	0.03		

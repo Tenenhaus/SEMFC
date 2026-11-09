@@ -63,3 +63,229 @@
         })
 
     }
+
+
+
+# =============================================================================
+# TOY EXAMPLE  (executer le fichier avec Rscript, ou sourcer et lancer toy())
+# =============================================================================
+# toy <- function(R = 4, K = 20, noise = 0.02, nrep = 200, seed = 123) {
+#     set.seed(seed)
+#     # distance entre colonnes estimees et vraies, a permutation et signe pres
+#     col_err <- function(Ahat, A) {
+#         Ahat <- sweep(Ahat, 2, sqrt(colSums(Ahat^2)), "/")
+#         A <- sweep(A, 2, sqrt(colSums(A^2)), "/")
+#         S <- abs(crossprod(A, Ahat)) # |cos| (vrai x estime)
+#         err <- numeric(R)
+#         for (k in 1:R) { # appariement glouton
+#             ij <- which(S == max(S), arr.ind = TRUE)[1, ]
+#             err[k] <- 1 - S[ij[1], ij[2]]
+#             S[ij[1], ] <- -1
+#             S[, ij[2]] <- -1
+#         }
+#         mean(err)
+#     }
+#     res <- matrix(NA, nrep, 2, dimnames = list(NULL, c("une_combinaison", "joint_diag")))
+#     for (rep in 1:nrep) {
+#         # A volontairement non orthogonale, assez mal conditionnee
+#         A <- matrix(rnorm(R * R), R, R) + 0.8 * outer(rnorm(R), rnorm(R)) + diag(R)
+#         Ainv <- solve(A)
+#         Fs <- lapply(1:K, function(c) {
+#             d <- rnorm(R)
+#             F <- A %*% diag(d) %*% Ainv
+#             F <- F / sqrt(sum(F^2)) # normalisation de Frobenius
+#             F + noise * matrix(rnorm(R * R), R, R) / R # bruit
+#         })
+#         # (1) methode actuelle : UNE seule paire (u, v) => F = M(u) M(v)^{-1}
+#         #     ici : F_1 seule, diagonalisee par eigen (equivalent a K = 1)
+#         e <- eigen(Fs[[1]])
+#         A1 <- Re(e$vectors)
+#         # (2) co-diagonalisation des K matrices
+#         fit <- joint_diag_nonorth(Fs)
+#         res[rep, ] <- c(col_err(A1, A), col_err(fit$A, A))
+#     }
+#     cat(sprintf("R = %d, K = %d, bruit = %.3f, %d repetitions\n", R, K, noise, nrep))
+#     cat("Erreur moyenne (1 - |cos|) sur les colonnes, mediane / moyenne :\n")
+#     print(rbind(mediane = apply(res, 2, median), moyenne = colMeans(res)))
+#     cat("\nSans bruit (doit etre ~1e-15) :\n")
+#     A <- matrix(rnorm(R * R), R, R) + diag(R)
+#     Ainv <- solve(A)
+#     Fs <- lapply(1:K, function(c) A %*% diag(rnorm(R)) %*% Ainv)
+#     fit <- joint_diag_nonorth(Fs)
+#     cat(
+#         "  erreur colonnes :", col_err(fit$A, A), " | critere final :", fit$crit,
+#         " | iterations :", fit$iter, "\n"
+#     )
+#     invisible(res)
+# }
+
+# toy()
+
+
+# =============================================================================
+# Algorithme SHEAR-ROTATION de Fu et Gao (2006)
+#
+# Reference :
+#   T. Fu and X. Gao, "Simultaneous diagonalization with similarity
+#   transformation for non-defective matrices", Proc. IEEE ICASSP 2006,
+#   vol. IV, pp. 1137-1140.
+#   (Les references internes du papier : Eberlein 1962 pour le cisaillement,
+#    Ruhe 1968 pour la convergence quadratique.)
+#
+# Probleme : K matrices reelles R x R, F_n = P D_n P^{-1} + bruit.
+# On cherche P telle que les P^{-1} F_n P soient le plus diagonales possible.
+# Les colonnes de P (normalisees) sont les directions cherchees.
+#
+# Algorithme (equations numerotees comme dans le papier) :
+#   A_n^(k+1) = U^T S^{-1} A_n^(k) S U            (1)
+#   S = cisaillement (shear) de parametre y sur le plan (p,q)       (2)
+#   U = rotation de Givens d'angle theta sur le plan (p,q)          (3)
+#   - y : choisi avec la matrice A_h seule, h maximisant |d_n|      (11)
+#         tanh y = (K_h - xi_h d_h) / (2 (d_h^2 + xi_h^2) + G_h)    (18)
+#         avec G_h (14) et K_h (15)
+#   - theta : minimise sum_n ||E_n''||_F^2 (hors diagonale)         (12)
+#         tan 4 theta = 2 sum(xi' d') / sum(d'^2 - xi'^2)           (22)
+#         branche retenue : celle qui verifie la condition (23)
+#   - pivots (p,q) parcourus cycliquement par lignes :
+#         (1,2),(1,3),...,(1,R),(2,3),...,(R-1,R) ; un cycle = un "sweep".
+#
+# PONDERATION (extension, NON presente dans le papier) :
+#   Le papier minimise sum_n ||E_n''||_F^2 (eq. 12). Avec des poids w_n >= 0
+#   on minimise sum_n w_n ||E_n''||_F^2. Concretement, quand tous les w_n = 1
+#   on retrouve EXACTEMENT l'algorithme du papier, et sinon :
+#     - les sommes de (22) et (23) sont ponderees par w_n ;
+#     - le choix de h dans (11) maximise w_n |d_n| au lieu de |d_n|.
+#   Le calcul de y (18) n'utilise que A_h, comme dans le papier.
+#
+# Critere renvoye : crit = sum_n w_n ||offdiag(P^{-1} F_n P)||_F^2
+# Le papier ne donne pas de test d'arret : on s'arrete quand le critere varie
+# relativement de moins de tol entre deux sweeps, ou quand il est nul.
+# =============================================================================
+
+# --- initialisation par defaut : vecteurs propres reels d'une combinaison -----
+# .jdsr_init <- function(Fs, w) {
+#     K <- length(Fs)
+#     R <- nrow(Fs[[1]])
+#     # coefficients deterministes de type "aleatoire" : on ne touche PAS a la
+#     # graine du generateur global de l'utilisateur
+#     alpha <- w * sin(12.9898 * seq_len(K) + 4.1414)
+#     F <- Reduce(`+`, Map(function(M, a) a * M, Fs, alpha))
+#     e <- eigen(F)
+#     V <- e$vectors
+#     A <- matrix(0, R, R)
+#     r <- 1
+#     while (r <= R) {
+#         if (r == R || abs(Im(e$values[r])) < 1e-10 * max(1, abs(e$values[r]))) {
+#             A[, r] <- Re(V[, r])
+#             r <- r + 1
+#         } else { # paire conjuguee : Re et Im donnent une base reelle
+#             A[, r] <- Re(V[, r])
+#             A[, r + 1] <- Im(V[, r])
+#             r <- r + 2
+#         }
+#     }
+#     A
+# }
+
+# # --- critere : somme ponderee des carres des termes hors diagonale -------------
+# .jdsr_crit <- function(An, w) {
+#     sum(vapply(seq_along(An), function(n) {
+#         M <- An[[n]]
+#         w[n] * (sum(M^2) - sum(diag(M)^2))
+#     }, numeric(1)))
+# }
+
+# # --- applique A <- Tinv A T sur le plan (p,q), pour toutes les matrices --------
+# .jdsr_apply <- function(An, pq, T2, Tinv2) {
+#     lapply(An, function(M) {
+#         M[pq, ] <- Tinv2 %*% M[pq, , drop = FALSE]
+#         M[, pq] <- M[, pq, drop = FALSE] %*% T2
+#         M
+#     })
+# }
+
+# # --- fonction principale -------------------------------------------------------
+# # Fs      : liste de K matrices R x R (reelles)
+# # weights : poids des matrices (defaut 1)
+# # A0      : initialisation (colonnes = directions). Si NULL, vecteurs propres d une
+# #           combinaison aleatoire. Avec A0 = diag(R) on part exactement des
+# #           matrices Fs, comme dans le papier.
+# # maxit   : nombre maximal de sweeps
+# # tol     : arret si variation relative du critere entre deux sweeps < tol
+# # ridge   : seuil de garde (pas une regularisation de l'estimateur) : un pivot
+# #           dont le denominateur de (18) est < ridge * ||A_h||_F^2 n'est pas
+# #           cisaille (on evite de diviser du bruit par du bruit).
+# # Retourne : A (colonnes de norme 1), D (K x R, valeurs propres jointes),
+# #            crit (critere final), iter (nombre de sweeps), crit_path
+# joint_diag_nonorth <- function(Fs, weights = NULL, A0 = NULL,
+#                                maxit = 200, tol = 1e-12, ridge = 1e-10,
+#                                verbose = FALSE) {
+#     K <- length(Fs)
+#     R <- nrow(Fs[[1]])
+#     w <- if (is.null(weights)) rep(1, K) else weights
+#     if (length(w) != K || any(w < 0) || all(w == 0)) {
+#         stop("weights doit etre de longueur K, >= 0 et non nul")
+#     }
+
+#     P <- if (is.null(A0)) .jdsr_init(Fs, w) else A0 # P accumule S U
+#     Pinv <- solve(P)
+#     An <- lapply(Fs, function(F) Pinv %*% F %*% P) # A_n^(0) dans la base P
+#     crit <- .jdsr_crit(An, w)
+#     path <- crit
+#     crit0 <- max(crit, .Machine$double.eps)
+
+#     if (R >= 2) {
+#         for (it in seq_len(maxit)) {
+#             for (p in 1:(R - 1)) {
+#                 for (q in (p + 1):R) {
+#                     pq <- c(p, q)
+#                     idx <- setdiff(1:R, pq)
+
+#                     # ---------- cisaillement (shear) : y calcule avec A_h seule -------------
+#                     dvec <- vapply(An, function(M) M[p, p] - M[q, q], numeric(1))
+#                     h <- which.max(w * abs(dvec)) # eq. (11), ponderee
+#                     Ah <- An[[h]]
+#                     dh <- Ah[p, p] - Ah[q, q]
+#                     xih <- Ah[p, q] - Ah[q, p] # eq. (6)
+#                     Gh <- sum(Ah[p, idx]^2 + Ah[q, idx]^2 + Ah[idx, p]^2 + Ah[idx, q]^2) # (14)
+#                     Kh <- sum(Ah[p, idx] * Ah[q, idx] - Ah[idx, p] * Ah[idx, q]) # (15)
+#                     den <- 2 * (dh^2 + xih^2) + Gh
+#                     if (den > ridge * sum(Ah^2)) {
+#                         y <- atanh((Kh - xih * dh) / den) # eq. (18), |argument| < 1
+#                         ch <- cosh(y)
+#                         sh <- sinh(y)
+#                         S2 <- matrix(c(ch, sh, sh, ch), 2, 2)
+#                         Sinv2 <- matrix(c(ch, -sh, -sh, ch), 2, 2)
+#                         An <- .jdsr_apply(An, pq, S2, Sinv2)
+#                         P[, pq] <- P[, pq, drop = FALSE] %*% S2
+#                     }
+
+#                     # ---------- rotation de Givens : theta minimise (12) ponderee -----------
+#                     dp <- vapply(An, function(M) M[p, p] - M[q, q], numeric(1)) # d'_n  (8)
+#                     xip <- vapply(An, function(M) -M[q, p] - M[p, q], numeric(1)) # xi'_n (8)
+#                     X <- sum(w * (dp^2 - xip^2))
+#                     Y <- sum(w * xip * dp)
+#                     if (X != 0 || Y != 0) {
+#                         theta <- 0.25 * atan2(2 * Y, X) # (22)+(23) : cos4t*X + 2 sin4t*Y > 0
+#                         cs <- cos(theta)
+#                         sn <- sin(theta)
+#                         U2 <- matrix(c(cs, -sn, sn, cs), 2, 2) # [cos sin; -sin cos]
+#                         An <- .jdsr_apply(An, pq, U2, t(U2))
+#                         P[, pq] <- P[, pq, drop = FALSE] %*% U2
+#                     }
+#                 }
+#             }
+#             cn <- .jdsr_crit(An, w)
+#             rel <- abs(crit - cn) / max(crit, .Machine$double.eps)
+#             crit <- cn
+#             path <- c(path, crit)
+#             if (verbose) cat(sprintf("sweep %3d  crit %.3e\n", it, crit))
+#             if (!is.finite(crit)) stop("divergence numerique : crit non fini")
+#             if (rel < tol || crit < 1e-28 * crit0) break
+#         }
+#     }
+
+#     A <- sweep(P, 2, pmax(sqrt(colSums(P^2)), 1e-300), "/")
+#     D <- t(vapply(An, diag, numeric(R))) # invariant a la mise a l'echelle
+#     list(A = A, D = D, crit = crit, iter = length(path) - 1, crit_path = path)
+# }
