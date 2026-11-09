@@ -36,7 +36,7 @@ sparse_svd.cv <- function(L, pen, len_seq, nfold, niter){
       # print(cv.out$bestsumabsv)
       # print(cv.out$bestsumabsv1se)
 
-      out <- SPC(data, sumabsv=cv.out$bestsumabsv1se, K=1, v=cv.out$v.init)$v
+      out <- SPC(data, sumabsv=cv.out$bestsumabsv1se, center = FALSE, K=1, v=cv.out$v.init)$v
 
       res$a[[x]] <- out
 
@@ -147,8 +147,8 @@ roc <- function(len, method){
   all_cols <- c(first_cols, other_metrics)
 
   tab <- matrix(nrow=0, ncol = length(all_cols))
-  lambda_tab <- matrix(nrow=0, ncol = 60)
-  # lambda_tab <- matrix(nrow=0, ncol = 160)
+  # lambda_tab <- matrix(nrow=0, ncol = 60)
+  lambda_tab <- matrix(nrow=0, ncol = 160)
   colnames(tab) <- all_cols
 
 
@@ -167,8 +167,8 @@ roc <- function(len, method){
     }
     else if (method=='pmd'){
       # val_pmd <- val * sqrt(ncol(Y[[1]]))
-      val_pmd <- round(val * sqrt(ncol(Y[[1]])),9)
-      # val_pmd <- round(val * sqrt(ncol(Y[[1]])),5)
+      # val_pmd <- round(val * sqrt(ncol(Y[[1]])),9)
+      val_pmd <- round(val * sqrt(ncol(Y[[1]])),5)
       fit <- sparse_svd(Y, c(1,0,0,0,0,0), c(val_pmd,0,0,0,0,0))
       serie <- fit[[1]]
 
