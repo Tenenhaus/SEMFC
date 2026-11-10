@@ -49,7 +49,7 @@ R_try <- 2
 R_true <- 2
 n_signif <- 3
 do_ML <- FALSE
-
+do_bootstrap <- TRUE
 
 ortho_generate <- TRUE
 ortho_solve_SVD <- TRUE
@@ -170,7 +170,11 @@ for (b in seq_len(n_simu)) {
     mode = rep("reflective", n_blocs),
     bias = FALSE, verbose = TRUE
   )
-  bootstrap_svd(fit.svd, B = 10, verbose = FALSE, seed = 123)
+
+  if (do_bootstrap) {
+    boot <- bootstrap_svd(fit.svd, B = 10, verbose = FALSE, seed = 123)
+    get_se_boot(boot)
+  }
 
   tryCatch(
     {
@@ -184,7 +188,10 @@ for (b in seq_len(n_simu)) {
         verbose = TRUE
       )
 
-      bootstrap_svd(fit.svd, B = 10, verbose = FALSE, seed = 123)
+      if (do_bootstrap) {
+        boot <- bootstrap_svd(fit.svd, B = 10, verbose = FALSE, seed = 123)
+        get_se_boot(boot)
+      }
 
       lili_lambda_svd[[b]] <- fit.svd$li_Lambda
       lili_beta_svd[[b]] <- fit.svd$li_beta

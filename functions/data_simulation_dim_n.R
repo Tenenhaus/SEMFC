@@ -48,9 +48,9 @@ li_BETA_TRUE <- lapply(1:R_true, function(r) {
 
 li_GAMMA_TRUE <- lapply(1:R_true, function(r) {
       if (r == 1) {
-            vec_weights <- c(0.2, -0.2, 0, 0, 0, 0, 1, -1)
+            vec_weights <- c(0.2, -0.2, 0, 0, 0, 0, 0.9, -0.2)
       } else if (r == 2) {
-            vec_weights <- c(0.4, 0.5, 0, 0, 0, 0, -1, 0.2)
+            vec_weights <- c(0.4, 0.5, 0, 0, 0, 0, -0.5, 0.2)
       } else {
             vec_weights <- c(0, 1, 0, 0, 0, 0, 1, 0)
       }
@@ -140,7 +140,7 @@ li_PSI0_TRUE <- lapply(1:R_true, function(r) {
       # la boucle B12/B21 autorise une correlation hors-diagonale sur Psi)
       gr <- li_graphs_TRUE[[r]]
       if (!igraph::is_dag(gr)) {
-            Psi0 <- matrix(0.15, n_endogenes, n_endogenes) / sqrt(r)
+            Psi0 <- matrix(0.03, n_endogenes, n_endogenes) / sqrt(r)
             diag(Psi0) <- 0.2 / sqrt(r)
       } else {
             Psi0 <- diag(0.2, n_endogenes) / sqrt(r)
@@ -245,7 +245,7 @@ if (least_val_propre <= 0) {
 
 # On complexifie les blocs diagonaux pour ne pas avoir indépendance entre variables latentes d'un meme bloc (tout en gardant la positivité de la matrice)
 
-
+least_val_propre <- 0
 bloc_perturbation_TRUE <- matrix(least_val_propre, nrow = R_true, ncol = R_true, byrow = TRUE)
 diag(bloc_perturbation_TRUE) <- 0
 perturbation <- Matrix::bdiag(lapply(1:length(is_endogenes), function(i) bloc_perturbation_TRUE)) # 6 blocs identiques pour lambda
@@ -286,9 +286,9 @@ if (least_val_propre <= 0) {
       stop("La matrice de correlation entre les variables latentes n'est pas positive definie. Il faut revoir la definition des parametres du modele.")
 }
 
-print("les val p de P sont")
-print(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values)
-stop()
+# print("les val p de P sont")
+# print(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values)
+
 # print(paste("La plus petite valeur propre apres perturbation de la matrice de correlation est :", least_val_propre))
 # print(P_TRUE)
 # print(least_val_propre)

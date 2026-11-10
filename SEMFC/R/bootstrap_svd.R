@@ -124,71 +124,65 @@ bootstrap_svd <- function(fit, B = 500, verbose = TRUE, seed = NULL) {
         mode = fit$mode,
         bias = fit$bias
       )
-
-      proper <- !any(eigen(fit_b$P_IMPLIED, symmetric = TRUE, only.values = TRUE)$values <= 0)
-      print(proper)
-      print(eigen(fit_b$P_IMPLIED, symmetric = TRUE, only.values = TRUE)$values)
-      if (proper) {
-        res <- list(
+      res <- list()
+      proper_boot <- !any(eigen(fit_b$P_IMPLIED, symmetric = TRUE, only.values = TRUE)$values <= 0)
+      if (proper_boot) {
+        res$boot <- list(
           boot_Lambda <- fit_b$li_Lambda,
-          boot_gamma <- fit_b$li_GAMMA,
-          boot_beta <- fit_b$li_BETA,
+          boot_gamma <- fit_b$li_gamma,
+          boot_beta <- fit_b$li_beta,
           boot_phi_endo <- fit_b$li_phi_endo,
           boot_phi_exo <- fit_b$li_phi_exo,
           boot_psi <- fit_b$li_PSI
         )
       } else {
-        res <- list(
-          boot_Lambda <- NA,
-          boot_gamma <- NA,
-          boot_beta <- NA,
-          boot_phi_endo <- NA,
-          boot_phi_exo <- NA,
-          boot_psi <- NA
-        )
+        res$boot <- NULL
       }
-      if (proper) {
-        res$Tb_LS <- d_LS(S_bs, fit_bs_b$SIGMA_IMPLIED)
+      proper_bs <- !any(eigen(fit_bs_b$P_IMPLIED, symmetric = TRUE, only.values = TRUE)$values <= 0)
+      if (proper_bs) {
+        res$BS <- d_LS(S_bs, fit_bs_b$SIGMA_IMPLIED)
       } else {
-        res$Tb_LS <- NA
+        res$BS <- NULL
       }
-
       return(res)
     }
   )
-  print(eigen(P_TRUE, symmetric = TRUE, only.values = TRUE)$values)
+
+
+  boot_Lambda <- lapply(L, function(x) if (!(is.null(x$boot))) x$boot[[1]] else NULL)
+  boot_gamma <- lapply(L, function(x) if (!is.null(x$boot)) x$boot[[2]] else NULL)
+  boot_beta <- lapply(L, function(x) if (!is.null(x$boot)) x$boot[[3]] else NULL)
+  boot_phi_endo <- lapply(L, function(x) if (!is.null(x$boot)) x$boot[[4]] else NULL)
+  boot_phi_exo <- lapply(L, function(x) if (!is.null(x$boot)) x$boot[[5]] else NULL)
+  boot_psi <- lapply(L, function(x) if (!is.null(x$boot)) x$boot[[6]] else NULL)
+  boot_BS <- unlist(lapply(L, function(x) x$BS))
+
+  improper <- sum(sapply(L, function(x) is.null(x$boot)))
+  improper_gof <- sum(sapply(L, function(x) is.null(x$BS)))
+
+
   # print(L)
-  print("Bootstrap completed.")
-  stop("done")
-
-  boot_lambda <- Reduce("rbind", L[1, ][!is.na(L[1, ])]) # on recupere les resultats non Na en matrice : en ligne les uns sous les autres.
-  boot_std_loadings <- Reduce("rbind", L[2, ][!is.na(L[2, ])])
-  boot_beta <- Reduce("rbind", L[3, ][!is.na(L[3, ])])
-  boot_gamma <- Reduce("rbind", L[4, ][!is.na(L[4, ])])
-  boot_residual_variance <- Reduce("rbind", L[5, ][!is.na(L[5, ])])
-  boot_total_effects <- Reduce("rbind", L[6, ][!is.na(L[6, ])])
-  boot_indirect_effects <- Reduce("rbind", L[7, ][!is.na(L[7, ])])
-  boot_omega <- Reduce("rbind", L[8, ][!is.na(L[8, ])])
-  boot_psi <- Reduce("rbind", L[9, ][!is.na(L[9, ])])
-
-  boot_Tb_LS <- unlist(L[10, ])
-  improper <- sum(is.na(L[1, ]))
-  improper_gof <- sum(is.na(L[10, ]))
-
+  # print(improper)
+  # print(improper_gof)
+  J <- length(fit$li_Lambda)
+  R <- ncol(fit$li_Lambda[[1]])
+  n_endogene <- nrow(fit$li_gamma[[1]])
+  n_exogene <- ncol(fit$li_gamma[[1]])
 
   boot <- list(
-    boot_lambda = boot_lambda,
-    boot_std_loadings = boot_std_loadings,
-    boot_beta = boot_beta,
+    boot_Lambda = boot_Lambda,
     boot_gamma = boot_gamma,
-    boot_residual_variance = boot_residual_variance,
-    boot_total_effects = boot_total_effects,
-    boot_indirect_effects = boot_indirect_effects,
-    boot_omega = boot_omega,
+    boot_beta = boot_beta,
+    boot_phi_endo = boot_phi_endo,
+    boot_phi_exo = boot_phi_exo,
     boot_psi = boot_psi,
-    boot_Tb_LS = boot_Tb_LS,
+    boot_Tb_LS = boot_BS,
     improper = improper,
-    improper_gof = improper_gof
+    improper_gof = improper_gof,
+    R = R,
+    J = J,
+    n_endogene = n_endogene,
+    n_exogene = n_exogene
   )
 
 
@@ -226,16 +220,62 @@ bootstrap_svd <- function(fit, B = 500, verbose = TRUE, seed = NULL) {
 
 get_se_boot <- function(boot) {
   safe_sd <- function(x) if (is.null(x)) NA else apply(x, 2, sd)
+  J <- boot$J
+  R <- boot$R
+  n_endogene <- boot$n_endogene
+  n_exogene <- boot$n_exogene
 
-  sd_lambda <- safe_sd(boot$boot_lambda)
-  sd_std_loadings <- safe_sd(boot$boot_std_loadings)
-  sd_beta <- safe_sd(boot$boot_beta)
-  sd_gamma <- safe_sd(boot$boot_gamma)
-  sd_residual_variance <- safe_sd(boot$boot_residual_variance)
-  sd_total_effects <- safe_sd(boot$boot_total_effects)
-  sd_indirect_effects <- safe_sd(boot$boot_indirect_effects)
-  sd_omega <- safe_sd(boot$boot_omega)
-  sd_psi <- safe_sd(boot$boot_psi)
+
+  li_sd_Lambda <- lapply(1:J, function(j) {
+    li_Lambda_j <- lapply(boot$boot_Lambda, function(x) x[[j]])
+    lambda_j_sd <- matrix(NA, nrow = nrow(li_Lambda_j[[1]]), ncol = ncol(li_Lambda_j[[1]]))
+    for (i in 1:vec_indicators_per_bloc[j]) {
+      for (k in 1:R) {
+        vec_values <- sapply(li_Lambda_j, function(x) {
+          if (is.null(x)) {
+            return(NA)
+          } else {
+            return(x[i, k])
+          }
+        })
+        lambda_j_sd[i, k] <- sd(vec_values, na.rm = TRUE)
+      }
+    }
+    return(lambda_j_sd)
+  })
+
+  li_sd_gamma <- lapply(1:R, function(r) {
+    li_gamma_r <- lapply(boot$boot_gamma, function(x) x[[r]])
+    gamma_r_sd <- matrix(NA, nrow = n_endogene, ncol = n_exogene)
+    for (i in 1:n_endogene) {
+      for (k in 1:n_exogene) {
+        vec_values <- sapply(li_gamma_r, function(x) {
+          if (is.null(x)) {
+            return(NA)
+          } else {
+            return(x[i, k])
+          }
+        })
+        gamma_r_sd[i, k] <- sd(vec_values, na.rm = TRUE)
+      }
+    }
+    return(gamma_r_sd)
+  })
+
+  print("li_sd_Lambda")
+  print(li_sd_gamma)
+  stop("bien")
+
+
+  # sd_lambda <- safe_sd(boot$boot_lambda)
+  # sd_std_loadings <- safe_sd(boot$boot_std_loadings)
+  # sd_beta <- safe_sd(boot$boot_beta)
+  # sd_gamma <- safe_sd(boot$boot_gamma)
+  # sd_residual_variance <- safe_sd(boot$boot_residual_variance)
+  # sd_total_effects <- safe_sd(boot$boot_total_effects)
+  # sd_indirect_effects <- safe_sd(boot$boot_indirect_effects)
+  # sd_omega <- safe_sd(boot$boot_omega)
+  # sd_psi <- safe_sd(boot$boot_psi)
 
   return(list(
     sd_lambda = sd_lambda,
