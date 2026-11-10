@@ -236,7 +236,7 @@ li_R2_TRUE <- lapply(1:R_true, function(r) {
 
 # print(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values)
 
-least_val_propre <- min(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values) * 0.3
+least_val_propre <- min(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values)
 if (least_val_propre <= 0) {
       print(paste("La plus petite valeur propre de la matrice de correlation est :", least_val_propre))
       stop("La matrice de correlation entre les variables latentes n'est pas positive definie. Il faut revoir la definition des parametres du modele.")
@@ -244,6 +244,7 @@ if (least_val_propre <= 0) {
 
 
 # On complexifie les blocs diagonaux pour ne pas avoir indépendance entre variables latentes d'un meme bloc (tout en gardant la positivité de la matrice)
+
 
 bloc_perturbation_TRUE <- matrix(least_val_propre, nrow = R_true, ncol = R_true, byrow = TRUE)
 diag(bloc_perturbation_TRUE) <- 0
@@ -279,12 +280,15 @@ if (!diag_generate) {
 }
 
 
-
 least_val_propre <- min(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values)
 if (least_val_propre <= 0) {
       print(paste("La plus petite valeur propre apres perturbation de la matrice de correlation est :", least_val_propre))
       stop("La matrice de correlation entre les variables latentes n'est pas positive definie. Il faut revoir la definition des parametres du modele.")
 }
+
+print("les val p de P sont")
+print(eigen(P_TRUE, only.values = TRUE, symmetric = TRUE)$values)
+stop()
 # print(paste("La plus petite valeur propre apres perturbation de la matrice de correlation est :", least_val_propre))
 # print(P_TRUE)
 # print(least_val_propre)

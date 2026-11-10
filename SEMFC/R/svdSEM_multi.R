@@ -39,7 +39,7 @@
 #' @export svdSEM_multi
 svdSEM_multi <- function(A, li_C, scale = TRUE,
                          mode = rep("reflective", length(A)),
-                         bias = FALSE) {
+                         bias = FALSE, verbose = FALSE) {
     if (any(mode == "formative")) {
         stop("svdSEM_multi() does not support yet formative blocks. Please use svdSEM() instead.")
     }
@@ -803,8 +803,11 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     # print(P_tilde)
     # print(P_induced)
     ecart <- norm(P_tilde - P_induced, "F")/ norm(P_tilde, "F")
-    if(ecart > 0.5){
-        stop(paste("Error: large difference between P_tilde and P_induced, check colinearity and identifiability:", round(ecart, 4)))
+    if(ecart > 0.5 & verbose){
+        print(paste("Error: large difference between P_tilde and P_induced, check colinearity and identifiability:", round(ecart, 4)))
+        big_ecart <- TRUE
+    } else{
+        big_ecart <- FALSE
     }
 
 
@@ -838,7 +841,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
         li_theta = li_theta,
         li_phi_endo = lv$li_phi_endo,
         li_phi_exo = lv$li_phi_exo,
-        li_S = li_S
+        li_S = li_S,
+        big_ecart = big_ecart
     )
 
     return(out)

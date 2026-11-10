@@ -33,8 +33,8 @@ load_all("SEMFC")
 
 # source("functions/data_simulation.R")
 source("functions/F1.R")
-source("functions/h_theta.R")
-source("functions/s_implied.R")
+# source("functions/h_theta.R")
+# source("functions/s_implied.R")
 source("functions/h_constraints.R")
 source("functions/reconstruct_blocs.R")
 source("functions/calculate_Sigma.R")
@@ -43,7 +43,7 @@ source("functions/calculate_Sigma.R")
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
 set.seed(4)
-n_simu <- 100
+n_simu <- 1
 N <- 1000
 R_try <- 2
 R_true <- 2
@@ -51,8 +51,8 @@ n_signif <- 3
 do_ML <- FALSE
 
 
-ortho_generate <- FALSE
-ortho_solve_SVD <- FALSE
+ortho_generate <- TRUE
+ortho_solve_SVD <- TRUE
 ortho_solve_ML <- FALSE
 diag_generate <- TRUE
 
@@ -165,11 +165,12 @@ for (b in seq_len(n_simu)) {
     }
   })
 
-  # fit.svd <- svdSEM_multi(Y, li_C,
-  #   scale = FALSE,
-  #   mode = rep("reflective", n_blocs),
-  #   bias = FALSE
-  # )
+  fit.svd <- svdSEM_multi(Y, li_C,
+    scale = FALSE,
+    mode = rep("reflective", n_blocs),
+    bias = FALSE, verbose = TRUE
+  )
+  bootstrap_svd(fit.svd, B = 10, verbose = FALSE, seed = 123)
 
   tryCatch(
     {
@@ -179,8 +180,11 @@ for (b in seq_len(n_simu)) {
       fit.svd <- svdSEM_multi(Y, li_C,
         scale = FALSE,
         mode = rep("reflective", n_blocs),
-        bias = FALSE
+        bias = FALSE,
+        verbose = TRUE
       )
+
+      bootstrap_svd(fit.svd, B = 10, verbose = FALSE, seed = 123)
 
       lili_lambda_svd[[b]] <- fit.svd$li_Lambda
       lili_beta_svd[[b]] <- fit.svd$li_beta
