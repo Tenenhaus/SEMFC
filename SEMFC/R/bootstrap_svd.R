@@ -176,7 +176,7 @@ bootstrap_svd <- function(fit, B = 500, verbose = TRUE, seed = NULL) {
     boot_phi_endo = boot_phi_endo,
     boot_phi_exo = boot_phi_exo,
     boot_psi = boot_psi,
-    boot_Tb_LS = boot_BS,
+    boot_BS = boot_BS,
     improper = improper,
     improper_gof = improper_gof,
     R = R,
@@ -191,32 +191,7 @@ bootstrap_svd <- function(fit, B = 500, verbose = TRUE, seed = NULL) {
 
 
 #' Compute Bootstrap Standard Errors for Model Parameters
-#'
-#' Calculates standard errors for all model parameters based on bootstrap replications.
-#' The standard errors are computed as the standard deviation of the bootstrap distribution
-#' for each parameter.
-#'
-#' @param boot List containing bootstrap replications. Expected elements include:
-#'   - `boot_lambda`: Matrix of bootstrap replications for factor loadings.
-#'   - `boot_std_loadings`: Matrix of bootstrap replications for standardized loadings.
-#'   - `boot_beta`: Matrix of bootstrap replications for structural coefficients (endogenous).
-#'   - `boot_gamma`: Matrix of bootstrap replications for regression coefficients (exogenous).
-#'   - `boot_residual_variance`: Matrix of bootstrap replications for residual variances.
-#'   - `boot_total_effects`: Matrix of bootstrap replications for total effects.
-#'   - `boot_indirect_effects`: Matrix of bootstrap replications for indirect effects.
-#'   - `boot_omega`: Matrix of bootstrap replications for formative block weights.
-#'
-#' @return A list containing standard errors for all parameters:
-#'   - `sd_lambda`: Vector of standard errors for factor loadings.
-#'   - `sd_std_loadings`: Vector of standard errors for standardized loadings.
-#'   - `sd_beta`: Vector of standard errors for structural coefficients.
-#'   - `sd_gamma`: Vector of standard errors for regression coefficients.
-#'   - `sd_residual_variance`: Vector of standard errors for residual variances.
-#'   - `sd_total_effects`: Vector of standard errors for total effects.
-#'   - `sd_indirect_effects`: Vector of standard errors for indirect effects.
-#'   - `sd_omega`: Vector of standard errors for formative block weights.
-#'
-#' @keywords internal
+
 
 get_se_boot <- function(boot) {
   safe_sd <- function(x) if (is.null(x)) NA else apply(x, 2, sd)
@@ -262,31 +237,89 @@ get_se_boot <- function(boot) {
     return(gamma_r_sd)
   })
 
-  print("li_sd_Lambda")
-  print(li_sd_gamma)
-  stop("bien")
+  li_sd_beta <- lapply(1:R, function(r) {
+    li_beta_r <- lapply(boot$boot_beta, function(x) x[[r]])
+    beta_r_sd <- matrix(NA, nrow = n_endogene, ncol = n_endogene)
+    for (i in 1:n_endogene) {
+      for (k in 1:n_endogene) {
+        vec_values <- sapply(li_beta_r, function(x) {
+          if (is.null(x)) {
+            return(NA)
+          } else {
+            return(x[i, k])
+          }
+        })
+        beta_r_sd[i, k] <- sd(vec_values, na.rm = TRUE)
+      }
+    }
+    return(beta_r_sd)
+  })
+
+  li_sd_phi_endo <- lapply(1:R, function(r) {
+    li_phi_endo_r <- lapply(boot$boot_phi_endo, function(x) x[[r]])
+    phi_endo_r_sd <- matrix(NA, nrow = n_endogene, ncol = n_endogene)
+    for (i in 1:n_endogene) {
+      for (k in 1:n_endogene) {
+        vec_values <- sapply(li_phi_endo_r, function(x) {
+          if (is.null(x)) {
+            return(NA)
+          } else {
+            return(x[i, k])
+          }
+        })
+        phi_endo_r_sd[i, k] <- sd(vec_values, na.rm = TRUE)
+      }
+    }
+    return(phi_endo_r_sd)
+  })
+
+  li_sd_phi_exo <- lapply(1:R, function(r) {
+    li_phi_exo_r <- lapply(boot$boot_phi_exo, function(x) x[[r]])
+    phi_exo_r_sd <- matrix(NA, nrow = n_exogene, ncol = n_exogene)
+    for (i in 1:n_exogene) {
+      for (k in 1:n_exogene) {
+        vec_values <- sapply(li_phi_exo_r, function(x) {
+          if (is.null(x)) {
+            return(NA)
+          } else {
+            return(x[i, k])
+          }
+        })
+        phi_exo_r_sd[i, k] <- sd(vec_values, na.rm = TRUE)
+      }
+    }
+    return(phi_exo_r_sd)
+  })
+
+  li_sd_psi <- lapply(1:R, function(r) {
+    li_psi_r <- lapply(boot$boot_psi, function(x) x[[r]])
+    psi_r_sd <- matrix(NA, nrow = n_endogene, ncol = n_endogene)
+    for (i in 1:n_endogene) {
+      for (k in 1:n_endogene) {
+        vec_values <- sapply(li_psi_r, function(x) {
+          if (is.null(x)) {
+            return(NA)
+          } else {
+            return(x[i, k])
+          }
+        })
+        psi_r_sd[i, k] <- sd(vec_values, na.rm = TRUE)
+      }
+    }
+    return(psi_r_sd)
+  })
 
 
-  # sd_lambda <- safe_sd(boot$boot_lambda)
-  # sd_std_loadings <- safe_sd(boot$boot_std_loadings)
-  # sd_beta <- safe_sd(boot$boot_beta)
-  # sd_gamma <- safe_sd(boot$boot_gamma)
-  # sd_residual_variance <- safe_sd(boot$boot_residual_variance)
-  # sd_total_effects <- safe_sd(boot$boot_total_effects)
-  # sd_indirect_effects <- safe_sd(boot$boot_indirect_effects)
-  # sd_omega <- safe_sd(boot$boot_omega)
-  # sd_psi <- safe_sd(boot$boot_psi)
+  n_improper_sd <- boot$improper
 
   return(list(
-    sd_lambda = sd_lambda,
-    sd_std_loadings = sd_std_loadings,
-    sd_beta = sd_beta,
-    sd_gamma = sd_gamma,
-    sd_residual_variance = sd_residual_variance,
-    sd_total_effects = sd_total_effects,
-    sd_indirect_effects = sd_indirect_effects,
-    sd_omega = sd_omega,
-    sd_psi = sd_psi
+    li_sd_Lambda = li_sd_Lambda,
+    li_sd_gamma = li_sd_gamma,
+    li_sd_beta = li_sd_beta,
+    li_sd_phi_endo = li_sd_phi_endo,
+    li_sd_phi_exo = li_sd_phi_exo,
+    li_sd_psi = li_sd_psi,
+    n_improper_sd = n_improper_sd
   ))
 }
 
@@ -321,39 +354,15 @@ formatting_svd_infer <- function(fit, boot) {
 }
 
 
-#' Statistical Inference and Goodness-of-Fit for SVD-Estimated Models
-#'
-#' Performs bootstrap-based statistical inference and computes goodness-of-fit statistics
-#' for models estimated using the SVD method. Combines bootstrap replications with
-#' Bollen-Stine bootstrap test results.
-#'
-#' @param fit A svdSEM fit object containing the fitted model information, including
-#'   parameter estimates and model-implied covariance matrix.
-#' @param B Integer specifying the number of bootstrap replications to perform.
-#' @param verbose Logical indicating whether to display a progress bar during
-#'   bootstrap resampling (default: `TRUE`).
-#' @param seed Optional integer for reproducibility of bootstrap results. If `NULL`, no seed is set (default: `NULL`).
-#'
-#' @return A list containing two main components:
-#'   - `result`: List with bootstrap and inference results:
-#'     - `boot`: List of bootstrap replications for all parameters (see `bootstrap_svd()`).
-#'     - `infer`: Formatted tables with parameter estimates, standard errors, z-statistics,
-#'       and p-values (see `formatting_svd_infer()`).
-#'   - `gof`: List with goodness-of-fit test results:
-#'     - `T_LS`: Observed test statistic from the fitted model.
-#'     - `Tb_LS`: Vector of bootstrap test statistics.
-#'     - `pval`: Bootstrap p-value for the goodness-of-fit test.
-#'     - `improper`: Number of improper bootstrap solutions (negative eigenvalues).
-#'
-#' @keywords internal
+
 svdsem_infer <- function(fit, B, verbose = TRUE, seed = NULL) {
   boot <- bootstrap_svd(fit, B, verbose, seed = seed)
   infer <- formatting_svd_infer(fit, boot)
   gof <- list(
-    T_LS = fit$T_LS,
-    Tb_LS = boot$boot_Tb_LS,
-    pval = mean(fit$T_LS <= boot$boot_Tb_LS, na.rm = TRUE),
-    improper = boot$improper
+    BS_stat = fit$BS_stat,
+    boot_BS = boot$boot_BS,
+    pval = mean(fit$BS_stat <= boot$boot_BS, na.rm = TRUE),
+    improper_gof = boot$improper_gof
   )
 
 

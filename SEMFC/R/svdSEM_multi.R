@@ -816,6 +816,7 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
     } else{
         Sigma_implied <- Estim_Sigma
     }
+    BS_stat <- d_LS(cov2(Reduce("cbind", A), bias = bias), Sigma_implied)
 
 
     out <- list(
@@ -842,7 +843,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
         li_phi_endo = lv$li_phi_endo,
         li_phi_exo = lv$li_phi_exo,
         li_S = li_S,
-        big_ecart = big_ecart
+        big_ecart = big_ecart,
+        BS_stat = BS_stat
     )
 
     return(out)

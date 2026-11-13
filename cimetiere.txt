@@ -289,3 +289,16 @@
 #     D <- t(vapply(An, diag, numeric(R))) # invariant a la mise a l'echelle
 #     list(A = A, D = D, crit = crit, iter = length(path) - 1, crit_path = path)
 # }
+
+Au cas où
+
+2242393577dd269b
+0076a05588ce75ea
+6b70f8f5d0060741
+5c66eb972a0a629b
+c6a41e205011e9cb
+0df7dc9389cfed22
+9b4f88db77f9d774
+a77517521125eac0
+7036ec3fb8689b92
+8fce4ec3f156217b

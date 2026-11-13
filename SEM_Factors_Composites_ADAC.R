@@ -50,6 +50,7 @@ R_true <- 2
 n_signif <- 3
 do_ML <- FALSE
 do_bootstrap <- TRUE
+B_bootstrap <- 100
 
 ortho_generate <- TRUE
 ortho_solve_SVD <- TRUE
@@ -172,8 +173,12 @@ for (b in seq_len(n_simu)) {
   )
 
   if (do_bootstrap) {
-    boot <- bootstrap_svd(fit.svd, B = 10, verbose = FALSE, seed = 123)
-    get_se_boot(boot)
+    boot_stats <- svdsem_infer(fit.svd, B = B_bootstrap, verbose = TRUE, seed = NULL)
+    boot_format <- boot_stats$result$infer
+    boot_gof <- boot_stats$gof$pval
+    print(boot_format)
+    print(boot_gof)
+    stop("ok")
   }
 
   tryCatch(
@@ -189,8 +194,7 @@ for (b in seq_len(n_simu)) {
       )
 
       if (do_bootstrap) {
-        boot <- bootstrap_svd(fit.svd, B = 10, verbose = FALSE, seed = 123)
-        get_se_boot(boot)
+        boot_stats <- svdsem_infer(fit.svd, B = B_bootstrap, verbose = TRUE, seed = NULL)
       }
 
       lili_lambda_svd[[b]] <- fit.svd$li_Lambda
