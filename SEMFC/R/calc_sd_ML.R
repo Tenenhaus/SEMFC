@@ -66,7 +66,17 @@ calc_sd_ML <- function(Sigma, x, S_bias, J, R_try, vec_indicators_per_bloc, li_g
     }
     cov_mat_uncertainty <- Info / N
     vec_uncertainty <- sqrt(diag(cov_mat_uncertainty))
-    reconstructed_uncertainty <- reconstruct_blocs(x, S_bias, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma)
+    reconstructed_uncertainty <- reconstruct_blocs(vec_uncertainty, S_bias, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma)
+
+    for (j in 1:J) {
+        diag(reconstructed_uncertainty$li_correl_same_diag[[j]]) <- 0
+    }
+    for (r in 1:R_try) {
+        diag(reconstructed_uncertainty$li_phi_exo[[r]]) <- 0
+        if (!is_dag[r]) {
+            diag(reconstructed_uncertainty$li_phi_endo[[r]]) <- 0
+        }
+    }
 
     return(list(cov_mat_uncertainty = cov_mat_uncertainty, vec_uncertainty = vec_uncertainty, reconstructed_uncertainty = reconstructed_uncertainty))
 }

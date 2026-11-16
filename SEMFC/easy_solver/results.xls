@@ -1,161 +1,161 @@
 Parametre	TRUE.	Mean	SD
-Erreur SVD moyenne L2 sur Sigma		0	
+Erreur SVD moyenne L2 sur Sigma		2.085	
 Nombre d'iterations SVD echouees		0	
 			
 Lambda			
-Lambda[rang 1, ligne 1, colonne 1]	0.7	0.7	NA
-Lambda[rang 1, ligne 1, colonne 2]	1.131	1.131	NA
-Lambda[rang 1, ligne 2, colonne 1]	0.7	0.7	NA
-Lambda[rang 1, ligne 2, colonne 2]	-0.824	-0.824	NA
-Lambda[rang 1, ligne 3, colonne 1]	0.7	0.7	NA
-Lambda[rang 1, ligne 3, colonne 2]	-0.461	-0.461	NA
-Lambda[rang 1, ligne 4, colonne 1]	0.7	0.7	NA
-Lambda[rang 1, ligne 4, colonne 2]	0.154	0.154	NA
-Lambda[rang 2, ligne 1, colonne 1]	0.7	0.7	NA
-Lambda[rang 2, ligne 1, colonne 2]	0.961	0.961	NA
-Lambda[rang 2, ligne 2, colonne 1]	0.7	0.7	NA
-Lambda[rang 2, ligne 2, colonne 2]	-0.669	-0.669	NA
-Lambda[rang 2, ligne 3, colonne 1]	0.7	0.7	NA
-Lambda[rang 2, ligne 3, colonne 2]	-0.642	-0.642	NA
-Lambda[rang 2, ligne 4, colonne 1]	0.7	0.7	NA
-Lambda[rang 2, ligne 4, colonne 2]	0.35	0.35	NA
-Lambda[rang 3, ligne 1, colonne 1]	0.7	0.7	NA
-Lambda[rang 3, ligne 1, colonne 2]	0.315	0.315	NA
-Lambda[rang 3, ligne 2, colonne 1]	0.7	0.7	NA
-Lambda[rang 3, ligne 2, colonne 2]	1.004	1.004	NA
-Lambda[rang 3, ligne 3, colonne 1]	0.7	0.7	NA
-Lambda[rang 3, ligne 3, colonne 2]	-0.381	-0.381	NA
-Lambda[rang 3, ligne 4, colonne 1]	0.7	0.7	NA
-Lambda[rang 3, ligne 4, colonne 2]	-0.938	-0.938	NA
-Lambda[rang 4, ligne 1, colonne 1]	0.7	0.7	NA
-Lambda[rang 4, ligne 1, colonne 2]	0.918	0.918	NA
-Lambda[rang 4, ligne 2, colonne 1]	0.7	0.7	NA
-Lambda[rang 4, ligne 2, colonne 2]	-0.62	-0.62	NA
-Lambda[rang 4, ligne 3, colonne 1]	0.7	0.7	NA
-Lambda[rang 4, ligne 3, colonne 2]	0.282	0.282	NA
-Lambda[rang 4, ligne 4, colonne 1]	0.7	0.7	NA
-Lambda[rang 4, ligne 4, colonne 2]	-0.58	-0.58	NA
-Lambda[rang 5, ligne 1, colonne 1]	0.7	0.7	NA
-Lambda[rang 5, ligne 1, colonne 2]	1.026	1.026	NA
-Lambda[rang 5, ligne 2, colonne 1]	0.7	0.7	NA
-Lambda[rang 5, ligne 2, colonne 2]	-0.942	-0.942	NA
-Lambda[rang 5, ligne 3, colonne 1]	0.7	0.7	NA
-Lambda[rang 5, ligne 3, colonne 2]	-0.057	-0.057	NA
-Lambda[rang 5, ligne 4, colonne 1]	0.7	0.7	NA
-Lambda[rang 5, ligne 4, colonne 2]	-0.026	-0.026	NA
-Lambda[rang 6, ligne 1, colonne 1]	0.7	0.7	NA
-Lambda[rang 6, ligne 1, colonne 2]	0.398	0.398	NA
-Lambda[rang 6, ligne 2, colonne 1]	0.7	0.7	NA
-Lambda[rang 6, ligne 2, colonne 2]	-0.293	-0.293	NA
-Lambda[rang 6, ligne 3, colonne 1]	0.7	0.7	NA
-Lambda[rang 6, ligne 3, colonne 2]	0.928	0.928	NA
-Lambda[rang 6, ligne 4, colonne 1]	0.7	0.7	NA
-Lambda[rang 6, ligne 4, colonne 2]	-1.034	-1.034	NA
+Lambda[rang 1, ligne 1, colonne 1]	0.7	0.92	NA
+Lambda[rang 1, ligne 1, colonne 2]	1.131	0.909	NA
+Lambda[rang 1, ligne 2, colonne 1]	0.7	0.516	NA
+Lambda[rang 1, ligne 2, colonne 2]	-0.824	-0.952	NA
+Lambda[rang 1, ligne 3, colonne 1]	0.7	0.582	NA
+Lambda[rang 1, ligne 3, colonne 2]	-0.461	-0.593	NA
+Lambda[rang 1, ligne 4, colonne 1]	0.7	0.701	NA
+Lambda[rang 1, ligne 4, colonne 2]	0.154	0.002	NA
+Lambda[rang 2, ligne 1, colonne 1]	0.7	0.532	NA
+Lambda[rang 2, ligne 1, colonne 2]	0.961	1.028	NA
+Lambda[rang 2, ligne 2, colonne 1]	0.7	0.708	NA
+Lambda[rang 2, ligne 2, colonne 2]	-0.669	-0.572	NA
+Lambda[rang 2, ligne 3, colonne 1]	0.7	0.743	NA
+Lambda[rang 2, ligne 3, colonne 2]	-0.642	-0.541	NA
+Lambda[rang 2, ligne 4, colonne 1]	0.7	0.603	NA
+Lambda[rang 2, ligne 4, colonne 2]	0.35	0.431	NA
+Lambda[rang 3, ligne 1, colonne 1]	0.7	0.732	NA
+Lambda[rang 3, ligne 1, colonne 2]	0.315	0.221	NA
+Lambda[rang 3, ligne 2, colonne 1]	0.7	0.797	NA
+Lambda[rang 3, ligne 2, colonne 2]	1.004	0.918	NA
+Lambda[rang 3, ligne 3, colonne 1]	0.7	0.654	NA
+Lambda[rang 3, ligne 3, colonne 2]	-0.381	-0.458	NA
+Lambda[rang 3, ligne 4, colonne 1]	0.7	0.585	NA
+Lambda[rang 3, ligne 4, colonne 2]	-0.938	-1.015	NA
+Lambda[rang 4, ligne 1, colonne 1]	0.7	0.481	NA
+Lambda[rang 4, ligne 1, colonne 2]	0.918	1.041	NA
+Lambda[rang 4, ligne 2, colonne 1]	0.7	0.819	NA
+Lambda[rang 4, ligne 2, colonne 2]	-0.62	-0.486	NA
+Lambda[rang 4, ligne 3, colonne 1]	0.7	0.595	NA
+Lambda[rang 4, ligne 3, colonne 2]	0.282	0.412	NA
+Lambda[rang 4, ligne 4, colonne 1]	0.7	0.831	NA
+Lambda[rang 4, ligne 4, colonne 2]	-0.58	-0.418	NA
+Lambda[rang 5, ligne 1, colonne 1]	0.7	0.26	NA
+Lambda[rang 5, ligne 1, colonne 2]	1.026	1.183	NA
+Lambda[rang 5, ligne 2, colonne 1]	0.7	1.024	NA
+Lambda[rang 5, ligne 2, colonne 2]	-0.942	-0.591	NA
+Lambda[rang 5, ligne 3, colonne 1]	0.7	0.679	NA
+Lambda[rang 5, ligne 3, colonne 2]	-0.057	0.204	NA
+Lambda[rang 5, ligne 4, colonne 1]	0.7	0.669	NA
+Lambda[rang 5, ligne 4, colonne 2]	-0.026	0.238	NA
+Lambda[rang 6, ligne 1, colonne 1]	0.7	0.652	NA
+Lambda[rang 6, ligne 1, colonne 2]	0.398	0.467	NA
+Lambda[rang 6, ligne 2, colonne 1]	0.7	0.708	NA
+Lambda[rang 6, ligne 2, colonne 2]	-0.293	-0.241	NA
+Lambda[rang 6, ligne 3, colonne 1]	0.7	0.605	NA
+Lambda[rang 6, ligne 3, colonne 2]	0.928	1.018	NA
+Lambda[rang 6, ligne 4, colonne 1]	0.7	0.759	NA
+Lambda[rang 6, ligne 4, colonne 2]	-1.034	-0.989	NA
 			
 Beta			
 Beta[rang 1, ligne 1, colonne 1]	0	0	NA
-Beta[rang 1, ligne 1, colonne 2]	0.494	0.494	NA
-Beta[rang 1, ligne 2, colonne 1]	0.122	0.122	NA
+Beta[rang 1, ligne 1, colonne 2]	0.494	0.486	NA
+Beta[rang 1, ligne 2, colonne 1]	0.122	0.113	NA
 Beta[rang 1, ligne 2, colonne 2]	0	0	NA
 Beta[rang 2, ligne 1, colonne 1]	0	0	NA
-Beta[rang 2, ligne 1, colonne 2]	-0.176	-0.176	NA
-Beta[rang 2, ligne 2, colonne 1]	0.341	0.341	NA
+Beta[rang 2, ligne 1, colonne 2]	-0.176	-0.191	NA
+Beta[rang 2, ligne 2, colonne 1]	0.341	0.374	NA
 Beta[rang 2, ligne 2, colonne 2]	0	0	NA
 			
 Gamma			
-Gamma[rang 1, ligne 1, colonne 1]	0.285	0.285	NA
-Gamma[rang 1, ligne 1, colonne 2]	-0.285	-0.285	NA
+Gamma[rang 1, ligne 1, colonne 1]	0.285	0.292	NA
+Gamma[rang 1, ligne 1, colonne 2]	-0.285	-0.265	NA
 Gamma[rang 1, ligne 1, colonne 3]	0	0	NA
 Gamma[rang 1, ligne 1, colonne 4]	0	0	NA
 Gamma[rang 1, ligne 2, colonne 1]	0	0	NA
 Gamma[rang 1, ligne 2, colonne 2]	0	0	NA
-Gamma[rang 1, ligne 2, colonne 3]	0.779	0.779	NA
-Gamma[rang 1, ligne 2, colonne 4]	-0.173	-0.173	NA
-Gamma[rang 2, ligne 1, colonne 1]	0.548	0.548	NA
-Gamma[rang 2, ligne 1, colonne 2]	0.685	0.685	NA
+Gamma[rang 1, ligne 2, colonne 3]	0.779	0.791	NA
+Gamma[rang 1, ligne 2, colonne 4]	-0.173	-0.166	NA
+Gamma[rang 2, ligne 1, colonne 1]	0.548	0.57	NA
+Gamma[rang 2, ligne 1, colonne 2]	0.685	0.702	NA
 Gamma[rang 2, ligne 1, colonne 3]	0	0	NA
 Gamma[rang 2, ligne 1, colonne 4]	0	0	NA
 Gamma[rang 2, ligne 2, colonne 1]	0	0	NA
 Gamma[rang 2, ligne 2, colonne 2]	0	0	NA
-Gamma[rang 2, ligne 2, colonne 3]	-0.779	-0.779	NA
-Gamma[rang 2, ligne 2, colonne 4]	0.312	0.312	NA
+Gamma[rang 2, ligne 2, colonne 3]	-0.779	-0.759	NA
+Gamma[rang 2, ligne 2, colonne 4]	0.312	0.275	NA
 			
 Phi endo			
 Phi endo[rang 1, ligne 1, colonne 1]		1	NA
-Phi endo[rang 1, ligne 1, colonne 2]		0.718	NA
-Phi endo[rang 1, ligne 2, colonne 1]		0.718	NA
+Phi endo[rang 1, ligne 1, colonne 2]		0.704	NA
+Phi endo[rang 1, ligne 2, colonne 1]		0.704	NA
 Phi endo[rang 1, ligne 2, colonne 2]		1	NA
 Phi endo[rang 2, ligne 1, colonne 1]		1	NA
-Phi endo[rang 2, ligne 1, colonne 2]		0.185	NA
-Phi endo[rang 2, ligne 2, colonne 1]		0.185	NA
+Phi endo[rang 2, ligne 1, colonne 2]		0.213	NA
+Phi endo[rang 2, ligne 2, colonne 1]		0.213	NA
 Phi endo[rang 2, ligne 2, colonne 2]		1	NA
 			
 Phi exo			
 Phi exo[rang 1, ligne 1, colonne 1]		1	NA
-Phi exo[rang 1, ligne 1, colonne 2]		0.2	NA
-Phi exo[rang 1, ligne 1, colonne 3]		0.1	NA
-Phi exo[rang 1, ligne 1, colonne 4]		-0.2	NA
-Phi exo[rang 1, ligne 2, colonne 1]		0.2	NA
+Phi exo[rang 1, ligne 1, colonne 2]		0.153	NA
+Phi exo[rang 1, ligne 1, colonne 3]		0.142	NA
+Phi exo[rang 1, ligne 1, colonne 4]		-0.208	NA
+Phi exo[rang 1, ligne 2, colonne 1]		0.153	NA
 Phi exo[rang 1, ligne 2, colonne 2]		1	NA
-Phi exo[rang 1, ligne 2, colonne 3]		-0.3	NA
-Phi exo[rang 1, ligne 2, colonne 4]		0.2	NA
-Phi exo[rang 1, ligne 3, colonne 1]		0.1	NA
-Phi exo[rang 1, ligne 3, colonne 2]		-0.3	NA
+Phi exo[rang 1, ligne 2, colonne 3]		-0.244	NA
+Phi exo[rang 1, ligne 2, colonne 4]		0.18	NA
+Phi exo[rang 1, ligne 3, colonne 1]		0.142	NA
+Phi exo[rang 1, ligne 3, colonne 2]		-0.244	NA
 Phi exo[rang 1, ligne 3, colonne 3]		1	NA
-Phi exo[rang 1, ligne 3, colonne 4]		-0.2	NA
-Phi exo[rang 1, ligne 4, colonne 1]		-0.2	NA
-Phi exo[rang 1, ligne 4, colonne 2]		0.2	NA
-Phi exo[rang 1, ligne 4, colonne 3]		-0.2	NA
+Phi exo[rang 1, ligne 3, colonne 4]		-0.171	NA
+Phi exo[rang 1, ligne 4, colonne 1]		-0.208	NA
+Phi exo[rang 1, ligne 4, colonne 2]		0.18	NA
+Phi exo[rang 1, ligne 4, colonne 3]		-0.171	NA
 Phi exo[rang 1, ligne 4, colonne 4]		1	NA
 Phi exo[rang 2, ligne 1, colonne 1]		1	NA
-Phi exo[rang 2, ligne 1, colonne 2]		0.082	NA
-Phi exo[rang 2, ligne 1, colonne 3]		-0.176	NA
-Phi exo[rang 2, ligne 1, colonne 4]		0.238	NA
-Phi exo[rang 2, ligne 2, colonne 1]		0.082	NA
+Phi exo[rang 2, ligne 1, colonne 2]		0.041	NA
+Phi exo[rang 2, ligne 1, colonne 3]		-0.203	NA
+Phi exo[rang 2, ligne 1, colonne 4]		0.188	NA
+Phi exo[rang 2, ligne 2, colonne 1]		0.041	NA
 Phi exo[rang 2, ligne 2, colonne 2]		1	NA
-Phi exo[rang 2, ligne 2, colonne 3]		0.28	NA
-Phi exo[rang 2, ligne 2, colonne 4]		-0.014	NA
-Phi exo[rang 2, ligne 3, colonne 1]		-0.176	NA
-Phi exo[rang 2, ligne 3, colonne 2]		0.28	NA
+Phi exo[rang 2, ligne 2, colonne 3]		0.266	NA
+Phi exo[rang 2, ligne 2, colonne 4]		-0.059	NA
+Phi exo[rang 2, ligne 3, colonne 1]		-0.203	NA
+Phi exo[rang 2, ligne 3, colonne 2]		0.266	NA
 Phi exo[rang 2, ligne 3, colonne 3]		1	NA
-Phi exo[rang 2, ligne 3, colonne 4]		0.12	NA
-Phi exo[rang 2, ligne 4, colonne 1]		0.238	NA
-Phi exo[rang 2, ligne 4, colonne 2]		-0.014	NA
-Phi exo[rang 2, ligne 4, colonne 3]		0.12	NA
+Phi exo[rang 2, ligne 3, colonne 4]		0.088	NA
+Phi exo[rang 2, ligne 4, colonne 1]		0.188	NA
+Phi exo[rang 2, ligne 4, colonne 2]		-0.059	NA
+Phi exo[rang 2, ligne 4, colonne 3]		0.088	NA
 Phi exo[rang 2, ligne 4, colonne 4]		1	NA
 			
 Theta			
-Theta[ligne 1]	0.061	0.061	NA
-Theta[ligne 2]	0.04	0.04	NA
-Theta[ligne 3]	0.024	0.024	NA
-Theta[ligne 4]	0.018	0.018	NA
-Theta[ligne 5]	0.049	0.049	NA
-Theta[ligne 6]	0.032	0.032	NA
-Theta[ligne 7]	0.031	0.031	NA
-Theta[ligne 8]	0.021	0.021	NA
-Theta[ligne 9]	0.02	0.02	NA
-Theta[ligne 10]	0.051	0.051	NA
-Theta[ligne 11]	0.022	0.022	NA
-Theta[ligne 12]	0.047	0.047	NA
-Theta[ligne 13]	0.046	0.046	NA
-Theta[ligne 14]	0.03	0.03	NA
-Theta[ligne 15]	0.02	0.02	NA
-Theta[ligne 16]	0.028	0.028	NA
-Theta[ligne 17]	0.053	0.053	NA
-Theta[ligne 18]	0.047	0.047	NA
-Theta[ligne 19]	0.017	0.017	NA
-Theta[ligne 20]	0.017	0.017	NA
-Theta[ligne 21]	0.022	0.022	NA
-Theta[ligne 22]	0.02	0.02	NA
-Theta[ligne 23]	0.046	0.046	NA
-Theta[ligne 24]	0.054	0.054	NA
+Theta[ligne 1]	0.061	0.06	NA
+Theta[ligne 2]	0.04	0.009	NA
+Theta[ligne 3]	0.024	0.03	NA
+Theta[ligne 4]	0.018	0.032	NA
+Theta[ligne 5]	0.049	0.043	NA
+Theta[ligne 6]	0.032	0.057	NA
+Theta[ligne 7]	0.031	0.009	NA
+Theta[ligne 8]	0.021	0.023	NA
+Theta[ligne 9]	0.02	0.016	NA
+Theta[ligne 10]	0.051	0.054	NA
+Theta[ligne 11]	0.022	0.018	NA
+Theta[ligne 12]	0.047	0.067	NA
+Theta[ligne 13]	0.046	0.013	NA
+Theta[ligne 14]	0.03	0.035	NA
+Theta[ligne 15]	0.02	0.045	NA
+Theta[ligne 16]	0.028	0.006	NA
+Theta[ligne 17]	0.053	0.041	NA
+Theta[ligne 18]	0.047	0.029	NA
+Theta[ligne 19]	0.017	0.026	NA
+Theta[ligne 20]	0.017	0.019	NA
+Theta[ligne 21]	0.022	0.023	NA
+Theta[ligne 22]	0.02	0.016	NA
+Theta[ligne 23]	0.046	0.051	NA
+Theta[ligne 24]	0.054	0.058	NA
 			
 Psi			
-Psi[rang 1, ligne 1, colonne 1]	0.406	0.406	NA
-Psi[rang 1, ligne 1, colonne 2]	0.037	0.037	NA
-Psi[rang 1, ligne 2, colonne 1]	0.037	0.037	NA
-Psi[rang 1, ligne 2, colonne 2]	0.15	0.15	NA
-Psi[rang 2, ligne 1, colonne 1]	0.265	0.265	NA
-Psi[rang 2, ligne 1, colonne 2]	0.045	0.045	NA
-Psi[rang 2, ligne 2, colonne 1]	0.045	0.045	NA
-Psi[rang 2, ligne 2, colonne 2]	0.344	0.344	NA
+Psi[rang 1, ligne 1, colonne 1]	0.406	0.42	NA
+Psi[rang 1, ligne 1, colonne 2]	0.037	0.042	NA
+Psi[rang 1, ligne 2, colonne 1]	0.037	0.042	NA
+Psi[rang 1, ligne 2, colonne 2]	0.15	0.155	NA
+Psi[rang 2, ligne 1, colonne 1]	0.265	0.267	NA
+Psi[rang 2, ligne 1, colonne 2]	0.045	0.051	NA
+Psi[rang 2, ligne 2, colonne 1]	0.045	0.051	NA
+Psi[rang 2, ligne 2, colonne 2]	0.344	0.365	NA

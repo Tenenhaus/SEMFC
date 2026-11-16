@@ -44,25 +44,28 @@ source("functions/calculate_Sigma.R")
 #############################################
 set.seed(4)
 bias <- TRUE
-n_simu <- 1
+n_simu <- 2
 N <- 1000
 R_try <- 2
 R_true <- 2
 n_signif <- 3
-do_ML <- TRUE
-do_bootstrap <- FALSE
-B_bootstrap <- 100
+do_ML <- FALSE
+do_bootstrap <- TRUE
+B_bootstrap <- 4
 seuil_p_value <- 0.05
+compare_true <- TRUE # Compare les ecarts types aux true valeurs.
 
 ortho_generate <- TRUE
-ortho_solve_SVD <- TRUE
-ortho_solve_ML <- TRUE
+ortho_solve_SVD <- FALSE
+ortho_solve_ML <- FALSE
 diag_generate <- TRUE
 
 show_svd <- FALSE
 show_ml <- FALSE
 show_TRUE <- FALSE
 show_norme <- FALSE
+show_all_bootstrap_ML <- FALSE
+
 # show_svd <- TRUE
 # show_ml <- TRUE
 # show_TRUE <- TRUE
@@ -70,7 +73,7 @@ show_norme <- FALSE
 do_full_reorder <- TRUE
 ancien_P <- FALSE
 
-triche <- TRUE
+triche <- FALSE
 no_svd_refining <- FALSE
 mauvais_depart <- FALSE
 
@@ -98,6 +101,7 @@ lili_theta_svd <- list()
 lili_phi_endo_svd <- list()
 lili_phi_exo_svd <- list()
 lili_S <- list()
+li_boot_se <- list()
 
 lili_lambda_ml <- list()
 lili_phi_exo_ml <- list()
@@ -164,20 +168,20 @@ for (b in seq_len(n_simu)) {
     }
   })
 
-  fit.svd <- svdSEM_multi(Y, li_C,
-    scale = FALSE,
-    mode = rep("reflective", n_blocs),
-    bias = FALSE, verbose = TRUE
-  )
+  # fit.svd <- svdSEM_multi(Y, li_C,
+  #   scale = FALSE,
+  #   mode = rep("reflective", n_blocs),
+  #   bias = FALSE, verbose = TRUE
+  # )
 
-  if (do_bootstrap) {
-    boot_stats <- svdsem_infer(fit.svd, B = B_bootstrap, verbose = TRUE, seed = NULL)
-    boot_format <- boot_stats$result$infer
-    boot_gof <- boot_stats$gof$pval
-    p_values_svd[b] <- boot_gof
-    # print(boot_format)
-    # print(boot_gof)
-  }
+  # if (do_bootstrap) {
+  #   boot_stats <- svdsem_infer(fit.svd, B = B_bootstrap, verbose = TRUE, seed = NULL)
+  #   boot_format <- boot_stats$result$infer
+  #   boot_gof <- boot_stats$gof$pval
+  #   p_values_svd[b] <- boot_gof
+  #   print(boot_format)
+  #   print(boot_gof)
+  # }
 
   tryCatch(
     {
@@ -193,6 +197,12 @@ for (b in seq_len(n_simu)) {
 
       if (do_bootstrap) {
         boot_stats <- svdsem_infer(fit.svd, B = B_bootstrap, verbose = TRUE, seed = NULL)
+        boot_format <- boot_stats$result$infer
+        boot_gof <- boot_stats$gof$pval
+        p_values_svd[b] <- boot_gof
+        li_boot_se[[b]] <- boot_format
+        # print(boot_format)
+        # print(boot_gof)
       }
 
       lili_lambda_svd[[b]] <- fit.svd$li_Lambda
@@ -498,8 +508,6 @@ for (b in seq_len(n_simu)) {
 
         p_value <- gof_ML(x = opt_param, S_bias, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma, N, n_endogenes, is_dag)
 
-        # print(paste("p-value ML:", p_value))
-
 
         lili_lambda_ml[[b]] <- li_Lambda
         lili_phi_exo_ml[[b]] <- li_phi_exo
@@ -518,7 +526,11 @@ for (b in seq_len(n_simu)) {
         error_ML[b] <- norm(as.matrix(Sigma_ML) - as.matrix(SIGMA_TRUE), "F")
 
         print(paste("opt_vrais", opt_vrais))
-        print(paste("uncertainty", sd_ML$vec_uncertainty))
+        if (show_all_bootstrap_ML) {
+          print(paste("uncertainty"))
+          print(sd_ML$reconstructed_uncertainty)
+          print(paste("p-value ML:", p_value))
+        }
       },
       error = function(e) {
         message("Erreur dans ML à l'itération ", b, ": ", conditionMessage(e))
@@ -861,6 +873,64 @@ if (do_ML) {
   })
 }
 
+if (do_bootstrap & compare_true) {
+  li_boot_lambda_se <- lapply(li_boot_se, function(x) x$lambda)
+  li_vec_est_lambda <- lapply(li_boot_lambda_se, function(x) {
+    vec_est_lambda <- x$est
+    return(vec_est_lambda)
+  })
+  li_vec_sd_lambda <- lapply(li_boot_lambda_se, function(x) {
+    vec_sd_lambda <- x$se
+    return(vec_sd_lambda)
+  })
+  vec_true_est_lambda <- do.call(c, lapply(1:J, function(j) {
+    vec_true_est_j <- unlist(li_lambda_TRUE[[j]])
+    return(vec_true_est_j)
+  }))
+  li_vec_p_values_lambda <- lapply(1:length(li_vec_est_lambda), function(i) {
+    est <- li_vec_est_lambda[[i]]
+    sd <- li_vec_sd_lambda[[i]]
+    true_val <- vec_true_est_lambda
+    z_scores <- (est - true_val) / sd
+    p_values <- 2 * (1 - pnorm(abs(z_scores)))
+    return(p_values)
+  })
+  li_vec_binary_lambda <- lapply(li_vec_p_values_lambda, function(p_values) {
+    binary <- ifelse(p_values < seuil_p_value, 1, 0)
+    return(binary)
+  })
+  vec_rejet_prop_lambda <- round(do.call("+", li_vec_binary_lambda) / length(li_vec_binary_lambda), 3)
+
+
+  # print(li_boot_se)
+  li_boot_beta_se <- lapply(li_boot_se, function(x) x$beta)
+  li_vec_est_beta <- lapply(li_boot_beta_se, function(x) {
+    vec_est_beta <- x$est
+    return(vec_est_beta)
+  })
+  li_vec_sd_beta <- lapply(li_boot_beta_se, function(x) {
+    vec_sd_beta <- x$se
+    return(vec_sd_beta)
+  })
+  vec_beta_TRUE <- do.call(c, lapply(1:R_try, function(r) {
+    vec_beta_r <- li_BETA_TRUE[[r]][li_BETA_TRUE[[r]] != 0]
+    return(vec_beta_r)
+  }))
+  li_vec_p_values_beta <- lapply(1:length(li_vec_est_beta), function(i) {
+    est <- li_vec_est_beta[[i]]
+    sd <- li_vec_sd_beta[[i]]
+    true_val <- vec_beta_TRUE
+    z_scores <- (est - true_val) / sd
+    p_values <- 2 * (1 - pnorm(abs(z_scores)))
+    return(p_values)
+  })
+  li_vec_binary_beta <- lapply(li_vec_p_values_beta, function(p_values) {
+    binary <- ifelse(p_values < seuil_p_value, 1, 0)
+    return(binary)
+  })
+  vec_rejet_prop_beta <- round(do.call("+", li_vec_binary_beta) / length(li_vec_binary_beta), 3)
+}
+
 print(paste("erreur estimateur empirique", mean(error_empirical, na.rm = TRUE)))
 
 print(paste("Nombre d'itérations SVD échouées :", sum(sapply(lili_lambda_svd, is.null))))
@@ -904,6 +974,13 @@ if (do_bootstrap) {
   accepted <- sum(p_values_svd > seuil_p_value)
   proportion_accepted <- accepted / length(p_values_svd)
   print(paste("Proportion d'itérations SVD acceptées :", proportion_accepted, "pour une prop de NA de", proportion_NA))
+  if (compare_true) {
+    print("Taux de vraies valeurs hors écart type pour Lambda")
+    print(vec_rejet_prop_lambda)
+
+    print("Taux de vraies valeurs hors écart type pour Beta")
+    print(vec_rejet_prop_beta)
+  }
 }
 
 

@@ -844,7 +844,8 @@ svdSEM_multi <- function(A, li_C, scale = TRUE,
         li_phi_exo = lv$li_phi_exo,
         li_S = li_S,
         big_ecart = big_ecart,
-        BS_stat = BS_stat
+        BS_stat = BS_stat,
+        vec_indicators_per_bloc = vec_indicators_per_bloc
     )
 
     return(out)

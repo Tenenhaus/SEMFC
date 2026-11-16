@@ -182,7 +182,8 @@ bootstrap_svd <- function(fit, B = 500, verbose = TRUE, seed = NULL) {
     R = R,
     J = J,
     n_endogene = n_endogene,
-    n_exogene = n_exogene
+    n_exogene = n_exogene,
+    vec_indicators_per_bloc = vec_indicators_per_bloc
   )
 
 
@@ -203,7 +204,7 @@ get_se_boot <- function(boot) {
 
   li_sd_Lambda <- lapply(1:J, function(j) {
     li_Lambda_j <- lapply(boot$boot_Lambda, function(x) x[[j]])
-    lambda_j_sd <- matrix(NA, nrow = nrow(li_Lambda_j[[1]]), ncol = ncol(li_Lambda_j[[1]]))
+    lambda_j_sd <- matrix(NA, nrow = vec_indicators_per_bloc[j], ncol = R)
     for (i in 1:vec_indicators_per_bloc[j]) {
       for (k in 1:R) {
         vec_values <- sapply(li_Lambda_j, function(x) {
