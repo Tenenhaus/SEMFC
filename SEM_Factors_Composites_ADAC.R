@@ -43,33 +43,34 @@ source("functions/calculate_Sigma.R")
 ########## MONTE-CARLO SIMULATION ###########
 #############################################
 set.seed(4)
+bias <- TRUE
 n_simu <- 1
 N <- 1000
 R_try <- 2
 R_true <- 2
 n_signif <- 3
-do_ML <- FALSE
-do_bootstrap <- TRUE
+do_ML <- TRUE
+do_bootstrap <- FALSE
 B_bootstrap <- 100
+seuil_p_value <- 0.05
 
 ortho_generate <- TRUE
 ortho_solve_SVD <- TRUE
-ortho_solve_ML <- FALSE
+ortho_solve_ML <- TRUE
 diag_generate <- TRUE
 
 show_svd <- FALSE
 show_ml <- FALSE
 show_TRUE <- FALSE
 show_norme <- FALSE
-show_svd <- TRUE
-show_ml <- TRUE
-show_TRUE <- TRUE
+# show_svd <- TRUE
+# show_ml <- TRUE
+# show_TRUE <- TRUE
 
 do_full_reorder <- TRUE
 ancien_P <- FALSE
-# blanchir <- FALSE
 
-triche <- FALSE
+triche <- TRUE
 no_svd_refining <- FALSE
 mauvais_depart <- FALSE
 
@@ -123,6 +124,8 @@ param_ml <- matrix(0, 61, n_simu)
 lrt_pval <- rep(NA, n_simu)
 vcov_pval <- rep(NA, n_simu)
 error_ML <- rep(NA, n_simu)
+p_values_svd <- rep(NA, n_simu)
+p_values_ml <- rep(NA, n_simu)
 
 error_empirical <- rep(NA, n_simu)
 
@@ -136,13 +139,8 @@ for (b in seq_len(n_simu)) {
   Sigma_SVD <- NULL
   fit.svd <- NULL
   if (b %% 10 == 0) print(b)
-  # try(
-  #   {
-
-  # print(dim(SIGMA_TRUE))
-  # print(sum(vec_indicators_per_bloc))
   X <- mvrnorm(N, rep(0, sum(vec_indicators_per_bloc)), SIGMA_TRUE, empirical = FALSE)
-  S <- cov(X)
+  S <- cov2(X, bias = bias)
   if (triche) {
     S <- SIGMA_TRUE
   }
@@ -176,9 +174,9 @@ for (b in seq_len(n_simu)) {
     boot_stats <- svdsem_infer(fit.svd, B = B_bootstrap, verbose = TRUE, seed = NULL)
     boot_format <- boot_stats$result$infer
     boot_gof <- boot_stats$gof$pval
-    print(boot_format)
-    print(boot_gof)
-    stop("ok")
+    p_values_svd[b] <- boot_gof
+    # print(boot_format)
+    # print(boot_gof)
   }
 
   tryCatch(
@@ -384,6 +382,7 @@ for (b in seq_len(n_simu)) {
           vec_beta <- rep(0, sum(sapply(li_non_null_beta_gamma, function(x) sum(x$non_null_beta))))
         }
 
+
         if (!is.null(fit.svd)) {
           li_gamma <- fit.svd$li_gamma
           li_vec_gamma <- lapply(1:R_try, function(r) {
@@ -423,12 +422,18 @@ for (b in seq_len(n_simu)) {
           })
         }
 
+        if (!triche) {
+          S_bias <- cov2(X, bias = TRUE)
+        } else {
+          S_bias <- as.matrix(SIGMA_TRUE)
+        }
+
         vec_correl_same_diag <- do.call(c, li_correl_same_diag)
 
 
         init_ml_with_S <- c(big_vec_Lambda, big_vec_phi_exo, big_vec_phi_endo, theta, vec_gamma, vec_beta, vec_correl_same_diag)
 
-        vrais_at_opt_SVD <- F1(init_ml_with_S, S, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma)
+        vrais_at_opt_SVD <- F1(init_ml_with_S, S_bias, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma)
         print(paste("vrais_at_opt SVD", vrais_at_opt_SVD))
 
         # stop("F1")
@@ -452,13 +457,14 @@ for (b in seq_len(n_simu)) {
         #   stop("stop ml")
         # }
 
+
         fit.ml <- easy_solver(
           pars = init_ml_with_S,
           fun = F1,
           eqfun = heq1,
           eqB = rep(0, n_zeros_eq),
           ineqLB = ineq_LB,
-          S = S,
+          S = S_bias,
           J = J,
           R_try = R_try,
           vec_indicators_per_bloc = vec_indicators_per_bloc,
@@ -471,6 +477,7 @@ for (b in seq_len(n_simu)) {
           f_min = -1e-10,
           trace = 10
         )
+
 
         convergence <- fit.ml$convergence
         if (convergence != 0) {
@@ -489,6 +496,11 @@ for (b in seq_len(n_simu)) {
         is_dag <- reconstructed_params$is_dag
         li_correl_same_diag <- reconstructed_params$li_correl_same_diag
 
+        p_value <- gof_ML(x = opt_param, S_bias, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma, N, n_endogenes, is_dag)
+
+        # print(paste("p-value ML:", p_value))
+
+
         lili_lambda_ml[[b]] <- li_Lambda
         lili_phi_exo_ml[[b]] <- li_phi_exo
         lili_phi_endo_ml[[b]] <- li_phi_endo
@@ -499,9 +511,14 @@ for (b in seq_len(n_simu)) {
         lili_correl_same_diag_ml[[b]] <- li_correl_same_diag
         Sigma_ML <- calculate_Sigma(li_Lambda, li_phi_exo, li_phi_endo, vec_theta, li_gamma, li_beta, is_dag, li_correl_same_diag, li_C, is_endogenes)
 
+
+        sd_ML <- calc_sd_ML(Sigma_ML, opt_param, S_bias, J, R_try, vec_indicators_per_bloc, li_gr, li_non_null_beta_gamma, N, li_C, is_endogenes)
+        p_values_ml[b] <- p_value
+
         error_ML[b] <- norm(as.matrix(Sigma_ML) - as.matrix(SIGMA_TRUE), "F")
 
         print(paste("opt_vrais", opt_vrais))
+        print(paste("uncertainty", sd_ML$vec_uncertainty))
       },
       error = function(e) {
         message("Erreur dans ML à l'itération ", b, ": ", conditionMessage(e))
@@ -881,6 +898,15 @@ if (show_svd) {
   print(lili_psi_aggregate)
 }
 
+if (do_bootstrap) {
+  proportion_NA <- sum(is.na(p_values_svd)) / length(p_values_svd)
+  p_values_svd <- p_values_svd[!is.na(p_values_svd)]
+  accepted <- sum(p_values_svd > seuil_p_value)
+  proportion_accepted <- accepted / length(p_values_svd)
+  print(paste("Proportion d'itérations SVD acceptées :", proportion_accepted, "pour une prop de NA de", proportion_NA))
+}
+
+
 if (show_ml & do_ML) {
   print("ML Lambda")
   print(lili_Lambda_ml_aggregate)
@@ -909,6 +935,11 @@ if (show_ml & do_ML) {
   print("ML correlations within blocks")
   print(lili_correl_same_diag_ml_aggregate)
 
+  proportion_NA_ml <- sum(is.na(p_values_ml)) / length(p_values_ml)
+  p_values_ml <- p_values_ml[!is.na(p_values_ml)]
+  accepted_ml <- sum(p_values_ml > seuil_p_value)
+  proportion_accepted_ml <- accepted_ml / length(p_values_ml)
+  print(paste("Proportion d'itérations ML acceptées :", proportion_accepted_ml, "pour une prop de NA de", proportion_NA_ml))
 
   ### UNIQUEMENT si TRICHE = TRUE pour la suite
 

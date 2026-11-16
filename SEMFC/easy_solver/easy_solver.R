@@ -35,6 +35,7 @@ easy_solver <- function(
     ineqLB <- as.numeric(ineqLB)
     m <- length(eqB)
 
+
     if (length(ineqLB) != n) stop("ineqLB must have the same length as pars")
     if (m > 0 && length(eqfun(x, ...)) != m) {
         stop("eqB and eqfun have incompatible lengths")
@@ -50,12 +51,14 @@ easy_solver <- function(
         trace, use_bfgs, bfgs_curv_tol, bfgs_scale, grad_eps
     ))
 
+
     res <- .Call("easy_solver_c", x, ineqLB, eqB, ctrl, f, h, environment())
+
 
     hm <- res$history
     res$history <- data.frame(
         iter = as.integer(hm[, 1]), f = hm[, 2], kkt = hm[, 3], eq = hm[, 4],
         grad_norm = hm[, 5], step = hm[, 6], accepted = hm[, 7] == 1
     )
-    res
+    return(res)
 }
