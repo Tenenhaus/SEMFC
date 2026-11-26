@@ -14,10 +14,6 @@
 #'
 #' @return A character string representing the significance level.
 #'
-#' @examples
-#' \dontrun{
-#' get_stars(0.0005) # Returns "***"
-#' }
 #' @keywords internal
 get_stars <- function(p) {
   if (is.na(p)) return("")
@@ -248,20 +244,20 @@ print_estimates <- function(estimate, standardized, effect){
 #' @param len_theta Integer specifying the number of model parameters.
 #' @param N Integer specifying the number of observations in the sample.
 #' @param dof Integer specifying the degrees of freedom for the model.
-#' @param F Numeric value representing the F statistic.
+#' @param F_value Numeric value representing the F statistic.
 #' @param T_LS Numeric value representing the d_LS (least squares discrepancy) statistic.
 #'
 #' @return Invisibly returns `NULL`. Outputs formatted model information to the console.
 #'
 #' @keywords internal
-print_model <- function(estimator, len_theta, N, dof, F, T_LS) {
+print_model <- function(estimator, len_theta, N, dof, F_value, T_LS) {
   cat("\n")
   cat(sprintf("%-45s%15s\n", "Estimator", toupper(estimator)))
   cat(sprintf("%-45s%15d\n", "Number of model parameters", len_theta))
   cat(sprintf("%-45s%15d\n", "Number of observations", N))
   cat(sprintf("%-45s%15d\n", "Degrees of freedom", dof))
   if (estimator == "ml") {
-    cat(sprintf("%-45s%15.3f\n", "F", F))
+    cat(sprintf("%-45s%15.3f\n", "F", F_value))
   }
   cat(sprintf("%-45s%15.3f\n", "d_LS", T_LS))
   cat("\n")

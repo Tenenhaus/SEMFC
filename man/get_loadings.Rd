@@ -21,11 +21,4 @@ for the corresponding block of manifest variables.
 This function retrieves the loadings for each block of observed variables
 based on the parameter vector \code{x} and the input block sizes.
 }
-\examples{
-\dontrun{
-set.seed(123)
-block_sizes <- c(3, 3, 3, 3, 3, 3)
-x  <- rnorm(61)
-get_loadings(x, block_sizes)}
-}
 \keyword{internal}

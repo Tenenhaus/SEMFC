@@ -4,7 +4,7 @@
 \alias{chi2sem}
 \title{Chi-Square Test for Structural Equation Models}
 \usage{
-chi2sem(p, q, r, F, N)
+chi2sem(p, q, r, F_value, N)
 }
 \arguments{
 \item{p}{Number of observed variables in the model}
@@ -13,7 +13,7 @@ chi2sem(p, q, r, F, N)
 
 \item{r}{Number of formative blocks}
 
-\item{F}{The fit function value}
+\item{F_value}{The fit function value}
 
 \item{N}{Sample size}
 }
@@ -28,13 +28,7 @@ This function computes the chi-square goodness-of-fit test statistic for
 structural equation models, along with its degrees of freedom and p-value.
 }
 \details{
-The chi-square statistic is calculated as (N-1) * F, where F is the
+The chi-square statistic is calculated as (N-1) * F_value, where F_value is the
 fit function value. The degrees of freedom are computed as p(p+1)/2 - q + r
-}
-\examples{
-\dontrun{
-chi2_results <- chi2sem(p = 18, q = 61, r = 4, F = 0.428, N = 300)
-print(chi2_results$pval)
-}
 }
 \keyword{internal}

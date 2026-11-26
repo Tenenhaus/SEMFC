@@ -26,12 +26,4 @@ using \code{cov2cor}. It then computes the residuals as the difference between t
 empirical and model-implied correlation matrices. The SRMR is calculated as the square
 root of the mean of the squared residuals from the lower triangular part of the matrix.
 }
-\examples{
-\dontrun{
-S <- matrix(c(1, 0.5, 0.5, 1), ncol = 2)
-Sigma <- matrix(c(1, 0.4, 0.4, 1), ncol = 2)
-srmr <- srmrsem(S, Sigma)
-print(srmr)
-}
-}
 \keyword{internal}

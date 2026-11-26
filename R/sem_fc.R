@@ -305,11 +305,11 @@ initialize = function(data, relation_matrix,
 #'                   all_measures = TRUE)
 #' }
 
-    summary = function(standardized = F, effect = FALSE, all_measures  = F){
+    summary = function(standardized = FALSE, effect = FALSE, all_measures  = FALSE){
 
       estimator <- private$.estimator
       print_model(estimator, sum(private$.model$lengths_theta), private$.data$n_row,
-                  private$.model$dof, private$.gof$F, private$.estimate$T_LS)
+                  private$.model$dof, private$.gof$F1, private$.estimate$T_LS)
       print_gof(all_measures, estimator, private$.gof, private$.boot_rep, private$.estimate$r2)
       estimate <- formatting_estimate(private$.estimate)
       if (!is.null(private$.infer_estimate)){
@@ -504,7 +504,7 @@ initialize = function(data, relation_matrix,
 #'   \itemize{
 #'     \item \code{"all"}: All computed measures (default).
 #'     \item \code{"bollen_stine"}: Bollen-Stine bootstrap goodness-of-fit test.
-#'     \item \code{"F"}: Model fitting function value.
+#'     \item \code{"F1"}: Model fitting function value.
 #'     \item \code{"ml"}: Maximum likelihood fit indices.
 #'     \item \code{"reliability"}: Reliability coefficients.
 #'     \item \code{"improper"}: Diagnostics for improper solutions.
@@ -551,7 +551,7 @@ initialize = function(data, relation_matrix,
 #' # Get the measures
 #'
 #' gof_all <- sem_model$get_gof("all")
-#' gof_F <- sem_model$get_gof("F")
+#' gof_F <- sem_model$get_gof("F1")
 #' gof_bollen_stine <- sem_model$get_gof("bollen_stine")
 #' gof_reliability <- sem_model$get_gof("reliability")
 #' }
@@ -559,7 +559,7 @@ initialize = function(data, relation_matrix,
     get_gof = function(measure = "all") {
 
       valid_measures <- c(
-        "all", "bollen_stine", "F",
+        "all", "bollen_stine", "F1",
         "ml", "reliability", "improper"
       )
       measure <- match.arg(measure, valid_measures)
@@ -619,7 +619,7 @@ initialize = function(data, relation_matrix,
 
       private$.estimate$theta <- theta_svd
       private$.estimate$effect <- compute_effect(private$.estimate$beta, private$.estimate$gamma)
-      private$.gof$F <- F1(theta_svd, private$.data$cov_S, private$.model)
+      private$.gof$F1 <- F1(theta_svd, private$.data$cov_S, private$.model)
     },
     svd_infer = function(B = 1000, verbose = TRUE, seed = NULL){
 
@@ -656,7 +656,7 @@ initialize = function(data, relation_matrix,
         warning("Initial value returned,ML estimation failed: ", ml_sol$diagnostics$message, call. = FALSE)
       }
       theta_ml <- ml_sol$pars
-      private$.estimate <- lvm_ml(x = theta_ml, model = private$.model, jac = F)
+      private$.estimate <- lvm_ml(x = theta_ml, model = private$.model, jac = FALSE)
       private$.estimate$optimization <- ml_sol$diagnostics
       private$.estimate$T_LS <- d_LS(private$.data$cov_S, private$.estimate$sigma_implied)
 
@@ -674,7 +674,7 @@ initialize = function(data, relation_matrix,
       private$.estimate$std_omega <- std_omega
       private$.estimate$theta <- theta_ml
       private$.estimate$effect <- compute_effect(private$.estimate$beta, private$.estimate$gamma)
-      private$.gof$F <- F1(theta_ml, private$.data$cov_S, private$.model)
+      private$.gof$F1 <- F1(theta_ml, private$.data$cov_S, private$.model)
 
 
     },
@@ -730,12 +730,12 @@ initialize = function(data, relation_matrix,
             p <- private$.model$p
             q <- private$.model$q
             r <- private$.model$r
-            F <- private$.gof$F
+            F_value <- private$.gof$F1
             N <- private$.data$n_row
             S <- private$.data$cov_S
             Sigma <- private$.estimate$sigma_implied
 
-            res_gof$ml <- semML_gof(p, q, r, F, N, S, Sigma)
+            res_gof$ml <- semML_gof(p, q, r, F_value, N, S, Sigma)
           } else {
             private$.gof$ml <- NULL
             warning(

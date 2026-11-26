@@ -28,13 +28,4 @@ A list of block matrices, where each block corresponds to either:
 This function creates a list of block diagonal covariance matrix for both formative and reflective blocks
 using the parameter vector \code{x}, block sizes, and the starting index of covariance parameters.
 }
-\examples{
-\dontrun{
-set.seed(27)
-x <- rnorm(61)
-mode <- c("formative", "formative", "formative", "formative", "reflective", "reflective")
-block_sizes <- rep(3, 6)
-initial_start_index_cov <- 32
-get_bdiag(x, mode, block_sizes, initial_start_index_cov)}
-}
 \keyword{internal}

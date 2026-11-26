@@ -17,9 +17,4 @@ A symmetric formative covariance matrix.
 This function builds a symmetric covariance matrix (S_composite_i) for a formative block,
 using the lower triangular values provided in \code{lower_values_composite_i}.
 }
-\examples{
-\dontrun{
-lower_values <- c(1, 0.3, 0.5, 1, 0.2, 1)
-build_formative_S_diag(lower_values)}
-}
 \keyword{internal}

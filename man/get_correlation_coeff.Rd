@@ -23,11 +23,4 @@ A symmetric correlation matrix (dim x dim), where \code{dim} is the number of la
 This function constructs a symmetric correlation matrix for a set of latent variables
 based on the parameter vector \code{x} and the starting index for correlation-related parameters.
 }
-\examples{
-\dontrun{
-latent_variables <- c("LV1", "LV2", "LV3", "LV4")
-x <- c(0.5, 0.3, 0.2, 0.5, 0.4, 0.2) # lower triangle values for a 4x4 matrix
-start_index <- 1
-get_correlation_coeff(x, latent_variables, start_index)}
-}
 \keyword{internal}

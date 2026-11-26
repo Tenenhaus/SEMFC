@@ -44,14 +44,6 @@
 #'   
 #'   
 #'
-#' @examples
-#' \dontrun{
-#' boot_results <- bootstrap_svd(fit, B = 500, verbose = TRUE)
-#' # Access bootstrap distributions
-#' head(boot_results$boot_lambda)
-#' # Check improper solutions
-#' boot_results$improper
-#' }
 #'
 #' @importFrom stats sd pnorm setNames
 #' @keywords internal

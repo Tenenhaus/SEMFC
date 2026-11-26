@@ -6,7 +6,7 @@
 #' @param p Number of observed variables in the model
 #' @param q Number of estimated parameters in the model
 #' @param r Number of formative blocks
-#' @param F The fit function value
+#' @param F_value The fit function value
 #' @param N Sample size
 #'
 #' @return A list containing:
@@ -14,18 +14,13 @@
 #'   \item{df}{Degrees of freedom for the test}
 #'   \item{pval}{The p-value of the chi-square test}
 #'
-#' @details The chi-square statistic is calculated as (N-1) * F, where F is the
+#' @details The chi-square statistic is calculated as (N-1) * F_value, where F_value is the
 #' fit function value. The degrees of freedom are computed as p(p+1)/2 - q + r
 #'
-#' @examples
-#' \dontrun{
-#' chi2_results <- chi2sem(p = 18, q = 61, r = 4, F = 0.428, N = 300)
-#' print(chi2_results$pval)
-#'}
 #' @importFrom stats pchisq
 #' @keywords internal
-chi2sem <- function(p, q, r, F, N){
-  chi2 <- (N-1) * F
+chi2sem <- function(p, q, r, F_value, N){
+  chi2 <- (N-1) * F_value
   df <- (p * (p+1)/2) - q + r
   p_value <- 1 - pchisq(chi2, df)
 
@@ -49,13 +44,6 @@ chi2sem <- function(p, q, r, F, N){
 #'   empirical and model-implied correlation matrices. The SRMR is calculated as the square
 #'   root of the mean of the squared residuals from the lower triangular part of the matrix.
 #'
-#' @examples
-#' \dontrun{
-#' S <- matrix(c(1, 0.5, 0.5, 1), ncol = 2)
-#' Sigma <- matrix(c(1, 0.4, 0.4, 1), ncol = 2)
-#' srmr <- srmrsem(S, Sigma)
-#' print(srmr)
-#'}
 #' @keywords internal
 srmrsem <- function(S, Sigma) {
   R_emp <- cov2cor(S)
@@ -92,11 +80,6 @@ srmrsem <- function(S, Sigma) {
 #'   P-values for close and not-close fit hypotheses are derived from the non-centrality
 #'   parameter of the chi-square distribution.
 #'
-#' @examples
-#' \dontrun{
-#' result <- rmseasem(chi2 = 20, df = 10, N = 200)
-#' print(result$estimate)
-#' }
 #' @importFrom stats pchisq uniroot
 #' @keywords internal
 rmseasem <- function(chi2, df, N, conf.level = 0.90, close = 0.05, notclose = 0.08) {
@@ -159,7 +142,7 @@ rmseasem <- function(chi2, df, N, conf.level = 0.90, close = 0.05, notclose = 0.
 #' @param p Integer. Number of observed variables
 #' @param q Integer. Number of free parameters in the model
 #' @param r Integer. Number of latent variables
-#' @param F Numeric. Value of the fitting function at convergence
+#' @param F_value Numeric. Value of the fitting function at convergence
 #' @param N Integer. Sample size
 #' @param S Matrix. Sample covariance matrix
 #' @param Sigma Matrix. Model-implied covariance matrix
@@ -192,8 +175,8 @@ rmseasem <- function(chi2, df, N, conf.level = 0.90, close = 0.05, notclose = 0.
 #' \code{\link{chi2sem}}, \code{\link{rmseasem}}, \code{\link{srmrsem}}
 #'
 #' @keywords internal
-semML_gof <- function(p, q, r, F, N, S, Sigma) {
-  chi2 <- chi2sem(p, q, r, F, N)
+semML_gof <- function(p, q, r, F_value, N, S, Sigma) {
+  chi2 <- chi2sem(p, q, r, F_value, N)
 
   # basline test
   S_baseline <- diag(diag(S))

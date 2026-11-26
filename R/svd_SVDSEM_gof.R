@@ -19,11 +19,6 @@
 #' then performs bootstrap to estimate the empirical distribution of the test statistic.
 #' Solutions with negative eigenvalues are considered improper and excluded.
 #'
-#' @examples
-#' \dontrun{
-#' gof_results <- svdSEM_gof(fit, B = 100)
-#' print(gof_results$pval)
-#' }
 #'
 #'
 #' @keywords internal
@@ -100,12 +95,6 @@ svdSEM_gof <- function(fit, B = 100){
 #'   where \eqn{S^{-1/2}} is the inverse square root of the data covariance matrix and \eqn{\Sigma^{1/2}}
 #'   is the square root of the target covariance matrix.
 #'
-#' @examples
-#' \dontrun{
-#' data <- matrix(rnorm(100), ncol = 5)
-#' Sigma <- diag(5)
-#' scaled_data <- scaleDataSet(data, Sigma)
-#' }
 #'
 #' @keywords internal
 

@@ -22,14 +22,6 @@
 #' The indirect effects are derived by subtracting the direct effects (BETA or GAMMA)
 #' from the total effects.
 #'
-#' @examples
-#' \dontrun{
-#' BETA <- matrix(c(0, 0.5, 0.25, 0), nrow = 2, byrow = TRUE)
-#' GAMMA <- matrix(c(-0.3, 0.5, 0, 0, 0, 0, 0.5, 0.25), nrow = 2, byrow = TRUE)
-#' result <- compute_effect(BETA, GAMMA)
-#' print(result$total_effect)
-#' print(result$indirect_effect)
-#' }
 #'
 #' @keywords internal
 compute_effect  <- function(BETA, GAMMA) {
