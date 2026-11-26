@@ -5,11 +5,14 @@ This is a resubmission of SEMFC.
 We have addressed the requested changes:
 
 Expanded the acronyms and added the methodological reference in the DESCRIPTION field.
+
 Renamed variables previously named F and replaced abbreviated logical values with TRUE and FALSE.
+
 Removed examples for unexported functions.
+
 Removed unnecessary \dontrun{} wrappers.
 
-Thank you for your feedback.
+
 
 
 ## R CMD check results
