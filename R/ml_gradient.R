@@ -15,23 +15,8 @@
 #'
 #' @return Matrix J_Sigma_theta (Jacobian of vech(Sigma) with respect to theta)
 #'
-#' @examples
-#' \dontrun{
-#' J_Sigma_theta_final <- compute_J_Sigma_theta(
-#'   lambda = lambda,
-#'   block_sizes = c(3,3,3,3,3,3),
-#'   lengths_theta = c(18,6,4,2,1,30),
-#'   mode = mode,
-#'   R = R,
-#'   rel_matrix = rel_matrix,
-#'   m_exo = 4,
-#'   Phi_exo = Phi_exo,
-#'   BETA = BETA,
-#'   GAMMA = GAMMA
-#' )
-#' }
 #'
-#' @export
+#' @keywords internal
 compute_J_Sigma_theta <- function(block_sizes, lengths_theta, mode, dag, R,
                                    rel_matrix, lambda, BETA, GAMMA) {
 

@@ -24,27 +24,4 @@ Vector of equality constraints.
 \description{
 Generalized version for multiple blocks with formative/reflective modes.
 }
-\examples{
-\dontrun{
-set.seed(123)
-n <- 300
-# Generate sample data (6 blocks with 3 indicators each)
-X <- matrix(rnorm(n * 18), ncol = 18)
-S <- cov(X)
-# Model specification
-block_sizes <- c(3, 3, 3, 3, 3, 3)
-mode <- c("formative", "formative", "formative", "formative",
-          "reflective", "reflective")
-
-
-model <- list(
- block_sizes = block_sizes,
-mode = mode
-)
-
-x  <- rnorm(61)
-
-heq(x, S, model)
-}
-}
 \keyword{internal}

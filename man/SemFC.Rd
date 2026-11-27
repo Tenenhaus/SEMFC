@@ -295,7 +295,7 @@ sem_model$fit(infer = FALSE)
 # Get the measures
 
 gof_all <- sem_model$get_gof("all")
-gof_F <- sem_model$get_gof("F")
+gof_F <- sem_model$get_gof("F1")
 gof_bollen_stine <- sem_model$get_gof("bollen_stine")
 gof_reliability <- sem_model$get_gof("reliability")
 }
@@ -507,7 +507,7 @@ sem_model_ml$fit(infer = TRUE,
   Print comprehensive summary of the fitted SemFC object.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{SemFC$summary(standardized = F, effect = FALSE, all_measures = F)}
+    \preformatted{SemFC$summary(standardized = FALSE, effect = FALSE, all_measures = FALSE)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
@@ -781,7 +781,7 @@ Available options are:
 \itemize{
 \item \code{"all"}: All computed measures (default).
 \item \code{"bollen_stine"}: Bollen-Stine bootstrap goodness-of-fit test.
-\item \code{"F"}: Model fitting function value.
+\item \code{"F1"}: Model fitting function value.
 \item \code{"ml"}: Maximum likelihood fit indices.
 \item \code{"reliability"}: Reliability coefficients.
 \item \code{"improper"}: Diagnostics for improper solutions.
@@ -831,7 +831,7 @@ sem_model$fit(infer = FALSE)
 # Get the measures
 
 gof_all <- sem_model$get_gof("all")
-gof_F <- sem_model$get_gof("F")
+gof_F <- sem_model$get_gof("F1")
 gof_bollen_stine <- sem_model$get_gof("bollen_stine")
 gof_reliability <- sem_model$get_gof("reliability")
 }

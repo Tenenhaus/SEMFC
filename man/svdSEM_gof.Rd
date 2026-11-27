@@ -28,12 +28,4 @@ The function first transforms the data according to Yuan & Hayashi (2003),
 then performs bootstrap to estimate the empirical distribution of the test statistic.
 Solutions with negative eigenvalues are considered improper and excluded.
 }
-\examples{
-\dontrun{
-gof_results <- svdSEM_gof(fit, B = 100)
-print(gof_results$pval)
-}
-
-
-}
 \keyword{internal}

@@ -42,20 +42,4 @@ Matrix J_Sigma_theta (Jacobian of vech(Sigma) with respect to theta)
 This function computes the final Jacobian matrix J_Sigma_theta with minimal inputs.
 It handles all intermediate calculations including structural and measurement models.
 }
-\examples{
-\dontrun{
-J_Sigma_theta_final <- compute_J_Sigma_theta(
-  lambda = lambda,
-  block_sizes = c(3,3,3,3,3,3),
-  lengths_theta = c(18,6,4,2,1,30),
-  mode = mode,
-  R = R,
-  rel_matrix = rel_matrix,
-  m_exo = 4,
-  Phi_exo = Phi_exo,
-  BETA = BETA,
-  GAMMA = GAMMA
-)
-}
-
-}
+\keyword{internal}

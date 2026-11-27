@@ -26,18 +26,4 @@ endogenous variables, with path coefficients filled in where applicable.
 This function generates a path coefficient matrix for endogenous and exogenous variables
 based on the parameter vector \code{x} and the provided relationships between variables.
 }
-\examples{
-\dontrun{
-x <- c(0.8, 0.5, 0.3, 0.7, 0.8, 0.4)
-row_exo_endo <- c(X5 = 5, X6 = 6)
-col_exo_endo <- c(X1 = 1, X2 = 2, X3 = 3, X4 = 4)
-initial_start_index <- 1
-C <- matrix(c(0, 0, 0, 0, 1, 0,
-            0, 0, 0, 0, 1, 0,
-            0, 0, 0, 0, 0, 1,
-            0, 0, 0, 0, 0, 1,
-            0, 0, 0, 0, 0, 1,
-            0, 0, 0, 0, 1, 0), 6, 6, byrow = TRUE)
-get_path_coeff(x, row_exo_endo, col_exo_endo, C, initial_start_index)}
-}
 \keyword{internal}

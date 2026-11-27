@@ -14,14 +14,6 @@
 #'   - A covariance matrix for formative blocks.
 #'   - A diagonal matrix for reflective blocks.
 #'
-#' @examples
-#' \dontrun{
-#' set.seed(27)
-#' x <- rnorm(61)
-#' mode <- c("formative", "formative", "formative", "formative", "reflective", "reflective")
-#' block_sizes <- rep(3, 6)
-#' initial_start_index_cov <- 32
-#' get_bdiag(x, mode, block_sizes, initial_start_index_cov)}
 #' @keywords internal
 
 get_bdiag <- function(x, mode, block_sizes, initial_start_index_cov) {
@@ -79,12 +71,6 @@ get_bdiag <- function(x, mode, block_sizes, initial_start_index_cov) {
 #'
 #' @return A symmetric correlation matrix (dim x dim), where `dim` is the number of latent variables.
 #'
-#' @examples
-#' \dontrun{
-#' latent_variables <- c("LV1", "LV2", "LV3", "LV4")
-#' x <- c(0.5, 0.3, 0.2, 0.5, 0.4, 0.2) # lower triangle values for a 4x4 matrix
-#' start_index <- 1
-#' get_correlation_coeff(x, latent_variables, start_index)}
 #' @keywords internal
 #'
 get_correlation_coeff <- function(x, latent_variables, start_index) {
@@ -117,12 +103,6 @@ get_correlation_coeff <- function(x, latent_variables, start_index) {
 #' @return A list of numeric vectors, where each vector contains the loadings
 #'   for the corresponding block of manifest variables.
 #'
-#' @examples
-#' \dontrun{
-#' set.seed(123)
-#' block_sizes <- c(3, 3, 3, 3, 3, 3)
-#' x  <- rnorm(61)
-#' get_loadings(x, block_sizes)}
 #' @keywords internal
 get_loadings <- function(x, block_sizes) {
   y <- sum(block_sizes)
@@ -154,19 +134,6 @@ get_loadings <- function(x, block_sizes) {
 #' @return A matrix where rows correspond to endogenous variables and columns to exogenous or
 #'   endogenous variables, with path coefficients filled in where applicable.
 #'
-#' @examples
-#' \dontrun{
-#' x <- c(0.8, 0.5, 0.3, 0.7, 0.8, 0.4)
-#' row_exo_endo <- c(X5 = 5, X6 = 6)
-#' col_exo_endo <- c(X1 = 1, X2 = 2, X3 = 3, X4 = 4)
-#' initial_start_index <- 1
-#' C <- matrix(c(0, 0, 0, 0, 1, 0,
-#'             0, 0, 0, 0, 1, 0,
-#'             0, 0, 0, 0, 0, 1,
-#'             0, 0, 0, 0, 0, 1,
-#'             0, 0, 0, 0, 0, 1,
-#'             0, 0, 0, 0, 1, 0), 6, 6, byrow = TRUE)
-#' get_path_coeff(x, row_exo_endo, col_exo_endo, C, initial_start_index)}
 #' @keywords internal
 
 get_path_coeff <- function(x, row_exo_endo, col_exo_endo, C, initial_start_index) {
@@ -196,10 +163,6 @@ get_path_coeff <- function(x, row_exo_endo, col_exo_endo, C, initial_start_index
 #'
 #' @return A symmetric formative covariance matrix.
 #'
-#' @examples
-#' \dontrun{
-#' lower_values <- c(1, 0.3, 0.5, 1, 0.2, 1)
-#' build_formative_S_diag(lower_values)}
 #' @keywords internal
 build_formative_S_diag <- function(lower_values_composite_i) {
 

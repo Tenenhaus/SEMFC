@@ -36,25 +36,4 @@ For formative models, the number of error covariances includes both
 variances and covariances: (p^2 + p)/2 for each block of size p.
 For reflective models, only variances are counted: p for each block of size p.
 }
-\examples{
-\dontrun{
-which_exo_endo <- list(
-  Hi = list(
-    c(LV1 = 1, LV2 = 2),
-    c(LV3 = 3, LV4 = 4)
-  ),
-  Ji = list(
-    c(LV6 = 6),
-    c(LV5 = 5)
-  ),
-  ind_endo = c(LV5 = 5, LV6 = 6),
-  ind_exo = c(LV1 = 1, LV2 = 2, LV3 = 3, LV4 = 4)
-)
-block_sizes <- c(3, 3, 3, 3, 3, 3)
-mode <- c("formative", "formative", "formative", "formative",
-          "reflective", "reflective")
-dag <- FALSE
-lengths <- get_lengths_theta(which_exo_endo, block_sizes, mode, dag)
-}
-}
 \keyword{internal}

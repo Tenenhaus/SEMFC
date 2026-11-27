@@ -57,14 +57,4 @@ models. British Journal of Mathematical and Statistical Psychology,
 56(1), 93-110.
 }
 }
-\examples{
-\dontrun{
-boot_results <- bootstrap_svd(fit, B = 500, verbose = TRUE)
-# Access bootstrap distributions
-head(boot_results$boot_lambda)
-# Check improper solutions
-boot_results$improper
-}
-
-}
 \keyword{internal}

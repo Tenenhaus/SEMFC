@@ -28,12 +28,4 @@ on both the data covariance matrix and the target covariance matrix, and applies
 where \eqn{S^{-1/2}} is the inverse square root of the data covariance matrix and \eqn{\Sigma^{1/2}}
 is the square root of the target covariance matrix.
 }
-\examples{
-\dontrun{
-data <- matrix(rnorm(100), ncol = 5)
-Sigma <- diag(5)
-scaled_data <- scaleDataSet(data, Sigma)
-}
-
-}
 \keyword{internal}

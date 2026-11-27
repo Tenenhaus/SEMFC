@@ -4,7 +4,7 @@
 \alias{print_model}
 \title{Print Model Information}
 \usage{
-print_model(estimator, len_theta, N, dof, F, T_LS)
+print_model(estimator, len_theta, N, dof, F_value, T_LS)
 }
 \arguments{
 \item{estimator}{Character string indicating the estimation method (e.g., "ml", "svd").
@@ -16,7 +16,7 @@ The estimator name will be displayed in uppercase.}
 
 \item{dof}{Integer specifying the degrees of freedom for the model.}
 
-\item{F}{Numeric value representing the F statistic.}
+\item{F_value}{Numeric value representing the F statistic.}
 
 \item{T_LS}{Numeric value representing the d_LS (least squares discrepancy) statistic.}
 }

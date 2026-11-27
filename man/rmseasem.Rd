@@ -38,10 +38,4 @@ Confidence intervals are computed using the non-central chi-square distribution.
 P-values for close and not-close fit hypotheses are derived from the non-centrality
 parameter of the chi-square distribution.
 }
-\examples{
-\dontrun{
-result <- rmseasem(chi2 = 20, df = 10, N = 200)
-print(result$estimate)
-}
-}
 \keyword{internal}

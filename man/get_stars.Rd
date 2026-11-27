@@ -23,9 +23,4 @@ A character string representing the significance level.
 \description{
 Assigns significance stars based on the p-value of a statistical test.
 }
-\examples{
-\dontrun{
-get_stars(0.0005) # Returns "***"
-}
-}
 \keyword{internal}

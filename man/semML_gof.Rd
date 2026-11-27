@@ -4,7 +4,7 @@
 \alias{semML_gof}
 \title{Calculate Goodness-of-Fit Statistics for SEM-ML Estimation}
 \usage{
-semML_gof(p, q, r, F, N, S, Sigma)
+semML_gof(p, q, r, F_value, N, S, Sigma)
 }
 \arguments{
 \item{p}{Integer. Number of observed variables}
@@ -13,7 +13,7 @@ semML_gof(p, q, r, F, N, S, Sigma)
 
 \item{r}{Integer. Number of latent variables}
 
-\item{F}{Numeric. Value of the fitting function at convergence}
+\item{F_value}{Numeric. Value of the fitting function at convergence}
 
 \item{N}{Integer. Sample size}
 

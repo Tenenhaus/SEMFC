@@ -218,12 +218,6 @@ extraction_diagonale <- function(n) {
 #'   where tr denotes the trace operator. This measures the overall fit
 #'   between the observed and model-implied covariance matrices.
 #'
-#' @examples
-#' \dontrun{
-#' S <- diag(2)
-#' SIGMA <- diag(2) * 0.5
-#' discrepancy <- d_LS(S, SIGMA)
-#'}
 #'
 #' @keywords internal
 d_LS <- function(A, B){
@@ -250,17 +244,6 @@ d_LS <- function(A, B){
 #' @details The Dillon reliability metric is calculated as the squared sum of
 #'   loadings divided by the sum of the squared loadings and the residual variances.
 #'
-#' @examples
-#' \dontrun{
-#' lambdas <- list(block1 = c(0.8, 0.7), block2 = c(0.9, 0.6, 0.5))
-#' residuals <- list(block1 = c(0.2, 0.3), block2 = c(0.1, 0.4, 0.5))
-#' reliability_values <- reliability(
-#'  metric = "Dillon",
-#'  lambdas = lambdas,
-#'  residual_variances = residuals
-#' )
-#' print(reliability_values)
-#' }
 #' @keywords internal
 
 # pour bloc formatif
